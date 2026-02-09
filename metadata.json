@@ -1,0 +1,14 @@
+{
+  "name": "REST IA OS v1.0.5",
+  "description": "Aplicação Desktop Nativa para gestão de restaurantes com SQLite e IA.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "tauriPermissions": [
+    "sql:default",
+    "shell:all",
+    "dialog:all"
+  ]
+}
