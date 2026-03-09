@@ -1,0 +1,74 @@
+{
+  "version": 2,
+  "name": "tasca-do-vereda",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist",
+        "buildCommand": "npm run build:vercel"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/menu-digital",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/menu-digital/(.*)",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/customer-display/(.*)",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "VITE_SUPABASE_URL": "@supabase-url",
+    "VITE_SUPABASE_ANON_KEY": "@supabase-anon-key",
+    "VITE_GEMINI_API_KEY": "@gemini-api-key"
+  },
+  "functions": {
+    "app/*.js": {
+      "maxDuration": 30
+    }
+  }
+}
