@@ -234,13 +234,13 @@ const Purchases = () => {
                 Números para Aprovação
               </label>
               <div className="space-y-3">
-                {whatsappSettings.approvalNumbers.map((number, index) => (
+                {whatsappSettings.approvalNumbers.map((number: string, index: number) => (
                   <div key={index} className="flex gap-3">
                     <input 
                       type="text" 
                       className="flex-1 p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-[#06b6d4]" 
                       value={number}
-                      onChange={e => updateApprovalNumber(index, e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateApprovalNumber(index, e.target.value)}
                       placeholder="+244923000000"
                     />
                     <button

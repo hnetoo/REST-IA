@@ -207,11 +207,22 @@ const POS = () => {
       {/* Sidebar Categorias */}
       <div className="w-24 bg-slate-950 border-r border-white/5 flex flex-col items-center py-10 gap-8 z-40 relative">
          <div className="flex-1 flex flex-col items-center gap-6 overflow-y-auto no-scrollbar w-full">
-           <button onClick={() => setSelectedCategoryId('TODOS')} className={`w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center transition-all ${selectedCategoryId === 'TODOS' ? 'bg-primary text-black shadow-glow scale-105' : 'bg-white/5 text-slate-500 hover:text-slate-300'}`}>
+           <button 
+              onClick={() => setSelectedCategoryId('TODOS')} 
+              className={`w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center transition-all ${selectedCategoryId === 'TODOS' ? 'bg-primary text-black shadow-glow scale-105' : 'bg-white/5 text-slate-500 hover:text-slate-300'}`}
+              title="Ver todos os produtos"
+              aria-label="Ver todos os produtos"
+           >
               <Grid3X3 size={24} />
            </button>
            {categories.map(cat => (
-             <button key={cat.id} onClick={() => setSelectedCategoryId(cat.id)} className={`w-16 h-16 shrink-0 rounded-2xl flex flex-col items-center justify-center transition-all group ${selectedCategoryId === cat.id ? 'bg-primary text-black shadow-glow scale-105' : 'bg-white/5 text-slate-500 hover:text-slate-300'}`}>
+             <button 
+               key={cat.id} 
+               onClick={() => setSelectedCategoryId(cat.id)} 
+               className={`w-16 h-16 shrink-0 rounded-2xl flex flex-col items-center justify-center transition-all group ${selectedCategoryId === cat.id ? 'bg-primary text-black shadow-glow scale-105' : 'bg-white/5 text-slate-500 hover:text-slate-300'}`}
+               title={`Categoria: ${cat.name}`}
+               aria-label={`Categoria: ${cat.name}`}
+             >
                 <Tag size={20} />
                 <span className="text-[7px] font-black uppercase mt-1 opacity-60 truncate w-full text-center px-1">{cat.name}</span>
              </button>

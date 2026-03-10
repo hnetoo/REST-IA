@@ -7,19 +7,20 @@ import {
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
+import { UserRole } from '../../types';
 
 // Importar componentes existentes
 import Employees from './Employees';
 import SettingsComponent from './Settings';
 
-// Definir interface User
-interface User {
+// Interface User local para este componente
+interface SystemHubUser {
   id: string;
   name: string;
-  role: string;
+  role: UserRole;
   pin: string;
   permissions: string[];
-  status: string;
+  status: 'ATIVO' | 'INATIVO';
 }
 
 const SystemHub = () => {
@@ -209,14 +210,14 @@ const SystemHub = () => {
   };
 
   const AccessControl = () => {
-    const { users, addUser, updateUser, removeUser, addNotification } = useStore();
+    const { users, addUser, updateUser, removeUser } = useStore();
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [editingUserId, setEditingUserId] = useState<string | null>(null);
-    const [userForm, setUserForm] = useState<Partial<User>>({ 
+    const [userForm, setUserForm] = useState<Partial<SystemHubUser>>({ 
       name: '', role: 'GARCOM', pin: '', permissions: [], status: 'ATIVO' 
     });
 
-    const handleOpenUserModal = (user?: User) => {
+    const handleOpenUserModal = (user?: SystemHubUser) => {
       if (user) {
         setEditingUserId(user.id);
         setUserForm(user);
@@ -230,12 +231,13 @@ const SystemHub = () => {
     const handleSaveUser = (e: React.FormEvent) => {
       e.preventDefault();
       if (editingUserId) {
-        updateUser({ ...userForm, id: editingUserId } as User);
+        updateUser({ ...userForm, id: editingUserId, role: userForm.role as UserRole } as SystemHubUser);
       } else {
         addUser({
           ...userForm,
           id: `user-${Date.now()}`,
-        } as User);
+          role: userForm.role as UserRole,
+        } as SystemHubUser);
       }
       setIsUserModalOpen(false);
     };
@@ -330,7 +332,7 @@ const SystemHub = () => {
                   <select 
                     className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-[#06b6d4] appearance-none cursor-pointer"
                     value={userForm.role} 
-                    onChange={e => setUserForm({...userForm, role: e.target.value})}
+                    onChange={e => setUserForm({...userForm, role: e.target.value as UserRole})}
                     aria-label="Papel do utilizador"
                   >
                     <option value="GARCOM">Garçom</option>
@@ -1756,7 +1758,7 @@ const SystemHub = () => {
       id: 'human-resources',
       title: 'Capital Humano (RH)',
       description: 'Gestão completa de recursos humanos',
-      icon: <Users className="w-8 h-8" />,
+      icon: <SystemHubUsers className="w-8 h-8" />,
       color: 'from-blue-500 to-blue-600',
       component: <Employees />
     },
