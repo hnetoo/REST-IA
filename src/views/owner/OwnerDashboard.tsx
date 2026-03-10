@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabaseService';
 import { Smartphone, DollarSign, Users, TrendingUp, Wallet, Receipt, FileText, Calculator, RefreshCw, LogOut, Settings } from 'lucide-react';
 
 interface Metrics {
@@ -494,10 +494,10 @@ const OwnerDashboard = () => {
         </div>
 
         {/* Grid de Cards - Layout Horizontal Compacto */}
-        <div className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-1 gap-2 w-full">
           {/* Card de Faturação Consolidada - Compacto */}
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-4 rounded-xl shadow-lg border-l-4 border-indigo-400 backdrop-blur-md">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-4 rounded-xl shadow-lg border-l-4 border-indigo-400 backdrop-blur-md w-full">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-indigo-200" />
                 <div>
@@ -506,7 +506,7 @@ const OwnerDashboard = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="text-lg font-bold text-white">
+                <div className="text-lg font-bold text-white text-right">
                   {formatAOA(metrics.totalVendas + metrics.historicoRevenue)}
                 </div>
                 <button className="p-1 bg-white/20 rounded hover:bg-white/30 transition-all">
@@ -517,78 +517,78 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Vendas Hoje - Verde */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-green-500 hover:bg-white/10 transition-all">
-            <div className="flex items-center justify-between">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-green-500 hover:bg-white/10 transition-all w-full">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-green-400" />
                 <span className="text-sm text-gray-300">Vendas Hoje</span>
               </div>
-              <div className="text-lg font-bold text-white">
+              <div className="text-lg font-bold text-white text-right">
                 {formatAOA(metrics.vendasHoje)}
               </div>
             </div>
           </div>
 
           {/* Mesas Ativas - Azul */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-blue-500 hover:bg-white/10 transition-all">
-            <div className="flex items-center justify-between">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-blue-500 hover:bg-white/10 transition-all w-full">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-blue-400" />
                 <span className="text-sm text-gray-300">Mesas Ativas</span>
               </div>
-              <div className="text-lg font-bold text-white">
+              <div className="text-lg font-bold text-white text-right">
                 {metrics.mesasAtivas}
               </div>
             </div>
           </div>
 
           {/* Receita Total - Roxa */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-purple-500 hover:bg-white/10 transition-all">
-            <div className="flex items-center justify-between">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-purple-500 hover:bg-white/10 transition-all w-full">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <Wallet className="w-4 h-4 text-purple-400" />
                 <span className="text-sm text-gray-300">Receita Total</span>
               </div>
-              <div className="text-lg font-bold text-white">
+              <div className="text-lg font-bold text-white text-right">
                 {formatAOA(metrics.receitaTotal)}
               </div>
             </div>
           </div>
 
           {/* Despesas - Laranja */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-orange-500 hover:bg-white/10 transition-all">
-            <div className="flex items-center justify-between">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-orange-500 hover:bg-white/10 transition-all w-full">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <Receipt className="w-4 h-4 text-orange-400" />
                 <span className="text-sm text-gray-300">Despesas</span>
               </div>
-              <div className="text-lg font-bold text-white">
+              <div className="text-lg font-bold text-white text-right">
                 {formatAOA(metrics.despesas)}
               </div>
             </div>
           </div>
 
           {/* Folha Salarial - Rosa */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-pink-500 hover:bg-white/10 transition-all">
-            <div className="flex items-center justify-between">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-pink-500 hover:bg-white/10 transition-all w-full">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-pink-400" />
                 <span className="text-sm text-gray-300">Folha Salarial</span>
               </div>
-              <div className="text-lg font-bold text-white">
+              <div className="text-lg font-bold text-white text-right">
                 {formatAOA(metrics.folhaSalarial)}
               </div>
             </div>
           </div>
 
           {/* Impostos - Vermelho */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-red-500 hover:bg-white/10 transition-all">
-            <div className="flex items-center justify-between">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-red-500 hover:bg-white/10 transition-all w-full">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <Calculator className="w-4 h-4 text-red-400" />
                 <span className="text-sm text-gray-300">Impostos (6.5%)</span>
               </div>
-              <div className="text-lg font-bold text-white">
+              <div className="text-lg font-bold text-white text-right">
                 {formatAOA(metrics.impostos)}
               </div>
             </div>
