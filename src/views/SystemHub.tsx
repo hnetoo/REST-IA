@@ -496,14 +496,179 @@ const SystemHub = () => {
     );
   };
 
-  const TechnicalKernel = () => (
-    <div className="glass-panel rounded-2xl p-8">
-      <h2 className="text-2xl font-bold text-white mb-6">Kernel Técnico</h2>
-      <div className="text-gray-400">
-        <p>Logs e configurações do sistema</p>
+  const TechnicalKernel = () => {
+    const { settings, updateSettings, addNotification } = useStore();
+    const [localSettings, setLocalSettings] = useState(settings);
+    const [isSaving, setIsSaving] = useState(false);
+    const [logs, setLogs] = useState([
+      { id: 1, timestamp: new Date().toISOString(), level: 'INFO', message: 'Sistema inicializado com sucesso' },
+      { id: 2, timestamp: new Date(Date.now() - 3600000).toISOString(), level: 'WARNING', message: 'Conexão com banco de dados instável' },
+      { id: 3, timestamp: new Date(Date.now() - 7200000).toISOString(), level: 'ERROR', message: 'Falha ao processar pagamento #1234' }
+    ]);
+
+    const handleSaveSettings = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSaving(true);
+      try {
+        await updateSettings(localSettings);
+        setTimeout(() => setIsSaving(false), 1000);
+      } catch (error) {
+        setIsSaving(false);
+      }
+    };
+
+    const handleClearLogs = () => {
+      setLogs([]);
+      addNotification('success', 'Logs do sistema limpos com sucesso!');
+    };
+
+    const handleExportLogs = () => {
+      const logText = logs.map(log => `[${log.timestamp}] ${log.level}: ${log.message}`).join('\n');
+      const blob = new Blob([logText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `system-logs-${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      addNotification('success', 'Logs exportados com sucesso!');
+    };
+
+    const getLevelColor = (level: string) => {
+      switch (level) {
+        case 'ERROR': return 'text-red-500';
+        case 'WARNING': return 'text-yellow-500';
+        case 'INFO': return 'text-green-500';
+        default: return 'text-gray-500';
+      }
+    };
+
+    return (
+      <div className="space-y-12">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white shadow-lg">
+              <Terminal size={32} />
+            </div>
+            <div>
+              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Kernel Técnico</h3>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">REST IA OS System Core</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Logs do Sistema */}
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
+              Logs do Sistema
+            </h4>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total de Logs</span>
+                <span className="text-lg font-mono font-bold text-white">{logs.length}</span>
+              </div>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {logs.map(log => (
+                  <div key={log.id} className="p-3 bg-white/5 border border-white/10 rounded-lg">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[8px] font-black uppercase ${getLevelColor(log.level)}`}>
+                            {log.level}
+                          </span>
+                          <span className="text-[8px] text-slate-400">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-white">{log.message}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4 border-t border-white/5">
+                <button 
+                  onClick={handleClearLogs}
+                  className="flex-1 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-[9px] font-black uppercase hover:bg-red-500/20 transition-all"
+                >
+                  Limpar Logs
+                </button>
+                <button 
+                  onClick={handleExportLogs}
+                  className="flex-1 py-3 bg-white/5 border border-white/10 text-slate-300 rounded-xl text-[9px] font-black uppercase hover:bg-white/10 transition-all"
+                >
+                  Exportar Logs
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Configurações do Sistema */}
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
+              Configurações do Sistema
+            </h4>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Modo de Depuração</label>
+                <select 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
+                  value={localSettings.debugMode || 'OFF'}
+                  onChange={e => setLocalSettings({...localSettings, debugMode: e.target.value})}
+                  aria-label="Modo de depuração"
+                >
+                  <option value="OFF">Desativado</option>
+                  <option value="BASIC">Básico</option>
+                  <option value="VERBOSE">Detalhado</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Nível de Log</label>
+                <select 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
+                  value={localSettings.logLevel || 'INFO'}
+                  onChange={e => setLocalSettings({...localSettings, logLevel: e.target.value})}
+                  aria-label="Nível de log"
+                >
+                  <option value="ERROR">Apenas Erros</option>
+                  <option value="WARNING">Erros e Avisos</option>
+                  <option value="INFO">Informações Completas</option>
+                  <option value="DEBUG">Modo Debug</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Cache de Dados</label>
+                <select 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
+                  value={localSettings.cacheMode || 'NORMAL'}
+                  onChange={e => setLocalSettings({...localSettings, cacheMode: e.target.value})}
+                  aria-label="Modo de cache"
+                >
+                  <option value="DISABLED">Desativado</option>
+                  <option value="NORMAL">Normal</option>
+                  <option value="AGGRESSIVE">Agressivo</option>
+                </select>
+              </div>
+              <div className="p-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl flex gap-3">
+                <div className="w-5 h-5 bg-[#06b6d4] rounded-full"></div>
+                <p className="text-[9px] text-slate-400 italic leading-relaxed">Configurações avançadas para otimização de performance. Altere com cautela.</p>
+              </div>
+              <button 
+                onClick={handleSaveSettings}
+                disabled={isSaving}
+                className="w-full py-4 bg-white/5 border border-white/10 text-slate-300 rounded-xl font-black text-[9px] uppercase hover:bg-white/10 transition-all"
+              >
+                {isSaving ? 'Guardando...' : 'Salvar Configurações'}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const systemCards = [
     {
