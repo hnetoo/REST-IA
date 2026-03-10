@@ -1,8 +1,10 @@
+import { supabase } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 
 const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const envAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+// Função de override para debug (mantida para compatibilidade)
 const getRuntimeOverride = () => {
   let url = '';
   let key = '';
@@ -31,12 +33,13 @@ const getRuntimeOverride = () => {
   return { url, key };
 };
 
-export const getClient = () => {
-  const { url, key } = getRuntimeOverride();
-  return createClient(url || envUrl, key || envAnonKey);
-};
+// Exportar o cliente centralizado (sem criar nova instância)
+export { supabase };
 
-export const supabase = getClient();
+// Manter getClient para compatibilidade, mas retornar o cliente centralizado
+export const getClient = () => {
+  return supabase;
+};
 
 const ensureSupabaseConfigured = () => {
   const { url, key } = getRuntimeOverride();

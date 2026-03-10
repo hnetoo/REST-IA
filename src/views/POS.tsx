@@ -177,8 +177,24 @@ const POS = () => {
       try {
         console.log(`[POS] Disparando impressão garantida do pedido ${orderToPrintId}`);
         
-        // Usar dados salvos localmente, não depende do banco
-        handlePrintWithCheck(orderData, customerData);
+        // Buscar pedido atualizado do estado para ter invoiceNumber
+        const state = useStore.getState();
+        const updatedOrder = state.activeOrders.find(o => o.id === orderToPrintId);
+        
+        // Usar pedido atualizado se disponível, senão usar dados locais
+        const orderToPrint = updatedOrder || orderData;
+        const customerToPrint = updatedOrder 
+          ? state.customers.find(c => c.id === updatedOrder.customerId)
+          : customerData;
+        
+        console.log(`[POS] Pedido para impressão:`, {
+          id: orderToPrint.id,
+          invoiceNumber: orderToPrint.invoiceNumber,
+          total: orderToPrint.total,
+          items: orderToPrint.items?.length || 0
+        });
+        
+        handlePrintWithCheck(orderToPrint, customerToPrint);
         
         addNotification('success', 'Impressão disparada com sucesso!');
       } catch (printError) {
