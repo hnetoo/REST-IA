@@ -24,12 +24,8 @@ const Sidebar = () => {
     { to: "/profit-center", icon: <Target size={20} />, label: "Centro de Lucro", permission: 'FINANCE_VIEW' },
     { to: "/tables-layout", icon: <MapIcon size={20} />, label: "Mapa de Sala", permission: 'POS_SALES' },
     { to: "/inventory", icon: <Package size={20} />, label: "Menu & Stock", permission: 'STOCK_MANAGE' },
-    { to: "/employees", icon: <UsersIcon size={20} />, label: "Equipa & RH", permission: 'STAFF_MANAGE' },
     { to: "/finance", icon: <Banknote size={20} />, label: "Financeiro Legal", permission: 'FINANCE_VIEW' },
     { to: "/settings", icon: <Settings size={20} />, label: "Sistema", permission: 'SYSTEM_CONFIG' },
-    { to: "/db-hub", icon: <Database size={20} />, label: "DB HUB", permission: 'SYSTEM_CONFIG' },
-    { to: "/owner", icon: <TrendingUp size={20} />, label: "Owner Hub", permission: 'OWNER_ACCESS' },
-    { to: "/console", icon: <Terminal size={20} />, label: "Consola Dev", permission: 'OWNER_ACCESS' },
   ];
 
   const filteredItems = navItems.filter(item => {
