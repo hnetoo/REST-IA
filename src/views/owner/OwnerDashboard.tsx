@@ -374,7 +374,7 @@ const OwnerDashboard = () => {
         </button>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 pb-24">
+      <main className="w-full px-4 pb-24">
         {/* Filtros de Período - Compactos */}
         <div className="flex gap-2 mb-4 overflow-x-auto">
           {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
