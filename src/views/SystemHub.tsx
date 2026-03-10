@@ -239,14 +239,142 @@ const SystemHub = () => {
     );
   };
 
-  const CloudEcosystem = () => (
-    <div className="glass-panel rounded-2xl p-8">
-      <h2 className="text-2xl font-bold text-white mb-6">Ecosistema Cloud</h2>
-      <div className="text-gray-400">
-        <p>Configurações do Supabase e APIs</p>
+  const CloudEcosystem = () => {
+    const { settings, updateSettings, addNotification } = useStore();
+    const [localSettings, setLocalSettings] = useState(settings);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSyncing, setIsSyncing] = useState<string | null>(null);
+
+    const handleSaveSettings = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSaving(true);
+      try {
+        await updateSettings(localSettings);
+        setTimeout(() => setIsSaving(false), 1000);
+      } catch (error) {
+        setIsSaving(false);
+      }
+    };
+
+    const handleManualSync = (type: string) => {
+      setIsSyncing(type);
+      // Simulate sync process
+      setTimeout(() => {
+        setIsSyncing(null);
+        addNotification('success', `Sincronização ${type === 'ALL' ? 'global' : 'seletiva'} concluída com sucesso!`);
+      }, 2000);
+    };
+
+    return (
+      <div className="space-y-12">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
+              <Cloud size={32} />
+            </div>
+            <div>
+              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Ecosistema Cloud</h3>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">REST IA OS Cloud Services</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 glass-panel rounded-[2.5rem] border border-white/5">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estado da Infraestrutura Cloud</span>
+            </div>
+            <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Hub de Dados Supabase</h3>
+            <p className="text-xs text-slate-400 mt-2 max-w-lg leading-relaxed">Este módulo sincroniza os seus dados locais com a nuvem de forma unidirecional. A nuvem serve apenas para alimentar o seu <b>Menu Digital</b> e <b>Dashboard Mobile (Netlify)</b>.</p>
+          </div>
+          <div className="flex gap-3 z-10">
+            <button 
+              onClick={() => handleManualSync('ALL')} 
+              disabled={!!isSyncing} 
+              className="px-8 py-4 bg-[#06b6d4] text-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center gap-2 hover:scale-105 transition-all"
+            >
+              {isSyncing === 'ALL' ? (
+                <div className="animate-spin">
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-black rounded-full"></div>
+                  <span>Sincronização Global</span>
+                </div>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Configuração de Acesso */}
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
+              Credenciais da Instância
+            </h4>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Project URL</label>
+                <input 
+                  type="text" 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                  value={localSettings.supabaseUrl} 
+                  onChange={e => setLocalSettings({...localSettings, supabaseUrl: e.target.value})} 
+                  placeholder="https://xxxx.supabase.co"
+                  aria-label="URL do projeto Supabase"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Service Role Key (Push Privileges)</label>
+                <input 
+                  type="password" 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                  value={localSettings.supabaseKey} 
+                  onChange={e => setLocalSettings({...localSettings, supabaseKey: e.target.value})} 
+                  placeholder="•••••••••••••"
+                  aria-label="Chave de serviço Supabase"
+                />
+              </div>
+              <button 
+                onClick={handleSaveSettings} 
+                disabled={isSaving}
+                className="w-full py-4 bg-white/5 border border-white/10 text-slate-300 rounded-xl font-black text-[9px] uppercase hover:bg-white/10 transition-all"
+              >
+                {isSaving ? 'Guardando...' : 'Guardar Credenciais'}
+              </button>
+            </div>
+          </div>
+
+          {/* Endpoints Externos */}
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
+              Destinos de Visualização
+            </h4>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">URL do Menu Digital (Netlify/Vercel)</label>
+                <input 
+                  type="text" 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                  value={localSettings.customDigitalMenuUrl} 
+                  onChange={e => setLocalSettings({...localSettings, customDigitalMenuUrl: e.target.value})} 
+                  placeholder="https://meu-restaurante.netlify.app"
+                  aria-label="URL do menu digital"
+                />
+              </div>
+              <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl flex gap-3">
+                <div className="w-5 h-5 bg-blue-500 rounded-full"></div>
+                <p className="text-[9px] text-slate-400 italic leading-relaxed">Este URL será utilizado para gerar o QR Code oficial da sua Tasca, direcionando os clientes para o seu menu online sincronizado.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const AGTCompliance = () => {
     const { settings, updateSettings, activeOrders, customers, menu } = useStore();
