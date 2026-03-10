@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { ChefHat, Delete, User, Shield, Wallet, Utensils, ArrowLeft, ChevronRight, Check } from 'lucide-react';
 import { User as UserType } from '../../types';
@@ -7,6 +8,7 @@ import appLogo from '/logo.png';
 
 const Login = () => {
   const { login, users, settings } = useStore();
+  const navigate = useNavigate();
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [pin, setPin] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -27,6 +29,12 @@ const Login = () => {
     if (!selectedUser || pin.length < 4) return;
     
     try {
+      // EXCEÇÃO: Se for usuário OWNER, redirecionar para /owner/login
+      if (selectedUser.role === 'OWNER') {
+        navigate('/owner/login');
+        return;
+      }
+      
       // Fixed: Removed rememberMe as login only accepts (pin, userId)
       const success = login(pin, selectedUser.id);
       if (!success) {
