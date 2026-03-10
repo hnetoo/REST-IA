@@ -163,23 +163,37 @@ const POS = () => {
     
     // Aumentar o timeout e garantir que os dados estejam estáveis
     setTimeout(() => {
-        const state = useStore.getState();
-        const order = state.activeOrders.find(o => o.id === orderToPrintId);
-        
-        console.log(`[POS] Tentando imprimir pedido após checkout`, { 
-            orderId: orderToPrintId, 
-            encontrado: !!order,
-            status: order?.status 
-        });
+        try {
+            const state = useStore.getState();
+            const order = state.activeOrders.find(o => o.id === orderToPrintId);
+            
+            console.log(`[POS] Tentando imprimir pedido após checkout`, { 
+                orderId: orderToPrintId, 
+                encontrado: !!order,
+                status: order?.status 
+            });
 
-        if (order) {
-            handlePrintWithCheck(
-                order, 
-                state.customers.find(c => c.id === order.customerId)
-            );
-        } else {
-            console.error(`[POS] Pedido ${orderToPrintId} não encontrado no estado para impressão.`);
-            addNotification('error', 'Erro ao localizar pedido para impressão.');
+            if (order) {
+                handlePrintWithCheck(
+                    order, 
+                    state.customers.find(c => c.id === order.customerId)
+                );
+            } else {
+                console.error(`[POS] Pedido ${orderToPrintId} não encontrado no estado para impressão.`);
+                addNotification('error', 'Erro ao localizar pedido para impressão.');
+            }
+        } catch (printError) {
+            console.error('[POS] Erro crítico na impressão:', printError);
+            addNotification('error', 'Falha na impressão. Tente novamente.');
+            
+            // Tentar impressão fallback com window.print
+            try {
+                console.log('[POS] Tentando impressão fallback com window.print()');
+                window.print();
+            } catch (fallbackError) {
+                console.error('[POS] Erro na impressão fallback:', fallbackError);
+                addNotification('error', 'Sistema de impressão indisponível.');
+            }
         }
     }, 500);
   };
