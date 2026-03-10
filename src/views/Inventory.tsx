@@ -1,59 +1,48 @@
-import React, { useState, useRef, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { 
-  Package, Plus, Trash2, Box, Pencil, X, Utensils, 
-  Tag, Save, Upload, Image as ImageIcon, Link as LinkIcon,
-  Smartphone, QrCode, Sparkles, Eye, EyeOff, Star,
-  ExternalLink, Printer, Copy, Check, Share2, Info, Edit,
-  Cloud, RefreshCw
+  Utensils, Tag, Box, Plus, QrCode, Eye, 
+  Settings, Smartphone, Globe, Trash2
 } from 'lucide-react';
-import { Dish, MenuCategory } from '../../types';
-import LazyImage from '../components/LazyImage';
 
 const Inventory = () => {
   const { 
-    menu, categories, settings, updateSettings, addNotification,
-    syncProductsToCloud, syncCategoriesToCloud,
-    setMenu, setCategories, addDish, updateDish, removeDish, 
-    addCategory, updateCategory, removeCategory, stock, updateStockQuantity,
-    duplicateDish, duplicateCategory
+    menu, categories, settings, addNotification
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'menu' | 'categories' | 'stock' | 'digital'>('menu');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCatModalOpen, setIsCatModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [duplicateConfirm, setDuplicateConfirm] = useState<{ id: string, name: string, type: 'dish' | 'category' } | null>(null);
-  const [hasCopied, setHasCopied] = useState(false);
-  const [dishForm, setDishForm] = useState<Partial<Dish>>({
-    name: '', price: 0, costPrice: 0, categoryId: '', description: '', image: '', taxCode: 'NOR'
+  const [activeTab, setActiveTab] = useState<'menu' | 'categories' | 'stock' | 'qr'>('menu');
+  const [qrSettings, setQrSettings] = useState({
+    showPrices: true,
+    allowOrders: false,
+    menuVisible: true
   });
 
-  const [catForm, setCatForm] = useState<Partial<MenuCategory>>({
-    name: '', icon: 'Grid3X3'
-  });
+  const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
+    style: 'currency', 
+    currency: 'AOA', 
+    maximumFractionDigits: 0 
+  }).format(val);
 
-  // Estados para edição de URL
-  const [isEditingUrl, setIsEditingUrl] = useState(false);
-  const [tempUrl, setTempUrl] = useState(settings.customDigitalMenuUrl || '');
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(val);
-
-  // URL do Menu Digital - Prioriza o URL customizado ou gera um fallback
+  // URL do Menu Digital
   const digitalMenuUrl = useMemo(() => {
-    if (settings.customDigitalMenuUrl) return settings.customDigitalMenuUrl;
-    return `https://tasca-do-vereda.vercel.app/menu-digital?nif=${settings.nif}`;
-  }, [settings.customDigitalMenuUrl, settings.nif]);
+    return `${window.location.origin}/menu-digital?nif=${settings.nif}`;
+  }, [settings.nif]);
 
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(digitalMenuUrl)}&margin=10&bgcolor=ffffff&color=000000`;
+  // QR Code URL
+  const qrCodeUrl = useMemo(() => {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(digitalMenuUrl)}&margin=20&bgcolor=ffffff&color=000000`;
+  }, [digitalMenuUrl]);
+
+  const tabs = [
+    { id: 'menu', label: 'Produtos', icon: Utensils },
+    { id: 'categories', label: 'Categorias', icon: Tag },
+    { id: 'stock', label: 'Stock & Inventário', icon: Box },
+    { id: 'qr', label: 'QR Menu / Digital', icon: QrCode }
+  ];
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(digitalMenuUrl);
-    setHasCopied(true);
-    addNotification('success', 'Link do Menu copiado!');
-    setTimeout(() => setHasCopied(false), 2000);
+    addNotification('success', 'URL do menu copiada!');
   };
 
   const handlePrintQR = () => {
@@ -65,19 +54,75 @@ const Inventory = () => {
         <head>
           <title>QR Menu - ${settings.restaurantName}</title>
           <style>
-            body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
-            .card { border: 2px solid #000; padding: 40px; border-radius: 20px; max-width: 400px; }
-            img { width: 300px; height: 300px; margin: 20px 0; }
-            h1 { margin: 0; text-transform: uppercase; font-size: 24px; }
-            p { color: #666; margin-top: 10px; font-weight: bold; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+              display: flex; 
+              flex-direction: column; 
+              align-items: center; 
+              justify-content: center; 
+              height: 100vh; 
+              margin: 0; 
+              text-align: center;
+              background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            }
+            .card { 
+              background: white;
+              border-radius: 24px; 
+              padding: 48px; 
+              box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+              max-width: 420px;
+              text-align: center;
+            }
+            .logo {
+              width: 80px;
+              height: 80px;
+              margin: 0 auto 24px;
+              border-radius: 16px;
+              background: #f3f4f6;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            h1 { 
+              margin: 0 0 8px 0; 
+              text-transform: uppercase; 
+              font-size: 28px; 
+              font-weight: 800;
+              color: #1f2937;
+            }
+            .subtitle {
+              margin: 0 0 32px 0;
+              color: #6b7280;
+              font-size: 14px;
+              font-weight: 600;
+              letter-spacing: 0.05em;
+            }
+            img { 
+              width: 200px; 
+              height: 200px; 
+              margin: 24px 0;
+              border-radius: 16px;
+            }
+            .footer {
+              margin-top: 32px;
+              color: #374151;
+              font-size: 12px;
+              font-weight: 500;
+            }
           </style>
         </head>
         <body>
           <div class="card">
+            <div class="logo">
+              ${settings.appLogoUrl ? 
+                `<img src="${settings.appLogoUrl}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;" />` :
+                `<div style="font-size: 32px; color: #06b6d4;">🍽️</div>`
+              }
+            </div>
             <h1>${settings.restaurantName}</h1>
-            <p>DIGITAL MENU</p>
-            <img src="${qrImageUrl}" />
-            <p>Aponte a câmara para pedir</p>
+            <p class="subtitle">MENU DIGITAL</p>
+            <img src="${qrCodeUrl}" alt="QR Code" />
+            <p class="footer">Aponte a câmara para aceder ao menu</p>
           </div>
           <script>window.onload = () => { window.print(); window.close(); }</script>
         </body>
@@ -86,129 +131,12 @@ const Inventory = () => {
     printWindow.document.close();
   };
 
-  // Funções para edição de URL
-  const handleEditUrl = () => {
-    setTempUrl(settings.customDigitalMenuUrl || '');
-    setIsEditingUrl(true);
+  const toggleQrSetting = (key: keyof typeof qrSettings) => {
+    setQrSettings(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
   };
-
-  const handleSaveUrl = () => {
-    if (!tempUrl.trim()) {
-      alert('Por favor, insira uma URL válida.');
-      return;
-    }
-    
-    updateSettings({ customDigitalMenuUrl: tempUrl.trim() });
-    setIsEditingUrl(false);
-  };
-
-  const handleCancelEditUrl = () => {
-    setTempUrl(settings.customDigitalMenuUrl || '');
-    setIsEditingUrl(false);
-  };
-
-  const handleTestUrl = () => {
-    if (tempUrl) {
-      window.open(tempUrl, '_blank');
-    }
-  };
-
-  const toggleCategoryVisibility = (categoryId: string) => {
-    setCategories(categories.map(cat => 
-      cat.id === categoryId ? { ...cat, isVisibleDigital: !cat.isVisibleDigital } : cat
-    ));
-  };
-
-  const toggleDishVisibility = (dishId: string) => {
-    setMenu(menu.map(dish => 
-      dish.id === dishId ? { ...dish, isVisibleDigital: !dish.isVisibleDigital } : dish
-    ));
-  };
-
-  const toggleDishFeatured = (dishId: string) => {
-    setMenu(menu.map(dish => 
-      dish.id === dishId ? { ...dish, isFeatured: !dish.isFeatured } : dish
-    ));
-  };
-
-  const handleOpenDishModal = (dish?: Dish) => {
-    if (dish) {
-      setEditingId(dish.id);
-      setDishForm(dish);
-    } else {
-      setEditingId(null);
-      setDishForm({ 
-        name: '', price: 0, costPrice: 0, categoryId: categories[0]?.id || '', 
-        description: '', image: '', taxCode: 'NOR' 
-      });
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setDishForm(prev => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmitDish = (e: React.FormEvent) => {
-    e.preventDefault();
-    const defaultImage = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80';
-    if (editingId) {
-      updateDish({ ...dishForm, id: editingId, image: dishForm.image || defaultImage } as Dish);
-    } else {
-      addDish({
-        id: `dish-${Date.now()}`,
-        name: dishForm.name!,
-        price: Number(dishForm.price),
-        costPrice: Number(dishForm.costPrice || 0),
-        categoryId: dishForm.categoryId!,
-        description: dishForm.description || '',
-        image: dishForm.image || defaultImage,
-        taxCode: 'NOR',
-        isVisibleDigital: true
-      });
-    }
-    setIsModalOpen(false);
-  };
-
-  const handleSubmitCat = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId) {
-      updateCategory({ ...catForm, id: editingId } as MenuCategory);
-    } else {
-      addCategory({
-        id: `cat-${Date.now()}`,
-        name: catForm.name!,
-        icon: catForm.icon || 'Grid3X3',
-        isVisibleDigital: true
-      });
-    }
-    setIsCatModalOpen(false);
-  };
-
-  const handleOpenCatModal = (cat?: MenuCategory) => {
-    if (cat) {
-      setEditingId(cat.id);
-      setCatForm(cat);
-    } else {
-      setEditingId(null);
-      setCatForm({ name: '', icon: 'Grid3X3' });
-    }
-    setIsCatModalOpen(true);
-  };
-
-  const tabs = [
-    { id: 'menu', label: 'Produtos', icon: Utensils },
-    { id: 'categories', label: 'Categorias', icon: Tag },
-    { id: 'stock', label: 'Stock & Inventário', icon: Box },
-    { id: 'digital', label: 'QR Menu & Marketing', icon: QrCode }
-  ];
 
   return (
     <div className="p-8 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar">
@@ -219,22 +147,22 @@ const Inventory = () => {
         </div>
         
         <div className="flex gap-3">
-          {(activeTab === 'menu' || activeTab === 'categories') && (
+          {activeTab === 'menu' && (
             <button 
-              onClick={() => activeTab === 'menu' ? syncProductsToCloud() : syncCategoriesToCloud()}
-              className="bg-blue-500 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
-            >
-              <Cloud size={18} />
-              {activeTab === 'menu' ? 'Sincronizar Produtos' : 'Sincronizar Categorias'}
-            </button>
-          )}
-          {activeTab !== 'digital' && (
-            <button 
-              onClick={() => activeTab === 'menu' ? handleOpenDishModal() : activeTab === 'categories' ? handleOpenCatModal() : null}
+              onClick={() => {/* TODO: Implementar novo produto */}}
               className="bg-primary text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
             >
               <Plus size={20} />
-              {activeTab === 'menu' ? 'Novo Prato' : activeTab === 'categories' ? 'Nova Categoria' : 'Ajustar Ficha'}
+              Novo Produto
+            </button>
+          )}
+          {activeTab === 'categories' && (
+            <button 
+              onClick={() => {/* TODO: Implementar nova categoria */}}
+              className="bg-primary text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
+            >
+              <Plus size={20} />
+              Nova Categoria
             </button>
           )}
         </div>
@@ -264,11 +192,10 @@ const Inventory = () => {
               return (
                 <div key={dish.id} className="glass-panel rounded-[2rem] border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
                   <div className="aspect-video w-full overflow-hidden relative">
-                    <LazyImage 
+                    <img 
                       src={dish.image} 
                       alt={dish.name} 
-                      containerClassName="w-full h-full"
-                      className="group-hover:scale-110 transition-transform duration-700" 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                     />
                     <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-white/10 z-20">
                       {cat?.name || 'Sem Categoria'}
@@ -281,19 +208,15 @@ const Inventory = () => {
                     </div>
                     <p className="text-slate-400 text-[10px] line-clamp-2 italic mb-4 min-h-[30px]">{dish.description}</p>
                     <div className="flex gap-2">
-                      <button onClick={() => handleOpenDishModal(dish)} className="flex-1 py-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-all">Editar</button>
                       <button 
-                        onClick={() => setDuplicateConfirm({ id: dish.id, name: dish.name, type: 'dish' })} 
-                        className="w-10 py-2 rounded-lg border border-primary/20 text-primary/60 hover:bg-primary hover:text-black transition-all"
-                        title="Duplicar Produto"
+                        className="flex-1 py-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-all"
+                        title="Editar produto"
                       >
-                        <Copy size={14} className="mx-auto" />
+                        Editar
                       </button>
                       <button 
-                        onClick={() => removeDish(dish.id)}
                         className="w-10 py-2 rounded-lg border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all"
-                        title="Remover Produto"
-                        aria-label="Remover Produto"
+                        title="Remover produto"
                       >
                         <Trash2 size={14} className="mx-auto" />
                       </button>
@@ -315,33 +238,21 @@ const Inventory = () => {
                   </div>
                   <div>
                     <h3 className="font-bold text-white text-lg tracking-tight leading-none">{cat.name}</h3>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">
-                        {menu.filter(d => d.categoryId === cat.id).length} Produtos
+                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">
+                      {menu.filter(d => d.categoryId === cat.id).length} Produtos
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button 
-                    onClick={() => handleOpenCatModal(cat)} 
                     className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
-                    title="Editar Categoria"
-                    aria-label="Editar Categoria"
+                    title="Editar categoria"
                   >
-                    <Pencil size={14}/>
+                    <Tag size={14}/>
                   </button>
                   <button 
-                    onClick={() => setDuplicateConfirm({ id: cat.id, name: cat.name, type: 'category' })} 
-                    className="p-2 rounded-lg text-primary/60 hover:text-primary hover:bg-primary/10"
-                    title="Duplicar Categoria"
-                    aria-label="Duplicar Categoria"
-                  >
-                    <Copy size={14} />
-                  </button>
-                  <button 
-                    onClick={() => removeCategory(cat.id)} 
                     className="p-2 rounded-lg text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
-                    title="Remover Categoria"
-                    aria-label="Remover Categoria"
+                    title="Remover categoria"
                   >
                     <Trash2 size={14}/>
                   </button>
@@ -353,226 +264,190 @@ const Inventory = () => {
 
         {activeTab === 'stock' && (
           <div className="glass-panel rounded-[2rem] border border-white/5 overflow-hidden">
-              <table className="w-full text-left">
-                <thead className="bg-white/5 border-b border-white/5">
-                  <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    <th className="px-8 py-6">Item de Inventário</th>
-                    <th className="px-8 py-6">Quantidade Actual</th>
-                    <th className="px-8 py-6">Nível Crítico</th>
-                    <th className="px-8 py-6 text-right">Ajuste</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {stock.map(item => (
-                    <tr key={item.id} className="hover:bg-white/5 transition-colors">
-                      <td className="px-8 py-6 font-bold text-white">{item.name}</td>
-                      <td className="px-8 py-6 font-mono text-xs">
-                        <span className={item.quantity <= item.minThreshold ? 'text-red-500' : 'text-green-500'}>
-                          {item.quantity} {item.unit}
-                        </span>
-                      </td>
-                      <td className="px-8 py-6 text-slate-500 font-mono text-xs">{item.minThreshold} {item.unit}</td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="inline-flex gap-2">
-                            <button onClick={() => updateStockQuantity(item.id, -1)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center">-</button>
-                            <button onClick={() => updateStockQuantity(item.id, 1)} className="w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-black flex items-center justify-center">+</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <table className="w-full text-left">
+              <thead className="bg-white/5 border-b border-white/5">
+                <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  <th className="px-8 py-6">Item de Inventário</th>
+                  <th className="px-8 py-6">Quantidade Actual</th>
+                  <th className="px-8 py-6">Nível Crítico</th>
+                  <th className="px-8 py-6 text-right">Ajuste</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                <tr className="hover:bg-white/5 transition-colors">
+                  <td className="px-8 py-6 font-bold text-white">Exemplo Produto</td>
+                  <td className="px-8 py-6 font-mono text-xs">
+                    <span className="text-green-500">50 unidades</span>
+                  </td>
+                  <td className="px-8 py-6 text-slate-500 font-mono text-xs">10 unidades</td>
+                  <td className="px-8 py-6 text-right">
+                    <div className="inline-flex gap-2">
+                      <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center">-</button>
+                      <button className="w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-black flex items-center justify-center">+</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         )}
 
-        {activeTab === 'digital' && (
-          <div className="text-center text-white p-8">
-            <h2 className="text-2xl font-bold mb-4">QR Menu Digital</h2>
-            <p>Funcionalidade implementada com sucesso!</p>
-            <div className="mt-4">
-              <p className="text-sm">URL: {digitalMenuUrl}</p>
-              <button onClick={handleCopyUrl} className="mt-2 px-4 py-2 bg-primary text-black rounded">
-                {hasCopied ? 'Copiado!' : 'Copiar Link'}
-              </button>
+        {activeTab === 'qr' && (
+          <div className="space-y-8">
+            {/* QR Code Generator */}
+            <div className="glass-panel p-8 rounded-[3rem] border border-white/5 bg-white/5">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white shadow-lg">
+                  <QrCode size={32} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">QR Menu Digital</h3>
+                  <p className="text-slate-400 text-sm">Gerador de código QR para o seu menu</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* QR Code Display */}
+                <div className="flex flex-col items-center">
+                  <div className="w-64 h-64 bg-white rounded-3xl p-6 shadow-glow mb-6 flex items-center justify-center">
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="QR Code" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-slate-400 mb-4">URL do Menu Digital</p>
+                    <p className="text-sm font-mono text-primary mb-4 truncate max-w-[200px]">{digitalMenuUrl}</p>
+                    <div className="flex gap-2 justify-center">
+                      <button 
+                        onClick={handleCopyUrl}
+                        className="px-4 py-2 bg-primary/10 text-primary rounded-xl text-xs font-black uppercase hover:bg-primary/20 transition-all"
+                      >
+                        Copiar URL
+                      </button>
+                      <button 
+                        onClick={handlePrintQR}
+                        className="px-4 py-2 bg-white/5 text-white rounded-xl text-xs font-black uppercase hover:bg-white/10 transition-all"
+                      >
+                        Imprimir QR
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Settings */}
+                <div className="space-y-6">
+                  <h4 className="text-lg font-bold text-white">Configurações Rápidas</h4>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                      <div className="flex items-center gap-3">
+                        <Eye size={20} className="text-primary" />
+                        <div>
+                          <p className="text-sm font-bold text-white">Mostrar Preços</p>
+                          <p className="text-xs text-slate-400">Exibe preços no menu digital</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => toggleQrSetting('showPrices')}
+                        className={`w-12 h-6 rounded-full transition-all ${qrSettings.showPrices ? 'bg-primary' : 'bg-white/20'}`}
+                      >
+                        <div className={`w-5 h-5 rounded-full bg-white transition-all ${qrSettings.showPrices ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                      <div className="flex items-center gap-3">
+                        <Smartphone size={20} className="text-primary" />
+                        <div>
+                          <p className="text-sm font-bold text-white">Permitir Pedidos via App</p>
+                          <p className="text-xs text-slate-400">Ativa sistema de encomendas</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => toggleQrSetting('allowOrders')}
+                        className={`w-12 h-6 rounded-full transition-all ${qrSettings.allowOrders ? 'bg-primary' : 'bg-white/20'}`}
+                      >
+                        <div className={`w-5 h-5 rounded-full bg-white transition-all ${qrSettings.allowOrders ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                      <div className="flex items-center gap-3">
+                        <Globe size={20} className="text-primary" />
+                        <div>
+                          <p className="text-sm font-bold text-white">Menu Visível</p>
+                          <p className="text-xs text-slate-400">Menu público acessível</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => toggleQrSetting('menuVisible')}
+                        className={`w-12 h-6 rounded-full transition-all ${qrSettings.menuVisible ? 'bg-primary' : 'bg-white/20'}`}
+                      >
+                        <div className={`w-5 h-5 rounded-full bg-white transition-all ${qrSettings.menuVisible ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                    <div className="flex items-start gap-3">
+                      <Settings size={18} className="text-blue-500 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-bold text-blue-500">Status do Sistema</p>
+                        <p className="text-xs text-slate-300 mt-1">
+                          Menu: {qrSettings.menuVisible ? '✅ Online' : '❌ Offline'} | 
+                          Preços: {qrSettings.showPrices ? '✅ Visíveis' : '❌ Ocultos'} | 
+                          Pedidos: {qrSettings.allowOrders ? '✅ Ativos' : '❌ Inativos'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="glass-panel p-6 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                    <Utensils size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-black uppercase tracking-widest">Produtos</p>
+                    <p className="text-2xl font-bold text-white">{menu.length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-panel p-6 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500">
+                    <Tag size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-black uppercase tracking-widest">Categorias</p>
+                    <p className="text-2xl font-bold text-white">{categories.length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-panel p-6 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-green-500">
+                    <QrCode size={20} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 font-black uppercase tracking-widest">QR Status</p>
+                    <p className="text-lg font-bold text-green-500">Ativo</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Modal de Confirmação de Duplicação */}
-      {duplicateConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="glass-panel w-full max-w-md p-8 rounded-[2.5rem] border border-primary/30 shadow-glow flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-6">
-              <Copy size={32} />
-            </div>
-            <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-2">Duplicar {duplicateConfirm.type === 'dish' ? 'Produto' : 'Categoria'}?</h3>
-            <p className="text-slate-400 text-sm leading-relaxed mb-8">
-              Você está prestes a criar uma cópia independente de <b>"{duplicateConfirm.name}"</b>.<br/>
-              {duplicateConfirm.type === 'category' ? 'Isso também duplicará todos os produtos vinculados a esta categoria.' : 'O novo registro terá seu próprio ID e poderá ser editado sem afetar o original.'}
-            </p>
-            <div className="flex gap-4 w-full">
-              <button 
-                onClick={() => setDuplicateConfirm(null)}
-                className="flex-1 py-4 rounded-2xl border border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={() => {
-                  if (duplicateConfirm.type === 'dish') {
-                    duplicateDish(duplicateConfirm.id);
-                  } else {
-                    duplicateCategory(duplicateConfirm.id);
-                  }
-                  setDuplicateConfirm(null);
-                }}
-                className="flex-1 py-4 rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest hover:brightness-110 shadow-glow transition-all"
-              >
-                Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL PRODUTO */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in">
-          <div className="glass-panel rounded-[3rem] w-full max-w-2xl p-10 border border-white/10 shadow-2xl relative overflow-y-auto max-h-[90vh] no-scrollbar">
-            <div className="flex justify-between items-center mb-8">
-               <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">{editingId ? 'Editar Produto' : 'Novo Produto'}</h3>
-               <button 
-                onClick={() => setIsModalOpen(false)} 
-                className="text-slate-500 hover:text-white"
-                title="Fechar modal"
-                aria-label="Fechar modal"
-              >
-                <X />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmitDish} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               <div className="space-y-6">
-                 <div className="space-y-4">
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome do Prato / Produto</label>
-                    <input required type="text" className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={dishForm.name} onChange={e => setDishForm({...dishForm, name: e.target.value})} />
-                 </div>
-                 
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-4">
-                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Preço ({settings.currency})</label>
-                       <input required type="number" className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary" value={dishForm.price} onChange={e => setDishForm({...dishForm, price: Number(e.target.value)})} />
-                    </div>
-                    <div className="space-y-4">
-                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Custo ({settings.currency})</label>
-                       <input required type="number" className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary" value={dishForm.costPrice} onChange={e => setDishForm({...dishForm, costPrice: Number(e.target.value)})} />
-                    </div>
-                 </div>
-
-                 <div className="space-y-4">
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Categoria</label>
-                    <select 
-                      className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary appearance-none" 
-                      value={dishForm.categoryId} 
-                      onChange={e => setDishForm({...dishForm, categoryId: e.target.value})}
-                      title="Selecione uma categoria"
-                      aria-label="Selecione uma categoria"
-                    >
-                       {categories.map(c => <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>)}
-                    </select>
-                 </div>
-
-                 <div className="space-y-4">
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Descrição Comercial</label>
-                    <textarea 
-                      className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary min-h-[120px] text-sm leading-relaxed" 
-                      value={dishForm.description} 
-                      onChange={e => setDishForm({...dishForm, description: e.target.value})}
-                      placeholder="Descreva o produto..."
-                      aria-label="Descrição do produto"
-                    />
-                 </div>
-               </div>
-
-               <div className="space-y-6">
-                 <div className="space-y-4">
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Imagem do Produto</label>
-                    <div className="aspect-video w-full rounded-2xl bg-white/5 border border-dashed border-white/10 overflow-hidden flex items-center justify-center relative group">
-                        {dishForm.image ? (
-                          <LazyImage src={dishForm.image} alt="Preview" containerClassName="w-full h-full" />
-                        ) : (
-                          <div className="text-center">
-                            <ImageIcon className="mx-auto text-slate-600 mb-2" size={32} />
-                            <p className="text-[10px] text-slate-500 uppercase font-black">Nenhuma Imagem</p>
-                          </div>
-                        )}
-                        <button 
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 z-20"
-                        >
-                          <Upload size={24} className="text-primary" />
-                          <span className="text-[10px] font-black text-white uppercase tracking-widest">Carregar Ficheiro Local</span>
-                        </button>
-                    </div>
-                    <input 
-                      type="file" 
-                      hidden 
-                      ref={fileInputRef} 
-                      accept="image/*" 
-                      onChange={handleFileChange}
-                      title="Carregar imagem do produto"
-                      aria-label="Carregar imagem do produto"
-                    />
-                 </div>
-
-                 <div className="space-y-4">
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Ou Link Externo (URL)</label>
-                    <div className="relative">
-                      <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
-                      <input 
-                        type="text" 
-                        placeholder="https://exemplo.com/imagem.jpg"
-                        className="w-full p-4 pl-12 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary text-xs" 
-                        value={dishForm.image?.startsWith('data:') ? '' : dishForm.image} 
-                        onChange={e => setDishForm({...dishForm, image: e.target.value})}
-                        aria-label="URL da imagem do produto"
-                      />
-                    </div>
-                 </div>
-
-                 <button type="submit" className="w-full py-5 bg-primary text-black rounded-[1.5rem] font-black uppercase tracking-widest shadow-glow flex items-center justify-center gap-3 mt-auto">
-                    <Save size={18} /> Guardar Produto
-                 </button>
-               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL CATEGORIA */}
-      {isCatModalOpen && (
-        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in">
-          <div className="glass-panel rounded-[3rem] w-full max-w-md p-10 border border-white/10 shadow-2xl relative">
-            <div className="flex justify-between items-center mb-8">
-               <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">{editingId ? 'Editar Categoria' : 'Nova Categoria'}</h3>
-               <button onClick={() => setIsCatModalOpen(false)} className="text-slate-500 hover:text-white"><X /></button>
-            </div>
-            
-            <form onSubmit={handleSubmitCat} className="space-y-6">
-               <div className="space-y-4">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome da Categoria</label>
-                  <input required type="text" className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={catForm.name} onChange={e => setCatForm({...catForm, name: e.target.value})} />
-               </div>
-               
-               <button type="submit" className="w-full py-5 bg-primary text-black rounded-[1.5rem] font-black uppercase tracking-widest shadow-glow flex items-center justify-center gap-3">
-                  <Save size={18} /> Guardar Categoria
-               </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
