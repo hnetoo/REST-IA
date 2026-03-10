@@ -13,57 +13,6 @@ const SystemHub = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const { settings, updateSettings } = useStore();
 
-  const systemCards = [
-    {
-      id: 'identity',
-      title: 'Identidade Geral',
-      description: 'Configurações principais da aplicação',
-      icon: <Building className="w-8 h-8" />,
-      color: 'from-cyan-500 to-cyan-600',
-      component: <IdentitySettings />
-    },
-    {
-      id: 'human-resources',
-      title: 'Capital Humano (RH)',
-      description: 'Gestão completa de recursos humanos',
-      icon: <Users className="w-8 h-8" />,
-      color: 'from-blue-500 to-blue-600',
-      component: <Employees />
-    },
-    {
-      id: 'access-control',
-      title: 'Controlo de Acesso',
-      description: 'Segurança e permissões do sistema',
-      icon: <Shield className="w-8 h-8" />,
-      color: 'from-purple-500 to-purple-600',
-      component: <AccessControl />
-    },
-    {
-      id: 'agt-compliance',
-      title: 'Compliance AGT',
-      description: 'Conformidade regulatória e fiscal',
-      icon: <FileText className="w-8 h-8" />,
-      color: 'from-green-500 to-green-600',
-      component: <div className="glass-panel rounded-2xl p-8 text-gray-400"><p>Compliance AGT</p></div>
-    },
-    {
-      id: 'cloud-ecosystem',
-      title: 'Ecosistema Cloud',
-      description: 'Integrações e serviços em nuvem',
-      icon: <Cloud className="w-8 h-8" />,
-      color: 'from-orange-500 to-orange-600',
-      component: <CloudEcosystem />
-    },
-    {
-      id: 'technical-kernel',
-      title: 'Kernel Técnico',
-      description: 'Ferramentas de desenvolvimento e sistema',
-      icon: <Terminal className="w-8 h-8" />,
-      color: 'from-red-500 to-red-600',
-      component: <TechnicalKernel />
-    }
-  ];
-
   // Componente Identidade usando formulário existente
   const IdentitySettings = () => {
     const [localSettings, setLocalSettings] = useState(settings);
@@ -155,6 +104,57 @@ const SystemHub = () => {
       </div>
     </div>
   );
+
+  const systemCards = [
+    {
+      id: 'identity',
+      title: 'Identidade Geral',
+      description: 'Configurações principais da aplicação',
+      icon: <Building className="w-8 h-8" />,
+      color: 'from-cyan-500 to-cyan-600',
+      component: <IdentitySettings />
+    },
+    {
+      id: 'human-resources',
+      title: 'Capital Humano (RH)',
+      description: 'Gestão completa de recursos humanos',
+      icon: <Users className="w-8 h-8" />,
+      color: 'from-blue-500 to-blue-600',
+      component: <Employees />
+    },
+    {
+      id: 'access-control',
+      title: 'Controlo de Acesso',
+      description: 'Segurança e permissões do sistema',
+      icon: <Shield className="w-8 h-8" />,
+      color: 'from-purple-500 to-purple-600',
+      component: <AccessControl />
+    },
+    {
+      id: 'agt-compliance',
+      title: 'Compliance AGT',
+      description: 'Conformidade regulatória e fiscal',
+      icon: <FileText className="w-8 h-8" />,
+      color: 'from-green-500 to-green-600',
+      component: <div className="glass-panel rounded-2xl p-8 text-gray-400"><p>Compliance AGT</p></div>
+    },
+    {
+      id: 'cloud-ecosystem',
+      title: 'Ecosistema Cloud',
+      description: 'Integrações e serviços em nuvem',
+      icon: <Cloud className="w-8 h-8" />,
+      color: 'from-orange-500 to-orange-600',
+      component: <CloudEcosystem />
+    },
+    {
+      id: 'technical-kernel',
+      title: 'Kernel Técnico',
+      description: 'Ferramentas de desenvolvimento e sistema',
+      icon: <Terminal className="w-8 h-8" />,
+      color: 'from-red-500 to-red-600',
+      component: <TechnicalKernel />
+    }
+  ];
 
   const activeComponent = systemCards.find(card => card.id === activeCard)?.component;
 
