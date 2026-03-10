@@ -27,7 +27,13 @@ const GlobalNotificationCenter = () => {
       {notifications.map(n => (
         <div key={n.id} className={`pointer-events-auto min-w-[300px] p-4 rounded-xl shadow-2xl flex items-start gap-3 border backdrop-blur-md animate-in slide-in-from-right ${n.type === 'success' ? 'bg-green-500/20 border-green-500/50 text-green-200' : 'bg-primary/20 border-primary/50 text-primary'}`}>
           <p className="text-xs font-black uppercase tracking-widest flex-1">{n.message}</p>
-          <button onClick={() => removeNotification(n.id)}><X size={14}/></button>
+          <button 
+            onClick={() => removeNotification(n.id)}
+            title="Fechar notificação"
+            aria-label="Fechar notificação"
+          >
+            <X size={14}/>
+          </button>
         </div>
       ))}
     </div>
