@@ -1758,7 +1758,7 @@ const SystemHub = () => {
       id: 'human-resources',
       title: 'Capital Humano (RH)',
       description: 'Gestão completa de recursos humanos',
-      icon: <SystemHubUsers className="w-8 h-8" />,
+      icon: <Users className="w-8 h-8" />,
       color: 'from-blue-500 to-blue-600',
       component: <Employees />
     },
