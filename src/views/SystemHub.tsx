@@ -447,7 +447,11 @@ const SystemHub = () => {
   };
 
   const AGTCompliance = () => {
-    const { settings, updateSettings, activeOrders, customers, menu } = useStore();
+    const { 
+      settings, updateSettings, activeOrders, customers, menu,
+      addExpense, updateExpense, removeExpense, approveExpense,
+      addNotification
+    } = useStore();
     const [localSettings, setLocalSettings] = useState(settings);
     const [isSaving, setIsSaving] = useState(false);
 
