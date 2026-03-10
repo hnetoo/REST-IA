@@ -1,27 +1,29 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useStore } from './src/store/useStore';
-import Sidebar from './src/components/Sidebar';
-import Login from './src/views/Login';
-import Dashboard from './src/views/Dashboard';
-import POS from './src/views/POS';
-import Inventory from './src/views/Inventory';
-import Finance from './src/views/Finance';
-import TableLayout from './src/views/TableLayout';
-import Purchases from './src/views/Purchases';
-import PurchaseApproval from './src/views/PurchaseApproval';
-import PublicMenu from './src/views/PublicMenu';
-import OwnerLogin from './src/views/owner/OwnerLogin';
-import OwnerDashboard from './src/views/owner/OwnerDashboard';
-import Employees from './src/views/Employees';
-import ProfitCenter from './src/views/ProfitCenter';
-import AGTControl from './src/views/AGTControl';
-import CustomerDisplay from './src/views/CustomerDisplay';
-import Settings from './src/views/Settings';
-import SystemHub from './src/views/SystemHub';
-import Analytics from './src/views/Analytics';
-import Reports from './src/views/Reports';
+import { GlobalNotificationCenter } from './src/components/GlobalNotificationCenter';
+import { Sidebar } from './src/components/Sidebar';
+import { Login } from './src/views/Login';
+import { OwnerLogin } from './src/views/owner/OwnerLogin';
+import { OwnerDashboard } from './src/views/owner/OwnerDashboard';
+import { Dashboard } from './src/views/Dashboard';
+import { POS } from './src/views/POS';
+import { PrinterConfig } from './src/views/PrinterConfig';
+import { AGTControl } from './src/views/AGTControl';
+import { ProfitCenter } from './src/views/ProfitCenter';
+import { TableLayout } from './src/views/TableLayout';
+import { Inventory } from './src/views/Inventory';
+import { Purchases } from './src/views/Purchases';
+import { PurchaseApproval } from './src/views/PurchaseApproval';
+import { Finance } from './src/views/Finance';
+import { Analytics } from './src/views/Analytics';
+import { Reports } from './src/views/Reports';
+import { Employees } from './src/views/Employees';
+import { SystemHub } from './src/views/SystemHub';
+import { PublicMenu } from './src/views/PublicMenu';
+import { CustomerDisplay } from './src/views/CustomerDisplay';
+import { Settings } from './src/views/Settings';
 import { X } from 'lucide-react';
+import { useStore } from './src/store/useStore';
 
 const GlobalNotificationCenter = () => {
   const { notifications, removeNotification } = useStore();
@@ -73,6 +75,7 @@ const App = () => {
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/pos" element={<POS />} />
+                    <Route path="/printer-config" element={<PrinterConfig />} />
                     <Route path="/agt" element={<AGTControl />} />
                     <Route path="/profit-center" element={<ProfitCenter />} />
                     <Route path="/tables-layout" element={<TableLayout />} />

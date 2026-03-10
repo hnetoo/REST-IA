@@ -1,5 +1,6 @@
 
 import { Order, Dish, SystemSettings, Customer } from '../types';
+import ThermalPrinterManager from './thermalPrinterConfig';
 
 const formatKz = (val: number) => 
   new Intl.NumberFormat('pt-AO', { 
@@ -71,6 +72,17 @@ const executePrint = (html: string) => {
     doc.write(html);
     doc.close();
     
+    // Obter configuração da impressora térmica
+    const printerConfig = ThermalPrinterManager.getConfig();
+    
+    // Configurar CSS específico da impressora
+    if (printerConfig) {
+      const printerCSS = ThermalPrinterManager.getPrinterCSS(printerConfig);
+      const styleElement = doc.createElement('style');
+      styleElement.textContent = printerCSS;
+      doc.head.appendChild(styleElement);
+    }
+    
     // Pequeno atraso para garantir renderização antes de disparar a impressão
     setTimeout(() => {
       printFrame.contentWindow?.focus();
@@ -96,6 +108,23 @@ export const printThermalInvoice = (
   
   const taxRate = settings.taxRate || 14;
   const netTotal = order.total - order.taxTotal;
+
+  // Obter configuração da impressora térmica
+  const printerConfig = ThermalPrinterManager.getConfig();
+  
+  // Gerar cabeçalho personalizado
+  const headerLines = printerConfig?.headerLines || [
+    settings.restaurantName || 'TASCA DO VEREDA',
+    settings.fiscalId || 'NIF: 123456789',
+    settings.address || 'Rua Principal, 123',
+    settings.phone || '+244 123 456 789'
+  ];
+
+  // Gerar rodapé personalizado
+  const footerLines = printerConfig?.footerLines || [
+    'Obrigado pela sua visita!',
+    'Volte sempre'
+  ];
 
   const qrData = `AGT;${settings.nif};${order.invoiceNumber};${order.total.toFixed(2)};${new Date(order.timestamp).toISOString()};${order.hash}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`;
