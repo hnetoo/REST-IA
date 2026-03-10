@@ -13,6 +13,8 @@ import PurchaseApproval from './src/views/PurchaseApproval';
 import PublicMenu from './src/views/PublicMenu';
 import OwnerDashboard from './src/views/OwnerDashboard';
 import OwnerLogin from './src/views/OwnerLogin';
+import OwnerDashboardSimple from './src/views/OwnerDashboardSimple';
+import OwnerLoginSimple from './src/views/OwnerLoginSimple';
 import Employees from './src/views/Employees';
 import ProfitCenter from './src/views/ProfitCenter';
 import AGTControl from './src/views/AGTControl';
@@ -53,9 +55,9 @@ const App = () => {
       <div className="flex h-screen w-full bg-slate-950 font-sans overflow-hidden">
         <GlobalNotificationCenter />
         <Routes>
-          {/* Owner - Rotas Independentes (primeiro para evitar conflito) */}
-          <Route path="/owner/login" element={<OwnerLogin />} />
-          <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+          {/* Owner - Rotas Independentes SIMPLES */}
+          <Route path="/owner/login" element={<OwnerLoginSimple />} />
+          <Route path="/owner/dashboard" element={<OwnerDashboardSimple />} />
           
           {/* Rotas Públicas / Externas */}
           <Route path="/menu/:tableId" element={<PublicMenu />} />
