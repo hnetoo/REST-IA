@@ -15,7 +15,7 @@ const Employees = () => {
     clockIn, clockOut, attendance, addNotification, settings 
   } = useStore();
   
-  const [activeTab, setActiveTab] = useState<'LIST' | 'SCHEDULE' | 'ATTENDANCE'>('LIST');
+  const [activeTab, setActiveTab] = useState<'LIST' | 'SCHEDULE' | 'ATTENDANCE' | 'PAYROLL'>('LIST');
 
   const handleExportSchedules = () => {
     if (workShifts.length === 0) {
@@ -139,7 +139,8 @@ const Employees = () => {
           {[
             { id: 'LIST', label: 'Funcionários', icon: Users },
             { id: 'SCHEDULE', label: 'Escalas de Turno', icon: Calendar },
-            { id: 'ATTENDANCE', label: 'Ponto & Picagem', icon: Clock }
+            { id: 'ATTENDANCE', label: 'Ponto & Picagem', icon: Clock },
+            { id: 'PAYROLL', label: 'Folha de Salário', icon: DollarSign }
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`pb-4 px-6 font-black uppercase text-[10px] tracking-[0.2em] transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id ? 'text-primary' : 'text-slate-500 hover:text-slate-300'}`}>
               <tab.icon size={16} /> {tab.label}
@@ -296,6 +297,59 @@ const Employees = () => {
                    })}
                 </tbody>
              </table>
+          </div>
+        )}
+
+        {activeTab === 'PAYROLL' && (
+          <div className="glass-panel rounded-[2.5rem] p-8 border border-white/5">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-xl font-black text-white">Folha de Salário</h3>
+              <button 
+                onClick={handleExportPayroll}
+                className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+              >
+                <Download size={18} /> Exportar
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left p-3 text-white font-black uppercase text-xs">Nome</th>
+                    <th className="text-left p-3 text-white font-black uppercase text-xs">Cargo</th>
+                    <th className="text-left p-3 text-white font-black uppercase text-xs">Salário Base (Kz)</th>
+                    <th className="text-left p-3 text-white font-black uppercase text-xs">Subsídios</th>
+                    <th className="text-left p-3 text-white font-black uppercase text-xs">Descontos</th>
+                    <th className="text-left p-3 text-white font-black uppercase text-xs">Total Líquido</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {employees.map(emp => {
+                    const subsidies = Math.round(emp.salary * 0.2); // 20% de subsídios
+                    const deductions = Math.round(emp.salary * 0.08); // 8% de descontos
+                    const netSalary = emp.salary + subsidies - deductions;
+                    
+                    return (
+                      <tr key={emp.id} className="hover:bg-white/5 transition-colors">
+                        <td className="p-3 text-white font-bold">{emp.name}</td>
+                        <td className="p-3 text-slate-400">{emp.role}</td>
+                        <td className="p-3 text-white font-mono">{formatKz(emp.salary)}</td>
+                        <td className="p-3 text-emerald-500 font-mono">{formatKz(subsidies)}</td>
+                        <td className="p-3 text-red-500 font-mono">{formatKz(deductions)}</td>
+                        <td className="p-3 text-primary font-mono font-bold">{formatKz(netSalary)}</td>
+                      </tr>
+                    );
+                  })}
+                  <tr className="border-t-2 border-primary/20">
+                    <td colSpan={2} className="p-3 text-primary font-black">TOTAL</td>
+                    <td className="p-3 text-white font-mono font-bold">{formatKz(totalPayroll)}</td>
+                    <td className="p-3 text-emerald-500 font-mono font-bold">{formatKz(employees.reduce((acc, emp) => acc + Math.round(emp.salary * 0.2), 0))}</td>
+                    <td className="p-3 text-red-500 font-mono font-bold">{formatKz(employees.reduce((acc, emp) => acc + Math.round(emp.salary * 0.08), 0))}</td>
+                    <td className="p-3 text-primary font-mono font-bold text-lg">{formatKz(employees.reduce((acc, emp) => acc + emp.salary + Math.round(emp.salary * 0.2) - Math.round(emp.salary * 0.08), 0))}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

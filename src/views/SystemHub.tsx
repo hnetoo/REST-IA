@@ -121,7 +121,7 @@ const SystemHub = () => {
               className="w-full py-5 bg-[#06b6d4] text-black rounded-[2rem] font-black uppercase text-xs shadow-glow flex items-center justify-center gap-3 transition-all hover:brightness-110"
               disabled={isSaving}
             >
-              {isSaving ? 'Guardando...' : 'Guardar Configurações'}
+              {isSaving ? 'Guardando...' : 'Guardar Alterações'}
             </button>
           </div>
         </form>
