@@ -349,39 +349,39 @@ const OwnerDashboard = () => {
   }, [period]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-y-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white h-screen overflow-y-auto">
       {/* Header com Botão de Sair */}
-      <header className="sticky top-0 z-50 flex justify-between items-center p-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mb-6">
+      <header className="sticky top-0 z-50 flex justify-between items-center p-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <Smartphone className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Smartphone className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Owner Dashboard</h1>
+            <h1 className="text-xl font-bold text-white mb-1">Owner Dashboard</h1>
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
-              <span className="text-sm text-white/90">{isOnline ? 'Online' : 'Offline'}</span>
+              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+              <span className="text-xs text-white/90">{isOnline ? 'Online' : 'Offline'}</span>
             </div>
           </div>
         </div>
         
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 px-6 py-3 bg-red-500/20 border border-red-500/30 text-red-400 rounded-xl hover:bg-red-500/30 transition-all backdrop-blur-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/30 transition-all backdrop-blur-sm"
         >
-          <LogOut size={18} />
+          <LogOut size={16} />
           <span className="font-semibold">Sair</span>
         </button>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 pb-24">
-        {/* Filtros de Período */}
-        <div className="flex gap-2 mb-6 overflow-x-auto">
+        {/* Filtros de Período - Compactos */}
+        <div className="flex gap-2 mb-4 overflow-x-auto">
           {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider transition-all ${
+              className={`px-3 py-1 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
                 period === p 
                   ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-black shadow-lg' 
                   : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
@@ -392,110 +392,105 @@ const OwnerDashboard = () => {
           ))}
         </div>
 
-        {/* Card de Faturação Consolidada */}
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-3xl shadow-2xl border border-white/20 backdrop-blur-md mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-8 h-8 text-white" />
-              <h2 className="text-xl font-bold text-white">Faturação Consolidada</h2>
-            </div>
-            <button className="px-4 py-2 bg-white/20 border border-white/30 text-white/80 rounded-lg hover:bg-white/30 transition-all text-sm">
-              <Settings className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm text-white/70 mb-2">Vendas Atuais (Vereda OS)</p>
-              <div className="text-3xl font-bold text-white">
-                {formatAOA(metrics.totalVendas)}
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-white/70 mb-2">Histórico Acumulado</p>
-              <div className="text-3xl font-bold text-white">
-                {formatAOA(0)}
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 pt-6 border-t border-white/20">
-            <div className="text-4xl font-bold text-white text-center">
-              {formatAOA(metrics.totalVendas + 0)}
-            </div>
-          </div>
-        </div>
-
-        {/* Grid de Cards - Layout Horizontal */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {/* Vendas Hoje - Verde */}
-          <div className="bg-gradient-to-br from-green-600 to-green-700 p-8 rounded-3xl shadow-2xl border border-green-500/30 backdrop-blur-md">
+        {/* Grid de Cards - Layout Horizontal Compacto */}
+        <div className="grid grid-cols-1 gap-2">
+          {/* Card de Faturação Consolidada - Compacto */}
+          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-4 rounded-xl shadow-lg border-l-4 border-indigo-400 backdrop-blur-md">
             <div className="flex items-center justify-between">
-              <DollarSign className="w-8 h-8 text-green-200" />
-              <span className="text-sm text-green-200 uppercase tracking-wider">AOA</span>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-indigo-200" />
+                <div>
+                  <h3 className="text-sm font-semibold text-white">Faturação Consolidada</h3>
+                  <p className="text-xs text-indigo-200">Vereda OS + Histórico</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-lg font-bold text-white">
+                  {formatAOA(metrics.totalVendas + 0)}
+                </div>
+                <button className="p-1 bg-white/20 rounded hover:bg-white/30 transition-all">
+                  <Settings className="w-3 h-3 text-white/80" />
+                </button>
+              </div>
             </div>
-            <div className="text-5xl font-bold text-white">
-              {formatAOA(metrics.vendasHoje)}
+          </div>
+
+          {/* Vendas Hoje - Verde */}
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-green-500 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-green-400" />
+                <span className="text-sm text-gray-300">Vendas Hoje</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {formatAOA(metrics.vendasHoje)}
+              </div>
             </div>
-            <div className="text-sm text-green-200">Vendas Hoje</div>
           </div>
 
           {/* Mesas Ativas - Azul */}
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-3xl shadow-2xl border border-blue-500/30 backdrop-blur-md">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-blue-500 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between">
-              <Users className="w-8 h-8 text-blue-200" />
-              <span className="text-sm text-blue-200 uppercase tracking-wider">MESAS</span>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-blue-400" />
+                <span className="text-sm text-gray-300">Mesas Ativas</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {metrics.mesasAtivas}
+              </div>
             </div>
-            <div className="text-5xl font-bold text-white">
-              {metrics.mesasAtivas}
-            </div>
-            <div className="text-sm text-blue-200">Mesas Ativas</div>
           </div>
 
           {/* Receita Total - Roxa */}
-          <div className="bg-gradient-to-br from-purple-600 to-purple-700 p-8 rounded-3xl shadow-2xl border border-purple-500/30 backdrop-blur-md">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-purple-500 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between">
-              <Wallet className="w-8 h-8 text-purple-200" />
-              <span className="text-sm text-purple-200 uppercase tracking-wider">AOA</span>
+              <div className="flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-purple-400" />
+                <span className="text-sm text-gray-300">Receita Total</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {formatAOA(metrics.receitaTotal)}
+              </div>
             </div>
-            <div className="text-5xl font-bold text-white">
-              {formatAOA(metrics.receitaTotal)}
-            </div>
-            <div className="text-sm text-purple-200">Receita Total</div>
           </div>
 
           {/* Despesas - Laranja */}
-          <div className="bg-gradient-to-br from-orange-600 to-orange-700 p-8 rounded-3xl shadow-2xl border border-orange-500/30 backdrop-blur-md">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-orange-500 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between">
-              <Receipt className="w-8 h-8 text-orange-200" />
-              <span className="text-sm text-orange-200 uppercase tracking-wider">AOA</span>
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-orange-400" />
+                <span className="text-sm text-gray-300">Despesas</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {formatAOA(metrics.despesas)}
+              </div>
             </div>
-            <div className="text-5xl font-bold text-white">
-              {formatAOA(metrics.despesas)}
-            </div>
-            <div className="text-sm text-orange-200">Despesas</div>
           </div>
 
           {/* Folha Salarial - Rosa */}
-          <div className="bg-gradient-to-br from-pink-600 to-pink-700 p-8 rounded-3xl shadow-2xl border border-pink-500/30 backdrop-blur-md">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-pink-500 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between">
-              <FileText className="w-8 h-8 text-pink-200" />
-              <span className="text-sm text-pink-200 uppercase tracking-wider">AOA</span>
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-pink-400" />
+                <span className="text-sm text-gray-300">Folha Salarial</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {formatAOA(metrics.folhaSalarial)}
+              </div>
             </div>
-            <div className="text-5xl font-bold text-white">
-              {formatAOA(metrics.folhaSalarial)}
-            </div>
-            <div className="text-sm text-pink-200">Folha Salarial</div>
           </div>
 
           {/* Impostos - Vermelho */}
-          <div className="bg-gradient-to-br from-red-600 to-red-700 p-8 rounded-3xl shadow-2xl border border-red-500/30 backdrop-blur-md">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-red-500 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between">
-              <Calculator className="w-8 h-8 text-red-200" />
-              <span className="text-sm text-red-200 uppercase tracking-wider">AOA</span>
+              <div className="flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-red-400" />
+                <span className="text-sm text-gray-300">Impostos (6.5%)</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {formatAOA(metrics.impostos)}
+              </div>
             </div>
-            <div className="text-5xl font-bold text-white">
-              {formatAOA(metrics.impostos)}
-            </div>
-            <div className="text-sm text-red-200">Impostos (6.5% sobre faturação)</div>
           </div>
         </div>
       </main>
