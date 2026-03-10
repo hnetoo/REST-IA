@@ -96,21 +96,19 @@ const OwnerDashboard = () => {
     }, 3000);
   };
 
-  // Formatação de moeda
+  // Função de formatação de moeda AOA/AKZ
   const formatAOA = (value: number) => {
     return new Intl.NumberFormat('pt-AO', {
       style: 'currency',
-      currency: 'AOA',
-      maximumFractionDigits: 0
-    }).format(value);
+      currency: 'AOA'
+    }).format(value || 0);
   };
 
   const formatAKZ = (value: number) => {
     return new Intl.NumberFormat('pt-AO', {
       style: 'currency',
-      currency: 'AOA',
-      maximumFractionDigits: 0
-    }).format(value);
+      currency: 'AOA'
+    }).format(value || 0);
   };
 
   // Buscar métricas do Supabase
@@ -169,13 +167,13 @@ const OwnerDashboard = () => {
           const todayDate = new Date();
           return orderDate.toDateString() === todayDate.toDateString();
         })
-        .reduce((sum, order) => sum + (order.total_amount_kz || 0), 0);
+        .reduce((sum, order) => sum + (order.total_amount || 0), 0);
 
       const mesasAtivas = orders
         .filter(order => order.status === 'open')
         .length;
 
-      const totalVendas = orders.reduce((sum, order) => sum + (order.total_amount_kz || 0), 0);
+      const totalVendas = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
       const receitaTotal = totalVendas;
       const despesas = purchases.reduce((sum, purchase) => sum + purchase.amount, 0);
       const folhaSalarial = staff.reduce((sum, employee) => sum + (employee.base_salary_kz || 0), 0);
@@ -235,22 +233,22 @@ const OwnerDashboard = () => {
 
   // Script de Teste - Gerar Dados de Teste
   const handleGenerateTestData = async () => {
-    if (!window.confirm('🧪 Gerar dados de teste?\n\nIsto irá criar 5 vendas de hoje e 2 despesas pagas.')) {
+    if (!window.confirm('🧪 Gerar dados de teste?\n\nIsto irá criar 10 vendas reais e 5 despesas pagas.')) {
       return;
     }
 
     setIsResetting(true);
     try {
-      // Gerar 5 vendas de hoje
+      // Gerar 10 vendas de hoje com valores realistas
       const today = new Date();
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 10; i++) {
         const { error } = await supabase
           .from('orders')
           .insert({
             id: `test-order-${Date.now()}-${i}`,
             table_id: Math.floor(Math.random() * 10) + 1,
             status: 'closed',
-            total_amount_kz: Math.floor(Math.random() * 50000) + 10000, // 10k-60k AOA
+            total_amount: Math.floor(Math.random() * 80000) + 20000, // 20k-100k AOA
             created_at: today.toISOString(),
             updated_at: today.toISOString()
           });
@@ -258,10 +256,13 @@ const OwnerDashboard = () => {
         if (error) throw error;
       }
 
-      // Gerar 2 despesas pagas
+      // Gerar 5 despesas pagas com valores realistas
       const expenses = [
-        { description: 'Matéria-prima cozinha', amount: 25000 },
-        { description: 'Bebidas e refrigerantes', amount: 18000 }
+        { description: 'Matéria-prima cozinha', amount: 45000 },
+        { description: 'Bebidas e refrigerantes', amount: 35000 },
+        { description: 'Carne e pescado', amount: 65000 },
+        { description: 'Legumes e frutas', amount: 28000 },
+        { description: 'Material de limpeza', amount: 15000 }
       ];
 
       for (let i = 0; i < expenses.length; i++) {
@@ -271,7 +272,7 @@ const OwnerDashboard = () => {
             id: `test-purchase-${Date.now()}-${i}`,
             description: expenses[i].description,
             amount: expenses[i].amount,
-            status: 'approved',
+            status: 'aprovado',
             created_at: today.toISOString(),
             updated_at: today.toISOString()
           });
@@ -348,42 +349,79 @@ const OwnerDashboard = () => {
   }, [period]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4">
       {/* Header com Botão de Sair */}
-      <div className="flex justify-between items-center p-6 bg-black/20 backdrop-blur-sm border-b border-white/10">
+      <div className="flex justify-between items-center p-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#06b6d4] to-[#0891b2] rounded-xl flex items-center justify-center">
-            <Smartphone className="w-5 h-5 text-white" />
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <Smartphone className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Owner Dashboard</h1>
+            <h1 className="text-2xl font-bold text-white mb-1">Owner Dashboard</h1>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
-              <span className="text-xs text-slate-400">{isOnline ? 'Online' : 'Offline'}</span>
+              <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+              <span className="text-sm text-white/90">{isOnline ? 'Online' : 'Offline'}</span>
             </div>
           </div>
         </div>
         
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/30 transition-all"
+          className="flex items-center gap-2 px-6 py-3 bg-red-500/20 border border-red-500/30 text-red-400 rounded-xl hover:bg-red-500/30 transition-all backdrop-blur-sm"
         >
-          <LogOut size={16} />
-          Sair
+          <LogOut size={18} />
+          <span className="font-semibold">Sair</span>
         </button>
       </div>
 
-      <div className="p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Card de Faturação Consolidada */}
+        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-3xl shadow-2xl border border-white/20 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white mb-1">Faturação Consolidada</h2>
+                <p className="text-sm text-white/80">Vereda OS + Histórico Externo</p>
+              </div>
+            </div>
+            <button className="px-4 py-2 bg-white/20 border border-white/30 text-white/80 rounded-lg hover:bg-white/30 transition-all text-sm">
+              Configurar Valor Externo
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm text-white/70 mb-2">Vendas Atuais (Vereda OS)</p>
+              <div className="text-3xl font-bold text-white">
+                {formatAOA(metrics.totalVendas)}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-white/70 mb-2">Histórico Acumulado</p>
+              <div className="text-3xl font-bold text-white">
+                {formatAOA(0)}
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 pt-6 border-t border-white/20">
+            <div className="text-4xl font-bold text-white text-center">
+              {formatAOA(metrics.totalVendas + 0)}
+            </div>
+          </div>
+        </div>
+
         {/* Filtros de Período */}
         <div className="flex gap-2 mb-6 overflow-x-auto">
           {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all ${
+              className={`px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider transition-all ${
                 period === p 
-                  ? 'bg-[#fbbf24] text-black' 
-                  : 'bg-white/10 text-white hover:bg-white/20'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-black shadow-lg' 
+                  : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
               }`}
             >
               {p}
@@ -391,87 +429,76 @@ const OwnerDashboard = () => {
           ))}
         </div>
 
-        {/* Grid de Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+        {/* Grid de Cards - Layout Vertical */}
+        <div className="grid grid-cols-1 gap-6">
           {/* Vendas Hoje - Verde */}
-          <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <DollarSign className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AOA</span>
+          <div className="bg-gradient-to-br from-green-600 to-green-700 p-8 rounded-3xl shadow-2xl border border-green-500/30 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-4">
+              <DollarSign className="w-8 h-8 text-green-200" />
+              <span className="text-sm text-green-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">
+            <div className="text-4xl font-bold text-white mb-2">
               {formatAOA(metrics.vendasHoje)}
             </div>
-            <div className="text-xs text-white/70">Vendas Hoje</div>
+            <div className="text-sm text-green-200">Vendas Hoje</div>
           </div>
 
           {/* Mesas Ativas - Azul */}
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <Users className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">TOTAL</span>
+          <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-3xl shadow-2xl border border-blue-500/30 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-4">
+              <Users className="w-8 h-8 text-blue-200" />
+              <span className="text-sm text-blue-200 uppercase tracking-wider">MESAS</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">
+            <div className="text-4xl font-bold text-white mb-2">
               {metrics.mesasAtivas}
             </div>
-            <div className="text-xs text-white/70">Mesas Ativas</div>
+            <div className="text-sm text-blue-200">Mesas Ativas</div>
           </div>
 
-          {/* Total Vendas - Laranja */}
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AOA</span>
+          {/* Receita Total - Roxa */}
+          <div className="bg-gradient-to-br from-purple-600 to-purple-700 p-8 rounded-3xl shadow-2xl border border-purple-500/30 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-4">
+              <Wallet className="w-8 h-8 text-purple-200" />
+              <span className="text-sm text-purple-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {formatAOA(metrics.totalVendas)}
-            </div>
-            <div className="text-xs text-white/70">Total Vendas</div>
-          </div>
-
-          {/* Receita Total - Roxo */}
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <Wallet className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AOA</span>
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">
+            <div className="text-4xl font-bold text-white mb-2">
               {formatAOA(metrics.receitaTotal)}
             </div>
-            <div className="text-xs text-white/70">Receita Total</div>
+            <div className="text-sm text-purple-200">Receita Total</div>
           </div>
 
-          {/* Despesas - Vermelho */}
-          <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <Receipt className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AKZ</span>
+          {/* Despesas - Laranja */}
+          <div className="bg-gradient-to-br from-orange-600 to-orange-700 p-8 rounded-3xl shadow-2xl border border-orange-500/30 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-4">
+              <Receipt className="w-8 h-8 text-orange-200" />
+              <span className="text-sm text-orange-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {formatAKZ(metrics.despesas)}
+            <div className="text-4xl font-bold text-white mb-2">
+              {formatAOA(metrics.despesas)}
             </div>
-            <div className="text-xs text-white/70">Despesas</div>
+            <div className="text-sm text-orange-200">Despesas</div>
           </div>
 
-          {/* Folha Salarial - Vermelho Escuro */}
-          <div className="bg-gradient-to-br from-red-700 to-red-800 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <FileText className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AKZ</span>
+          {/* Folha Salarial - Rosa */}
+          <div className="bg-gradient-to-br from-pink-600 to-pink-700 p-8 rounded-3xl shadow-2xl border border-pink-500/30 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-4">
+              <FileText className="w-8 h-8 text-pink-200" />
+              <span className="text-sm text-pink-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {formatAKZ(metrics.folhaSalarial)}
+            <div className="text-4xl font-bold text-white mb-2">
+              {formatAOA(metrics.folhaSalarial)}
             </div>
-            <div className="text-xs text-white/70">Folha Salarial</div>
+            <div className="text-sm text-pink-200">Folha Salarial</div>
           </div>
 
-          {/* Impostos - Azul Escuro */}
-          <div className="bg-gradient-to-br from-blue-700 to-blue-800 p-6 rounded-2xl col-span-2">
-            <div className="flex items-center justify-between mb-2">
-              <Calculator className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AKZ</span>
+          {/* Impostos - Vermelho */}
+          <div className="bg-gradient-to-br from-red-600 to-red-700 p-8 rounded-3xl shadow-2xl border border-red-500/30 backdrop-blur-md">
+            <div className="flex items-center justify-between mb-4">
+              <Calculator className="w-8 h-8 text-red-200" />
+              <span className="text-sm text-red-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">
+            <div className="text-4xl font-bold text-white mb-2">
+              {formatAOA(metrics.impostos)}
               {formatAKZ(metrics.impostos)}
             </div>
             <div className="text-xs text-white/70">Impostos (6.5% sobre faturação)</div>
