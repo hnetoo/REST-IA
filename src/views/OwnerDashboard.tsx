@@ -63,49 +63,21 @@ const OwnerDashboard = () => {
   const [isOnline, setIsOnline] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
 
-  // Verificar sessão do Owner
+  // Verificação SIMPLES - sem complexidade
   useEffect(() => {
-    console.log('OwnerDashboard: Verificando sessão...');
-    const session = localStorage.getItem('ownerSession');
-    console.log('Sessão encontrada:', !!session);
-    
-    if (!session) {
-      console.log('Redirecionando para /owner/login - sessão não encontrada');
+    const isLoggedIn = localStorage.getItem('owner_logged_in') === 'true';
+    if (!isLoggedIn) {
       navigate('/owner/login');
       return;
     }
 
-    try {
-      const sessionData = JSON.parse(session);
-      console.log('Dados da sessão:', sessionData);
-      
-      // Verificar se a sessão expirou (24 horas)
-      const now = Date.now();
-      const sessionAge = now - sessionData.timestamp;
-      const maxAge = 24 * 60 * 60 * 1000;
-      
-      console.log('Idade da sessão:', sessionAge, 'ms');
-      console.log('Max idade:', maxAge, 'ms');
-      
-      if (sessionAge > maxAge) {
-        console.log('Sessão expirada, removendo e redirecionando');
-        localStorage.removeItem('ownerSession');
-        navigate('/owner/login');
-        return;
-      }
-      
-      console.log('Sessão válida, permanecendo no dashboard');
-    } catch (error) {
-      console.error('Erro ao parsear sessão:', error);
-      console.log('Removendo sessão inválida e redirecionando');
-      localStorage.removeItem('ownerSession');
-      navigate('/owner/login');
-    }
+    // Carregar dados reais do Supabase
+    fetchMetrics();
   }, [navigate]);
 
   // Função de logout
   const handleLogout = () => {
-    localStorage.removeItem('ownerSession');
+    localStorage.removeItem('owner_logged_in');
     navigate('/owner/login');
   };
 

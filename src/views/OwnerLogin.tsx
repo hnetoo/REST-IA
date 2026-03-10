@@ -26,14 +26,8 @@ const OwnerLogin = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       if (pin === OWNER_CREDENTIALS.pin) {
-        // Salvar sessão do Owner
-        localStorage.setItem('ownerSession', JSON.stringify({
-          authenticated: true,
-          timestamp: Date.now(),
-          business: OWNER_CREDENTIALS.business,
-          name: OWNER_CREDENTIALS.name
-        }));
-
+        // Login SIMPLES - sem complexidade
+        localStorage.setItem('owner_logged_in', 'true');
         navigate('/owner/dashboard');
       } else {
         setError('PIN incorreto. Tente novamente.');
