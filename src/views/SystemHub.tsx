@@ -78,14 +78,164 @@ const SystemHub = () => {
     );
   };
 
-  const AccessControl = () => (
-    <div className="glass-panel rounded-2xl p-8">
-      <h2 className="text-2xl font-bold text-white mb-6">Controlo de Acesso</h2>
-      <div className="text-gray-400">
-        <p>Gestão de permissões e utilizadores</p>
+  const AccessControl = () => {
+    const { users, addUser, updateUser, removeUser, addNotification } = useStore();
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+    const [editingUserId, setEditingUserId] = useState<string | null>(null);
+    const [userForm, setUserForm] = useState<Partial<User>>({ 
+      name: '', role: 'GARCOM', pin: '', permissions: [], status: 'ATIVO' 
+    });
+
+    const handleOpenUserModal = (user?: User) => {
+      if (user) {
+        setEditingUserId(user.id);
+        setUserForm(user);
+      } else {
+        setEditingUserId(null);
+        setUserForm({ name: '', role: 'GARCOM', pin: '', permissions: [], status: 'ATIVO' });
+      }
+      setIsUserModalOpen(true);
+    };
+
+    const handleSaveUser = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (editingUserId) {
+        updateUser({ ...userForm, id: editingUserId } as User);
+      } else {
+        addUser({
+          ...userForm,
+          id: `user-${Date.now()}`,
+        } as User);
+      }
+      setIsUserModalOpen(false);
+    };
+
+    const getRoleBadge = (role: string) => {
+      switch (role) {
+        case 'ADMIN': return { bg: 'bg-purple-600' };
+        case 'GARCOM': return { bg: 'bg-slate-800' };
+        case 'COZINHA': return { bg: 'bg-orange-600' };
+        case 'CAIXA': return { bg: 'bg-green-600' };
+        default: return { bg: 'bg-slate-800' };
+      }
+    };
+
+    return (
+      <div className="glass-panel rounded-2xl p-8">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-white">Controlo de Acesso</h2>
+          <button 
+            onClick={() => handleOpenUserModal()} 
+            className="px-6 py-3 bg-[#06b6d4] text-black rounded-2xl font-black text-[10px] uppercase shadow-glow flex items-center gap-2"
+          >
+            <Plus size={16}/> Adicionar Novo
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {users.map(u => {
+            const roleInfo = getRoleBadge(u.role);
+            return (
+              <div key={u.id} className="glass-panel p-6 rounded-[2.5rem] border border-white/5 group hover:border-[#06b6d4]/40 transition-all flex flex-col">
+                <div className="flex justify-between mb-6">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white ${roleInfo.bg}`}>
+                    <Users size={24}/>
+                  </div>
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => handleOpenUserModal(u)} 
+                      className="p-3 text-slate-500 hover:text-white"
+                      title="Editar utilizador"
+                    >
+                      <Edit2 size={16}/>
+                    </button>
+                    <button 
+                      onClick={() => removeUser(u.id)} 
+                      className="p-3 text-red-500/30 hover:text-red-500"
+                      title="Remover utilizador"
+                    >
+                      <Trash2 size={16}/>
+                    </button>
+                  </div>
+                </div>
+                <h4 className="text-white font-bold uppercase truncate">{u.name}</h4>
+                <p className="text-[10px] font-black text-[#06b6d4] uppercase mt-1">{u.role}</p>
+                <div className="mt-4 flex flex-wrap gap-1">
+                  {u.permissions.map(p => (
+                    <span key={p} className="text-[7px] font-black uppercase bg-white/5 px-2 py-0.5 rounded text-slate-500">{p}</span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Modal de Utilizador */}
+        {isUserModalOpen && (
+          <div className="fixed inset-0 bg-black/90 z-[120] flex items-center justify-center p-6 backdrop-blur-xl animate-in fade-in">
+            <div className="glass-panel rounded-[4rem] w-full max-w-md p-12 border border-white/10 shadow-2xl relative">
+              <button 
+                onClick={() => setIsUserModalOpen(false)} 
+                className="absolute top-10 right-10 text-slate-500 hover:text-white"
+                title="Fechar modal"
+              >
+                <X size={32} />
+              </button>
+              <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-10">
+                {editingUserId ? 'Atualizar Utilizador' : 'Novo Utilizador'}
+              </h3>
+              <form onSubmit={handleSaveUser} className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome</label>
+                  <input 
+                    required 
+                    type="text" 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-[#06b6d4]" 
+                    value={userForm.name} 
+                    onChange={e => setUserForm({...userForm, name: e.target.value})}
+                    aria-label="Nome do utilizador"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Papel</label>
+                  <select 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-[#06b6d4] appearance-none cursor-pointer"
+                    value={userForm.role} 
+                    onChange={e => setUserForm({...userForm, role: e.target.value})}
+                    aria-label="Papel do utilizador"
+                  >
+                    <option value="GARCOM">Garçom</option>
+                    <option value="COZINHA">Chef / Cozinha</option>
+                    <option value="CAIXA">Caixa</option>
+                    <option value="ADMIN">Administrador</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">PIN</label>
+                  <input 
+                    required 
+                    type="password" 
+                    maxLength={4}
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-mono text-xl outline-none focus:border-[#06b6d4] text-center" 
+                    value={userForm.pin} 
+                    onChange={e => setUserForm({...userForm, pin: e.target.value.replace(/\D/g, '')})}
+                    aria-label="PIN do utilizador"
+                  />
+                </div>
+                <div className="pt-6">
+                  <button 
+                    type="submit" 
+                    className="w-full py-5 bg-[#06b6d4] text-black rounded-[2rem] font-black uppercase text-xs shadow-glow flex items-center justify-center gap-3 transition-all hover:brightness-110"
+                  >
+                    <Save size={22} /> {editingUserId ? 'Atualizar' : 'Criar'} Utilizador
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const CloudEcosystem = () => (
     <div className="glass-panel rounded-2xl p-8">
