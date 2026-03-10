@@ -1,18 +1,21 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { 
   Search, Minus, Plus, CreditCard, LayoutGrid, Printer, 
   Banknote, X, Utensils, MoveHorizontal, Sparkles, Loader2,
   ChevronRight, Grid3X3, Tag, ShoppingBasket, FileText,
   UserPlus, History, LogOut, CheckCircle2, MoreVertical,
-  ChevronLeft, Layout, Clock, QrCode, ArrowRightLeft, User, Users, Monitor, Shield
+  ChevronLeft, Layout, Clock, QrCode, ArrowRightLeft, User, Users, Monitor, Shield, Settings
 } from 'lucide-react';
 import { Dish, PaymentMethod, Order, Table, Customer } from '../../types';
 import { printThermalInvoice, printTableReview, printCashClosing } from '../lib/printService';
+import ThermalPrinterManager from '../lib/thermalPrinterConfig';
 import LazyImage from '../components/LazyImage';
 
 const POS = () => {
+  const navigate = useNavigate();
   const { 
     tables, activeTableId, setActiveTable, 
     menu, categories, activeOrders, activeOrderId, setActiveOrder, 
@@ -41,6 +44,24 @@ const POS = () => {
   const [orderToChangeId, setOrderToChangeId] = useState<string | null>(null);
   
   const currentOrder = activeOrders.find(o => o.id === activeOrderId);
+  
+  // Função para verificar e configurar impressora
+  const handlePrintWithCheck = (order: any, customer?: any) => {
+    const printerConfig = ThermalPrinterManager.getConfig();
+    
+    if (!printerConfig) {
+      // Impressora não configurada - mostrar alerta e redirecionar
+      addNotification('error', 'Impressora térmica não configurada! Configure a impressora primeiro.');
+      setTimeout(() => {
+        navigate('/printer-config');
+      }, 2000);
+      return;
+    }
+    
+    // Impressora configurada - prosseguir com impressão
+    console.log(`[POS] Imprimindo com impressora: ${printerConfig.name}`);
+    printThermalInvoice(order, menu, settings, customer);
+  };
   
   const closedToday = useMemo(() => {
     const todayStr = new Date().toLocaleDateString('en-CA');
@@ -152,10 +173,8 @@ const POS = () => {
         });
 
         if (order) {
-            printThermalInvoice(
+            handlePrintWithCheck(
                 order, 
-                state.menu, 
-                state.settings, 
                 state.customers.find(c => c.id === order.customerId)
             );
         } else {
@@ -194,6 +213,14 @@ const POS = () => {
               title="Histórico de Turno"
             >
               <History size={22} className="group-hover:rotate-[-10deg] transition-transform" />
+            </button>
+            
+            <button 
+              onClick={() => navigate('/printer-config')}
+              className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center group"
+              title="Configurar Impressora"
+            >
+              <Settings size={20} className="group-hover:rotate-45 transition-transform" />
             </button>
             
             <button 
@@ -622,7 +649,7 @@ const POS = () => {
                         <button 
                             onClick={() => {
                                 console.log(`[POS] Solicitando reimpressão do pedido ${order.invoiceNumber}`);
-                                printThermalInvoice(order, menu, settings, customers.find(c => c.id === order.customerId));
+                                handlePrintWithCheck(order, customers.find(c => c.id === order.customerId));
                             }} 
                             className="p-4 bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all border border-white/5" 
                             title="Reimprimir"
