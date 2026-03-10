@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { 
   Settings, Users, Shield, FileText, Cloud, Terminal,
-  ChevronRight, Building, UserCheck, Lock, Database, Code
+  ChevronRight, Building, UserCheck, Lock, Database, Code,
+  Plus, Edit2, Trash2, X, Save, FileBadge, Landmark, Info, Download
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { generateSAFT, downloadSAFT } from '../lib/saftService';
 
 // Importar componentes existentes
 import Employees from './Employees';
@@ -246,6 +248,126 @@ const SystemHub = () => {
     </div>
   );
 
+  const AGTCompliance = () => {
+    const { settings, updateSettings, activeOrders, customers, menu } = useStore();
+    const [localSettings, setLocalSettings] = useState(settings);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSaveSettings = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSaving(true);
+      try {
+        await updateSettings(localSettings);
+        setTimeout(() => setIsSaving(false), 1000);
+      } catch (error) {
+        setIsSaving(false);
+      }
+    };
+
+    const handleExportSAFT = () => {
+      const period = { month: new Date().getMonth(), year: new Date().getFullYear() };
+      const xml = generateSAFT(activeOrders, customers, menu, settings, period);
+      downloadSAFT(xml, `SAFT_AO_${settings.nif}.xml`);
+    };
+
+    return (
+      <div className="space-y-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-3">
+              <FileBadge className="text-[#06b6d4]" /> Certificação & Série
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">N.º do Certificado AGT</label>
+                <input 
+                  type="text" 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                  value={localSettings.agtCertificate} 
+                  onChange={e => setLocalSettings({...localSettings, agtCertificate: e.target.value})}
+                  aria-label="Número do certificado AGT"
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Série de Faturação Ativa</label>
+                <input 
+                  type="text" 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs uppercase" 
+                  value={localSettings.invoiceSeries} 
+                  onChange={e => setLocalSettings({...localSettings, invoiceSeries: e.target.value})}
+                  aria-label="Série de faturação"
+                />
+              </div>
+              <div className="p-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl flex gap-3">
+                <Info size={20} className="text-[#06b6d4] shrink-0" />
+                <p className="text-[9px] text-slate-400 italic leading-relaxed">Software certificado nos termos do Regime Jurídico das Faturas de Angola. Imutabilidade SHA-256 garantida.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-3">
+              <Landmark className="text-[#06b6d4]" /> Cadastro Fiscal
+            </h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">NIF</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                    value={localSettings.nif} 
+                    onChange={e => setLocalSettings({...localSettings, nif: e.target.value})}
+                    aria-label="NIF"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Capital Social</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                    value={localSettings.capitalSocial} 
+                    onChange={e => setLocalSettings({...localSettings, capitalSocial: e.target.value})}
+                    aria-label="Capital social"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Regime Fiscal IVA</label>
+                <select 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
+                  value={localSettings.taxRegime}
+                  onChange={e => setLocalSettings({...localSettings, taxRegime: e.target.value as any})}
+                  aria-label="Regime fiscal IVA"
+                >
+                  <option value="GERAL">Regime Geral (14%)</option>
+                  <option value="SIMPLIFICADO">Regime Simplificado (7%)</option>
+                  <option value="EXCLUSAO">Regime de Exclusão</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-6 pt-6 border-t border-white/5">
+          <button 
+            onClick={handleSaveSettings} 
+            disabled={isSaving}
+            className="flex-1 py-5 bg-[#06b6d4] text-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center justify-center gap-3 hover:scale-105 transition-all"
+          >
+            <Save size={18}/> {isSaving ? 'Salvando...' : 'Salvar Dados Fiscais'}
+          </button>
+          <button 
+            onClick={handleExportSAFT} 
+            className="flex-1 py-5 bg-white/5 border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-white/10 transition-all"
+          >
+            <Download size={18}/> Exportar SAF-T AO (XML)
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const TechnicalKernel = () => (
     <div className="glass-panel rounded-2xl p-8">
       <h2 className="text-2xl font-bold text-white mb-6">Kernel Técnico</h2>
@@ -286,7 +408,7 @@ const SystemHub = () => {
       description: 'Conformidade regulatória e fiscal',
       icon: <FileText className="w-8 h-8" />,
       color: 'from-green-500 to-green-600',
-      component: <div className="glass-panel rounded-2xl p-8 text-gray-400"><p>Compliance AGT</p></div>
+      component: <AGTCompliance />
     },
     {
       id: 'cloud-ecosystem',
