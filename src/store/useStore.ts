@@ -827,6 +827,12 @@ restoreFromSupabase: async () => {
     if (data?.state_data) {
       set(JSON.parse(data.state_data));
       get().addNotification('success', 'Dados restaurados da nuvem com sucesso!');
+    }
+  } catch (error) {
+    get().addNotification('error', 'Falha ao restaurar da nuvem');
+  }
+},
+
       addExpense: (expense) => set(state => {
         const newExpense = {
           ...expense,
