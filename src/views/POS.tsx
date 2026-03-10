@@ -223,6 +223,24 @@ const POS = () => {
               <Settings size={20} className="group-hover:rotate-45 transition-transform" />
             </button>
             
+            {/* Botão temporário para teste de impressão */}
+            <button 
+              onClick={() => {
+                const state = useStore.getState();
+                const lastOrder = state.activeOrders.find(o => o.status === 'FECHADO');
+                if (lastOrder) {
+                  console.log('[POS] Reimprimindo último pedido:', lastOrder.invoiceNumber);
+                  handlePrintWithCheck(lastOrder, state.customers.find(c => c.id === lastOrder.customerId));
+                } else {
+                  addNotification('error', 'Nenhum pedido fechado encontrado para reimprimir.');
+                }
+              }}
+              className="w-14 h-14 rounded-2xl bg-green-500/10 border border-green-500/20 text-green-500 hover:bg-green-500 hover:text-white transition-all flex items-center justify-center group"
+              title="Reimprimir Último"
+            >
+              <Printer size={20} className="group-hover:scale-110 transition-transform" />
+            </button>
+            
             <button 
               onClick={handleCashClosingClick}
               className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-black transition-all flex flex-col items-center justify-center gap-1 group shadow-lg shadow-emerald-500/5"
