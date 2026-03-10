@@ -144,7 +144,8 @@ const TableLayout = () => {
                 w-28 h-28 rounded-[1.5rem] border-2 flex flex-col items-center justify-center group relative
                 ${isDesignMode ? 'border-orange-500/50 bg-orange-500/5 cursor-move' : 
                   !isOccupied ? 'border-white/10 bg-white/5 hover:border-primary/50' : 
-                  isCritical ? 'border-red-500 bg-red-500/10 animate-glow' : 'border-primary bg-primary/10 shadow-glow'}
+                    'border-red-500 bg-red-500/10 animate-pulse shadow-red-500/20'
+                }
               `}
             >
               {/* Botão de Apagar (Apenas em Modo Design) */}
