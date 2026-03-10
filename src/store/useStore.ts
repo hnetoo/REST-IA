@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { sqliteService } from '../lib/sqliteService';
-import { supabase } from '../lib/supabaseService';
+import { supabase } from '../lib/supabase';
 import { versionControlService } from '../lib/versionControlService';
 import { sqlMigrationService } from '../lib/sqlMigrationService';
 import { databaseService } from '../lib/databaseService';

@@ -153,48 +153,47 @@ const POS = () => {
     }
 
     const orderToPrintId = currentOrder.id;
+    const orderData = currentOrder; // Salvar dados do pedido antes de qualquer alteração
+    const customerData = customers.find(c => c.id === orderData.customerId);
+    
     console.log(`[POS] Finalizando pedido ${orderToPrintId} com método ${method}`);
     
-    checkoutTable(currentOrder.id, method, customerId);
+    // Tentar finalização no banco (pode falhar com 401)
+    try {
+      checkoutTable(currentOrder.id, method, customerId);
+    } catch (dbError) {
+      console.error('[POS] Erro na gravação do pedido:', dbError);
+      addNotification('error', 'Erro ao salvar pedido. Tentando imprimir mesmo assim...');
+    }
+    
+    // Fechar modal e resetar estado
     setIsCheckoutModalOpen(false);
     setCheckoutStep('METHOD');
     setSelectedPaymentMethod(null);
     setSelectedCustomerId(undefined);
     
-    // Aumentar o timeout e garantir que os dados estejam estáveis
+    // IMPRESSÃO GARANTIDA - Independente do sucesso da gravação
     setTimeout(() => {
+      try {
+        console.log(`[POS] Disparando impressão garantida do pedido ${orderToPrintId}`);
+        
+        // Usar dados salvos localmente, não depende do banco
+        handlePrintWithCheck(orderData, customerData);
+        
+        addNotification('success', 'Impressão disparada com sucesso!');
+      } catch (printError) {
+        console.error('[POS] Erro crítico na impressão:', printError);
+        addNotification('error', 'Falha na impressão. Tente novamente.');
+        
+        // Tentar impressão fallback com window.print
         try {
-            const state = useStore.getState();
-            const order = state.activeOrders.find(o => o.id === orderToPrintId);
-            
-            console.log(`[POS] Tentando imprimir pedido após checkout`, { 
-                orderId: orderToPrintId, 
-                encontrado: !!order,
-                status: order?.status 
-            });
-
-            if (order) {
-                handlePrintWithCheck(
-                    order, 
-                    state.customers.find(c => c.id === order.customerId)
-                );
-            } else {
-                console.error(`[POS] Pedido ${orderToPrintId} não encontrado no estado para impressão.`);
-                addNotification('error', 'Erro ao localizar pedido para impressão.');
-            }
-        } catch (printError) {
-            console.error('[POS] Erro crítico na impressão:', printError);
-            addNotification('error', 'Falha na impressão. Tente novamente.');
-            
-            // Tentar impressão fallback com window.print
-            try {
-                console.log('[POS] Tentando impressão fallback com window.print()');
-                window.print();
-            } catch (fallbackError) {
-                console.error('[POS] Erro na impressão fallback:', fallbackError);
-                addNotification('error', 'Sistema de impressão indisponível.');
-            }
+          console.log('[POS] Tentando impressão fallback com window.print()');
+          window.print();
+        } catch (fallbackError) {
+          console.error('[POS] Erro na impressão fallback:', fallbackError);
+          addNotification('error', 'Sistema de impressão indisponível.');
         }
+      }
     }, 500);
   };
 
