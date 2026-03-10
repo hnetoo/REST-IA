@@ -3,128 +3,15 @@ import {
   Settings, Users, Shield, FileText, Cloud, Terminal,
   ChevronRight, Building, UserCheck, Lock, Database, Code
 } from 'lucide-react';
+import { useStore } from '../store/useStore';
 
-// Componentes internos
-const IdentitySettings = () => (
-  <div className="glass-panel rounded-2xl p-8">
-    <h2 className="text-2xl font-bold text-white mb-6">Identidade Geral</h2>
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-400 mb-2">Nome da Aplicação</label>
-        <input 
-          type="text" 
-          className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white" 
-          defaultValue="Vereda OS"
-          aria-label="Nome da aplicação"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-400 mb-2">Logo</label>
-        <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center">
-          <Building className="w-8 h-8 text-[#06b6d4]" />
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const HumanResources = () => {
-  const [activeTab, setActiveTab] = useState<'employees' | 'payroll'>('employees');
-  
-  return (
-    <div className="glass-panel rounded-2xl p-8">
-      <h2 className="text-2xl font-bold text-white mb-6">Capital Humano (RH)</h2>
-      
-      {/* Tabs */}
-      <div className="flex gap-4 mb-6">
-        <button
-          onClick={() => setActiveTab('employees')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'employees' 
-              ? 'bg-[#06b6d4] text-black' 
-              : 'bg-white/10 text-gray-400 hover:bg-white/20'
-          }`}
-        >
-          Funcionários
-        </button>
-        <button
-          onClick={() => setActiveTab('payroll')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'payroll' 
-              ? 'bg-[#06b6d4] text-black' 
-              : 'bg-white/10 text-gray-400 hover:bg-white/20'
-          }`}
-        >
-          Folha de Salários
-        </button>
-      </div>
-
-      {/* Conteúdo das Tabs */}
-      {activeTab === 'employees' && (
-        <div className="text-gray-400">
-          <p>Gestão de funcionários</p>
-        </div>
-      )}
-      
-      {activeTab === 'payroll' && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-white">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left p-3">Nome</th>
-                <th className="text-left p-3">Cargo</th>
-                <th className="text-left p-3">Salário Base (Kz)</th>
-                <th className="text-left p-3">Subsídios</th>
-                <th className="text-left p-3">Descontos</th>
-                <th className="text-left p-3">Total Líquido</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-white/5">
-                <td className="p-3">João Silva</td>
-                <td className="p-3">Gerente</td>
-                <td className="p-3">250.000</td>
-                <td className="p-3">50.000</td>
-                <td className="p-3">30.000</td>
-                <td className="p-3">270.000</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const AccessControl = () => (
-  <div className="glass-panel rounded-2xl p-8">
-    <h2 className="text-2xl font-bold text-white mb-6">Controlo de Acesso</h2>
-    <div className="text-gray-400">
-      <p>Gestão de permissões e utilizadores</p>
-    </div>
-  </div>
-);
-
-const CloudEcosystem = () => (
-  <div className="glass-panel rounded-2xl p-8">
-    <h2 className="text-2xl font-bold text-white mb-6">Ecosistema Cloud</h2>
-    <div className="text-gray-400">
-      <p>Configurações do Supabase e APIs</p>
-    </div>
-  </div>
-);
-
-const TechnicalKernel = () => (
-  <div className="glass-panel rounded-2xl p-8">
-    <h2 className="text-2xl font-bold text-white mb-6">Kernel Técnico</h2>
-    <div className="text-gray-400">
-      <p>Logs e configurações do sistema</p>
-    </div>
-  </div>
-);
+// Importar componentes existentes
+import Employees from './Employees';
+import SettingsComponent from './Settings';
 
 const SystemHub = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
+  const { settings, updateSettings } = useStore();
 
   const systemCards = [
     {
@@ -141,7 +28,7 @@ const SystemHub = () => {
       description: 'Gestão completa de recursos humanos',
       icon: <Users className="w-8 h-8" />,
       color: 'from-blue-500 to-blue-600',
-      component: <HumanResources />
+      component: <Employees />
     },
     {
       id: 'access-control',
@@ -176,6 +63,98 @@ const SystemHub = () => {
       component: <TechnicalKernel />
     }
   ];
+
+  // Componente Identidade usando formulário existente
+  const IdentitySettings = () => {
+    const [localSettings, setLocalSettings] = useState(settings);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSaveSettings = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSaving(true);
+      try {
+        await updateSettings(localSettings);
+        // Mostrar notificação de sucesso
+        setTimeout(() => setIsSaving(false), 1000);
+      } catch (error) {
+        setIsSaving(false);
+      }
+    };
+
+    return (
+      <div className="glass-panel rounded-2xl p-8">
+        <h2 className="text-2xl font-bold text-white mb-6">Identidade Geral</h2>
+        <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10">
+          <div className="grid grid-cols-1 gap-8">
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome do Restaurante</label>
+              <input 
+                type="text" 
+                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                value={localSettings.restaurantName} 
+                onChange={e => setLocalSettings({...localSettings, restaurantName: e.target.value})}
+                aria-label="Nome do restaurante"
+              />
+            </div>
+            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+              <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                {localSettings.appLogoUrl ? (
+                  <img src={localSettings.appLogoUrl} className="w-full h-full object-contain p-2" alt="Logo" />
+                ) : (
+                  <Building size={48} className="text-[#06b6d4]"/>
+                )}
+              </div>
+              <div className="flex-1 space-y-4 w-full">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Identidade Visual (Logo)</p>
+                <button 
+                  type="button" 
+                  className="px-6 py-3 bg-[#06b6d4]/10 border border-[#06b6d4]/20 text-[#06b6d4] rounded-xl text-[10px] font-black uppercase hover:bg-[#06b6d4]/20 transition-all flex items-center gap-2"
+                >
+                  Carregar Novo Logo
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="pt-6">
+            <button 
+              type="submit" 
+              className="w-full py-5 bg-[#06b6d4] text-black rounded-[2rem] font-black uppercase text-xs shadow-glow flex items-center justify-center gap-3 transition-all hover:brightness-110"
+              disabled={isSaving}
+            >
+              {isSaving ? 'Guardando...' : 'Guardar Configurações'}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+
+  const AccessControl = () => (
+    <div className="glass-panel rounded-2xl p-8">
+      <h2 className="text-2xl font-bold text-white mb-6">Controlo de Acesso</h2>
+      <div className="text-gray-400">
+        <p>Gestão de permissões e utilizadores</p>
+      </div>
+    </div>
+  );
+
+  const CloudEcosystem = () => (
+    <div className="glass-panel rounded-2xl p-8">
+      <h2 className="text-2xl font-bold text-white mb-6">Ecosistema Cloud</h2>
+      <div className="text-gray-400">
+        <p>Configurações do Supabase e APIs</p>
+      </div>
+    </div>
+  );
+
+  const TechnicalKernel = () => (
+    <div className="glass-panel rounded-2xl p-8">
+      <h2 className="text-2xl font-bold text-white mb-6">Kernel Técnico</h2>
+      <div className="text-gray-400">
+        <p>Logs e configurações do sistema</p>
+      </div>
+    </div>
+  );
 
   const activeComponent = systemCards.find(card => card.id === activeCard)?.component;
 
