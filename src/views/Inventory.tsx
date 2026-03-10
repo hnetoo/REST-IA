@@ -231,7 +231,14 @@ const Inventory = () => {
                       >
                         <Copy size={14} className="mx-auto" />
                       </button>
-                      <button onClick={() => removeDish(dish.id)} className="w-10 py-2 rounded-lg border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={14} className="mx-auto" /></button>
+                      <button 
+                        onClick={() => removeDish(dish.id)}
+                        className="w-10 py-2 rounded-lg border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all"
+                        title="Remover Produto"
+                        aria-label="Remover Produto"
+                      >
+                        <Trash2 size={14} className="mx-auto" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -256,15 +263,30 @@ const Inventory = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => handleOpenCatModal(cat)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"><Pencil size={14}/></button>
+                  <button 
+                    onClick={() => handleOpenCatModal(cat)} 
+                    className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+                    title="Editar Categoria"
+                    aria-label="Editar Categoria"
+                  >
+                    <Pencil size={14}/>
+                  </button>
                   <button 
                     onClick={() => setDuplicateConfirm({ id: cat.id, name: cat.name, type: 'category' })} 
                     className="p-2 rounded-lg text-primary/60 hover:text-primary hover:bg-primary/10"
                     title="Duplicar Categoria"
+                    aria-label="Duplicar Categoria"
                   >
                     <Copy size={14} />
                   </button>
-                  <button onClick={() => removeCategory(cat.id)} className="p-2 rounded-lg text-red-500/50 hover:text-red-500 hover:bg-red-500/10"><Trash2 size={14}/></button>
+                  <button 
+                    onClick={() => removeCategory(cat.id)} 
+                    className="p-2 rounded-lg text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
+                    title="Remover Categoria"
+                    aria-label="Remover Categoria"
+                  >
+                    <Trash2 size={14}/>
+                  </button>
                 </div>
               </div>
             ))}
@@ -469,7 +491,14 @@ const Inventory = () => {
           <div className="glass-panel rounded-[3rem] w-full max-w-2xl p-10 border border-white/10 shadow-2xl relative overflow-y-auto max-h-[90vh] no-scrollbar">
             <div className="flex justify-between items-center mb-8">
                <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">{editingId ? 'Editar Produto' : 'Novo Produto'}</h3>
-               <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white"><X /></button>
+               <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="text-slate-500 hover:text-white"
+                title="Fechar modal"
+                aria-label="Fechar modal"
+              >
+                <X />
+              </button>
             </div>
             
             <form onSubmit={handleSubmitDish} className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -492,14 +521,26 @@ const Inventory = () => {
 
                  <div className="space-y-4">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Categoria</label>
-                    <select className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary appearance-none" value={dishForm.categoryId} onChange={e => setDishForm({...dishForm, categoryId: e.target.value})}>
+                    <select 
+                      className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary appearance-none" 
+                      value={dishForm.categoryId} 
+                      onChange={e => setDishForm({...dishForm, categoryId: e.target.value})}
+                      title="Selecione uma categoria"
+                      aria-label="Selecione uma categoria"
+                    >
                        {categories.map(c => <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>)}
                     </select>
                  </div>
 
                  <div className="space-y-4">
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Descrição Comercial</label>
-                    <textarea className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary min-h-[120px] text-sm leading-relaxed" value={dishForm.description} onChange={e => setDishForm({...dishForm, description: e.target.value})} />
+                    <textarea 
+                      className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary min-h-[120px] text-sm leading-relaxed" 
+                      value={dishForm.description} 
+                      onChange={e => setDishForm({...dishForm, description: e.target.value})}
+                      placeholder="Descreva o produto..."
+                      aria-label="Descrição do produto"
+                    />
                  </div>
                </div>
 
@@ -529,7 +570,9 @@ const Inventory = () => {
                       hidden 
                       ref={fileInputRef} 
                       accept="image/*" 
-                      onChange={handleFileChange} 
+                      onChange={handleFileChange}
+                      title="Carregar imagem do produto"
+                      aria-label="Carregar imagem do produto"
                     />
                  </div>
 
@@ -542,7 +585,8 @@ const Inventory = () => {
                         placeholder="https://exemplo.com/imagem.jpg"
                         className="w-full p-4 pl-12 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary text-xs" 
                         value={dishForm.image?.startsWith('data:') ? '' : dishForm.image} 
-                        onChange={e => setDishForm({...dishForm, image: e.target.value})} 
+                        onChange={e => setDishForm({...dishForm, image: e.target.value})}
+                        aria-label="URL da imagem do produto"
                       />
                     </div>
                  </div>

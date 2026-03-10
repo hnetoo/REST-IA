@@ -401,9 +401,23 @@ const PublicMenu = () => {
                               className="flex items-center gap-1 bg-primary rounded-2xl p-1.5 shadow-lg shadow-primary/20 animate-in zoom-in duration-200"
                               onClick={(e) => e.stopPropagation()} 
                             >
-                              <button onClick={() => updateCart(dish.id, -1)} className="w-9 h-9 rounded-xl bg-black/20 hover:bg-black/30 flex items-center justify-center text-black transition-colors"><Minus size={16} strokeWidth={3}/></button>
+                              <button 
+                                onClick={() => updateCart(dish.id, -1)} 
+                                className="w-9 h-9 rounded-xl bg-black/20 hover:bg-black/30 flex items-center justify-center text-black transition-colors"
+                                title="Remover quantidade"
+                                aria-label="Remover quantidade"
+                              >
+                                <Minus size={16} strokeWidth={3}/>
+                              </button>
                               <span className="font-black text-black text-sm min-w-[1.5rem] text-center">{itemInCart.quantity}</span>
-                              <button onClick={() => updateCart(dish.id, 1)} className="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center hover:scale-105 transition-transform"><Plus size={16} strokeWidth={3}/></button>
+                              <button 
+                                onClick={() => updateCart(dish.id, 1)} 
+                                className="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center hover:scale-105 transition-transform"
+                                title="Adicionar quantidade"
+                                aria-label="Adicionar quantidade"
+                              >
+                                <Plus size={16} strokeWidth={3}/>
+                              </button>
                             </div>
                           ) : (
                             <button 
@@ -452,6 +466,8 @@ const PublicMenu = () => {
                 setCart({}); 
               }}
               className="w-full bg-white text-black p-1.5 pl-6 pr-2 rounded-[2rem] shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] flex items-center justify-between group overflow-hidden relative hover:scale-[1.02] transition-transform"
+              title="Confirmar pedido"
+              aria-label="Confirmar pedido"
            >
               <div className="flex flex-col items-start">
                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5">{cartCount} Itens</span>
@@ -476,6 +492,8 @@ const PublicMenu = () => {
             <button 
               onClick={() => setSelectedDish(null)} 
               className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-all"
+              title="Fechar detalhes"
+              aria-label="Fechar detalhes"
             >
               <X size={20}/>
             </button>
