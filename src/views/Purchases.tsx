@@ -50,12 +50,23 @@ const Purchases = () => {
   const fetchPurchaseRequests = async () => {
     try {
       setLoading(true);
+      
+      // Verificar se o cliente Supabase está inicializado
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      console.log('[DEBUG] Usando URL:', supabaseUrl);
+      
+      if (!supabaseUrl) {
+        throw new Error('URL do Supabase não encontrada');
+      }
+      
+      console.log('[PURCHASES] Buscando pedidos...');
       const { data, error } = await supabase
         .from('purchase_requests')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('[PURCHASES] Pedidos carregados:', data?.length || 0);
       setRequests(data || []);
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error);
@@ -76,11 +87,20 @@ const Purchases = () => {
     try {
       let proforma_url = '';
 
+      // Verificar se o cliente Supabase está inicializado
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      console.log('[DEBUG] Enviando pedido usando URL:', supabaseUrl);
+      
+      if (!supabaseUrl) {
+        throw new Error('URL do Supabase não encontrada');
+      }
+
       // Upload proforma file if exists
       if (formData.proforma_file) {
         const fileExt = formData.proforma_file.name.split('.').pop();
         const fileName = `proforma_${Date.now()}.${fileExt}`;
         
+        console.log('[PURCHASES] Fazendo upload do arquivo...');
         const { data, error } = await supabase.storage
           .from('purchase-documents')
           .upload(fileName, formData.proforma_file);
@@ -95,6 +115,7 @@ const Purchases = () => {
       }
 
       // Insert purchase request
+      console.log('[PURCHASES] Enviando pedido para o banco...');
       const { error } = await supabase
         .from('purchase_requests')
         .insert({
@@ -107,6 +128,7 @@ const Purchases = () => {
 
       if (error) throw error;
 
+      console.log('[PURCHASES] Pedido enviado com sucesso!');
       addNotification('success', 'Pedido de compra enviado com sucesso!');
       setFormData({ description: '', amount: '', provider: '', proforma_file: null });
       setShowForm(false);
