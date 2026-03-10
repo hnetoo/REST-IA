@@ -7,7 +7,7 @@ import {
 import { Table, TableZone } from '../../types';
 
 const TableLayout = () => {
-  const { tables, activeOrders, setActiveTable, updateTablePosition, addNotification, removeTable, closeTable } = useStore();
+  const { tables, activeOrders, setActiveTable, updateTablePosition, addNotification, removeTable, closeTable, addTable } = useStore();
   const [activeZone, setActiveZone] = useState<TableZone>('INTERIOR');
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -48,6 +48,26 @@ const TableLayout = () => {
       removeTable(tableToDelete.id);
       setTableToDelete(null);
     }
+  };
+
+  const handleAddTable = () => {
+    // Encontrar o próximo ID disponível
+    const nextId = Math.max(...tables.map(t => t.id), 0) + 1;
+    
+    const newTable: Table = {
+      id: nextId,
+      name: `Mesa ${nextId}`,
+      seats: 4,
+      status: 'LIVRE',
+      x: 0,
+      y: 0,
+      zone: activeZone,
+      shape: 'SQUARE',
+      rotation: 0
+    };
+    
+    addTable(newTable);
+    addNotification('success', `Mesa ${nextId} adicionada com sucesso!`);
   };
 
   const filteredTables = tables.filter(t => t.zone === activeZone);
@@ -200,6 +220,7 @@ const TableLayout = () => {
 
         {!isDesignMode && (
           <button 
+            onClick={handleAddTable}
             style={{ 
               position: 'absolute', 
               right: '40px', 

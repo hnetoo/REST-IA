@@ -8,11 +8,11 @@ import {
 } from 'lucide-react';
 import { printThermalInvoice, printFinanceReport } from '../lib/printService';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
-import { PaymentMethodConfig, Order } from '../../types';
+import { PaymentMethodConfig, Order, Expense, ExpenseCategory, ExpenseStatus } from '../../types';
 
 const Finance = () => {
-  const { activeOrders, settings, menu, customers, addNotification, paymentConfigs, addPaymentConfig, updatePaymentConfig } = useStore();
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SALES' | 'AUDIT' | 'LEGAL' | 'CONFIG'>('OVERVIEW');
+  const { activeOrders, settings, menu, customers, addNotification, paymentConfigs, addPaymentConfig, updatePaymentConfig, expenses, addExpense, updateExpense, removeExpense, approveExpense } = useStore();
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SALES' | 'AUDIT' | 'LEGAL' | 'CONFIG' | 'EXPENSES'>('OVERVIEW');
   const [saftLoading, setSaftLoading] = useState(false);
   const [isAddingPayment, setIsAddingPayment] = useState(false);
   const [newPayment, setNewPayment] = useState<Omit<PaymentMethodConfig, 'id'>>({
@@ -20,6 +20,20 @@ const Finance = () => {
     type: 'NUMERARIO',
     icon: 'Banknote',
     isActive: true
+  });
+  
+  // Estados para despesas
+  const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [newExpense, setNewExpense] = useState<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>({
+    description: '',
+    amount: 0,
+    category: 'OUTROS',
+    status: 'PENDENTE',
+    date: new Date(),
+    paymentMethod: 'NUMERARIO',
+    receipt: '',
+    notes: ''
   });
 
   const closedOrders = useMemo(() => activeOrders.filter(o => o.status === 'FECHADO'), [activeOrders]);
@@ -75,7 +89,98 @@ const Finance = () => {
     addNotification('success', 'Relatório exportado com sucesso.');
   };
 
+  // Funções para despesas
+  const handleAddExpense = () => {
+    if (!newExpense.description || newExpense.amount <= 0) {
+      addNotification('error', 'Preencha todos os campos obrigatórios.');
+      return;
+    }
+    
+    addExpense(newExpense);
+    setNewExpense({
+      description: '',
+      amount: 0,
+      category: 'OUTROS',
+      status: 'PENDENTE',
+      date: new Date(),
+      paymentMethod: 'NUMERARIO',
+      receipt: '',
+      notes: ''
+    });
+    setIsAddingExpense(false);
+    addNotification('success', 'Despesa adicionada com sucesso.');
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setNewExpense({
+      description: expense.description,
+      amount: expense.amount,
+      category: expense.category,
+      status: expense.status,
+      date: expense.date,
+      paymentMethod: expense.paymentMethod,
+      receipt: expense.receipt || '',
+      notes: expense.notes || ''
+    });
+  };
+
+  const handleUpdateExpense = () => {
+    if (!editingExpense || !newExpense.description || newExpense.amount <= 0) {
+      addNotification('error', 'Preencha todos os campos obrigatórios.');
+      return;
+    }
+    
+    updateExpense(editingExpense.id, newExpense);
+    setEditingExpense(null);
+    setNewExpense({
+      description: '',
+      amount: 0,
+      category: 'OUTROS',
+      status: 'PENDENTE',
+      date: new Date(),
+      paymentMethod: 'NUMERARIO',
+      receipt: '',
+      notes: ''
+    });
+    addNotification('success', 'Despesa atualizada com sucesso.');
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    if (confirm('Tem certeza que deseja apagar esta despesa?')) {
+      removeExpense(id);
+      addNotification('success', 'Despesa removida com sucesso.');
+    }
+  };
+
+  const handleApproveExpense = (expense: Expense) => {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    approveExpense(expense.id, currentUser.name || 'Sistema');
+    addNotification('success', 'Despesa aprovada com sucesso.');
+  };
+
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(val);
+
+  const getCategoryColor = (category: ExpenseCategory) => {
+    switch (category) {
+      case 'ALIMENTACAO': return 'text-orange-500';
+      case 'BEBIDAS': return 'text-blue-500';
+      case 'MATERIAL_LIMPEZA': return 'text-green-500';
+      case 'UTILIDADES': return 'text-yellow-500';
+      case 'REPARACOES': return 'text-red-500';
+      case 'MARKETING': return 'text-purple-500';
+      default: return 'text-slate-500';
+    }
+  };
+
+  const getStatusColor = (status: ExpenseStatus) => {
+    switch (status) {
+      case 'PENDENTE': return 'text-yellow-500';
+      case 'APROVADO': return 'text-blue-500';
+      case 'PAGO': return 'text-green-500';
+      default: return 'text-slate-500';
+    }
+  };
 
   return (
     <div className="p-8 h-full overflow-y-auto no-scrollbar bg-background">
@@ -100,6 +205,7 @@ const Finance = () => {
                { id: 'OVERVIEW', label: 'Rendimento', icon: LayoutDashboard },
                { id: 'SALES', label: 'Vendas', icon: History },
                { id: 'CONFIG', label: 'Pagamentos', icon: Banknote },
+               { id: 'EXPENSES', label: 'Despesas', icon: DollarSign },
                { id: 'AUDIT', label: 'Auditoria AGT', icon: FileText },
                { id: 'LEGAL', label: 'Certificação', icon: ShieldCheck }
              ].map(tab => (
@@ -288,6 +394,89 @@ const Finance = () => {
           </div>
         )}
 
+        {activeTab === 'EXPENSES' && (
+          <div className="space-y-8 animate-in slide-in-from-bottom-4">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Gestão de Despesas</h3>
+              <button 
+                onClick={() => setIsAddingExpense(true)}
+                className="px-6 py-3 bg-primary text-black rounded-xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center gap-2 hover:scale-105 transition-all"
+              >
+                <Plus size={16} /> Nova Despesa
+              </button>
+            </div>
+
+            {/* Lista de Despesas */}
+            <div className="glass-panel rounded-[3rem] border border-white/5 overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-white/5 border-b border-white/5">
+                  <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    <th className="px-6 py-4">Descrição</th>
+                    <th className="px-6 py-4">Categoria</th>
+                    <th className="px-6 py-4">Valor</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Data</th>
+                    <th className="px-6 py-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {expenses.slice(-20).map(expense => (
+                    <tr key={expense.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="font-bold text-white text-sm">{expense.description}</div>
+                          {expense.notes && <div className="text-[8px] text-slate-400 mt-1">{expense.notes}</div>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`text-[8px] font-black uppercase ${getCategoryColor(expense.category)}`}>
+                          {expense.category.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount)}</td>
+                      <td className="px-6 py-4">
+                        <span className={`text-[8px] font-black uppercase ${getStatusColor(expense.status)}`}>
+                          {expense.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500 font-mono">
+                        {new Date(expense.date).toLocaleDateString('pt-AO')}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex gap-2 justify-end">
+                          <button 
+                            onClick={() => handleEditExpense(expense)}
+                            className="p-2 bg-white/5 text-slate-400 hover:text-primary rounded-lg transition-all"
+                            title="Editar despesa"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          {expense.status === 'PENDENTE' && (
+                            <button 
+                              onClick={() => handleApproveExpense(expense)}
+                              className="p-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg transition-all"
+                              title="Aprovar despesa"
+                            >
+                              <Check size={16} />
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => handleDeleteExpense(expense.id)}
+                            className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg transition-all"
+                            title="Apagar despesa"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'AUDIT' && (
           <div className="max-w-4xl mx-auto space-y-8">
              <div className="glass-panel p-10 rounded-[3rem] border border-primary/20 bg-primary/5 text-center">
@@ -330,6 +519,125 @@ const Finance = () => {
           </div>
         )}
       </div>
+
+      {/* Modal para Adicionar/Editar Despesa */}
+      {(isAddingExpense || editingExpense) && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] flex items-center justify-center p-6">
+          <div className="max-w-md w-full glass-panel p-8 rounded-[3rem] border border-white/10">
+            <h3 className="text-2xl font-black text-white italic uppercase mb-8">
+              {editingExpense ? 'Editar Despesa' : 'Nova Despesa'}
+            </h3>
+            <div className="space-y-6">
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Descrição</label>
+                <input 
+                  type="text"
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
+                  placeholder="Ex: Compra de material de limpeza"
+                  value={newExpense.description}
+                  onChange={e => setNewExpense({...newExpense, description: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Categoria</label>
+                <select 
+                  className="w-full p-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
+                  value={newExpense.category}
+                  onChange={e => setNewExpense({...newExpense, category: e.target.value as ExpenseCategory})}
+                >
+                  <option value="ALIMENTACAO">Alimentação</option>
+                  <option value="BEBIDAS">Bebidas</option>
+                  <option value="MATERIAL_LIMPEZA">Material de Limpeza</option>
+                  <option value="UTILIDADES">Utilidades</option>
+                  <option value="REPARACOES">Reparações</option>
+                  <option value="MARKETING">Marketing</option>
+                  <option value="OUTROS">Outros</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Valor (Kz)</label>
+                <input 
+                  type="number"
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
+                  placeholder="0.00"
+                  value={newExpense.amount}
+                  onChange={e => setNewExpense({...newExpense, amount: parseFloat(e.target.value) || 0})}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Método de Pagamento</label>
+                <select 
+                  className="w-full p-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
+                  value={newExpense.paymentMethod}
+                  onChange={e => setNewExpense({...newExpense, paymentMethod: e.target.value as PaymentMethod})}
+                >
+                  <option value="NUMERARIO">Numerário</option>
+                  <option value="TPA">TPA / Cartão</option>
+                  <option value="TRANSFERENCIA">Transferência</option>
+                  <option value="QR_CODE">QR Code / Referência</option>
+                  <option value="PAGAR_DEPOIS">Conta Corrente / Pagar Depois</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Data</label>
+                <input 
+                  type="date"
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
+                  value={newExpense.date instanceof Date ? newExpense.date.toISOString().split('T')[0] : newExpense.date}
+                  onChange={e => setNewExpense({...newExpense, date: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Recibo</label>
+                <input 
+                  type="text"
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
+                  placeholder="Número do recibo (opcional)"
+                  value={newExpense.receipt}
+                  onChange={e => setNewExpense({...newExpense, receipt: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Notas</label>
+                <textarea 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary resize-none"
+                  placeholder="Observações adicionais (opcional)"
+                  rows={3}
+                  value={newExpense.notes}
+                  onChange={e => setNewExpense({...newExpense, notes: e.target.value})}
+                />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button 
+                  onClick={() => {
+                    setIsAddingExpense(false);
+                    setEditingExpense(null);
+                    setNewExpense({
+                      description: '',
+                      amount: 0,
+                      category: 'OUTROS',
+                      status: 'PENDENTE',
+                      date: new Date(),
+                      paymentMethod: 'NUMERARIO',
+                      receipt: '',
+                      notes: ''
+                    });
+                  }}
+                  className="flex-1 py-4 bg-white/5 text-slate-400 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/10 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={editingExpense ? handleUpdateExpense : handleAddExpense}
+                  className="flex-1 py-4 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-glow"
+                >
+                  {editingExpense ? 'Atualizar' : 'Adicionar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

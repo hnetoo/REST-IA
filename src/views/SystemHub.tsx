@@ -12,6 +12,16 @@ import { generateSAFT, downloadSAFT } from '../lib/saftService';
 import Employees from './Employees';
 import SettingsComponent from './Settings';
 
+// Definir interface User
+interface User {
+  id: string;
+  name: string;
+  role: string;
+  pin: string;
+  permissions: string[];
+  status: string;
+}
+
 const SystemHub = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const { settings, updateSettings } = useStore();
@@ -46,6 +56,60 @@ const SystemHub = () => {
                 value={localSettings.restaurantName} 
                 onChange={e => setLocalSettings({...localSettings, restaurantName: e.target.value})}
                 aria-label="Nome do restaurante"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">NIF (Número de Identificação Fiscal)</label>
+              <input 
+                type="text" 
+                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                value={localSettings.nif} 
+                onChange={e => setLocalSettings({...localSettings, nif: e.target.value})}
+                aria-label="NIF do restaurante"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Telefone</label>
+              <input 
+                type="tel" 
+                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                value={localSettings.phone || ''} 
+                onChange={e => setLocalSettings({...localSettings, phone: e.target.value})}
+                aria-label="Telefone do restaurante"
+                placeholder="+244 900 000 000"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Morada</label>
+              <input 
+                type="text" 
+                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                value={localSettings.address || ''} 
+                onChange={e => setLocalSettings({...localSettings, address: e.target.value})}
+                aria-label="Morada do restaurante"
+                placeholder="Rua Principal, 123 - Bairro, Cidade"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Email</label>
+              <input 
+                type="email" 
+                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                value={localSettings.email || ''} 
+                onChange={e => setLocalSettings({...localSettings, email: e.target.value})}
+                aria-label="Email do restaurante"
+                placeholder="contato@restaurante.com"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Website</label>
+              <input 
+                type="url" 
+                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                value={localSettings.website || ''} 
+                onChange={e => setLocalSettings({...localSettings, website: e.target.value})}
+                aria-label="Website do restaurante"
+                placeholder="https://www.restaurante.com"
               />
             </div>
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
@@ -250,7 +314,12 @@ const SystemHub = () => {
       e.preventDefault();
       setIsSaving(true);
       try {
-        await updateSettings(localSettings);
+        // Salvar apenas as configurações que existem no tipo SystemSettings
+        const settingsToSave = {
+          restaurantName: localSettings.restaurantName,
+          appLogoUrl: localSettings.appLogoUrl
+        };
+        await updateSettings(settingsToSave);
         setTimeout(() => setIsSaving(false), 1000);
       } catch (error) {
         setIsSaving(false);
@@ -286,7 +355,7 @@ const SystemHub = () => {
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estado da Infraestrutura Cloud</span>
             </div>
             <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Hub de Dados Supabase</h3>
-            <p className="text-xs text-slate-400 mt-2 max-w-lg leading-relaxed">Este módulo sincroniza os seus dados locais com a nuvem de forma unidirecional. A nuvem serve apenas para alimentar o seu <b>Menu Digital</b> e <b>Dashboard Mobile (Netlify)</b>.</p>
+            <p className="text-xs text-slate-400 mt-2 max-w-lg leading-relaxed">Este módulo sincroniza os seus dados locais com a nuvem de forma unidirecional. A nuvem serve apenas para alimentar o seu <b>Menu Digital</b> e <b>Dashboard Mobile (Vercel)</b>.</p>
           </div>
           <div className="flex gap-3 z-10">
             <button 
@@ -356,13 +425,13 @@ const SystemHub = () => {
             </h4>
             <div className="space-y-4">
               <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">URL do Menu Digital (Netlify/Vercel)</label>
+                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">URL do Menu Digital (Vercel)</label>
                 <input 
                   type="text" 
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
                   value={localSettings.customDigitalMenuUrl} 
                   onChange={e => setLocalSettings({...localSettings, customDigitalMenuUrl: e.target.value})} 
-                  placeholder="https://meu-restaurante.netlify.app"
+                  placeholder="https://meu-restaurante.vercel.app"
                   aria-label="URL do menu digital"
                 />
               </div>
@@ -386,7 +455,12 @@ const SystemHub = () => {
       e.preventDefault();
       setIsSaving(true);
       try {
-        await updateSettings(localSettings);
+        // Salvar apenas as configurações que existem no tipo SystemSettings
+        const settingsToSave = {
+          restaurantName: localSettings.restaurantName,
+          appLogoUrl: localSettings.appLogoUrl
+        };
+        await updateSettings(settingsToSave);
         setTimeout(() => setIsSaving(false), 1000);
       } catch (error) {
         setIsSaving(false);
@@ -426,6 +500,53 @@ const SystemHub = () => {
                   onChange={e => setLocalSettings({...localSettings, invoiceSeries: e.target.value})}
                   aria-label="Série de faturação"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Certificação do Software</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                    value={localSettings.agtSoftwareCertification || ''} 
+                    onChange={e => setLocalSettings({...localSettings, agtSoftwareCertification: e.target.value})}
+                    aria-label="Certificação do software"
+                    placeholder="Nº da certificação"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Versão do Software</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                    value={localSettings.agtSoftwareVersion || ''} 
+                    onChange={e => setLocalSettings({...localSettings, agtSoftwareVersion: e.target.value})}
+                    aria-label="Versão do software"
+                    placeholder="v1.0.0"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Nº do Processo</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                    value={localSettings.agtProcessNumber || ''} 
+                    onChange={e => setLocalSettings({...localSettings, agtProcessNumber: e.target.value})}
+                    aria-label="Número do processo"
+                    placeholder="2023/AGT/12345"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Data de Certificação</label>
+                  <input 
+                    type="date" 
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
+                    value={localSettings.agtCertificationDate || ''} 
+                    onChange={e => setLocalSettings({...localSettings, agtCertificationDate: e.target.value})}
+                    aria-label="Data de certificação"
+                  />
+                </div>
               </div>
               <div className="p-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl flex gap-3">
                 <Info size={20} className="text-[#06b6d4] shrink-0" />
@@ -503,7 +624,7 @@ const SystemHub = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [logs, setLogs] = useState([
       { id: 1, timestamp: new Date().toISOString(), level: 'INFO', message: 'Sistema inicializado com sucesso' },
-      { id: 2, timestamp: new Date(Date.now() - 3600000).toISOString(), level: 'WARNING', message: 'Conexão com banco de dados instável' },
+      { id: 2, timestamp: new Date(Date.now() - 3600000).toISOString(), level: 'WARNING', message: 'Conexao com banco de dados instavel' },
       { id: 3, timestamp: new Date(Date.now() - 7200000).toISOString(), level: 'ERROR', message: 'Falha ao processar pagamento #1234' }
     ]);
 
@@ -524,12 +645,12 @@ const SystemHub = () => {
     };
 
     const handleExportLogs = () => {
-      const logText = logs.map(log => `[${log.timestamp}] ${log.level}: ${log.message}`).join('\n');
+      const logText = logs.map(log => '[' + log.timestamp + '] ' + log.level + ': ' + log.message).join('\n');
       const blob = new Blob([logText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `system-logs-${new Date().toISOString().split('T')[0]}.txt`;
+      a.download = 'system-logs-' + new Date().toISOString().split('T')[0] + '.txt';
       a.click();
       URL.revokeObjectURL(url);
       addNotification('success', 'Logs exportados com sucesso!');
@@ -552,14 +673,13 @@ const SystemHub = () => {
               <Terminal size={32} />
             </div>
             <div>
-              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Kernel Técnico</h3>
+              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Kernel Tecnico</h3>
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">REST IA OS System Core</p>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Logs do Sistema */}
           <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
             <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
               <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
@@ -576,7 +696,7 @@ const SystemHub = () => {
                     <div className="flex justify-between items-start gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[8px] font-black uppercase ${getLevelColor(log.level)}`}>
+                          <span className={'text-[8px] font-black uppercase ' + getLevelColor(log.level)}>
                             {log.level}
                           </span>
                           <span className="text-[8px] text-slate-400">
@@ -588,7 +708,6 @@ const SystemHub = () => {
                     </div>
                   </div>
                 ))}
-                </div>
               </div>
               <div className="flex gap-2 pt-4 border-t border-white/5">
                 <button 
@@ -607,7 +726,6 @@ const SystemHub = () => {
             </div>
           </div>
 
-          {/* Configurações do Sistema */}
           <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
             <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
               <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
@@ -618,8 +736,7 @@ const SystemHub = () => {
                 <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Modo de Depuração</label>
                 <select 
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
-                  value={localSettings.debugMode || 'OFF'}
-                  onChange={e => setLocalSettings({...localSettings, debugMode: e.target.value})}
+                  value="OFF"
                   aria-label="Modo de depuração"
                 >
                   <option value="OFF">Desativado</option>
@@ -631,8 +748,7 @@ const SystemHub = () => {
                 <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Nível de Log</label>
                 <select 
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
-                  value={localSettings.logLevel || 'INFO'}
-                  onChange={e => setLocalSettings({...localSettings, logLevel: e.target.value})}
+                  value="INFO"
                   aria-label="Nível de log"
                 >
                   <option value="ERROR">Apenas Erros</option>
@@ -645,8 +761,7 @@ const SystemHub = () => {
                 <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Cache de Dados</label>
                 <select 
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
-                  value={localSettings.cacheMode || 'NORMAL'}
-                  onChange={e => setLocalSettings({...localSettings, cacheMode: e.target.value})}
+                  value="NORMAL"
                   aria-label="Modo de cache"
                 >
                   <option value="DISABLED">Desativado</option>
@@ -665,6 +780,108 @@ const SystemHub = () => {
               >
                 {isSaving ? 'Guardando...' : 'Salvar Configurações'}
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const DigitalKitchen = () => {
+    const [kdsStatus, setKdsStatus] = useState({
+      isOnline: false,
+      lastSync: null as string | null,
+      ordersToday: 0,
+      activeOrders: 0
+    });
+
+    const handleToggleKDS = () => {
+      setKdsStatus(prev => ({
+        ...prev,
+        isOnline: !prev.isOnline,
+        lastSync: new Date().toISOString()
+      }));
+    };
+
+    return (
+      <div className="space-y-12">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg">
+              <ChefHat size={32} />
+            </div>
+            <div>
+              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Cozinha Digital</h3>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sistema KDS Online</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Status do KDS */}
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+              <div className={`w-4 h-4 rounded-full ${kdsStatus.isOnline ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+              Status do Sistema
+            </h4>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Conexão</span>
+                <span className={`text-lg font-bold ${kdsStatus.isOnline ? 'text-emerald-500' : 'text-red-500'}`}>
+                  {kdsStatus.isOnline ? 'ONLINE' : 'OFFLINE'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Última Sincronização</span>
+                <span className="text-sm text-white">
+                  {kdsStatus.lastSync ? new Date(kdsStatus.lastSync).toLocaleString() : 'Nunca'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Pedidos Hoje</span>
+                <span className="text-lg font-mono font-bold text-white">{kdsStatus.ordersToday}</span>
+              </div>
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Pedidos Ativos</span>
+                <span className="text-lg font-mono font-bold text-[#06b6d4]">{kdsStatus.activeOrders}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Controlo do KDS */}
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
+              Controlo do KDS
+            </h4>
+            <div className="space-y-4">
+              <div className="p-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl flex gap-3">
+                <div className="w-5 h-5 bg-[#06b6d4] rounded-full"></div>
+                <p className="text-[9px] text-slate-400 italic leading-relaxed">O KDS (Kitchen Display System) permite à cozinha visualizar e gerir pedidos em tempo real.</p>
+              </div>
+              
+              <button 
+                onClick={handleToggleKDS}
+                className={`w-full py-6 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 ${
+                  kdsStatus.isOnline 
+                    ? 'bg-red-500 text-white hover:bg-red-600' 
+                    : 'bg-emerald-500 text-white hover:bg-emerald-600'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full ${kdsStatus.isOnline ? 'bg-white' : 'bg-white'}`}></div>
+                {kdsStatus.isOnline ? 'Desligar KDS' : 'Ligar KDS'}
+              </button>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-white mb-2">24/7</div>
+                  <div className="text-[8px] text-slate-400 uppercase">Disponibilidade</div>
+                </div>
+                <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-[#06b6d4] mb-2">0.3s</div>
+                  <div className="text-[8px] text-slate-400 uppercase">Latência</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -800,6 +1017,14 @@ const SystemHub = () => {
       component: <KitchenKDS />
     },
     {
+      id: 'digital-kitchen',
+      title: 'Cozinha Digital',
+      description: 'Sistema KDS Online em Tempo Real',
+      icon: <ChefHat className="w-8 h-8" />,
+      color: 'from-emerald-500 to-teal-600',
+      component: <DigitalKitchen />
+    },
+    {
       id: 'access-control',
       title: 'Controlo de Acesso',
       description: 'Segurança e permissões do sistema',
@@ -894,6 +1119,14 @@ const SystemHub = () => {
                         <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Status</span>
                         <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Pedidos</span>
                         <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Controlo</span>
+                      </>
+                    )}
+                    {card.id === 'digital-kitchen' && (
+                      <>
+                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Online</span>
+                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">KDS</span>
+                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Tempo Real</span>
+                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Sincronização</span>
                       </>
                     )}
                     {card.id === 'access-control' && (

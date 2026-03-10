@@ -5,20 +5,16 @@ import {
   Package, Plus, Trash2, Box, Pencil, X, Utensils, 
   Tag, Save, Upload, Image as ImageIcon, Link as LinkIcon,
   Smartphone, QrCode, Sparkles, Eye, EyeOff, Star,
-  ExternalLink, Printer, Copy, Check, Share2, Info
+  ExternalLink, Printer, Copy, Check, Share2, Info, Edit,
+  Cloud, RefreshCw
 } from 'lucide-react';
 import { Dish, MenuCategory } from '../../types';
 import LazyImage from '../components/LazyImage';
 
 const Inventory = () => {
   const { 
-    menu, stock, categories, 
-    addDish, updateDish, removeDish, 
-    addCategory, updateCategory, removeCategory,
-    duplicateDish, duplicateCategory,
-    updateStockQuantity,
-    toggleDishVisibility, toggleDishFeatured, toggleCategoryVisibility,
-    settings, addNotification
+    menu, categories, settings, updateSettings, addNotification,
+    syncProductsToCloud, syncCategoriesToCloud
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'menu' | 'categories' | 'stock' | 'digital'>('menu');
@@ -27,8 +23,6 @@ const Inventory = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [duplicateConfirm, setDuplicateConfirm] = useState<{ id: string, name: string, type: 'dish' | 'category' } | null>(null);
   const [hasCopied, setHasCopied] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [dishForm, setDishForm] = useState<Partial<Dish>>({
     name: '', price: 0, costPrice: 0, categoryId: '', description: '', image: '', taxCode: 'NOR'
   });
@@ -36,6 +30,12 @@ const Inventory = () => {
   const [catForm, setCatForm] = useState<Partial<MenuCategory>>({
     name: '', icon: 'Grid3X3'
   });
+
+  // Estados para edição de URL
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [tempUrl, setTempUrl] = useState(settings.customDigitalMenuUrl || '');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(val);
 
@@ -82,6 +82,33 @@ const Inventory = () => {
       </html>
     `);
     printWindow.document.close();
+  };
+
+  // Funções para edição de URL
+  const handleEditUrl = () => {
+    setTempUrl(settings.customDigitalMenuUrl || '');
+    setIsEditingUrl(true);
+  };
+
+  const handleSaveUrl = () => {
+    if (!tempUrl.trim()) {
+      alert('Por favor, insira uma URL válida.');
+      return;
+    }
+    
+    updateSettings({ customDigitalMenuUrl: tempUrl.trim() });
+    setIsEditingUrl(false);
+  };
+
+  const handleCancelEditUrl = () => {
+    setTempUrl(settings.customDigitalMenuUrl || '');
+    setIsEditingUrl(false);
+  };
+
+  const handleTestUrl = () => {
+    if (tempUrl) {
+      window.open(tempUrl, '_blank');
+    }
   };
 
   const handleOpenDishModal = (dish?: Dish) => {
@@ -171,15 +198,26 @@ const Inventory = () => {
           <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">Gestão Central de Mercadorias</p>
         </div>
         
-        {activeTab !== 'digital' && (
-          <button 
-            onClick={() => activeTab === 'menu' ? handleOpenDishModal() : activeTab === 'categories' ? handleOpenCatModal() : null}
-            className="bg-primary text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
-          >
-            <Plus size={20} />
-            {activeTab === 'menu' ? 'Novo Prato' : activeTab === 'categories' ? 'Nova Categoria' : 'Ajustar Ficha'}
-          </button>
-        )}
+        <div className="flex gap-3">
+          {(activeTab === 'menu' || activeTab === 'categories') && (
+            <button 
+              onClick={() => activeTab === 'menu' ? syncProductsToCloud() : syncCategoriesToCloud()}
+              className="bg-blue-500 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
+            >
+              <Cloud size={18} />
+              {activeTab === 'menu' ? 'Sincronizar Produtos' : 'Sincronizar Categorias'}
+            </button>
+          )}
+          {activeTab !== 'digital' && (
+            <button 
+              onClick={() => activeTab === 'menu' ? handleOpenDishModal() : activeTab === 'categories' ? handleOpenCatModal() : null}
+              className="bg-primary text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
+            >
+              <Plus size={20} />
+              {activeTab === 'menu' ? 'Novo Prato' : activeTab === 'categories' ? 'Nova Categoria' : 'Ajustar Ficha'}
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="flex gap-4 mb-8 border-b border-white/5 overflow-x-auto no-scrollbar">
@@ -352,21 +390,75 @@ const Inventory = () => {
                   <div>
                     <div className="flex items-center gap-3 mb-6">
                        <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary"><Smartphone size={20}/></div>
-                       <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Estado da Montra Digital</h3>
+                       <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Configuração do Menu Digital</h3>
                     </div>
-                    <div className="space-y-4 mb-10">
+                    <div className="space-y-4">
                        <div className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5">
-                          <div>
-                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">URL de Destino</p>
-                             <p className="text-sm font-mono text-primary mt-1 truncate max-w-md">{digitalMenuUrl}</p>
+                          <div className="flex-1">
+                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">URL Personalizada</p>
+                             {isEditingUrl ? (
+                               <div className="flex gap-2">
+                                 <input
+                                   type="url"
+                                   className="flex-1 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white font-mono text-xs outline-none focus:border-primary"
+                                   placeholder="https://meu-restaurante.vercel.app"
+                                   value={tempUrl}
+                                   onChange={e => setTempUrl(e.target.value)}
+                                 />
+                                 <button
+                                   onClick={handleTestUrl}
+                                   className="px-3 py-2 bg-emerald-500 text-black rounded-xl font-black text-xs uppercase hover:bg-emerald-600 transition-all"
+                                   title="Testar URL"
+                                 >
+                                   <ExternalLink size={14} />
+                                 </button>
+                               </div>
+                             ) : (
+                               <div className="flex items-center justify-between">
+                                 <div className="flex-1">
+                                   {settings.customDigitalMenuUrl ? (
+                                     <a 
+                                       href={settings.customDigitalMenuUrl} 
+                                       target="_blank" 
+                                       rel="noopener noreferrer"
+                                       className="text-primary font-mono text-xs hover:underline truncate max-w-[300px] block"
+                                     >
+                                       {settings.customDigitalMenuUrl}
+                                     </a>
+                                   ) : (
+                                     <span className="text-slate-500 text-xs italic">Usando URL padrão</span>
+                                   )}
+                                 </div>
+                                 <button
+                                   onClick={handleEditUrl}
+                                   className="p-2 bg-white/10 text-slate-400 hover:text-primary rounded-xl transition-all"
+                                   title="Editar URL"
+                                 >
+                                   <Edit size={14} />
+                                 </button>
+                               </div>
+                             )}
                           </div>
                           <a href={digitalMenuUrl} target="_blank" rel="noreferrer" className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><ExternalLink size={20}/></a>
                        </div>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div className="p-5 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
-                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Produtos Ativos</p>
-                             <p className="text-2xl font-mono font-bold text-emerald-500">{menu.filter(d => d.isVisibleDigital).length}</p>
-                          </div>
+                       
+
+                       {isEditingUrl && (
+                         <div className="flex gap-2">
+                           <button
+                             onClick={handleCancelEditUrl}
+                             className="flex-1 py-2 bg-white/5 text-slate-400 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-white/10 transition-all"
+                           >
+                             Cancelar
+                           </button>
+                           <button
+                             onClick={handleSaveUrl}
+                             className="flex-1 py-2 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl shadow-glow hover:scale-105 transition-all"
+                           >
+                             Salvar URL
+                           </button>
+                         </div>
+                       )}
                           <div className="p-5 bg-purple-500/5 border border-purple-500/20 rounded-2xl">
                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Categorias Live</p>
                              <p className="text-2xl font-mono font-bold text-purple-500">{categories.filter(c => c.isVisibleDigital).length}</p>

@@ -250,7 +250,7 @@ const Settings = () => {
                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estado da Infraestrutura Cloud</span>
                   </div>
                   <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Hub de Dados Supabase</h3>
-                  <p className="text-xs text-slate-400 mt-2 max-w-lg leading-relaxed">Este módulo sincroniza os seus dados locais com a nuvem de forma unidirecional. A nuvem serve apenas para alimentar o seu <b>Menu Digital</b> e <b>Dashboard Mobile (Netlify)</b>.</p>
+                  <p className="text-xs text-slate-400 mt-2 max-w-lg leading-relaxed">Este módulo sincroniza os seus dados locais com a nuvem de forma unidirecional. A nuvem serve apenas para alimentar o seu <b>Menu Digital</b> e <b>Dashboard Mobile (Vercel)</b>.</p>
                </div>
                <div className="flex gap-3 z-10">
                   <button onClick={() => handleManualSync('ALL')} disabled={!!isSyncing} className="px-8 py-4 bg-primary text-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center gap-2 hover:scale-105 transition-all">
@@ -285,8 +285,8 @@ const Settings = () => {
                   </h4>
                   <div className="space-y-4">
                      <div>
-                        <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">URL do Menu Digital (Netlify/Vercel)</label>
-                        <input type="text" className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" value={localSettings.customDigitalMenuUrl} onChange={e => setLocalSettings({...localSettings, customDigitalMenuUrl: e.target.value})} placeholder="https://meu-restaurante.netlify.app" />
+                        <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">URL do Menu Digital (Vercel)</label>
+                        <input type="text" className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" value={localSettings.customDigitalMenuUrl} onChange={e => setLocalSettings({...localSettings, customDigitalMenuUrl: e.target.value})} placeholder="https://meu-restaurante.vercel.app" />
                      </div>
                      <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl flex gap-3">
                         <Link2 size={20} className="text-blue-500 shrink-0" />

@@ -6,6 +6,8 @@ export type PaymentMethod = 'NUMERARIO' | 'TPA' | 'TRANSFERENCIA' | 'QR_CODE' | 
 export type OrderType = 'LOCAL' | 'ENCOMENDA' | 'TAKEAWAY';
 export type OrderStatus = 'ABERTO' | 'FECHADO' | 'CANCELADO' | 'PENDENTE_ENTREGA';
 export type TaxRegime = 'GERAL' | 'SIMPLIFICADO' | 'EXCLUSAO';
+export type ExpenseCategory = 'ALIMENTACAO' | 'BEBIDAS' | 'MATERIAL_LIMPEZA' | 'UTILIDADES' | 'REPARACOES' | 'MARKETING' | 'OUTROS';
+export type ExpenseStatus = 'PENDENTE' | 'APROVADO' | 'PAGO';
 
 // Permissões de Sistema
 export type PermissionKey = 
@@ -93,6 +95,21 @@ export interface Order {
   paymentMethod?: PaymentMethod;
 }
 
+export interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  category: ExpenseCategory;
+  status: ExpenseStatus;
+  date: Date | string;
+  paymentMethod?: PaymentMethod;
+  receipt?: string;
+  notes?: string;
+  approvedBy?: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
 export interface PaymentMethodConfig {
   id: string;
   name: string;
@@ -121,6 +138,8 @@ export interface SystemSettings {
   phone: string;
   address: string;
   nif: string;
+  email: string;
+  website: string;
   commercialReg: string;
   capitalSocial: string;
   conservatoria: string;
@@ -133,6 +152,23 @@ export interface SystemSettings {
   supabaseKey: string;
   autoBackup: boolean;
   customDigitalMenuUrl?: string;
+  // Campos adicionais para conformidade AGT
+  agtSoftwareCertification: string;
+  agtSoftwareVersion: string;
+  agtProductionCertificate: string;
+  agtProcessNumber: string;
+  agtCertificationDate: string;
+  agtValidityPeriod: string;
+  agtTechnicalResponsible: string;
+  agtContactEmail: string;
+  agtSupportPhone: string;
+  saftPassword: string;
+  digitalSignatureEnabled: boolean;
+  electronicInvoiceEnabled: boolean;
+  dataRetentionPeriod: number;
+  backupFrequency: string;
+  lastAuditDate: string;
+  nextAuditDate: string;
 }
 
 export interface Customer {

@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabaseService';
 import { versionControlService } from '../lib/versionControlService';
 import { sqlMigrationService } from '../lib/sqlMigrationService';
 import { databaseService } from '../lib/databaseService';
-import { Table, Order, Dish, Customer, PaymentMethod, User, SystemSettings, Notification, MenuCategory, OrderType, Employee, AttendanceRecord, StockItem, Reservation, WorkShift, OrderItem, PermissionTemplate, AuditLog, PaymentMethodConfig } from '../../types';
+import { Table, Order, Dish, Customer, PaymentMethod, User, SystemSettings, Notification, MenuCategory, OrderType, Employee, AttendanceRecord, StockItem, Reservation, WorkShift, OrderItem, PermissionTemplate, AuditLog, PaymentMethodConfig, Expense, ExpenseCategory, ExpenseStatus } from '../../types';
 import { MOCK_MENU, MOCK_TABLES, MOCK_CUSTOMERS, MOCK_USERS, MOCK_CATEGORIES, MOCK_STOCK, MOCK_RESERVATIONS } from '../../constants';
 import defaultLogo from '/logo.png';
 
@@ -93,6 +93,15 @@ interface StoreState {
   stock: StockItem[];
   reservations: Reservation[];
   workShifts: WorkShift[];
+  
+  // Despesas
+  expenses: Expense[];
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateExpense: (id: string, expense: Partial<Expense>) => void;
+  removeExpense: (id: string) => void;
+  approveExpense: (id: string, approvedBy: string) => void;
+  syncProductsToCloud: () => Promise<void>;
+  syncCategoriesToCloud: () => Promise<void>;
   
   setActiveTable: (id: number | null) => void;
   setActiveOrder: (id: string | null) => void;
@@ -185,6 +194,7 @@ export const useStore = create<StoreState>()(
         { id: '4', name: 'Referência QR', type: 'QR_CODE', icon: 'QrCode', isActive: true },
       ],
       notifications: [],
+      expenses: [],
       addNotification: (type, message) => {
         const id = Math.random().toString(36).substring(7);
         set(state => ({ notifications: [...state.notifications, { id, type, message }] }));
@@ -805,24 +815,73 @@ export const useStore = create<StoreState>()(
         }
       },
 
-      restoreFromSupabase: async () => {
-        get().addNotification('info', 'Restaurando integridade...');
+restoreFromSupabase: async () => {
+  get().addNotification('info', 'Restaurando integridade...');
+  try {
+    const { data, error } = await supabase
+      .from('restaurant_state')
+      .select('state_data')
+      .eq('id', 'main')
+      .single();
+    
+    if (data?.state_data) {
+      set(JSON.parse(data.state_data));
+      get().addNotification('success', 'Dados restaurados da nuvem com sucesso!');
+      addExpense: (expense) => set(state => {
+        const newExpense = {
+          ...expense,
+          id: `exp-${Date.now()}`,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        return { expenses: [...state.expenses, newExpense] };
+      }),
+
+      updateExpense: (id, expense) => set(state => ({
+        expenses: state.expenses.map(e => e.id === id ? { ...e, ...expense, updatedAt: new Date() } : e)
+      })),
+
+      removeExpense: (id) => set(state => ({
+        expenses: state.expenses.filter(e => e.id !== id)
+      })),
+
+      approveExpense: (id, approvedBy) => set(state => ({
+        expenses: state.expenses.map(e => 
+          e.id === id ? { ...e, status: 'APROVADO', approvedBy, updatedAt: new Date() } : e
+        )
+      })),
+
+      syncProductsToCloud: async () => {
+        get().addNotification('info', 'Sincronizando produtos com a nuvem...');
         try {
-          const { data, error } = await supabase
-            .from('application_state')
-            .select('data')
-            .eq('id', 'current_state')
-            .single();
-          
-          if (error) throw error;
-          if (data && data.data) {
-            const parsed = JSON.parse(data.data);
-            set(parsed);
-            get().addNotification('success', 'Restauração concluída.');
-          }
-        } catch (err: any) {
-          console.error('Erro restore Supabase:', err);
-          get().addNotification('error', 'Falha na restauração Supabase.');
+          const state = get();
+          await supabase
+            .from('restaurant_state')
+            .upsert({
+              id: 'main',
+              state_data: JSON.stringify(state),
+              updated_at: new Date().toISOString()
+            });
+          get().addNotification('success', 'Produtos sincronizados com sucesso!');
+        } catch (error) {
+          get().addNotification('error', 'Falha ao sincronizar produtos');
+        }
+      },
+
+      syncCategoriesToCloud: async () => {
+        get().addNotification('info', 'Sincronizando categorias com a nuvem...');
+        try {
+          const state = get();
+          await supabase
+            .from('restaurant_state')
+            .upsert({
+              id: 'main',
+              state_data: JSON.stringify(state),
+              updated_at: new Date().toISOString()
+            });
+          get().addNotification('success', 'Categorias sincronizadas com sucesso!');
+        } catch (error) {
+          get().addNotification('error', 'Falha ao sincronizar categorias');
         }
       },
 

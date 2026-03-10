@@ -1,10 +1,12 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Eye, EyeOff, Star, Tag, Utensils, QrCode, Smartphone, Sparkles, Cloud, AlertTriangle, CheckCircle } from 'lucide-react';
 
 const DigitalMenuManager = () => {
-  const { menu, categories, settings, notifications, toggleDishVisibility, toggleDishFeatured, toggleCategoryVisibility } = useStore();
+  const { menu, categories, settings, notifications, toggleDishVisibility, toggleDishFeatured, toggleCategoryVisibility, updateSettings } = useStore();
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [tempUrl, setTempUrl] = useState(settings.customDigitalMenuUrl || '');
 
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(val);
 
@@ -26,6 +28,33 @@ const DigitalMenuManager = () => {
     };
   }, [settings.supabaseUrl, categories, menu, notifications]);
 
+  // Funções para gerenciar URL do menu digital
+  const handleEditUrl = () => {
+    setTempUrl(settings.customDigitalMenuUrl || '');
+    setIsEditingUrl(true);
+  };
+
+  const handleSaveUrl = () => {
+    if (!tempUrl.trim()) {
+      alert('Por favor, insira uma URL válida.');
+      return;
+    }
+    
+    updateSettings({ customDigitalMenuUrl: tempUrl.trim() });
+    setIsEditingUrl(false);
+  };
+
+  const handleCancelEditUrl = () => {
+    setTempUrl(settings.customDigitalMenuUrl || '');
+    setIsEditingUrl(false);
+  };
+
+  const handleTestUrl = () => {
+    if (tempUrl) {
+      window.open(tempUrl, '_blank');
+    }
+  };
+
   return (
     <div className="p-8 h-full overflow-y-auto no-scrollbar bg-background">
       <header className="mb-10 flex justify-between items-end">
@@ -37,6 +66,78 @@ const DigitalMenuManager = () => {
           <h2 className="text-4xl font-black text-white italic uppercase tracking-tighter">Gestão Menu Público</h2>
         </div>
         <div className="flex gap-4">
+          {/* Configuração da URL do Menu Digital */}
+          <div className="glass-panel p-4 rounded-2xl border border-white/10 bg-white/5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-xl">
+                <QrCode size={16} className="text-primary" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[8px] font-black text-slate-500 uppercase mb-1">URL Menu Digital</div>
+                {isEditingUrl ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      className="flex-1 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white font-mono text-xs outline-none focus:border-primary"
+                      placeholder="https://meu-restaurante.vercel.app"
+                      value={tempUrl}
+                      onChange={e => setTempUrl(e.target.value)}
+                    />
+                    <button
+                      onClick={handleTestUrl}
+                      className="px-3 py-2 bg-emerald-500 text-black rounded-xl font-black text-xs uppercase hover:bg-emerald-600 transition-all"
+                      title="Testar URL"
+                    >
+                      Testar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      {settings.customDigitalMenuUrl ? (
+                        <a 
+                          href={settings.customDigitalMenuUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary font-mono text-xs hover:underline truncate max-w-[200px] block"
+                        >
+                          {settings.customDigitalMenuUrl}
+                        </a>
+                      ) : (
+                        <span className="text-slate-500 text-xs italic">Não configurado</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleEditUrl}
+                      className="p-2 bg-white/10 text-slate-400 hover:text-primary rounded-xl transition-all"
+                      title="Editar URL"
+                    >
+                      <Eye size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Ações de edição da URL */}
+          {isEditingUrl && (
+            <div className="flex gap-2">
+              <button
+                onClick={handleCancelEditUrl}
+                className="px-4 py-2 bg-white/5 text-slate-400 rounded-xl font-black text-xs uppercase hover:bg-white/10 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveUrl}
+                className="px-4 py-2 bg-primary text-black rounded-xl font-black text-xs uppercase shadow-glow hover:scale-105 transition-all"
+              >
+                Salvar
+              </button>
+            </div>
+          )}
+          
           <div className="px-6 py-3 bg-primary/10 border border-primary/20 rounded-2xl flex items-center gap-3">
             <Smartphone size={20} className="text-primary" />
             <div className="text-[10px] font-black uppercase text-slate-400">Estado: <span className="text-emerald-500">Live</span></div>
