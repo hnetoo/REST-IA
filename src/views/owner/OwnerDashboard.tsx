@@ -11,6 +11,7 @@ interface Metrics {
   despesas: number;
   folhaSalarial: number;
   impostos: number;
+  historicoRevenue: number; // Adicionar histórico de owner_finances
 }
 
 // Tipos para as tabelas do Supabase
@@ -57,7 +58,8 @@ const OwnerDashboard = () => {
     receitaTotal: 0,
     despesas: 0,
     folhaSalarial: 0,
-    impostos: 0
+    impostos: 0,
+    historicoRevenue: 0
   });
   const [period, setPeriod] = useState<'HOJE' | 'SEMANA' | 'MÊS' | 'ANO'>('HOJE');
   const [isOnline, setIsOnline] = useState(true);
@@ -211,6 +213,20 @@ const OwnerDashboard = () => {
       }
       console.log(`[DASHBOARD] Staff encontrados: ${staff?.length || 0}`);
 
+      // Buscar histórico de owner_finances
+      console.log(`[DASHBOARD] Buscando owner_finances`);
+      const { data: ownerFinances, error: ownerFinancesError } = await supabase
+        .from('owner_finances')
+        .select('legacy_revenue_kz')
+        .gte('created_at', startDate.toISOString());
+
+      if (ownerFinancesError) {
+        console.error('[DASHBOARD] Erro ao buscar owner_finances:', ownerFinancesError);
+        // Não throw error aqui, pode ser que a tabela não exista ainda
+        console.log('[DASHBOARD] Continuando sem dados de owner_finances');
+      }
+      console.log(`[DASHBOARD] Owner finances encontrados: ${ownerFinances?.length || 0}`);
+
       // Calcular métricas
       const vendasHoje = orders
         .filter(order => {
@@ -228,7 +244,16 @@ const OwnerDashboard = () => {
       const receitaTotal = totalVendas;
       const despesas = purchases.reduce((sum, purchase) => sum + (purchase.amount_kz || 0), 0); // Corrigido: amount_kz
       const folhaSalarial = staff.reduce((sum, employee) => sum + (employee.base_salary_kz || 0), 0);
+      const historicoRevenue = ownerFinances?.reduce((sum, finance) => sum + (finance.legacy_revenue_kz || 0), 0) || 0;
       const impostos = totalVendas * 0.065;
+
+      console.log(`[DASHBOARD] Métricas calculadas:`, {
+        totalVendas,
+        despesas,
+        folhaSalarial,
+        historicoRevenue,
+        impostos
+      });
 
       setMetrics({
         vendasHoje,
@@ -237,7 +262,8 @@ const OwnerDashboard = () => {
         receitaTotal,
         despesas,
         folhaSalarial,
-        impostos
+        impostos,
+        historicoRevenue
       });
 
     } catch (error) {
@@ -264,7 +290,8 @@ const OwnerDashboard = () => {
         receitaTotal: 0,
         despesas: 0,
         folhaSalarial: 0,
-        impostos: 0
+        impostos: 0,
+        historicoRevenue: 0
       });
     }
   };
@@ -480,7 +507,7 @@ const OwnerDashboard = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-lg font-bold text-white">
-                  {formatAOA(metrics.totalVendas + 0)}
+                  {formatAOA(metrics.totalVendas + metrics.historicoRevenue)}
                 </div>
                 <button className="p-1 bg-white/20 rounded hover:bg-white/30 transition-all">
                   <Settings className="w-3 h-3 text-white/80" />
