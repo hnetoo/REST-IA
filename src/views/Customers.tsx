@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Users, Phone, Calendar, Wallet, Printer, CheckCircle, X, Plus, Pencil, Trash2, Search, Fingerprint } from 'lucide-react';
-import { Customer } from '../types';
+import { Customer } from '../../types';
 
 const Customers = () => {
   const { customers, settleCustomerDebt, addCustomer, updateCustomer, removeCustomer, currentUser, settings } = useStore();
@@ -195,3 +195,7 @@ const Customers = () => {
 };
 
 export default Customers;
+
+
+
+

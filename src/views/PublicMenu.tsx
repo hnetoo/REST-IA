@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { supabase, getSupabaseMenu, getSupabaseCategories } from '../services/supabaseService';
+import { supabase, getSupabaseMenu, getSupabaseCategories } from '../lib/supabaseService';
 import { 
   Search, X, Send, Sparkles, Loader2, Plus, Minus, 
   UtensilsCrossed, Wifi, WifiOff, ShoppingBag, ChevronRight,
   Info, RefreshCw
 } from 'lucide-react';
-import { getAIWaiterRecommendation } from '../services/geminiService';
+import { getAIWaiterRecommendation } from '../lib/geminiService';
 import LazyImage from '../components/LazyImage';
-import appLogo from '../logo.png';
+import appLogo from '/logo.png';
 
 // Cache keys
 const CACHE_KEY_MENU = 'public_menu_data';
@@ -604,3 +604,7 @@ const PublicMenu = () => {
 };
 
 export default PublicMenu;
+
+
+
+

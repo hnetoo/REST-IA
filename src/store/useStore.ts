@@ -1,14 +1,14 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
-import { sqliteService } from '../services/sqliteService';
-import { supabase } from '../services/supabaseService';
-import { versionControlService } from '../services/versionControlService';
-import { sqlMigrationService } from '../services/sqlMigrationService';
-import { databaseService } from '../services/databaseService';
-import { Table, Order, Dish, Customer, PaymentMethod, User, SystemSettings, Notification, MenuCategory, OrderType, Employee, AttendanceRecord, StockItem, Reservation, WorkShift, OrderItem, PermissionTemplate, AuditLog, PaymentMethodConfig } from '../types';
-import { MOCK_MENU, MOCK_TABLES, MOCK_CUSTOMERS, MOCK_USERS, MOCK_CATEGORIES, MOCK_STOCK, MOCK_RESERVATIONS } from '../constants';
-import defaultLogo from '../logo.png';
+import { sqliteService } from '../lib/sqliteService';
+import { supabase } from '../lib/supabaseService';
+import { versionControlService } from '../lib/versionControlService';
+import { sqlMigrationService } from '../lib/sqlMigrationService';
+import { databaseService } from '../lib/databaseService';
+import { Table, Order, Dish, Customer, PaymentMethod, User, SystemSettings, Notification, MenuCategory, OrderType, Employee, AttendanceRecord, StockItem, Reservation, WorkShift, OrderItem, PermissionTemplate, AuditLog, PaymentMethodConfig } from '../../types';
+import { MOCK_MENU, MOCK_TABLES, MOCK_CUSTOMERS, MOCK_USERS, MOCK_CATEGORIES, MOCK_STOCK, MOCK_RESERVATIONS } from '../../constants';
+import defaultLogo from '/logo.png';
 
 const syncChannel = new BroadcastChannel('vereda_state_sync');
 

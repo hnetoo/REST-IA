@@ -7,7 +7,7 @@ import {
   Smartphone, QrCode, Sparkles, Eye, EyeOff, Star,
   ExternalLink, Printer, Copy, Check, Share2, Info
 } from 'lucide-react';
-import { Dish, MenuCategory } from '../types';
+import { Dish, MenuCategory } from '../../types';
 import LazyImage from '../components/LazyImage';
 
 const Inventory = () => {
@@ -583,3 +583,7 @@ const Inventory = () => {
 };
 
 export default Inventory;
+
+
+
+

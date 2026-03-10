@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { generateSAFT, downloadSAFT } from '../services/saftService';
+import { generateSAFT, downloadSAFT } from '../lib/saftService';
 import { 
   FileDown, Activity, Calendar, Filter, Loader2, ShieldCheck, TrendingUp, DollarSign
 } from 'lucide-react';
@@ -209,3 +209,7 @@ const Reports = () => {
 };
 
 export default Reports;
+
+
+
+

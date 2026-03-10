@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { Clock, CheckCircle, AlertCircle, Filter, Flame, ChefHat, Bell, CheckSquare, Volume2, VolumeX, Timer, Zap } from 'lucide-react';
-import { OrderItem } from '../types';
+import { OrderItem } from '../../types';
 
 type KitchenFilter = 'TODOS' | 'PENDENTE' | 'PREPARANDO' | 'PRONTO' | 'ENTREGUE';
 
@@ -336,3 +336,7 @@ const Kitchen = () => {
 };
 
 export default Kitchen;
+
+
+
+

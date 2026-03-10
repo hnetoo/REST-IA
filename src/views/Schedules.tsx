@@ -6,7 +6,7 @@ import {
   Users, ChefHat, Utensils, Wallet, ShieldCheck, 
   ChevronLeft, ChevronRight, Timer, AlertCircle
 } from 'lucide-react';
-import { WorkShift, Employee, UserRole } from '../types';
+import { WorkShift, Employee, UserRole } from '../../types';
 
 const Schedules = () => {
   const { employees, workShifts, addWorkShift, updateWorkShift, removeWorkShift, addNotification } = useStore();
@@ -252,3 +252,7 @@ const Schedules = () => {
 };
 
 export default Schedules;
+
+
+
+

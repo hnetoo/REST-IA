@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore';
 import { 
   Users, Zap, Clock, Trash2, Edit3, Save, Move, Plus, AlertTriangle, X
 } from 'lucide-react';
-import { Table, TableZone } from '../types';
+import { Table, TableZone } from '../../types';
 
 const TableLayout = () => {
   const { tables, activeOrders, setActiveTable, updateTablePosition, addNotification, removeTable, closeTable } = useStore();
@@ -280,3 +280,7 @@ const ChevronUp = ({size}: {size: number}) => <svg width={size} height={size} vi
 const ChevronDown = ({size}: {size: number}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
 
 export default TableLayout;
+
+
+
+

@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { printFinanceReport } from '../services/printService';
+import { printFinanceReport } from '../lib/printService';
 import { 
   Target, TrendingUp, DollarSign, Zap, Sparkles, 
   PieChart as PieIcon, BarChart3, ArrowUpRight, 
@@ -239,3 +239,7 @@ const ProfitCenter = () => {
 };
 
 export default ProfitCenter;
+
+
+
+

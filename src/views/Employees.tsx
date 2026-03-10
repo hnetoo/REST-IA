@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { printStaffSchedules, printPayroll } from '../services/printService';
+import { printStaffSchedules, printPayroll } from '../lib/printService';
 import { 
   Users, UserPlus, Calendar, Clock, Phone, DollarSign, Trash2, 
   Edit2, X, Plus, Save, Fingerprint, ChefHat, Wallet, Utensils,
@@ -372,3 +372,7 @@ const Employees = () => {
 };
 
 export default Employees;
+
+
+
+

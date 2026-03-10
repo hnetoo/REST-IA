@@ -6,9 +6,9 @@ import {
   ArrowUpRight, PieChart, BarChart as BarChartIcon, Activity, Loader2,
   CreditCard, ArrowRightLeft, QrCode, Plus, Trash2, Edit2, Check
 } from 'lucide-react';
-import { printThermalInvoice, printFinanceReport } from '../services/printService';
-import { generateSAFT, downloadSAFT } from '../services/saftService';
-import { PaymentMethodConfig, Order } from '../types';
+import { printThermalInvoice, printFinanceReport } from '../lib/printService';
+import { generateSAFT, downloadSAFT } from '../lib/saftService';
+import { PaymentMethodConfig, Order } from '../../types';
 
 const Finance = () => {
   const { activeOrders, settings, menu, customers, addNotification, paymentConfigs, addPaymentConfig, updatePaymentConfig } = useStore();
@@ -335,3 +335,7 @@ const Finance = () => {
 };
 
 export default Finance;
+
+
+
+

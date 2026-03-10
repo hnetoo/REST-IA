@@ -7,8 +7,8 @@ import {
   Save, Printer, Database, Globe, Briefcase,
   FileBadge, Landmark, Scale
 } from 'lucide-react';
-import { generateSAFT, downloadSAFT } from '../services/saftService';
-import { TaxRegime } from '../types';
+import { generateSAFT, downloadSAFT } from '../lib/saftService';
+import { TaxRegime } from '../../types';
 
 const AGTControl = () => {
   const { settings, updateSettings, activeOrders, customers, menu, addNotification } = useStore();
@@ -313,3 +313,7 @@ const AGTControl = () => {
 };
 
 export default AGTControl;
+
+
+
+

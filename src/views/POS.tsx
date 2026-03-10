@@ -8,8 +8,8 @@ import {
   UserPlus, History, LogOut, CheckCircle2, MoreVertical,
   ChevronLeft, Layout, Clock, QrCode, ArrowRightLeft, User, Users, Monitor, Shield
 } from 'lucide-react';
-import { Dish, PaymentMethod, Order, Table, Customer } from '../types';
-import { printThermalInvoice, printTableReview, printCashClosing } from '../services/printService';
+import { Dish, PaymentMethod, Order, Table, Customer } from '../../types';
+import { printThermalInvoice, printTableReview, printCashClosing } from '../lib/printService';
 import LazyImage from '../components/LazyImage';
 
 const POS = () => {
@@ -746,3 +746,7 @@ const POS = () => {
 };
 
 export default POS;
+
+
+
+

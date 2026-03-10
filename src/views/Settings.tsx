@@ -12,9 +12,9 @@ import {
   CloudLightning, Globe, Share2, Server, ShieldAlert, Link2,
   Utensils, TrendingUp
 } from 'lucide-react';
-import { User, UserRole, PermissionKey, TaxRegime } from '../types';
-import { generateSAFT, downloadSAFT } from '../services/saftService';
-import { sqlMigrationService } from '../services/sqlMigrationService';
+import { User, UserRole, PermissionKey, TaxRegime } from '../../types';
+import { generateSAFT, downloadSAFT } from '../lib/saftService';
+import { sqlMigrationService } from '../lib/sqlMigrationService';
 
 const ALL_PERMISSIONS: { key: PermissionKey; label: string }[] = [
   { key: 'POS_SALES', label: 'Realizar Vendas' },
@@ -532,3 +532,7 @@ const Settings = () => {
 };
 
 export default Settings;
+
+
+
+

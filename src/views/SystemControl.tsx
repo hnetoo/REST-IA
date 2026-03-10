@@ -7,7 +7,7 @@ import {
   Wifi, Zap, Lock, HardDrive, Bell, Trash2, AlertTriangle, 
   RotateCcw, Settings2, ShieldAlert, Binary, Rocket, Share2
 } from 'lucide-react';
-import { sqlMigrationService } from '../services/sqlMigrationService';
+import { sqlMigrationService } from '../lib/sqlMigrationService';
 
 type ControlTab = 'HEALTH' | 'CLOUD' | 'MAINTENANCE';
 
@@ -214,3 +214,7 @@ const SystemControl = () => {
 };
 
 export default SystemControl;
+
+
+
+
