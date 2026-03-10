@@ -13,8 +13,6 @@ import PurchaseApproval from './src/views/PurchaseApproval';
 import PublicMenu from './src/views/PublicMenu';
 import OwnerDashboard from './src/views/OwnerDashboard';
 import OwnerLogin from './src/views/OwnerLogin';
-import OwnerDashboardSimple from './src/views/OwnerDashboardSimple';
-import OwnerLoginSimple from './src/views/OwnerLoginSimple';
 import Employees from './src/views/Employees';
 import ProfitCenter from './src/views/ProfitCenter';
 import AGTControl from './src/views/AGTControl';
@@ -55,7 +53,7 @@ const App = () => {
       <div className="flex h-screen w-full bg-slate-950 font-sans overflow-hidden">
         <GlobalNotificationCenter />
         <Routes>
-          {/* Owner - Rotas Independentes */}
+          {/* Owner - Rotas FORA do layout principal */}
           <Route path="/owner/login" element={<OwnerLogin />} />
           <Route path="/owner/dashboard" element={<OwnerDashboard />} />
           
@@ -63,9 +61,9 @@ const App = () => {
           <Route path="/menu/:tableId" element={<PublicMenu />} />
           <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
           
-          {/* Sistema Principal - rotas específicas */}
+          {/* Sistema Principal - com Sidebar e Layout */}
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={
+          <Route path="/*" element={
             !currentUser ? <Login /> : (
               <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
@@ -89,13 +87,6 @@ const App = () => {
                   </Routes>
                 </main>
               </div>
-            )
-          } />
-          
-          {/* Catch-all para outras rotas do sistema principal */}
-          <Route path="*" element={
-            !currentUser ? <Login /> : (
-              <Navigate to="/" />
             )
           } />
         </Routes>
