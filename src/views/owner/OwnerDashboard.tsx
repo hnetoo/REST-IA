@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { Smartphone, DollarSign, Users, TrendingUp, Wallet, Receipt, FileText, Calculator, RefreshCw, LogOut } from 'lucide-react';
+import { Smartphone, DollarSign, Users, TrendingUp, Wallet, Receipt, FileText, Calculator, RefreshCw, LogOut, Settings } from 'lucide-react';
 
 interface Metrics {
   vendasHoje: number;
@@ -349,9 +349,9 @@ const OwnerDashboard = () => {
   }, [period]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-y-auto">
       {/* Header com Botão de Sair */}
-      <div className="flex justify-between items-center p-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mb-6">
+      <header className="sticky top-0 z-50 flex justify-between items-center p-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mb-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
             <Smartphone className="w-6 h-6 text-white" />
@@ -372,23 +372,35 @@ const OwnerDashboard = () => {
           <LogOut size={18} />
           <span className="font-semibold">Sair</span>
         </button>
-      </div>
+      </header>
 
-      <div className="max-w-4xl mx-auto space-y-6">
+      <main className="max-w-7xl mx-auto px-4 pb-24">
+        {/* Filtros de Período */}
+        <div className="flex gap-2 mb-6 overflow-x-auto">
+          {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider transition-all ${
+                period === p 
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-black shadow-lg' 
+                  : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+
         {/* Card de Faturação Consolidada */}
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-3xl shadow-2xl border border-white/20 backdrop-blur-md">
+        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-3xl shadow-2xl border border-white/20 backdrop-blur-md mb-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white mb-1">Faturação Consolidada</h2>
-                <p className="text-sm text-white/80">Vereda OS + Histórico Externo</p>
-              </div>
+              <TrendingUp className="w-8 h-8 text-white" />
+              <h2 className="text-xl font-bold text-white">Faturação Consolidada</h2>
             </div>
             <button className="px-4 py-2 bg-white/20 border border-white/30 text-white/80 rounded-lg hover:bg-white/30 transition-all text-sm">
-              Configurar Valor Externo
+              <Settings className="w-4 h-4" />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -412,32 +424,15 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
-        {/* Filtros de Período */}
-        <div className="flex gap-2 mb-6 overflow-x-auto">
-          {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider transition-all ${
-                period === p 
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-black shadow-lg' 
-                  : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-
-        {/* Grid de Cards - Layout Vertical */}
-        <div className="grid grid-cols-1 gap-6">
+        {/* Grid de Cards - Layout Horizontal */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Vendas Hoje - Verde */}
           <div className="bg-gradient-to-br from-green-600 to-green-700 p-8 rounded-3xl shadow-2xl border border-green-500/30 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <DollarSign className="w-8 h-8 text-green-200" />
               <span className="text-sm text-green-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-4xl font-bold text-white mb-2">
+            <div className="text-5xl font-bold text-white">
               {formatAOA(metrics.vendasHoje)}
             </div>
             <div className="text-sm text-green-200">Vendas Hoje</div>
@@ -445,11 +440,11 @@ const OwnerDashboard = () => {
 
           {/* Mesas Ativas - Azul */}
           <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-3xl shadow-2xl border border-blue-500/30 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <Users className="w-8 h-8 text-blue-200" />
               <span className="text-sm text-blue-200 uppercase tracking-wider">MESAS</span>
             </div>
-            <div className="text-4xl font-bold text-white mb-2">
+            <div className="text-5xl font-bold text-white">
               {metrics.mesasAtivas}
             </div>
             <div className="text-sm text-blue-200">Mesas Ativas</div>
@@ -457,11 +452,11 @@ const OwnerDashboard = () => {
 
           {/* Receita Total - Roxa */}
           <div className="bg-gradient-to-br from-purple-600 to-purple-700 p-8 rounded-3xl shadow-2xl border border-purple-500/30 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <Wallet className="w-8 h-8 text-purple-200" />
               <span className="text-sm text-purple-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-4xl font-bold text-white mb-2">
+            <div className="text-5xl font-bold text-white">
               {formatAOA(metrics.receitaTotal)}
             </div>
             <div className="text-sm text-purple-200">Receita Total</div>
@@ -469,11 +464,11 @@ const OwnerDashboard = () => {
 
           {/* Despesas - Laranja */}
           <div className="bg-gradient-to-br from-orange-600 to-orange-700 p-8 rounded-3xl shadow-2xl border border-orange-500/30 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <Receipt className="w-8 h-8 text-orange-200" />
               <span className="text-sm text-orange-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-4xl font-bold text-white mb-2">
+            <div className="text-5xl font-bold text-white">
               {formatAOA(metrics.despesas)}
             </div>
             <div className="text-sm text-orange-200">Despesas</div>
@@ -481,11 +476,11 @@ const OwnerDashboard = () => {
 
           {/* Folha Salarial - Rosa */}
           <div className="bg-gradient-to-br from-pink-600 to-pink-700 p-8 rounded-3xl shadow-2xl border border-pink-500/30 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <FileText className="w-8 h-8 text-pink-200" />
               <span className="text-sm text-pink-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-4xl font-bold text-white mb-2">
+            <div className="text-5xl font-bold text-white">
               {formatAOA(metrics.folhaSalarial)}
             </div>
             <div className="text-sm text-pink-200">Folha Salarial</div>
@@ -493,18 +488,17 @@ const OwnerDashboard = () => {
 
           {/* Impostos - Vermelho */}
           <div className="bg-gradient-to-br from-red-600 to-red-700 p-8 rounded-3xl shadow-2xl border border-red-500/30 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <Calculator className="w-8 h-8 text-red-200" />
               <span className="text-sm text-red-200 uppercase tracking-wider">AOA</span>
             </div>
-            <div className="text-4xl font-bold text-white mb-2">
+            <div className="text-5xl font-bold text-white">
               {formatAOA(metrics.impostos)}
-              {formatAKZ(metrics.impostos)}
             </div>
-            <div className="text-xs text-white/70">Impostos (6.5% sobre faturação)</div>
+            <div className="text-sm text-red-200">Impostos (6.5% sobre faturação)</div>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Botão de Reset - Limpar Dados de Teste */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-2">
