@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { 
   ShoppingCart, Plus, FileText, Clock, CheckCircle, 
-  XCircle, DollarSign, Send, Eye, AlertCircle
+  XCircle, DollarSign, Send, Eye, AlertCircle, Settings, Save, Trash2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -19,15 +19,28 @@ interface PurchaseRequest {
 }
 
 const Purchases = () => {
-  const { addNotification } = useStore();
+  const { addNotification, settings } = useStore();
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
     provider: '',
     proforma_file: null as File | null
+  });
+  
+  // Configurações de WhatsApp (localStorage)
+  const [whatsappSettings, setWhatsappSettings] = useState(() => {
+    const saved = localStorage.getItem('whatsappPurchaseSettings');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return {
+      approvalNumbers: ['+244923000000'],
+      customMessage: 'Olá, novo pedido de compra no Vereda OS: {description} - {amount} Kz. Link para decidir: {approvalLink}'
+    };
   });
 
   useEffect(() => {
@@ -105,10 +118,18 @@ const Purchases = () => {
   };
 
   const sendForApproval = async (request: PurchaseRequest) => {
-    const message = `Olá, novo pedido de compra no Vereda OS: ${request.description} - ${request.amount.toFixed(2)} Kz. Link para decidir: https://rest-ia.vercel.app/compras/owner/${request.id}`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    // Substituir placeholders na mensagem personalizada
+    const message = whatsappSettings.customMessage
+      .replace('{description}', request.description)
+      .replace('{amount}', formatKz(request.amount))
+      .replace('{approvalLink}', `https://rest-ia.vercel.app/compras/owner/${request.id}`);
     
-    window.open(whatsappUrl, '_blank');
+    // Enviar para todos os números configurados
+    whatsappSettings.approvalNumbers.forEach((number: string) => {
+      const cleanNumber = number.replace(/\D/g, ''); // Remover caracteres não numéricos
+      const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+    });
   };
 
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
@@ -137,6 +158,33 @@ const Purchases = () => {
     }
   };
 
+  const saveWhatsappSettings = () => {
+    localStorage.setItem('whatsappPurchaseSettings', JSON.stringify(whatsappSettings));
+    addNotification('success', 'Configurações de WhatsApp salvas com sucesso!');
+    setShowSettings(false);
+  };
+
+  const addApprovalNumber = () => {
+    setWhatsappSettings((prev: any) => ({
+      ...prev,
+      approvalNumbers: [...prev.approvalNumbers, '+244']
+    }));
+  };
+
+  const removeApprovalNumber = (index: number) => {
+    setWhatsappSettings((prev: any) => ({
+      ...prev,
+      approvalNumbers: prev.approvalNumbers.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  const updateApprovalNumber = (index: number, value: string) => {
+    setWhatsappSettings((prev: any) => ({
+      ...prev,
+      approvalNumbers: prev.approvalNumbers.map((num: string, i: number) => i === index ? value : num)
+    }));
+  };
+
   return (
     <div className="p-8 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar">
       <header className="flex justify-between items-center mb-8">
@@ -145,14 +193,102 @@ const Purchases = () => {
           <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">Pedidos e Aprovações</p>
         </div>
         
-        <button 
-          onClick={() => setShowForm(!showForm)}
-          className="bg-[#070b14] text-white px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
-        >
-          <Plus size={20} />
-          Novo Pedido
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setShowSettings(!showSettings)}
+            className="bg-white/10 border border-white/20 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-white/20 transition-all font-black uppercase text-xs tracking-widest"
+            title="Configurar WhatsApp"
+          >
+            <Settings size={20} />
+            Configurar
+          </button>
+          
+          <button 
+            onClick={() => setShowForm(!showForm)}
+            className="bg-[#070b14] text-white px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
+          >
+            <Plus size={20} />
+            Novo Pedido
+          </button>
+        </div>
       </header>
+
+      {/* Painel de Configurações de WhatsApp */}
+      {showSettings && (
+        <div className="glass-panel p-8 rounded-[3rem] border border-[#070b14]/30 bg-[#070b14]/5 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-white">Configurações de WhatsApp</h3>
+            <button 
+              onClick={() => setShowSettings(false)}
+              className="text-slate-400 hover:text-white transition-colors"
+              title="Fechar configurações"
+            >
+              <XCircle size={24} />
+            </button>
+          </div>
+          
+          <div className="space-y-6">
+            {/* Números de WhatsApp para Aprovação */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+                Números para Aprovação
+              </label>
+              <div className="space-y-3">
+                {whatsappSettings.approvalNumbers.map((number, index) => (
+                  <div key={index} className="flex gap-3">
+                    <input 
+                      type="text" 
+                      className="flex-1 p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-[#06b6d4]" 
+                      value={number}
+                      onChange={e => updateApprovalNumber(index, e.target.value)}
+                      placeholder="+244923000000"
+                    />
+                    <button
+                      onClick={() => removeApprovalNumber(index)}
+                      className="p-4 bg-red-500/20 border border-red-500/30 text-red-400 rounded-2xl hover:bg-red-500/30 transition-all"
+                      title="Remover número"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={addApprovalNumber}
+                  className="w-full p-4 bg-white/10 border border-white/20 text-white rounded-2xl hover:bg-white/20 transition-all font-bold text-sm"
+                >
+                  + Adicionar Número
+                </button>
+              </div>
+            </div>
+            
+            {/* Mensagem Personalizada */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+                Mensagem Personalizada
+              </label>
+              <textarea 
+                className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-[#06b6d4] resize-none" 
+                rows={4}
+                value={whatsappSettings.customMessage}
+                onChange={e => setWhatsappSettings(prev => ({...prev, customMessage: e.target.value}))}
+                placeholder="Use {description}, {amount} e {approvalLink} como variáveis"
+              />
+              <div className="mt-2 text-xs text-slate-400">
+                Variáveis disponíveis: {'{description}'}, {'{amount}'}, {'{approvalLink}'}
+              </div>
+            </div>
+            
+            {/* Botão Salvar */}
+            <button
+              onClick={saveWhatsappSettings}
+              className="w-full py-4 bg-[#06b6d4] text-black rounded-2xl font-black uppercase text-sm tracking-widest shadow-glow hover:brightness-110 transition-all flex items-center justify-center gap-2"
+            >
+              <Save size={20} />
+              Salvar Configurações
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Formulário de Novo Pedido */}
       {showForm && (

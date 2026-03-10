@@ -53,13 +53,13 @@ const App = () => {
       <div className="flex h-screen w-full bg-slate-950 font-sans overflow-hidden">
         <GlobalNotificationCenter />
         <Routes>
+          {/* Owner - Rotas Independentes (primeiro para evitar conflito) */}
+          <Route path="/owner/login" element={<OwnerLogin />} />
+          <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+          
           {/* Rotas Públicas / Externas */}
           <Route path="/menu/:tableId" element={<PublicMenu />} />
           <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
-          
-          {/* Owner - Rotas Independentes */}
-          <Route path="/owner/login" element={<OwnerLogin />} />
-          <Route path="/owner/dashboard" element={<OwnerDashboard />} />
           
           <Route path="/*" element={
             !currentUser ? <Login /> : (
