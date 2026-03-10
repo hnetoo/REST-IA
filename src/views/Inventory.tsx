@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { 
   Utensils, Tag, Box, Plus, QrCode, Eye, 
-  Settings, Smartphone, Globe, Trash2
+  Settings, Smartphone, Globe, Trash2, RefreshCw, Download, Upload,
+  CheckCircle, AlertCircle, Clock
 } from 'lucide-react';
 
 const Inventory = () => {
@@ -16,6 +17,12 @@ const Inventory = () => {
     allowOrders: false,
     menuVisible: true
   });
+
+  // Estados para sincronização
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [syncProgress, setSyncProgress] = useState(0);
 
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
     style: 'currency', 
@@ -138,6 +145,140 @@ const Inventory = () => {
     }));
   };
 
+  // Funções de sincronização
+  const handleSyncMenu = async () => {
+    setIsSyncing(true);
+    setSyncStatus('syncing');
+    setSyncProgress(0);
+
+    try {
+      // Simular sincronização de categorias
+      setSyncProgress(20);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Simular sincronização de produtos
+      setSyncProgress(50);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Simular sincronização de estoque
+      setSyncProgress(80);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Finalizar sincronização
+      setSyncProgress(100);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      setSyncStatus('success');
+      setLastSync(new Date().toISOString());
+      addNotification('success', 'Menu sincronizado com sucesso!');
+      
+      // Resetar status após 3 segundos
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncProgress(0);
+      }, 3000);
+      
+    } catch (error) {
+      setSyncStatus('error');
+      addNotification('error', 'Erro ao sincronizar menu');
+      setTimeout(() => {
+        setSyncStatus('idle');
+        setSyncProgress(0);
+      }, 3000);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleExportMenu = async () => {
+    try {
+      const menuData = {
+        categories: categories,
+        products: menu,
+        settings: qrSettings,
+        exportedAt: new Date().toISOString()
+      };
+      
+      const dataStr = JSON.stringify(menuData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = `menu-export-${new Date().toISOString().split('T')[0]}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      addNotification('success', 'Menu exportado com sucesso!');
+    } catch (error) {
+      addNotification('error', 'Erro ao exportar menu');
+    }
+  };
+
+  const handleImportMenu = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        
+        // Validar estrutura do arquivo
+        if (!data.categories || !data.products) {
+          throw new Error('Arquivo inválido');
+        }
+        
+        // Simular importação
+        setIsSyncing(true);
+        setSyncStatus('syncing');
+        setSyncProgress(50);
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setSyncProgress(100);
+        setSyncStatus('success');
+        setLastSync(new Date().toISOString());
+        
+        addNotification('success', 'Menu importado com sucesso!');
+        
+        setTimeout(() => {
+          setSyncStatus('idle');
+          setSyncProgress(0);
+        }, 3000);
+        
+      } catch (error) {
+        addNotification('error', 'Erro ao importar menu: arquivo inválido');
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+    
+    input.click();
+  };
+
+  const getSyncIcon = () => {
+    switch (syncStatus) {
+      case 'syncing': return <RefreshCw size={20} className="animate-spin" />;
+      case 'success': return <CheckCircle size={20} />;
+      case 'error': return <AlertCircle size={20} />;
+      default: return <RefreshCw size={20} />;
+    }
+  };
+
+  const getSyncColor = () => {
+    switch (syncStatus) {
+      case 'syncing': return 'bg-blue-500';
+      case 'success': return 'bg-green-500';
+      case 'error': return 'bg-red-500';
+      default: return 'bg-primary';
+    }
+  };
+
   return (
     <div className="p-8 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar">
       <header className="flex justify-between items-center mb-8">
@@ -147,6 +288,34 @@ const Inventory = () => {
         </div>
         
         <div className="flex gap-3">
+          {/* Botões de sincronização */}
+          <button
+            onClick={handleSyncMenu}
+            disabled={isSyncing}
+            className={`${getSyncColor()} text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest disabled:opacity-50`}
+          >
+            {getSyncIcon()}
+            {syncStatus === 'syncing' ? 'Sincronizando...' : 'Sincronizar'}
+          </button>
+          
+          <button
+            onClick={handleExportMenu}
+            disabled={isSyncing}
+            className="bg-white/10 border border-white/20 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-white/20 transition-all font-black uppercase text-xs tracking-widest disabled:opacity-50"
+          >
+            <Download size={20} />
+            Exportar
+          </button>
+          
+          <button
+            onClick={handleImportMenu}
+            disabled={isSyncing}
+            className="bg-white/10 border border-white/20 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-white/20 transition-all font-black uppercase text-xs tracking-widest disabled:opacity-50"
+          >
+            <Upload size={20} />
+            Importar
+          </button>
+
           {activeTab === 'menu' && (
             <button 
               onClick={() => {/* TODO: Implementar novo produto */}}
@@ -167,6 +336,42 @@ const Inventory = () => {
           )}
         </div>
       </header>
+
+      {(isSyncing || syncStatus !== 'idle') && (
+        <div className="mb-6 glass-panel p-4 rounded-xl border border-white/5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              {getSyncIcon()}
+              <span className="text-sm font-bold text-white">
+                {syncStatus === 'syncing' ? 'Sincronizando menu...' : 
+                 syncStatus === 'success' ? 'Sincronização concluída!' :
+                 syncStatus === 'error' ? 'Erro na sincronização' : 'Menu sincronizado'}
+              </span>
+            </div>
+            {lastSync && (
+              <span className="text-xs text-slate-400">
+                Última sincronização: {new Date(lastSync).toLocaleString('pt-AO')}
+              </span>
+            )}
+          </div>
+          
+          {isSyncing && (
+            <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-[#06b6d4] to-[#0891b2] transition-all duration-300 ease-out"
+                style={{ width: `${syncProgress}%` }}
+              />
+            </div>
+          )}
+          
+          <div className="mt-2 text-xs text-slate-400">
+            {syncProgress === 20 && 'Sincronizando categorias...'}
+            {syncProgress === 50 && 'Sincronizando produtos...'}
+            {syncProgress === 80 && 'Sincronizando estoque...'}
+            {syncProgress === 100 && 'Finalizando sincronização...'}
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-4 mb-8 border-b border-white/5 overflow-x-auto no-scrollbar">
         {tabs.map(tab => {

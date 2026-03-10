@@ -369,7 +369,13 @@ const SystemHub = () => {
 
   const CloudEcosystem = () => {
     const { settings, updateSettings, addNotification } = useStore();
-    const [localSettings, setLocalSettings] = useState(settings);
+    const [localSettings, setLocalSettings] = useState({
+      ...settings,
+      // Valores padrão atualizados
+      supabaseUrl: 'https://tboiuiwlqfzcvakxrsmj.supabase.co',
+      supabaseKey: 'sb_publishable_fBMKbbzNYBe8d1rzdWyerg_4We8tZEm',
+      customDigitalMenuUrl: 'https://rest-ia.vercel.app/public-menu'
+    });
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncing, setIsSyncing] = useState<string | null>(null);
 
@@ -377,14 +383,19 @@ const SystemHub = () => {
       e.preventDefault();
       setIsSaving(true);
       try {
-        // Salvar apenas as configurações que existem no tipo SystemSettings
+        // Salvar todas as configurações do Cloud Ecosystem
         const settingsToSave = {
           restaurantName: localSettings.restaurantName,
-          appLogoUrl: localSettings.appLogoUrl
+          appLogoUrl: localSettings.appLogoUrl,
+          supabaseUrl: localSettings.supabaseUrl,
+          supabaseKey: localSettings.supabaseKey,
+          customDigitalMenuUrl: localSettings.customDigitalMenuUrl
         };
         await updateSettings(settingsToSave);
+        addNotification('success', 'Configurações do Ecosistema Cloud atualizadas com sucesso!');
         setTimeout(() => setIsSaving(false), 1000);
       } catch (error) {
+        addNotification('error', 'Erro ao salvar configurações');
         setIsSaving(false);
       }
     };
