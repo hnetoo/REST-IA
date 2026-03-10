@@ -11,6 +11,7 @@ interface PurchaseRequest {
   created_at: string;
   description: string;
   amount: number;
+  amount_kz?: number;
   provider: string;
   status: 'pendente' | 'aprovado' | 'rejeitado' | 'pago';
   proforma_url?: string;
@@ -140,18 +141,43 @@ const Purchases = () => {
   };
 
   const sendForApproval = async (request: PurchaseRequest) => {
-    // Substituir placeholders na mensagem personalizada
-    const message = whatsappSettings.customMessage
-      .replace('{description}', request.description)
-      .replace('{amount}', formatKz(request.amount))
-      .replace('{approvalLink}', `https://rest-ia.vercel.app/compras/owner/${request.id}`);
-    
-    // Enviar para todos os números configurados
-    whatsappSettings.approvalNumbers.forEach((number: string) => {
-      const cleanNumber = number.replace(/\D/g, ''); // Remover caracteres não numéricos
-      const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+    try {
+      console.log('[PURCHASES] Enviando para aprovação:', request);
+      
+      // Buscar o token de aprovação do pedido
+      const { data: purchaseData, error: fetchError } = await supabase
+        .from('purchase_requests')
+        .select('approval_token')
+        .eq('id', request.id)
+        .single();
+
+      if (fetchError || !purchaseData?.approval_token) {
+        console.error('[PURCHASES] Erro ao buscar token:', fetchError);
+        addNotification('error', 'Erro ao gerar link de aprovação');
+        return;
+      }
+
+      const approvalToken = purchaseData.approval_token;
+      const approvalUrl = `https://rest-ia.vercel.app/approve-purchase/${request.id}/${approvalToken}`;
+      
+      const message = `*🛒 PEDIDO DE COMPRA PARA APROVAÇÃO*\n\n` +
+        `*Descrição:* ${request.description}\n` +
+        `*Valor:* ${formatKz(request.amount)}\n` +
+        `*Fornecedor:* ${request.provider}\n\n` +
+        `*Para aprovar ou rejeitar, clique no link abaixo:*\n` +
+        `${approvalUrl}\n\n` +
+        `*Este link expira após o uso.*`;
+
+      const whatsappUrl = `https://wa.me/244923000000?text=${encodeURIComponent(message)}`;
+      
+      console.log('[PURCHASES] Abrindo WhatsApp:', whatsappUrl);
       window.open(whatsappUrl, '_blank');
-    });
+      
+      addNotification('success', 'Link de aprovação enviado via WhatsApp!');
+    } catch (error) {
+      console.error('Erro ao enviar para aprovação:', error);
+      addNotification('error', 'Erro ao enviar link de aprovação');
+    }
   };
 
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 

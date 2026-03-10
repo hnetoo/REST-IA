@@ -14,6 +14,7 @@ import TableLayout from './src/views/TableLayout';
 import Inventory from './src/views/Inventory';
 import Purchases from './src/views/Purchases';
 import PurchaseApproval from './src/views/PurchaseApproval';
+import ApprovePurchase from './src/views/ApprovePurchase';
 import Finance from './src/views/Finance';
 import Analytics from './src/views/Analytics';
 import Reports from './src/views/Reports';
@@ -65,6 +66,9 @@ const App = () => {
           
           {/* Login do Sistema Principal */}
           <Route path="/login" element={<Login />} />
+          
+          {/* Rota Pública de Aprovação - SEM LOGIN */}
+          <Route path="/approve-purchase/:id/:token" element={<ApprovePurchase />} />
           
           {/* Área do Restaurante - COM SIDEBAR - PROTEGIDA */}
           <Route path="/*" element={

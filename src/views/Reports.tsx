@@ -1,13 +1,50 @@
 import React, { useState } from 'react';
+import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, ShoppingCart, Users, Filter } from 'lucide-react';
+import { generateSalesReport, generatePurchaseReport } from '../services/pdfService';
 import { useStore } from '../store/useStore';
-import { 
-  FileDown, FileText, DollarSign, Users, ShoppingCart, 
-  Calendar, Filter, Download, TrendingUp, Activity
-} from 'lucide-react';
 
 const Reports = () => {
   const { settings } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
+
+  const generatePDF = (reportName: string) => {
+    console.log('[REPORTS] Gerando PDF:', reportName);
+    
+    switch(reportName) {
+      case 'Relatório de Vendas':
+        generateSalesReport();
+        break;
+      case 'Relatório de Compras':
+        generatePurchaseReport();
+        break;
+      case 'Relatório de Lucros':
+        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        break;
+      case 'Fluxo de Caixa':
+        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        break;
+      case 'Inventário Atual':
+        generatePurchaseReport(); // Por enquanto usa o mesmo de compras
+        break;
+      case 'Movimentação':
+        generatePurchaseReport(); // Por enquanto usa o mesmo de compras
+        break;
+      case 'Produtos Mais Vendidos':
+        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        break;
+      case 'Folha de Pagamento':
+        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        break;
+      case 'Horas Trabalhadas':
+        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        break;
+      case 'Desempenho':
+        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        break;
+      default:
+        console.log('[REPORTS] Relatório não implementado:', reportName);
+    }
+  };
 
   const reportCategories = [
     {
@@ -41,12 +78,6 @@ const Reports = () => {
       ]
     }
   ];
-
-  const generatePDF = (reportName: string) => {
-    // Placeholder para implementação com jspdf/html2canvas
-    console.log(`Gerando PDF: ${reportName}`);
-    // TODO: Implementar geração de PDF
-  };
 
   return (
     <div className="p-8 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar">
@@ -122,20 +153,28 @@ const Reports = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
             <div>
-              <p className="text-white font-bold">Relatório de Vendas - Dezembro 2025</p>
-              <p className="text-xs text-slate-500">Gerado em 31/12/2025 às 23:59</p>
+              <p className="text-white font-bold">Relatório de Vendas</p>
+              <p className="text-xs text-slate-500">Dados reais do Supabase</p>
             </div>
-            <button className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm">
+            <button 
+              onClick={generateSalesReport}
+              className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm hover:bg-white/20 transition-colors"
+              title="Download Relatório de Vendas"
+            >
               <Download size={16} />
             </button>
           </div>
           
           <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
             <div>
-              <p className="text-white font-bold">Inventário Atual - 30/12/2025</p>
-              <p className="text-xs text-slate-500">Gerado em 30/12/2025 às 18:00</p>
+              <p className="text-white font-bold">Inventário Atual</p>
+              <p className="text-xs text-slate-500">Dados reais do Supabase</p>
             </div>
-            <button className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm">
+            <button 
+              onClick={generatePurchaseReport}
+              className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm hover:bg-white/20 transition-colors"
+              title="Download Relatório de Compras"
+            >
               <Download size={16} />
             </button>
           </div>
