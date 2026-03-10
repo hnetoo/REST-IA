@@ -111,9 +111,45 @@ const OwnerDashboard = () => {
     }).format(value || 0);
   };
 
+  // Função para criar dados de teste
+  const seedTestData = async () => {
+    try {
+      console.log('[DASHBOARD] Inserindo dados de teste...');
+      
+      // Inserir uma venda real de 5.000 Kz
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          id: `test-order-${Date.now()}`,
+          table_id: 1,
+          status: 'closed',
+          total_amount: 5000,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          invoice_number: `TEST-${Date.now()}`
+        });
+
+      if (orderError) {
+        console.error('[DASHBOARD] Erro ao inserir order de teste:', orderError);
+        throw orderError;
+      }
+
+      console.log('[DASHBOARD] Dados de teste inseridos com sucesso!');
+      
+      // Atualizar métricas após inserção
+      setTimeout(() => {
+        fetchMetrics();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('[DASHBOARD] Erro ao inserir dados de teste:', error);
+    }
+  };
+
   // Buscar métricas do Supabase
   const fetchMetrics = async () => {
     try {
+      console.log(`[DASHBOARD] Iniciando busca de métricas para período: ${period}`);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -136,29 +172,44 @@ const OwnerDashboard = () => {
       }
 
       // Buscar pedidos
+      console.log(`[DASHBOARD] Buscando orders de ${startDate.toISOString()} até agora`);
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select('*')
         .gte('created_at', startDate.toISOString())
         .eq('status', 'closed');
 
-      if (ordersError) throw ordersError;
+      if (ordersError) {
+        console.error('[DASHBOARD] Erro ao buscar orders:', ordersError);
+        throw ordersError;
+      }
+      console.log(`[DASHBOARD] Orders encontrados: ${orders?.length || 0}`);
 
       // Buscar despesas (purchase_requests)
+      console.log(`[DASHBOARD] Buscando purchase_requests de ${startDate.toISOString()} até agora`);
       const { data: purchases, error: purchasesError } = await supabase
         .from('purchase_requests')
         .select('*')
         .gte('created_at', startDate.toISOString())
-        .eq('status', 'approved');
+        .eq('status', 'pago'); // Corrigido: 'pago' em vez de 'approved'
 
-      if (purchasesError) throw purchasesError;
+      if (purchasesError) {
+        console.error('[DASHBOARD] Erro ao buscar purchase_requests:', purchasesError);
+        throw purchasesError;
+      }
+      console.log(`[DASHBOARD] Purchase requests encontrados: ${purchases?.length || 0}`);
 
       // Buscar folha salarial
+      console.log(`[DASHBOARD] Buscando staff`);
       const { data: staff, error: staffError } = await supabase
         .from('staff')
         .select('base_salary_kz');
 
-      if (staffError) throw staffError;
+      if (staffError) {
+        console.error('[DASHBOARD] Erro ao buscar staff:', staffError);
+        throw staffError;
+      }
+      console.log(`[DASHBOARD] Staff encontrados: ${staff?.length || 0}`);
 
       // Calcular métricas
       const vendasHoje = orders
@@ -175,7 +226,7 @@ const OwnerDashboard = () => {
 
       const totalVendas = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
       const receitaTotal = totalVendas;
-      const despesas = purchases.reduce((sum, purchase) => sum + purchase.amount, 0);
+      const despesas = purchases.reduce((sum, purchase) => sum + (purchase.amount_kz || 0), 0); // Corrigido: amount_kz
       const folhaSalarial = staff.reduce((sum, employee) => sum + (employee.base_salary_kz || 0), 0);
       const impostos = totalVendas * 0.065;
 
@@ -190,8 +241,31 @@ const OwnerDashboard = () => {
       });
 
     } catch (error) {
-      console.error('Erro ao buscar métricas:', error);
-      addNotification('error', 'Erro ao carregar métricas');
+      console.error('[DASHBOARD] Erro ao buscar métricas:', error);
+      console.error('[DASHBOARD] Detalhes do erro:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      
+      // Se for erro de permissão, mostrar mensagem específica
+      if (error.message?.includes('permission') || error.code === 'PGRST301') {
+        addNotification('error', 'Erro de permissão: Verifique as políticas RLS das tabelas');
+      } else {
+        addNotification('error', `Erro ao carregar métricas: ${error.message}`);
+      }
+      
+      // Em caso de erro, definir valores padrão
+      setMetrics({
+        vendasHoje: 0,
+        mesasAtivas: 0,
+        totalVendas: 0,
+        receitaTotal: 0,
+        despesas: 0,
+        folhaSalarial: 0,
+        impostos: 0
+      });
     }
   };
 
@@ -497,6 +571,13 @@ const OwnerDashboard = () => {
 
       {/* Botão de Reset - Limpar Dados de Teste */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-2">
+        <button
+          onClick={seedTestData}
+          className="bg-blue-500/20 border border-blue-500/30 text-blue-400 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-500/30 transition-all flex items-center gap-2"
+        >
+          <RefreshCw className="w-3 h-3" />
+          Teste 5.000 Kz
+        </button>
         <button
           onClick={handleGenerateTestData}
           disabled={isResetting}
