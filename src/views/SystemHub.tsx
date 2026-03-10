@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   Settings, Users, Shield, FileText, Cloud, Terminal,
   ChevronRight, Building, UserCheck, Lock, Database, Code,
-  Plus, Edit2, Trash2, X, Save, FileBadge, Landmark, Info, Download
+  Plus, Edit2, Trash2, X, Save, FileBadge, Landmark, Info, Download,
+  ChefHat
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
@@ -671,6 +672,108 @@ const SystemHub = () => {
     );
   };
 
+  const KitchenKDS = () => {
+    const [kdsStatus, setKdsStatus] = useState({
+      isOnline: false,
+      lastSync: null as string | null,
+      ordersToday: 0,
+      activeOrders: 0
+    });
+
+    const handleToggleKDS = () => {
+      setKdsStatus(prev => ({
+        ...prev,
+        isOnline: !prev.isOnline,
+        lastSync: new Date().toISOString()
+      }));
+    };
+
+    return (
+      <div className="space-y-12">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
+              <ChefHat size={32} />
+            </div>
+            <div>
+              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Cozinha</h3>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">KDS Management System</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Status do KDS */}
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+              <div className={`w-4 h-4 rounded-full ${kdsStatus.isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              Status do Sistema
+            </h4>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Conexão</span>
+                <span className={`text-lg font-bold ${kdsStatus.isOnline ? 'text-green-500' : 'text-red-500'}`}>
+                  {kdsStatus.isOnline ? 'ONLINE' : 'OFFLINE'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Última Sincronização</span>
+                <span className="text-sm text-white">
+                  {kdsStatus.lastSync ? new Date(kdsStatus.lastSync).toLocaleString() : 'Nunca'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Pedidos Hoje</span>
+                <span className="text-lg font-mono font-bold text-white">{kdsStatus.ordersToday}</span>
+              </div>
+              <div className="flex justify-between items-center gap-3">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Pedidos Ativos</span>
+                <span className="text-lg font-mono font-bold text-[#06b6d4]">{kdsStatus.activeOrders}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Controlo do KDS */}
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
+              Controlo do KDS
+            </h4>
+            <div className="space-y-4">
+              <div className="p-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl flex gap-3">
+                <div className="w-5 h-5 bg-[#06b6d4] rounded-full"></div>
+                <p className="text-[9px] text-slate-400 italic leading-relaxed">O KDS (Kitchen Display System) permite à cozinha visualizar e gerir pedidos em tempo real.</p>
+              </div>
+              
+              <button 
+                onClick={handleToggleKDS}
+                className={`w-full py-6 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 ${
+                  kdsStatus.isOnline 
+                    ? 'bg-red-500 text-white hover:bg-red-600' 
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
+              >
+                <div className={`w-4 h-4 rounded-full ${kdsStatus.isOnline ? 'bg-white' : 'bg-white'}`}></div>
+                {kdsStatus.isOnline ? 'Desligar KDS' : 'Ligar KDS'}
+              </button>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-white mb-2">24/7</div>
+                  <div className="text-[8px] text-slate-400 uppercase">Disponibilidade</div>
+                </div>
+                <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-[#06b6d4] mb-2">0.3s</div>
+                  <div className="text-[8px] text-slate-400 uppercase">Latência</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const systemCards = [
     {
       id: 'identity',
@@ -687,6 +790,14 @@ const SystemHub = () => {
       icon: <Users className="w-8 h-8" />,
       color: 'from-blue-500 to-blue-600',
       component: <Employees />
+    },
+    {
+      id: 'kitchen-kds',
+      title: 'Cozinha',
+      description: 'Gestão do KDS - Kitchen Display System',
+      icon: <ChefHat className="w-8 h-8" />,
+      color: 'from-yellow-500 to-orange-600',
+      component: <KitchenKDS />
     },
     {
       id: 'access-control',
@@ -775,6 +886,14 @@ const SystemHub = () => {
                         <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Escalas</span>
                         <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Ponto</span>
                         <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Salário</span>
+                      </>
+                    )}
+                    {card.id === 'kitchen-kds' && (
+                      <>
+                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">KDS</span>
+                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Status</span>
+                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Pedidos</span>
+                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Controlo</span>
                       </>
                     )}
                     {card.id === 'access-control' && (
