@@ -12,6 +12,7 @@ import Purchases from './src/views/Purchases';
 import PurchaseApproval from './src/views/PurchaseApproval';
 import PublicMenu from './src/views/PublicMenu';
 import OwnerDashboard from './src/views/OwnerDashboard';
+import OwnerLogin from './src/views/OwnerLogin';
 import Employees from './src/views/Employees';
 import ProfitCenter from './src/views/ProfitCenter';
 import AGTControl from './src/views/AGTControl';
@@ -55,6 +56,10 @@ const App = () => {
           {/* Rotas Públicas / Externas */}
           <Route path="/menu/:tableId" element={<PublicMenu />} />
           <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
+          
+          {/* Owner - Rotas Independentes */}
+          <Route path="/owner/login" element={<OwnerLogin />} />
+          <Route path="/owner/dashboard" element={<OwnerDashboard />} />
           
           <Route path="/*" element={
             !currentUser ? <Login /> : (

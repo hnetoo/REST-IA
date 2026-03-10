@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Smartphone, DollarSign, Users, TrendingUp, Wallet, Receipt, FileText, Calculator, RefreshCw, LogOut } from 'lucide-react';
+import { Smartphone, DollarSign, Users, TrendingUp, Wallet, Receipt, FileText, Calculator, RefreshCw } from 'lucide-react';
 
 interface Metrics {
   vendasHoje: number;
@@ -48,7 +48,7 @@ interface Staff {
   status: string | null;
 }
 
-const OwnerDashboard = () => {
+const OwnerMobile = () => {
   const navigate = useNavigate();
   const [metrics, setMetrics] = useState<Metrics>({
     vendasHoje: 0,
@@ -63,11 +63,11 @@ const OwnerDashboard = () => {
   const [isOnline, setIsOnline] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
 
-  // Verificar sessão do Owner
+  // Verificar sessão independente do Owner Mobile
   useEffect(() => {
-    const session = localStorage.getItem('ownerSession');
+    const session = localStorage.getItem('ownerMobileSession');
     if (!session) {
-      navigate('/owner/login');
+      navigate('/owner-mobile/login');
       return;
     }
 
@@ -75,24 +75,19 @@ const OwnerDashboard = () => {
       const sessionData = JSON.parse(session);
       // Verificar se a sessão expirou (24 horas)
       if (Date.now() - sessionData.timestamp > 24 * 60 * 60 * 1000) {
-        localStorage.removeItem('ownerSession');
-        navigate('/owner/login');
+        localStorage.removeItem('ownerMobileSession');
+        navigate('/owner-mobile/login');
         return;
       }
     } catch (error) {
-      localStorage.removeItem('ownerSession');
-      navigate('/owner/login');
+      localStorage.removeItem('ownerMobileSession');
+      navigate('/owner-mobile/login');
     }
   }, [navigate]);
 
-  // Função de logout
-  const handleLogout = () => {
-    localStorage.removeItem('ownerSession');
-    navigate('/owner/login');
-  };
-
-  // Função de notificação simples
+  // Função de notificação simples (independente do store)
   const addNotification = (type: 'success' | 'error', message: string) => {
+    // Criar notificação temporária
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg text-white font-medium text-sm shadow-lg transform transition-all duration-300 ${
       type === 'success' ? 'bg-green-500' : 'bg-red-500'
@@ -186,10 +181,10 @@ const OwnerDashboard = () => {
         .length;
 
       const totalVendas = orders.reduce((sum, order) => sum + (order.total_amount_kz || 0), 0);
-      const receitaTotal = totalVendas;
+      const receitaTotal = totalVendas; // Pode ser ajustado para lucro líquido
       const despesas = purchases.reduce((sum, purchase) => sum + purchase.amount, 0);
       const folhaSalarial = staff.reduce((sum, employee) => sum + (employee.base_salary_kz || 0), 0);
-      const impostos = totalVendas * 0.065;
+      const impostos = totalVendas * 0.065; // 6.5% sobre faturação
 
       setMetrics({
         vendasHoje,
@@ -218,7 +213,7 @@ const OwnerDashboard = () => {
           table: 'orders' 
         }, 
         () => {
-          fetchMetrics();
+          fetchMetrics(); // Recalcula os valores dos cards
         }
       )
       .subscribe();
@@ -232,7 +227,7 @@ const OwnerDashboard = () => {
           table: 'purchase_requests' 
         }, 
         () => {
-          fetchMetrics();
+          fetchMetrics(); // Recalcula os valores dos cards
         }
       )
       .subscribe();
@@ -243,7 +238,7 @@ const OwnerDashboard = () => {
     };
   };
 
-  // Reset de dados de produção
+  // Reset de dados de produção (apenas para desenvolvimento)
   const handleResetProduction = async () => {
     if (!window.confirm('⚠️ ATENÇÃO: Esta ação irá apagar todos os pedidos e compras.\n\nEsta função é apenas para ambiente de desenvolvimento.\n\nDeseja continuar?')) {
       return;
@@ -255,7 +250,7 @@ const OwnerDashboard = () => {
       const { error: ordersError } = await supabase
         .from('orders')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Não apagar nada se não houver pedidos
 
       if (ordersError) throw ordersError;
 
@@ -268,7 +263,7 @@ const OwnerDashboard = () => {
       if (purchasesError) throw purchasesError;
 
       addNotification('success', 'Dados de produção resetados com sucesso!');
-      await fetchMetrics();
+      await fetchMetrics(); // Recarregar métricas
 
     } catch (error) {
       console.error('Erro ao resetar dados:', error);
@@ -280,7 +275,7 @@ const OwnerDashboard = () => {
 
   // Carregar dados e subscrição
   useEffect(() => {
-    const session = localStorage.getItem('ownerSession');
+    const session = localStorage.getItem('ownerMobileSession');
     if (!session) return;
 
     fetchMetrics();
@@ -301,139 +296,127 @@ const OwnerDashboard = () => {
   }, [period]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-      {/* Header com Botão de Sair */}
-      <div className="flex justify-between items-center p-6 bg-black/20 backdrop-blur-sm border-b border-white/10">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#06b6d4] to-[#0891b2] rounded-xl flex items-center justify-center">
-            <Smartphone className="w-5 h-5 text-white" />
-          </div>
+          <Smartphone className="w-6 h-6 text-[#06b6d4]" />
           <div>
-            <h1 className="text-xl font-bold text-white">Owner Dashboard</h1>
+            <h1 className="text-2xl font-bold text-white">Owner Mobile</h1>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
               <span className="text-xs text-slate-400">{isOnline ? 'Online' : 'Offline'}</span>
             </div>
           </div>
         </div>
-        
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/30 transition-all"
-        >
-          <LogOut size={16} />
-          Sair
-        </button>
       </div>
 
-      <div className="p-6">
-        {/* Filtros de Período */}
-        <div className="flex gap-2 mb-6 overflow-x-auto">
-          {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all ${
-                period === p 
-                  ? 'bg-[#fbbf24] text-black' 
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
+      {/* Filtros de Período */}
+      <div className="flex gap-2 mb-6 overflow-x-auto">
+        {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all ${
+              period === p 
+                ? 'bg-[#fbbf24] text-black' 
+                : 'bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+
+      {/* Grid de Cards */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        {/* Vendas Hoje - Verde */}
+        <div className="bg-gradient-to-br from-green-500 to-green-600 p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <DollarSign className="w-5 h-5 text-white/80" />
+            <span className="text-xs text-white/80 uppercase">AOA</span>
+          </div>
+          <div className="text-2xl font-bold text-white mb-1">
+            {formatAOA(metrics.vendasHoje)}
+          </div>
+          <div className="text-xs text-white/70">Vendas Hoje</div>
         </div>
 
-        {/* Grid de Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-          {/* Vendas Hoje - Verde */}
-          <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <DollarSign className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AOA</span>
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {formatAOA(metrics.vendasHoje)}
-            </div>
-            <div className="text-xs text-white/70">Vendas Hoje</div>
+        {/* Mesas Ativas - Azul */}
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <Users className="w-5 h-5 text-white/80" />
+            <span className="text-xs text-white/80 uppercase">TOTAL</span>
           </div>
+          <div className="text-2xl font-bold text-white mb-1">
+            {metrics.mesasAtivas}
+          </div>
+          <div className="text-xs text-white/70">Mesas Ativas</div>
+        </div>
 
-          {/* Mesas Ativas - Azul */}
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <Users className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">TOTAL</span>
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {metrics.mesasAtivas}
-            </div>
-            <div className="text-xs text-white/70">Mesas Ativas</div>
+        {/* Total Vendas - Laranja */}
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <TrendingUp className="w-5 h-5 text-white/80" />
+            <span className="text-xs text-white/80 uppercase">AOA</span>
           </div>
+          <div className="text-2xl font-bold text-white mb-1">
+            {formatAOA(metrics.totalVendas)}
+          </div>
+          <div className="text-xs text-white/70">Total Vendas</div>
+        </div>
 
-          {/* Total Vendas - Laranja */}
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AOA</span>
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {formatAOA(metrics.totalVendas)}
-            </div>
-            <div className="text-xs text-white/70">Total Vendas</div>
+        {/* Receita Total - Roxo */}
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <Wallet className="w-5 h-5 text-white/80" />
+            <span className="text-xs text-white/80 uppercase">AOA</span>
           </div>
+          <div className="text-2xl font-bold text-white mb-1">
+            {formatAOA(metrics.receitaTotal)}
+          </div>
+          <div className="text-xs text-white/70">Receita Total</div>
+        </div>
 
-          {/* Receita Total - Roxo */}
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <Wallet className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AOA</span>
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {formatAOA(metrics.receitaTotal)}
-            </div>
-            <div className="text-xs text-white/70">Receita Total</div>
+        {/* Despesas - Vermelho */}
+        <div className="bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <Receipt className="w-5 h-5 text-white/80" />
+            <span className="text-xs text-white/80 uppercase">AKZ</span>
           </div>
+          <div className="text-2xl font-bold text-white mb-1">
+            {formatAKZ(metrics.despesas)}
+          </div>
+          <div className="text-xs text-white/70">Despesas</div>
+        </div>
 
-          {/* Despesas - Vermelho */}
-          <div className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <Receipt className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AKZ</span>
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {formatAKZ(metrics.despesas)}
-            </div>
-            <div className="text-xs text-white/70">Despesas</div>
+        {/* Folha Salarial - Vermelho Escuro */}
+        <div className="bg-gradient-to-br from-red-700 to-red-800 p-4 rounded-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <FileText className="w-5 h-5 text-white/80" />
+            <span className="text-xs text-white/80 uppercase">AKZ</span>
           </div>
+          <div className="text-2xl font-bold text-white mb-1">
+            {formatAKZ(metrics.folhaSalarial)}
+          </div>
+          <div className="text-xs text-white/70">Folha Salarial</div>
+        </div>
 
-          {/* Folha Salarial - Vermelho Escuro */}
-          <div className="bg-gradient-to-br from-red-700 to-red-800 p-6 rounded-2xl">
-            <div className="flex items-center justify-between mb-2">
-              <FileText className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AKZ</span>
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {formatAKZ(metrics.folhaSalarial)}
-            </div>
-            <div className="text-xs text-white/70">Folha Salarial</div>
+        {/* Impostos - Azul Escuro */}
+        <div className="bg-gradient-to-br from-blue-700 to-blue-800 p-4 rounded-2xl col-span-2">
+          <div className="flex items-center justify-between mb-2">
+            <Calculator className="w-5 h-5 text-white/80" />
+            <span className="text-xs text-white/80 uppercase">AKZ</span>
           </div>
-
-          {/* Impostos - Azul Escuro */}
-          <div className="bg-gradient-to-br from-blue-700 to-blue-800 p-6 rounded-2xl col-span-2">
-            <div className="flex items-center justify-between mb-2">
-              <Calculator className="w-6 h-6 text-white/80" />
-              <span className="text-xs text-white/80 uppercase">AKZ</span>
-            </div>
-            <div className="text-3xl font-bold text-white mb-1">
-              {formatAKZ(metrics.impostos)}
-            </div>
-            <div className="text-xs text-white/70">Impostos (6.5% sobre faturação)</div>
+          <div className="text-2xl font-bold text-white mb-1">
+            {formatAKZ(metrics.impostos)}
           </div>
+          <div className="text-xs text-white/70">Impostos (6.5% sobre faturação)</div>
         </div>
       </div>
 
       {/* Botão de Reset - Apenas para desenvolvimento */}
-      <div className="fixed bottom-6 right-6">
+      <div className="fixed bottom-4 right-4">
         <button
           onClick={handleResetProduction}
           disabled={isResetting}
@@ -453,4 +436,4 @@ const OwnerDashboard = () => {
   );
 };
 
-export default OwnerDashboard;
+export default OwnerMobile;
