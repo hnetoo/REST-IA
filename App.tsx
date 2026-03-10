@@ -53,7 +53,7 @@ const App = () => {
       <div className="flex h-screen w-full bg-slate-950 font-sans overflow-hidden">
         <GlobalNotificationCenter />
         <Routes>
-          {/* Owner - Rotas FORA do layout principal */}
+          {/* OWNER - ROTAS INDEPENDENTES NO NÍVEL MAIS ALTO */}
           <Route path="/owner/login" element={<OwnerLogin />} />
           <Route path="/owner/dashboard" element={<OwnerDashboard />} />
           
@@ -61,7 +61,7 @@ const App = () => {
           <Route path="/menu/:tableId" element={<PublicMenu />} />
           <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
           
-          {/* Sistema Principal - com Sidebar e Layout */}
+          {/* SISTEMA PRINCIPAL - com Sidebar e Layout */}
           <Route path="/login" element={<Login />} />
           <Route path="/*" element={
             !currentUser ? <Login /> : (
@@ -70,7 +70,6 @@ const App = () => {
                 <main className="flex-1 h-full overflow-hidden relative">
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
-                    <Route path="/owner-hub" element={<OwnerDashboard />} />
                     <Route path="/pos" element={<POS />} />
                     <Route path="/agt" element={<AGTControl />} />
                     <Route path="/profit-center" element={<ProfitCenter />} />
