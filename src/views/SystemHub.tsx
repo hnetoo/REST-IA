@@ -585,7 +585,8 @@ const SystemHub = () => {
                         <p className="text-sm text-white">{log.message}</p>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
                 </div>
               </div>
               <div className="flex gap-2 pt-4 border-t border-white/5">
