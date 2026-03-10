@@ -3,7 +3,7 @@ import {
   Settings, Users, Shield, FileText, Cloud, Terminal,
   ChevronRight, Building, UserCheck, Lock, Database, Code,
   Plus, Edit2, Trash2, X, Save, FileBadge, Landmark, Info, Download,
-  ChefHat
+  ChefHat, Upload
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
@@ -30,6 +30,7 @@ const SystemHub = () => {
   const IdentitySettings = () => {
     const [localSettings, setLocalSettings] = useState(settings);
     const [isSaving, setIsSaving] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleSaveSettings = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -41,6 +42,34 @@ const SystemHub = () => {
       } catch (error) {
         setIsSaving(false);
       }
+    };
+
+    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        // Validar se é uma imagem
+        if (!file.type.startsWith('image/')) {
+          alert('Por favor, selecione um arquivo de imagem (JPG, PNG, etc.)');
+          return;
+        }
+
+        // Validar tamanho máximo (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('A imagem não pode ser maior que 5MB');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          setLocalSettings({...localSettings, appLogoUrl: result});
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const handleRemoveLogo = () => {
+      setLocalSettings({...localSettings, appLogoUrl: ''});
     };
 
     return (
@@ -113,21 +142,55 @@ const SystemHub = () => {
               />
             </div>
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-              <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative group">
                 {localSettings.appLogoUrl ? (
                   <img src={localSettings.appLogoUrl} className="w-full h-full object-contain p-2" alt="Logo" />
                 ) : (
                   <Building size={48} className="text-[#06b6d4]"/>
                 )}
+                {/* Overlay para upload */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <Upload size={24} className="mx-auto mb-2" />
+                    <p className="text-xs font-black uppercase">Clique para alterar</p>
+                  </div>
+                </div>
+                {/* Input escondido */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  title="Carregar novo logo"
+                  aria-label="Carregar novo logo"
+                />
               </div>
               <div className="flex-1 space-y-4 w-full">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Identidade Visual (Logo)</p>
-                <button 
-                  type="button" 
-                  className="px-6 py-3 bg-[#06b6d4]/10 border border-[#06b6d4]/20 text-[#06b6d4] rounded-xl text-[10px] font-black uppercase hover:bg-[#06b6d4]/20 transition-all flex items-center gap-2"
-                >
-                  Carregar Novo Logo
-                </button>
+                <div className="flex flex-wrap gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-6 py-3 bg-[#06b6d4]/10 border border-[#06b6d4]/20 text-[#06b6d4] rounded-xl text-[10px] font-black uppercase hover:bg-[#06b6d4]/20 transition-all flex items-center gap-2"
+                  >
+                    <Upload size={16} />
+                    Carregar Novo Logo
+                  </button>
+                  {localSettings.appLogoUrl && (
+                    <button 
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="px-6 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase hover:bg-red-500/20 transition-all flex items-center gap-2"
+                    >
+                      <Trash2 size={16} />
+                      Remover Logo
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 italic mt-2">
+                  Formatos aceites: JPG, PNG, GIF. Tamanho máximo: 5MB. Recomendado: 512x512px.
+                </p>
               </div>
             </div>
           </div>

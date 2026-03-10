@@ -891,6 +891,9 @@ restoreFromSupabase: async () => {
         }
       },
 
+      setMenu: (menu: Dish[]) => set({ menu }),
+      setCategories: (categories: MenuCategory[]) => set({ categories }),
+      
       resetFinancialData: () => {
         set(state => ({
           activeOrders: [],

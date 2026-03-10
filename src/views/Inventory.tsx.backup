@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { 
@@ -145,6 +146,17 @@ const Inventory = () => {
     setIsModalOpen(true);
   };
 
+  const handleOpenCatModal = (cat?: MenuCategory) => {
+    if (cat) {
+      setEditingId(cat.id);
+      setCatForm(cat);
+    } else {
+      setEditingId(null);
+      setCatForm({ name: '', icon: 'Grid3X3' });
+    }
+    setIsCatModalOpen(true);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -190,17 +202,6 @@ const Inventory = () => {
       });
     }
     setIsCatModalOpen(false);
-  };
-
-  const handleOpenCatModal = (cat?: MenuCategory) => {
-    if (cat) {
-      setEditingId(cat.id);
-      setCatForm(cat);
-    } else {
-      setEditingId(null);
-      setCatForm({ name: '', icon: 'Grid3X3' });
-    }
-    setIsCatModalOpen(true);
   };
 
   const tabs = [
@@ -386,15 +387,9 @@ const Inventory = () => {
         )}
 
         {activeTab === 'digital' && (
-          <div className="text-center text-white p-8">
-            <h2 className="text-2xl font-bold mb-4">QR Menu Digital</h2>
-            <p>Funcionalidade implementada com sucesso!</p>
-            <div className="mt-4">
-              <p className="text-sm">URL: {digitalMenuUrl}</p>
-              <button onClick={handleCopyUrl} className="mt-2 px-4 py-2 bg-primary text-black rounded">
-                {hasCopied ? 'Copiado!' : 'Copiar Link'}
-              </button>
-            </div>
+          <div className="space-y-12 pb-20">
+            {/* QR MENU STUDIO */}
+            <QRMenuStudio />
           </div>
         )}
       </div>
@@ -577,4 +572,444 @@ const Inventory = () => {
   );
 };
 
+// Componente QR Menu Studio
+const QRMenuStudio = () => {
+  const { menu, categories, settings, updateSettings, addNotification } = useStore();
+  const [hasCopied, setHasCopied] = useState(false);
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [tempUrl, setTempUrl] = useState(settings.customDigitalMenuUrl || '');
+
+  const digitalMenuUrl = useMemo(() => {
+    if (settings.customDigitalMenuUrl) return settings.customDigitalMenuUrl;
+    return `https://tasca-do-vereda.vercel.app/menu-digital?nif=${settings.nif}`;
+  }, [settings.customDigitalMenuUrl, settings.nif]);
+
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(digitalMenuUrl)}&margin=10&bgcolor=ffffff&color=000000`;
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(digitalMenuUrl);
+    setHasCopied(true);
+    addNotification('success', 'Link do Menu copiado!');
+    setTimeout(() => setHasCopied(false), 2000);
+  };
+
+  const handlePrintQR = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>QR Menu - ${settings.restaurantName}</title>
+          <style>
+            body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
+            .card { border: 2px solid #000; padding: 40px; border-radius: 20px; max-width: 400px; }
+            img { width: 300px; height: 300px; margin: 20px 0; }
+            h1 { margin: 0; text-transform: uppercase; font-size: 24px; }
+            p { color: #666; margin-top: 10px; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>${settings.restaurantName}</h1>
+            <p>DIGITAL MENU</p>
+            <img src="${qrImageUrl}" />
+            <p>Aponte a câmara para pedir</p>
+          </div>
+          <script>window.onload = () => { window.print(); window.close(); }</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const handleEditUrl = () => {
+    setTempUrl(settings.customDigitalMenuUrl || '');
+    setIsEditingUrl(true);
+  };
+
+  const handleSaveUrl = () => {
+    if (!tempUrl.trim()) {
+      alert('Por favor, insira uma URL válida.');
+      return;
+    }
+    
+    updateSettings({ customDigitalMenuUrl: tempUrl.trim() });
+    setIsEditingUrl(false);
+  };
+
+  const handleCancelEditUrl = () => {
+    setTempUrl(settings.customDigitalMenuUrl || '');
+    setIsEditingUrl(false);
+  };
+
+  const handleTestUrl = () => {
+    if (tempUrl) {
+      window.open(tempUrl, '_blank');
+    }
+  };
+
+  return (
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 glass-panel p-8 rounded-[3rem] border-primary/30 bg-primary/5 flex flex-col items-center text-center">
+          <div className="w-full aspect-square bg-white rounded-3xl p-4 shadow-glow mb-6 flex items-center justify-center overflow-hidden">
+            <img src={qrImageUrl} alt="Restaurant QR" className="w-full h-full object-contain" />
+          </div>
+          <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">QR Menu Oficial</h3>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 mb-8">Gerado via Vereda Digital Engine</p>
+          
+          <div className="grid grid-cols-2 gap-3 w-full">
+            <button onClick={handlePrintQR} className="flex items-center justify-center gap-2 py-4 bg-white text-black rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-primary transition-all">
+              <Printer size={16}/> Imprimir
+            </button>
+            <button onClick={handleCopyUrl} className="flex items-center justify-center gap-2 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all">
+              {hasCopied ? <Check size={16} className="text-emerald-500"/> : <Copy size={16}/>} {hasCopied ? 'Copiado' : 'Link'}
+            </button>
+          </div>
+        </div>
+
+        <div className="lg:col-span-2 glass-panel p-10 rounded-[3rem] border-white/5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary"><Smartphone size={20}/></div>
+              <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Configuração do Menu Digital</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5">
+                <div className="flex-1">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">URL Personalizada</p>
+                  {isEditingUrl ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        className="flex-1 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white font-mono text-xs outline-none focus:border-primary"
+                        placeholder="https://meu-restaurante.vercel.app"
+                        value={tempUrl}
+                        onChange={e => setTempUrl(e.target.value)}
+                      />
+                      <button
+                        onClick={handleTestUrl}
+                        className="px-3 py-2 bg-emerald-500 text-black rounded-xl font-black text-xs uppercase hover:bg-emerald-600 transition-all"
+                        title="Testar URL"
+                      >
+                        <ExternalLink size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        {settings.customDigitalMenuUrl ? (
+                          <a 
+                            href={settings.customDigitalMenuUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary font-mono text-xs hover:underline truncate max-w-[300px] block"
+                          >
+                            {settings.customDigitalMenuUrl}
+                          </a>
+                        ) : (
+                          <span className="text-slate-500 text-xs italic">Usando URL padrão</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={handleEditUrl}
+                        className="p-2 bg-white/10 text-slate-400 hover:text-primary rounded-xl transition-all"
+                        title="Editar URL"
+                      >
+                        <Edit size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <a href={digitalMenuUrl} target="_blank" rel="noreferrer" className="p-3 bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"><ExternalLink size={20}/></a>
+              </div>
+
+              {isEditingUrl && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCancelEditUrl}
+                    className="flex-1 py-2 bg-white/5 text-slate-400 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-white/10 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSaveUrl}
+                    className="flex-1 py-2 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-xl shadow-glow hover:scale-105 transition-all"
+                  >
+                    Salvar URL
+                  </button>
+                </div>
+              )}
+              
+              <div className="p-5 bg-purple-500/5 border border-purple-500/20 rounded-2xl">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Categorias Live</p>
+                <p className="text-2xl font-mono font-bold text-purple-500">{categories.filter(c => c.isVisibleDigital).length}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-3xl flex gap-4">
+            <Info size={24} className="text-blue-500 shrink-0" />
+            <p className="text-[11px] text-slate-300 leading-relaxed italic">
+              <b>Dica IA:</b> Pratos com fotos de alta qualidade e marcados como "Destaque" têm uma taxa de conversão 40% superior no menu digital. Garanta que as suas fotos estão apelativas.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full h-px bg-white/5 my-12"></div>
+
+      <CategoryVisibility />
+      <DishVisibility />
+    </>
+  );
+};
+
+// Componente Category Visibility
+const CategoryVisibility = () => {
+  const { categories } = useStore();
+
+  return (
+    <div>
+      <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+        <Tag size={16} /> Visibilidade de Categorias no QR
+      </h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {categories.map(cat => (
+          <button 
+            key={cat.id}
+            onClick={() => toggleCategoryVisibility(cat.id)}
+            className={`p-6 rounded-[2rem] border transition-all flex flex-col items-center gap-3 ${cat.isVisibleDigital ? 'bg-primary/5 border-primary shadow-glow' : 'bg-white/5 border-white/5 opacity-40'}`}
+          >
+            <div className={`p-3 rounded-2xl ${cat.isVisibleDigital ? 'bg-primary text-black' : 'bg-slate-800 text-slate-500'}`}>
+              <Tag size={20} />
+            </div>
+            <span className="text-[10px] font-black uppercase text-center">{cat.name}</span>
+            {cat.isVisibleDigital ? <Eye size={14} className="text-emerald-500" /> : <EyeOff size={14} className="text-red-500" />}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Componente Dish Visibility
+const DishVisibility = () => {
+  const { menu, categories } = useStore();
+
+  return (
+    <div>
+      <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+        <Utensils size={16} /> Destaques & Disponibilidade Mobile
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {menu.map(dish => {
+          const cat = categories.find(c => c.id === dish.categoryId);
+          return (
+            <div key={dish.id} className={`glass-panel p-6 rounded-[2.5rem] border transition-all flex items-center gap-6 ${dish.isVisibleDigital ? 'border-primary/20' : 'border-white/5 grayscale opacity-40'}`}>
+              <div className="w-20 h-20 rounded-2xl overflow-hidden relative shrink-0">
+                <img src={dish.image} className="w-full h-full object-cover" alt="" />
+                {dish.isFeatured && <div className="absolute top-2 right-2 p-1.5 bg-yellow-500 text-black rounded-full shadow-lg"><Sparkles size={10}/></div>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[8px] font-black text-slate-500 uppercase mb-1">{cat?.name}</p>
+                <h4 className="text-white font-bold text-sm truncate">{dish.name}</h4>
+                <p className="text-primary font-mono text-xs">{formatKz(dish.price)}</p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button 
+                  onClick={() => toggleDishVisibility(dish.id)}
+                  className={`p-3 rounded-xl transition-all ${dish.isVisibleDigital ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}
+                >
+                  {dish.isVisibleDigital ? <Eye size={16}/> : <EyeOff size={16}/>}
+                </button>
+                <button 
+                  onClick={() => toggleDishFeatured(dish.id)}
+                  className={`p-3 rounded-xl transition-all ${dish.isFeatured ? 'bg-yellow-500 text-black shadow-glow' : 'bg-white/5 text-slate-500'}`}
+                >
+                  <Star size={16} fill={dish.isFeatured ? 'currentColor' : 'none'} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+            <p className="text-slate-400 text-sm leading-relaxed mb-8">
+              Você está prestes a criar uma cópia independente de <b>"{duplicateConfirm.name}"</b>.<br/>
+              {duplicateConfirm.type === 'category' ? 'Isso também duplicará todos os produtos vinculados a esta categoria.' : 'O novo registro terá seu próprio ID e poderá ser editado sem afetar o original.'}
+            </p>
+            <div className="flex gap-4 w-full">
+              <button 
+                onClick={() => setDuplicateConfirm(null)}
+                className="flex-1 py-4 rounded-2xl border border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/5 transition-all"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  if (duplicateConfirm.type === 'dish') {
+                    duplicateDish(duplicateConfirm.id);
+                  } else {
+                    duplicateCategory(duplicateConfirm.id);
+                  }
+                  setDuplicateConfirm(null);
+                }}
+                className="flex-1 py-4 rounded-2xl bg-primary text-black font-black uppercase text-[10px] tracking-widest hover:brightness-110 shadow-glow transition-all"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PRODUTO */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in">
+          <div className="glass-panel rounded-[3rem] w-full max-w-2xl p-10 border border-white/10 shadow-2xl relative overflow-y-auto max-h-[90vh] no-scrollbar">
+            <div className="flex justify-between items-center mb-8">
+               <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">{editingId ? 'Editar Produto' : 'Novo Produto'}</h3>
+               <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="text-slate-500 hover:text-white"
+                title="Fechar modal"
+                aria-label="Fechar modal"
+              >
+                <X />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmitDish} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               <div className="space-y-6">
+                 <div className="space-y-4">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome do Prato / Produto</label>
+                    <input required type="text" className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={dishForm.name} onChange={e => setDishForm({...dishForm, name: e.target.value})} />
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Preço ({settings.currency})</label>
+                       <input required type="number" className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary" value={dishForm.price} onChange={e => setDishForm({...dishForm, price: Number(e.target.value)})} />
+                    </div>
+                    <div className="space-y-4">
+                       <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Custo ({settings.currency})</label>
+                       <input required type="number" className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary" value={dishForm.costPrice} onChange={e => setDishForm({...dishForm, costPrice: Number(e.target.value)})} />
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Categoria</label>
+                    <select 
+                      className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary appearance-none" 
+                      value={dishForm.categoryId} 
+                      onChange={e => setDishForm({...dishForm, categoryId: e.target.value})}
+                      title="Selecione uma categoria"
+                      aria-label="Selecione uma categoria"
+                    >
+                       {categories.map(c => <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>)}
+                    </select>
+                 </div>
+
+                 <div className="space-y-4">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Descrição Comercial</label>
+                    <textarea 
+                      className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary min-h-[120px] text-sm leading-relaxed" 
+                      value={dishForm.description} 
+                      onChange={e => setDishForm({...dishForm, description: e.target.value})}
+                      placeholder="Descreva o produto..."
+                      aria-label="Descrição do produto"
+                    />
+                 </div>
+               </div>
+
+               <div className="space-y-6">
+                 <div className="space-y-4">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Imagem do Produto</label>
+                    <div className="aspect-video w-full rounded-2xl bg-white/5 border border-dashed border-white/10 overflow-hidden flex items-center justify-center relative group">
+                        {dishForm.image ? (
+                          <LazyImage src={dishForm.image} alt="Preview" containerClassName="w-full h-full" />
+                        ) : (
+                          <div className="text-center">
+                            <ImageIcon className="mx-auto text-slate-600 mb-2" size={32} />
+                            <p className="text-[10px] text-slate-500 uppercase font-black">Nenhuma Imagem</p>
+                          </div>
+                        )}
+                        <button 
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 z-20"
+                        >
+                          <Upload size={24} className="text-primary" />
+                          <span className="text-[10px] font-black text-white uppercase tracking-widest">Carregar Ficheiro Local</span>
+                        </button>
+                    </div>
+                    <input 
+                      type="file" 
+                      hidden 
+                      ref={fileInputRef} 
+                      accept="image/*" 
+                      onChange={handleFileChange}
+                      title="Carregar imagem do produto"
+                      aria-label="Carregar imagem do produto"
+                    />
+                 </div>
+
+                 <div className="space-y-4">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Ou Link Externo (URL)</label>
+                    <div className="relative">
+                      <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+                      <input 
+                        type="text" 
+                        placeholder="https://exemplo.com/imagem.jpg"
+                        className="w-full p-4 pl-12 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary text-xs" 
+                        value={dishForm.image?.startsWith('data:') ? '' : dishForm.image} 
+                        onChange={e => setDishForm({...dishForm, image: e.target.value})}
+                        aria-label="URL da imagem do produto"
+                      />
+                    </div>
+                 </div>
+
+                 <button type="submit" className="w-full py-5 bg-primary text-black rounded-[1.5rem] font-black uppercase tracking-widest shadow-glow flex items-center justify-center gap-3 mt-auto">
+                    <Save size={18} /> Guardar Produto
+                 </button>
+               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CATEGORIA */}
+      {isCatModalOpen && (
+        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 backdrop-blur-md animate-in fade-in">
+          <div className="glass-panel rounded-[3rem] w-full max-w-md p-10 border border-white/10 shadow-2xl relative">
+            <div className="flex justify-between items-center mb-8">
+               <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">{editingId ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+               <button onClick={() => setIsCatModalOpen(false)} className="text-slate-500 hover:text-white"><X /></button>
+            </div>
+            
+            <form onSubmit={handleSubmitCat} className="space-y-6">
+               <div className="space-y-4">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Nome da Categoria</label>
+                  <input required type="text" className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={catForm.name} onChange={e => setCatForm({...catForm, name: e.target.value})} />
+               </div>
+               
+               <button type="submit" className="w-full py-5 bg-primary text-black rounded-[1.5rem] font-black uppercase tracking-widest shadow-glow flex items-center justify-center gap-3">
+                  <Save size={18} /> Guardar Categoria
+               </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default Inventory;
+
+
+
+
