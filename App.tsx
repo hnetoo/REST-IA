@@ -11,8 +11,8 @@ import TableLayout from './src/views/TableLayout';
 import Purchases from './src/views/Purchases';
 import PurchaseApproval from './src/views/PurchaseApproval';
 import PublicMenu from './src/views/PublicMenu';
-import OwnerDashboard from './src/views/OwnerDashboard';
-import OwnerLogin from './src/views/OwnerLogin';
+import OwnerLogin from './src/views/owner/OwnerLogin';
+import OwnerDashboard from './src/views/owner/OwnerDashboard';
 import Employees from './src/views/Employees';
 import ProfitCenter from './src/views/ProfitCenter';
 import AGTControl from './src/views/AGTControl';
@@ -53,7 +53,7 @@ const App = () => {
       <div className="flex h-screen w-full bg-slate-950 font-sans overflow-hidden">
         <GlobalNotificationCenter />
         <Routes>
-          {/* OWNER - ROTAS INDEPENDENTES NO NÍVEL MAIS ALTO */}
+          {/* Área do Dono - SEM SIDEBAR - INDEPENDENTE DO currentUser */}
           <Route path="/owner/login" element={<OwnerLogin />} />
           <Route path="/owner/dashboard" element={<OwnerDashboard />} />
           
@@ -61,8 +61,10 @@ const App = () => {
           <Route path="/menu/:tableId" element={<PublicMenu />} />
           <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
           
-          {/* SISTEMA PRINCIPAL - com Sidebar e Layout */}
+          {/* Login do Sistema Principal */}
           <Route path="/login" element={<Login />} />
+          
+          {/* Área do Restaurante - COM SIDEBAR - PROTEGIDA */}
           <Route path="/*" element={
             !currentUser ? <Login /> : (
               <div className="flex h-screen w-full overflow-hidden">

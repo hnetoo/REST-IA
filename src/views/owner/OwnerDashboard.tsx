@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { Smartphone, DollarSign, Users, TrendingUp, Wallet, Receipt, FileText, Calculator, RefreshCw, LogOut } from 'lucide-react';
 
 interface Metrics {
@@ -422,7 +422,7 @@ const OwnerDashboard = () => {
         </div>
       </div>
 
-      {/* Botão de Reset - Apenas para desenvolvimento */}
+      {/* Botão de Reset - Limpar Dados de Teste */}
       <div className="fixed bottom-6 right-6">
         <button
           onClick={handleResetProduction}
@@ -432,10 +432,10 @@ const OwnerDashboard = () => {
           {isResetting ? (
             <>
               <RefreshCw className="w-3 h-3 animate-spin" />
-              Resetando...
+              Limpando...
             </>
           ) : (
-            'Reset de Dados de Produção'
+            'Limpar Dados de Teste'
           )}
         </button>
       </div>

@@ -26,9 +26,9 @@ const OwnerLogin = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       if (pin === OWNER_CREDENTIALS.pin) {
-        // Login independente - redireciona apenas para /owner/dashboard
+        // Login independente - REDIRECIONAMENTO EXPLÍCITO
         localStorage.setItem('owner_logged_in', 'true');
-        navigate('/owner/dashboard');
+        navigate('/owner/dashboard'); // EXPLÍCITO: apenas /owner/dashboard
       } else {
         setError('PIN incorreto. Tente novamente.');
         setPin('');
