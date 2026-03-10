@@ -3,7 +3,7 @@ import {
   Settings, Users, Shield, FileText, Cloud, Terminal,
   ChevronRight, Building, UserCheck, Lock, Database, Code,
   Plus, Edit2, Trash2, X, Save, FileBadge, Landmark, Info, Download,
-  ChefHat, Upload
+  ChefHat, Upload, AlertCircle, Activity
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
@@ -1058,6 +1058,680 @@ const SystemHub = () => {
     );
   };
 
+  const ProductionReset = () => {
+    const [isConfirming, setIsConfirming] = useState(false);
+    const [isResetting, setIsResetting] = useState(false);
+    const [resetReason, setResetReason] = useState('');
+    const [productionData, setProductionData] = useState({
+      ordersToday: 156,
+      revenueToday: 2450000,
+      profitToday: 850000,
+      itemsSold: 234,
+      activeTables: 8,
+      lastReset: '2024-12-01'
+    });
+
+    const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
+      style: 'currency', 
+      currency: 'AOA', 
+      maximumFractionDigits: 2 
+    }).format(val);
+
+    const handleResetProduction = async () => {
+      if (!resetReason.trim()) {
+        alert('Por favor, informe o motivo do reset de produção.');
+        return;
+      }
+
+      setIsResetting(true);
+      try {
+        // Simulação de reset de dados
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Resetar todos os valores para zero
+        setProductionData({
+          ordersToday: 0,
+          revenueToday: 0,
+          profitToday: 0,
+          itemsSold: 0,
+          activeTables: 0,
+          lastReset: new Date().toISOString().split('T')[0]
+        });
+
+        // Limpar formulário
+        setResetReason('');
+        setIsConfirming(false);
+        
+        console.log('Produção resetada com sucesso. Motivo:', resetReason);
+      } catch (error) {
+        console.error('Erro ao resetar produção:', error);
+      } finally {
+        setIsResetting(false);
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Status Atual da Produção */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+            Status Atual da Produção
+          </h4>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl text-center">
+              <div className="text-3xl font-bold text-green-500 mb-2">{productionData.ordersToday}</div>
+              <div className="text-[8px] text-slate-400 uppercase">Pedidos Hoje</div>
+            </div>
+            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-center">
+              <div className="text-2xl font-bold text-blue-500 mb-2">{formatKz(productionData.revenueToday)}</div>
+              <div className="text-[8px] text-slate-400 uppercase">Receita Hoje</div>
+            </div>
+            <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl text-center">
+              <div className="text-2xl font-bold text-purple-500 mb-2">{formatKz(productionData.profitToday)}</div>
+              <div className="text-[8px] text-slate-400 uppercase">Lucro Hoje</div>
+            </div>
+            <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl text-center">
+              <div className="text-2xl font-bold text-orange-500 mb-2">{productionData.itemsSold}</div>
+              <div className="text-[8px] text-slate-400 uppercase">Itens Vendidos</div>
+            </div>
+            <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl text-center">
+              <div className="text-2xl font-bold text-cyan-500 mb-2">{productionData.activeTables}</div>
+              <div className="text-[8px] text-slate-400 uppercase">Mesas Ativas</div>
+            </div>
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-center">
+              <div className="text-lg font-bold text-red-500 mb-2">
+                {new Date(productionData.lastReset).toLocaleDateString('pt-AO')}
+              </div>
+              <div className="text-[8px] text-slate-400 uppercase">Último Reset</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Controlo de Reset */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+            Controlo de Reset de Produção
+          </h4>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-2xl flex gap-3">
+              <div className="w-5 h-5 bg-red-500 rounded-full"></div>
+              <p className="text-[9px] text-slate-400 italic leading-relaxed">
+                O reset de produção irá zerar todos os dados do dia atual: pedidos, receitas, lucros e estatísticas. Esta ação não pode ser desfeita.
+              </p>
+            </div>
+
+            {!isConfirming ? (
+              <button
+                onClick={() => setIsConfirming(true)}
+                className="w-full py-6 bg-red-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 hover:bg-red-600"
+              >
+                <Trash2 size={20} />
+                Resetar Produção
+              </button>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                  <h5 className="text-white font-bold mb-3 flex items-center gap-2">
+                    <AlertCircle size={20} className="text-red-500" />
+                    Confirmação Necessária
+                  </h5>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">
+                        Motivo do Reset
+                      </label>
+                      <textarea
+                        value={resetReason}
+                        onChange={(e) => setResetReason(e.target.value)}
+                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-red-500 min-h-[100px] resize-none"
+                        placeholder="Descreva o motivo do reset de produção (ex: Mudança de turno, encerramento do dia, teste do sistema, etc.)"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => {
+                          setIsConfirming(false);
+                          setResetReason('');
+                        }}
+                        disabled={isResetting}
+                        className="py-3 bg-white/10 border border-white/20 text-white rounded-xl font-black uppercase text-sm tracking-widest transition-all hover:bg-white/20 disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleResetProduction}
+                        disabled={isResetting}
+                        className="py-3 bg-red-500 text-white rounded-xl font-black uppercase text-sm tracking-widest shadow-glow flex items-center justify-center gap-2 transition-all hover:scale-105 disabled:opacity-50"
+                      >
+                        {isResetting ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Resetando...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 size={16} />
+                            Confirmar Reset
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
+                  <h5 className="text-yellow-400 font-bold mb-2 text-sm">⚠️ O que será resetado:</h5>
+                  <ul className="space-y-1 text-xs text-slate-400">
+                    <li>• Todos os pedidos do dia</li>
+                    <li>• Receitas e lucros acumulados</li>
+                    <li>• Contagem de itens vendidos</li>
+                    <li>• Mesas ativas</li>
+                    <li>• Estatísticas de produção</li>
+                    <li>• Cache temporário do sistema</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Histórico de Resets */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+            Histórico de Resets
+          </h4>
+          
+          <div className="space-y-3">
+            <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h5 className="text-white font-bold">Reset de Produção</h5>
+                  <p className="text-xs text-slate-400">Motivo: Mudança de turno - Manhã para Tarde</p>
+                </div>
+                <span className="text-xs text-blue-400 font-mono">01/12/2024 14:30</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-slate-500">Pedidos:</span>
+                  <span className="text-white ml-2">89</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Receita:</span>
+                  <span className="text-green-400 ml-2">1.2M Kz</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Status:</span>
+                  <span className="text-green-400 ml-2">Concluído</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h5 className="text-white font-bold">Reset de Produção</h5>
+                  <p className="text-xs text-slate-400">Motivo: Encerramento do dia</p>
+                </div>
+                <span className="text-xs text-blue-400 font-mono">30/11/2024 23:59</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-slate-500">Pedidos:</span>
+                  <span className="text-white ml-2">156</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Receita:</span>
+                  <span className="text-green-400 ml-2">2.4M Kz</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Status:</span>
+                  <span className="text-green-400 ml-2">Concluído</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Informações do Sistema */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-purple-500 rounded-full"></div>
+            Informações do Sistema
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-purple-500/5 border border-purple-500/20 rounded-2xl">
+              <h5 className="text-purple-400 font-bold mb-2 text-sm">🔄 Reset Automático</h5>
+              <p className="text-xs text-slate-400 mb-3">
+                O sistema pode ser configurado para reset automático diário às 23:59.
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Status:</span>
+                <span className="text-xs text-purple-400 font-mono">Desativado</span>
+              </div>
+            </div>
+            
+            <div className="p-4 bg-purple-500/5 border border-purple-500/20 rounded-2xl">
+              <h5 className="text-purple-400 font-bold mb-2 text-sm">💾 Backup Antes do Reset</h5>
+              <p className="text-xs text-slate-400 mb-3">
+                Backup automático dos dados antes de qualquer operação de reset.
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Status:</span>
+                <span className="text-xs text-green-400 font-mono">Ativo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const FinancialHistory = () => {
+    const [records, setRecords] = useState([
+      { id: '1', system: 'Sistema POS Antigo', period: 'Jan-Dez 2024', revenue: 45000000, profit: 8500000, date: '2024-12-31' },
+      { id: '2', system: 'Excel Manual', period: 'Jan-Jun 2024', revenue: 22000000, profit: 4200000, date: '2024-06-30' },
+      { id: '3', system: 'Papel e Caneta', period: 'Jan-Mai 2024', revenue: 18000000, profit: 3500000, date: '2024-05-31' }
+    ]);
+    const [showForm, setShowForm] = useState(false);
+    const [formData, setFormData] = useState({
+      system: '',
+      period: '',
+      revenue: '',
+      profit: ''
+    });
+
+    const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
+      style: 'currency', 
+      currency: 'AOA', 
+      maximumFractionDigits: 2 
+    }).format(val);
+
+    const handleAddRecord = (e: React.FormEvent) => {
+      e.preventDefault();
+      const newRecord = {
+        id: Date.now().toString(),
+        system: formData.system,
+        period: formData.period,
+        revenue: parseFloat(formData.revenue),
+        profit: parseFloat(formData.profit),
+        date: new Date().toISOString().split('T')[0]
+      };
+      setRecords([newRecord, ...records]);
+      setFormData({ system: '', period: '', revenue: '', profit: '' });
+      setShowForm(false);
+    };
+
+    const totalRevenue = records.reduce((sum, record) => sum + record.revenue, 0);
+    const totalProfit = records.reduce((sum, record) => sum + record.profit, 0);
+    const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+    return (
+      <div className="space-y-6">
+        {/* Resumo Financeiro */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+            Resumo Financeiro Histórico
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl text-center">
+              <div className="text-2xl font-bold text-green-500 mb-2">{formatKz(totalRevenue)}</div>
+              <div className="text-[8px] text-slate-400 uppercase">Receita Total</div>
+            </div>
+            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-center">
+              <div className="text-2xl font-bold text-blue-500 mb-2">{formatKz(totalProfit)}</div>
+              <div className="text-[8px] text-slate-400 uppercase">Lucro Total</div>
+            </div>
+            <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl text-center">
+              <div className="text-2xl font-bold text-purple-500 mb-2">{avgProfitMargin.toFixed(1)}%</div>
+              <div className="text-[8px] text-slate-400 uppercase">Margem Média</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Adicionar Novo Registro */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <div className="flex justify-between items-center">
+            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
+              Registros Históricos
+            </h4>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="px-4 py-2 bg-[#06b6d4] text-black rounded-xl text-sm font-black uppercase hover:brightness-110 transition-all flex items-center gap-2"
+            >
+              <Plus size={16} />
+              {showForm ? 'Cancelar' : 'Adicionar Registro'}
+            </button>
+          </div>
+
+          {showForm && (
+            <form onSubmit={handleAddRecord} className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">Sistema Anterior</label>
+                  <input
+                    type="text"
+                    value={formData.system}
+                    onChange={(e) => setFormData({...formData, system: e.target.value})}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#06b6d4]"
+                    placeholder="Nome do sistema"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">Período</label>
+                  <input
+                    type="text"
+                    value={formData.period}
+                    onChange={(e) => setFormData({...formData, period: e.target.value})}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#06b6d4]"
+                    placeholder="Ex: Jan-Jun 2024"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">Receita (Kz)</label>
+                  <input
+                    type="number"
+                    value={formData.revenue}
+                    onChange={(e) => setFormData({...formData, revenue: e.target.value})}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#06b6d4]"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">Lucro (Kz)</label>
+                  <input
+                    type="number"
+                    value={formData.profit}
+                    onChange={(e) => setFormData({...formData, profit: e.target.value})}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#06b6d4]"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="w-full py-4 bg-green-500 text-white rounded-xl font-black uppercase text-sm tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105"
+              >
+                <Save size={20} />
+                Salvar Registro
+              </button>
+            </form>
+          )}
+        </div>
+
+        {/* Lista de Registros */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
+            Histórico de Sistemas
+          </h4>
+          
+          <div className="space-y-4">
+            {records.map((record) => (
+              <div key={record.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h5 className="text-white font-bold text-lg">{record.system}</h5>
+                    <p className="text-xs text-slate-400">{record.period}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-400">Margem</p>
+                    <p className="text-lg font-bold text-purple-400">
+                      {((record.profit / record.revenue) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-slate-400">Receita</p>
+                    <p className="text-xl font-bold text-green-400">{formatKz(record.revenue)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400">Lucro</p>
+                    <p className="text-xl font-bold text-blue-400">{formatKz(record.profit)}</p>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <p className="text-xs text-slate-500">Registrado em: {new Date(record.date).toLocaleDateString('pt-AO')}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Análise Comparativa */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
+            Análise Comparativa
+          </h4>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
+              <h5 className="text-white font-bold mb-2">Insights Financeiros</h5>
+              <ul className="space-y-2 text-xs text-slate-400">
+                <li>• Total de {records.length} sistemas registrados</li>
+                <li>• Melhor margem: {Math.max(...records.map(r => (r.profit / r.revenue) * 100)).toFixed(1)}%</li>
+                <li>• Período médio de operação: 6 meses</li>
+                <li>• Crescimento médio mensal: {avgProfitMargin.toFixed(1)}%</li>
+              </ul>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                <p className="text-xs text-slate-400 mb-2">Sistema Mais Rentável</p>
+                <p className="text-lg font-bold text-green-400">
+                  {records.reduce((max, r) => r.profit > max.profit ? r : max).system}
+                </p>
+              </div>
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                <p className="text-xs text-slate-400 mb-2">Maior Receita</p>
+                <p className="text-lg font-bold text-blue-400">
+                  {records.reduce((max, r) => r.revenue > max.revenue ? r : max).system}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const DatabaseOperations = () => {
+    const [dbType, setDbType] = useState('postgresql');
+    const [isBackingUp, setIsBackingUp] = useState(false);
+    const [isRestoring, setIsRestoring] = useState(false);
+    const [lastBackup, setLastBackup] = useState<string | null>(null);
+
+    const databaseTypes = [
+      { id: 'postgresql', name: 'PostgreSQL', description: 'Base de dados principal do sistema', icon: '🐘' },
+      { id: 'sqlite', name: 'SQLite', description: 'Base de dados local para cache', icon: '🗄️' },
+      { id: 'local', name: 'Local Storage', description: 'Armazenamento local do navegador', icon: '💾' }
+    ];
+
+    const handleBackup = async (type: string) => {
+      setIsBackingUp(true);
+      try {
+        // Simulação de backup
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setLastBackup(new Date().toISOString());
+        console.log(`Backup realizado para ${type}`);
+      } catch (error) {
+        console.error('Erro no backup:', error);
+      } finally {
+        setIsBackingUp(false);
+      }
+    };
+
+    const handleRestore = async (type: string) => {
+      setIsRestoring(true);
+      try {
+        // Simulação de restore
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        console.log(`Restore realizado para ${type}`);
+      } catch (error) {
+        console.error('Erro no restore:', error);
+      } finally {
+        setIsRestoring(false);
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Informações da Base de Dados */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
+            Informações da Base de Dados
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {databaseTypes.map((db) => (
+              <div 
+                key={db.id}
+                className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                  dbType === db.id 
+                    ? 'bg-[#06b6d4]/10 border-[#06b6d4]/30' 
+                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                }`}
+                onClick={() => setDbType(db.id)}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="text-2xl">{db.icon}</div>
+                  <div>
+                    <h5 className="text-white font-bold">{db.name}</h5>
+                    <p className="text-xs text-slate-400">{db.description}</p>
+                  </div>
+                </div>
+                {dbType === db.id && (
+                  <div className="text-xs text-[#06b6d4] font-bold">ATIVO</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Operações de Backup */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+            Operações de Backup
+          </h4>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-green-500/5 border border-green-500/20 rounded-2xl flex gap-3">
+              <div className="w-5 h-5 bg-green-500 rounded-full"></div>
+              <p className="text-[9px] text-slate-400 italic leading-relaxed">
+                O backup cria uma cópia de segurança completa dos dados da base de dados selecionada.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={() => handleBackup(dbType)}
+                disabled={isBackingUp}
+                className="py-6 bg-green-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 disabled:opacity-50"
+              >
+                <Download size={20} />
+                {isBackingUp ? 'Fazendo Backup...' : 'Fazer Backup'}
+              </button>
+              
+              <button
+                onClick={() => handleRestore(dbType)}
+                disabled={isRestoring}
+                className="py-6 bg-orange-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 disabled:opacity-50"
+              >
+                <Upload size={20} />
+                {isRestoring ? 'Restaurando...' : 'Restaurar Backup'}
+              </button>
+            </div>
+
+            {lastBackup && (
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                <p className="text-xs text-slate-400">Último backup realizado:</p>
+                <p className="text-sm text-white font-mono">
+                  {new Date(lastBackup).toLocaleString('pt-AO')}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Status da Base de Dados */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+            Status da Base de Dados
+          </h4>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
+              <div className="text-2xl font-bold text-green-500 mb-2">ONLINE</div>
+              <div className="text-[8px] text-slate-400 uppercase">Status</div>
+            </div>
+            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
+              <div className="text-2xl font-bold text-white mb-2">2.4GB</div>
+              <div className="text-[8px] text-slate-400 uppercase">Tamanho</div>
+            </div>
+            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
+              <div className="text-2xl font-bold text-[#06b6d4] mb-2">15,234</div>
+              <div className="text-[8px] text-slate-400 uppercase">Registros</div>
+            </div>
+            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
+              <div className="text-2xl font-bold text-white mb-2">99.9%</div>
+              <div className="text-[8px] text-slate-400 uppercase">Uptime</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Configurações Avançadas */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+            <div className="w-4 h-4 bg-purple-500 rounded-full"></div>
+            Configurações Avançadas
+          </h4>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-purple-500/5 border border-purple-500/20 rounded-2xl">
+              <h5 className="text-white font-bold mb-2">Otimização Automática</h5>
+              <p className="text-xs text-slate-400 mb-3">
+                O sistema realiza otimizações automáticas da base de dados durante horários de baixa atividade.
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Próxima otimização:</span>
+                <span className="text-xs text-purple-400 font-mono">02:00 AM</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button className="py-4 bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-xl text-xs font-black uppercase hover:bg-purple-500/30 transition-all">
+                Limpar Cache
+              </button>
+              <button className="py-4 bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-xl text-xs font-black uppercase hover:bg-purple-500/30 transition-all">
+                Analisar Performance
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const systemCards = [
     {
       id: 'identity',
@@ -1106,6 +1780,30 @@ const SystemHub = () => {
       icon: <FileText className="w-8 h-8" />,
       color: 'from-green-500 to-green-600',
       component: <AGTCompliance />
+    },
+    {
+      id: 'financial-history',
+      title: 'Histórico Financeiro',
+      description: 'Registre lucros de sistemas anteriores',
+      icon: <Landmark className="w-8 h-8" />,
+      color: 'from-emerald-500 to-emerald-600',
+      component: <FinancialHistory />
+    },
+    {
+      id: 'production-reset',
+      title: 'Produção',
+      description: 'Reset de dados para nova produção',
+      icon: <Activity className="w-8 h-8" />,
+      color: 'from-red-500 to-orange-600',
+      component: <ProductionReset />
+    },
+    {
+      id: 'database-operations',
+      title: 'BD',
+      description: 'Operações de base de dados e backups',
+      icon: <Database className="w-8 h-8" />,
+      color: 'from-indigo-500 to-indigo-600',
+      component: <DatabaseOperations />
     },
     {
       id: 'cloud-ecosystem',

@@ -8,6 +8,8 @@ import POS from './src/views/POS';
 import Inventory from './src/views/Inventory';
 import Finance from './src/views/Finance';
 import TableLayout from './src/views/TableLayout';
+import Purchases from './src/views/Purchases';
+import PurchaseApproval from './src/views/PurchaseApproval';
 import PublicMenu from './src/views/PublicMenu';
 import OwnerDashboard from './src/views/OwnerDashboard';
 import Employees from './src/views/Employees';
@@ -16,6 +18,8 @@ import AGTControl from './src/views/AGTControl';
 import CustomerDisplay from './src/views/CustomerDisplay';
 import Settings from './src/views/Settings';
 import SystemHub from './src/views/SystemHub';
+import Analytics from './src/views/Analytics';
+import Reports from './src/views/Reports';
 import { X } from 'lucide-react';
 
 const GlobalNotificationCenter = () => {
@@ -65,7 +69,11 @@ const App = () => {
                     <Route path="/profit-center" element={<ProfitCenter />} />
                     <Route path="/tables-layout" element={<TableLayout />} />
                     <Route path="/inventory" element={<Inventory />} />
+                    <Route path="/compras" element={<Purchases />} />
+                    <Route path="/compras/owner/:id" element={<PurchaseApproval />} />
                     <Route path="/finance" element={<Finance />} />
+                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/reports" element={<Reports />} />
                     <Route path="/employees" element={<Employees />} />
                     <Route path="/settings" element={<SystemHub />} />
                     <Route path="*" element={<Navigate to="/" />} />
