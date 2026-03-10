@@ -61,7 +61,9 @@ const App = () => {
           <Route path="/menu/:tableId" element={<PublicMenu />} />
           <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
           
-          <Route path="/*" element={
+          {/* Sistema Principal - rotas específicas */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={
             !currentUser ? <Login /> : (
               <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
@@ -85,6 +87,13 @@ const App = () => {
                   </Routes>
                 </main>
               </div>
+            )
+          } />
+          
+          {/* Catch-all para outras rotas do sistema principal */}
+          <Route path="*" element={
+            !currentUser ? <Login /> : (
+              <Navigate to="/" />
             )
           } />
         </Routes>
