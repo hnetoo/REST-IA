@@ -3,7 +3,6 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './i18n';
-import { sqliteService } from './services/sqliteService';
 
 let root: any = null;
 
@@ -15,11 +14,6 @@ const boot = async () => {
   if (!root) {
     root = createRoot(rootElement);
   }
-
-  // Primeiro inicializamos a base de dados
-  await sqliteService.init().catch(err => {
-    console.warn("Aviso na Base de Dados (usando fallback LocalStorage):", err);
-  });
 
   try {
     root.render(

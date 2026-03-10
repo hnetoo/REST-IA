@@ -3,9 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { DollarSign, ShoppingBag, Users, TrendingUp, Sparkles, Loader2, Activity, Target, Clock, Zap, ChefHat, MonitorOff, Printer, History, PieChart } from 'lucide-react';
-import { analyzeBusinessPerformance } from '../services/geminiService';
-import { printThermalInvoice, printFinanceReport } from '../services/printService';
-import { AIAnalysisResult, Order } from '../types';
+import { AIAnalysisResult, Order } from '../../types';
 
 const Dashboard = () => {
   const { activeOrders, customers, menu, settings, addNotification } = useStore();

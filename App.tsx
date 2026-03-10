@@ -1,26 +1,21 @@
-
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useStore } from './store/useStore';
-import Sidebar from './components/Sidebar';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import POS from './pages/POS';
-import Kitchen from './pages/Kitchen';
-import Reservations from './pages/Reservations';
-import Inventory from './pages/Inventory';
-import Finance from './pages/Finance';
-import TableLayout from './pages/TableLayout';
-import PublicMenu from './pages/PublicMenu';
-import OwnerDashboard from './pages/OwnerDashboard';
-import Employees from './pages/Employees';
-import ProfitCenter from './pages/ProfitCenter';
-import AGTControl from './pages/AGTControl';
-import CustomerDisplay from './pages/CustomerDisplay';
-// Fix: Added missing import for Settings page
-import Settings from './pages/Settings';
-import DBHub from './pages/DBHub';
-import DeveloperConsole from './components/DeveloperConsole';
+import { useStore } from './src/store/useStore';
+import Sidebar from './src/components/Sidebar';
+import Login from './src/views/Login';
+import Dashboard from './src/views/Dashboard';
+import POS from './src/views/POS';
+import Inventory from './src/views/Inventory';
+import Finance from './src/views/Finance';
+import TableLayout from './src/views/TableLayout';
+import PublicMenu from './src/views/PublicMenu';
+import OwnerDashboard from './src/views/OwnerDashboard';
+import Employees from './src/views/Employees';
+import ProfitCenter from './src/views/ProfitCenter';
+import AGTControl from './src/views/AGTControl';
+import CustomerDisplay from './src/views/CustomerDisplay';
+import Settings from './src/views/Settings';
+import SystemHub from './src/views/SystemHub';
 import { X } from 'lucide-react';
 
 const GlobalNotificationCenter = () => {
@@ -66,9 +61,7 @@ const App = () => {
                     <Route path="/inventory" element={<Inventory />} />
                     <Route path="/finance" element={<Finance />} />
                     <Route path="/employees" element={<Employees />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/db-hub" element={<DBHub />} />
-                    <Route path="/console" element={<DeveloperConsole />} />
+                    <Route path="/settings" element={<SystemHub />} />
                     <Route path="*" element={<Navigate to="/" />} />
                   </Routes>
                 </main>

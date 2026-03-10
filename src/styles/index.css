@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+@layer base {
+  body {
+    @apply bg-[#070b14] text-[#f8fafc] font-sans antialiased;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-[rgba(17,24,39,0.7)] backdrop-blur-xl border border-[rgba(255,255,255,0.05)];
+  }
+  
+  .shadow-glow {
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.8);
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 5s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
