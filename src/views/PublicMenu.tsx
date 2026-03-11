@@ -250,7 +250,7 @@ const PublicMenu = () => {
 
   // --- WhatsApp Integration ---
   const handleWhatsAppOrder = () => {
-    const phoneNumber = '+244 976825520'; // Número do restaurante
+    const phoneNumber = '+244976825520'; // Número do restaurante
     const message = cartCount > 0 
       ? `Olá! Gostaria de fazer um pedido com ${cartCount} itens no valor total de ${formatCurrency(cartTotal)} Kz.`
       : 'Olá! Gostaria de fazer um pedido.';
@@ -293,7 +293,7 @@ const PublicMenu = () => {
               {/* Contact Info */}
               <div className="flex items-center gap-3 text-slate-300">
                 <Phone size={18} className="text-primary" />
-                <span className="text-sm font-medium">+244 976 825 520</span>
+                <span className="text-sm font-medium">+244976825520</span>
               </div>
               
               {/* Order Button */}
