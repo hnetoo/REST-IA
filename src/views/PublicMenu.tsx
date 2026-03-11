@@ -5,7 +5,7 @@ import { supabase, getSupabaseMenu, getSupabaseCategories } from '../lib/supabas
 import { 
   Search, X, Send, Sparkles, Loader2, Plus, Minus, 
   UtensilsCrossed, Wifi, WifiOff, ShoppingBag, ChevronRight,
-  Info, RefreshCw
+  Info, RefreshCw, Phone, MessageCircle
 } from 'lucide-react';
 import { getAIWaiterRecommendation } from '../lib/geminiService';
 import LazyImage from '../components/LazyImage';
@@ -248,101 +248,126 @@ const PublicMenu = () => {
     return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(val).replace('Kz', '').trim();
   };
 
+  // --- WhatsApp Integration ---
+  const handleWhatsAppOrder = () => {
+    const phoneNumber = '+244923000000'; // Número do restaurante
+    const message = cartCount > 0 
+      ? `Olá! Gostaria de fazer um pedido com ${cartCount} itens no valor total de ${formatCurrency(cartTotal)} Kz.`
+      : 'Olá! Gostaria de fazer um pedido.';
+    
+    const whatsappUrl = `https://wa.me/${phoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   // --- Render ---
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col overflow-hidden font-sans text-slate-200 selection:bg-primary/30">
       
-      {/* 1. Header Minimalista & Prominente */}
-      <header className="shrink-0 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-40 transition-all duration-300">
-        <div className="max-w-[2000px] mx-auto px-4 sm:px-8 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            
-            {/* Identidade do Restaurante */}
-            <div className="flex items-center gap-6 w-full md:w-auto justify-center md:justify-start">
-              <div className="relative group">
-                  <img 
-                    src={appLogo} 
-                    alt="Tasca do Vereda" 
-                    loading="eager"
-                    className="w-[150px] h-[45px] md:w-[200px] md:h-[60px] object-contain group-hover:scale-105 transition-transform duration-500" 
-                  />
-                {/* Status Indicator Badge */}
-                <div className="absolute -bottom-1 -right-1 flex h-4 w-4">
-                  {isOnline ? (
-                    <>
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-slate-950"></span>
-                    </>
-                  ) : (
-                    <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-slate-950"></span>
-                  )}
-                </div>
-              </div>
-
-              <div className="text-center md:text-left">
-                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-none mb-1">
-                  {settings.restaurantName || "RESTAURANTE"}
-                </h1>
-                <div className="flex items-center justify-center md:justify-start gap-3 text-slate-400">
-                  <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
-                    {settings.restaurantName?.substring(0, 3).toUpperCase() || "RES"}
-                  </span>
-                  <span className="w-1 h-1 rounded-full bg-slate-600"></span>
-                  <span className="text-[10px] font-medium uppercase tracking-widest">
-                    {isViewOnly ? "Vitrine Digital" : "Menu Digital"}
-                  </span>
-                </div>
-              </div>
+      {/* 1. Header Premium Mobile-First */}
+      <header className="shrink-0 bg-slate-950/90 backdrop-blur-xl border-b border-white/5 sticky top-0 z-40">
+        {/* Logo e Identidade */}
+        <div className="max-w-[2000px] mx-auto px-4 sm:px-8 py-4">
+          <div className="flex items-center justify-center md:justify-start gap-4">
+            <img 
+              src={appLogo} 
+              alt="Tasca do Vereda" 
+              loading="eager"
+              className="w-[120px] h-[36px] md:w-[150px] md:h-[45px] object-contain" 
+            />
+            <div className="text-center md:text-left">
+              <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">
+                TASCA DO VEREDA
+              </h1>
+              <p className="text-xs text-primary font-bold uppercase tracking-widest">
+                Inteligência Gastronómica
+              </p>
             </div>
-
-            {/* Barra de Pesquisa & Status */}
-            <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="relative flex-1 md:w-80 group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Procurar pratos..." 
-                  className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/5 rounded-2xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:bg-white/10 focus:border-primary/30 transition-all shadow-inner" 
-                  value={searchTerm} 
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
-                {isSyncing && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-primary animate-spin">
-                    <RefreshCw size={14} />
-                  </div>
-                )}
-              </div>
-            </div>
-
           </div>
         </div>
 
-        {/* Categorias - Scroll Horizontal Suave */}
-        <div className="max-w-[2000px] mx-auto px-4 sm:px-8 pb-4">
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x mask-linear-fade">
-            <button 
-              onClick={() => setSelectedCatId('TODOS')} 
-              className={`snap-start px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap border ${selectedCatId === 'TODOS' ? 'bg-white text-black border-white shadow-lg scale-105' : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}
-            >
-              Todos
-            </button>
-            {digitalCategories.map(cat => (
+        {/* Sticky Order Section */}
+        <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md border-t border-white/10">
+          <div className="max-w-[2000px] mx-auto px-4 sm:px-8 py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Contact Info */}
+              <div className="flex items-center gap-3 text-slate-300">
+                <Phone size={18} className="text-primary" />
+                <span className="text-sm font-medium">+244 923 000 000</span>
+              </div>
+              
+              {/* Order Button */}
               <button 
-                key={cat.id} 
-                onClick={() => setSelectedCatId(cat.id)} 
-                className={`snap-start px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap border ${selectedCatId === cat.id ? 'bg-white text-black border-white shadow-lg scale-105' : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}
+                onClick={handleWhatsAppOrder}
+                className={`w-full sm:w-auto px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg ${
+                  cartCount > 0 
+                    ? 'bg-primary text-black hover:scale-105 shadow-primary/30 animate-pulse' 
+                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                }`}
+                title="Faça a sua encomenda via WhatsApp"
+                aria-label="Faça a sua encomenda via WhatsApp"
               >
-                {cat.name}
+                <MessageCircle size={18} />
+                Faça a sua Encomenda
+                {cartCount > 0 && (
+                  <span className="ml-2 px-2 py-1 bg-black/20 rounded-full text-xs">
+                    {cartCount}
+                  </span>
+                )}
               </button>
-            ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Categorias Carousel */}
+        <div className="bg-slate-950/50 backdrop-blur-sm">
+          <div className="max-w-[2000px] mx-auto px-4 sm:px-8 py-3">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 snap-x">
+              <button 
+                onClick={() => setSelectedCatId('TODOS')} 
+                className={`snap-start px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap border ${
+                  selectedCatId === 'TODOS' 
+                    ? 'bg-primary text-black border-primary shadow-lg scale-105' 
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                Todos
+              </button>
+              {digitalCategories.map(cat => (
+                <button 
+                  key={cat.id} 
+                  onClick={() => setSelectedCatId(cat.id)} 
+                  className={`snap-start px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap border ${
+                    selectedCatId === cat.id 
+                      ? 'bg-primary text-black border-primary shadow-lg scale-105' 
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Conteúdo Principal */}
-      <main className="flex-1 overflow-y-auto no-scrollbar bg-slate-950 relative">
-        <div className="max-w-[2000px] mx-auto px-4 sm:px-8 py-8">
+      {/* Conteúdo Principal com Padding para não sobrepor header */}
+      <main className="flex-1 overflow-y-auto no-scrollbar bg-slate-950 relative pt-4">
+        <div className="max-w-[2000px] mx-auto px-4 sm:px-8 py-4">
+          
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative max-w-md mx-auto sm:max-w-none">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <input 
+                type="text" 
+                placeholder="Procurar pratos..." 
+                className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:bg-white/10 focus:border-primary/30 transition-all" 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
           
           {isLoading ? (
             <div className="h-64 flex flex-col items-center justify-center gap-4 text-slate-500 animate-pulse">
@@ -356,67 +381,64 @@ const PublicMenu = () => {
                <p className="text-sm text-slate-600 mt-2">Tente ajustar a sua pesquisa.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 pb-32">
+            <div className="space-y-4 pb-24">
               {filteredMenu.map(dish => {
                 const itemInCart = cart[dish.id];
                 return (
                   <div 
                     key={dish.id} 
                     onClick={() => setSelectedDish(dish)}
-                    className="group bg-slate-900/50 rounded-[2.5rem] p-5 border border-white/5 hover:border-primary/30 hover:bg-slate-900 transition-all duration-500 flex flex-col relative overflow-hidden hover:shadow-2xl hover:shadow-primary/5 cursor-pointer"
+                    className="bg-slate-900/50 rounded-2xl p-4 border border-white/5 hover:border-primary/30 hover:bg-slate-900 transition-all duration-300 flex gap-4 relative overflow-hidden cursor-pointer"
                   >
                      
-                     {/* Imagem com Lazy Loading & Zoom Effect */}
-                     <div className="aspect-[4/3] w-full rounded-[2rem] overflow-hidden mb-5 relative bg-slate-950 shadow-inner">
+                     {/* Imagem Compacta */}
+                     <div className="aspect-square w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-950 shadow-inner">
                         <LazyImage 
                             src={dish.image} 
                             alt={dish.name} 
                             containerClassName="w-full h-full" 
-                            className="group-hover:scale-110 transition-transform duration-700 object-cover w-full h-full"
+                            className="object-cover w-full h-full"
                         />
-                        {dish.isFeatured && (
-                          <div className="absolute top-4 right-4 px-3 py-1.5 bg-yellow-400/90 backdrop-blur-md text-black text-[10px] font-black uppercase rounded-full shadow-lg z-10 flex items-center gap-1.5">
-                            <Sparkles size={12} fill="black" /> Destaque
-                          </div>
-                        )}
                      </div>
 
                      {/* Informações do Prato */}
-                     <div className="flex-1 flex flex-col">
-                        <h3 className="font-bold text-white text-lg leading-tight mb-2 group-hover:text-primary transition-colors">{dish.name}</h3>
-                        <p className="text-sm text-slate-400 leading-relaxed line-clamp-2 mb-6 font-medium opacity-80">{dish.description}</p>
+                     <div className="flex-1 flex flex-col justify-between min-w-0">
+                        <div>
+                          <h3 className="font-bold text-white text-base leading-tight mb-1">{dish.name}</h3>
+                          <p className="text-sm text-slate-400 leading-relaxed line-clamp-2 font-medium opacity-80">{dish.description}</p>
+                        </div>
                         
-                        {/* Footer do Card: Preço e Ações */}
-                        <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                        {/* Footer: Preço e Quantidade */}
+                        <div className="flex items-center justify-between mt-2">
                           <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Preço</span>
-                            <span className="text-xl font-black text-white tracking-tight">
-                              {formatCurrency(dish.price)}<span className="text-sm font-bold text-primary ml-0.5">Kz</span>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Preço</span>
+                            <span className="text-lg font-black text-primary tracking-tight">
+                              {formatCurrency(dish.price)} Kz
                             </span>
                           </div>
                           
                           {!isViewOnly && (
                             itemInCart?.quantity ? (
                             <div 
-                              className="flex items-center gap-1 bg-primary rounded-2xl p-1.5 shadow-lg shadow-primary/20 animate-in zoom-in duration-200"
+                              className="flex items-center gap-1 bg-primary rounded-xl p-1 shadow-lg shadow-primary/20"
                               onClick={(e) => e.stopPropagation()} 
                             >
                               <button 
                                 onClick={() => updateCart(dish.id, -1)} 
-                                className="w-9 h-9 rounded-xl bg-black/20 hover:bg-black/30 flex items-center justify-center text-black transition-colors"
+                                className="w-8 h-8 rounded-lg bg-black/20 hover:bg-black/30 flex items-center justify-center text-black transition-colors"
                                 title="Remover quantidade"
                                 aria-label="Remover quantidade"
                               >
-                                <Minus size={16} strokeWidth={3}/>
+                                <Minus size={14} strokeWidth={3}/>
                               </button>
-                              <span className="font-black text-black text-sm min-w-[1.5rem] text-center">{itemInCart.quantity}</span>
+                              <span className="font-black text-black text-sm min-w-[1.2rem] text-center">{itemInCart.quantity}</span>
                               <button 
                                 onClick={() => updateCart(dish.id, 1)} 
-                                className="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center hover:scale-105 transition-transform"
+                                className="w-8 h-8 rounded-lg bg-white text-black flex items-center justify-center hover:scale-105 transition-transform"
                                 title="Adicionar quantidade"
                                 aria-label="Adicionar quantidade"
                               >
-                                <Plus size={16} strokeWidth={3}/>
+                                <Plus size={14} strokeWidth={3}/>
                               </button>
                             </div>
                           ) : (
@@ -425,10 +447,10 @@ const PublicMenu = () => {
                                 e.stopPropagation();
                                 updateCart(dish.id, 1);
                               }}
-                              className="w-12 h-12 rounded-2xl bg-white/5 text-primary border border-white/10 flex items-center justify-center hover:bg-primary hover:text-black hover:border-transparent transition-all active:scale-95 shadow-lg hover:shadow-primary/20"
+                              className="w-10 h-10 rounded-xl bg-white/5 text-primary border border-white/10 flex items-center justify-center hover:bg-primary hover:text-black hover:border-transparent transition-all active:scale-95"
                               aria-label={`Adicionar ${dish.name} ao pedido`}
                             >
-                              <Plus size={24} />
+                              <Plus size={20} />
                             </button>
                           )
                           )}
@@ -442,16 +464,25 @@ const PublicMenu = () => {
         </div>
       </main>
 
-      {/* Botão Flutuante IA (Fixo no canto inferior direito) */}
+      {/* Floating Action Button (FAB) - WhatsApp Order */}
       {!isViewOnly && (
-      <button 
-        onClick={() => setIsAIChatOpen(true)}
-        className="fixed bottom-28 right-6 md:bottom-10 md:right-10 z-50 w-16 h-16 bg-gradient-to-br from-primary to-cyan-300 rounded-full shadow-[0_0_40px_rgba(6,182,212,0.4)] flex items-center justify-center text-black hover:scale-110 transition-transform hover:rotate-12 duration-300 group"
-        aria-label="Assistente IA"
-      >
-        <Sparkles size={28} className="group-hover:animate-pulse" fill="black" />
-        <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-slate-950 animate-bounce"></span>
-      </button>
+        <button 
+          onClick={handleWhatsAppOrder}
+          className={`fixed bottom-24 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
+            cartCount > 0 
+              ? 'bg-primary text-black hover:scale-110 shadow-primary/30 animate-pulse' 
+              : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+          }`}
+          title="Faça a sua encomenda via WhatsApp"
+          aria-label="Faça a sua encomenda via WhatsApp"
+        >
+          <MessageCircle size={24} />
+          {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center border-2 border-slate-950">
+              {cartCount}
+            </span>
+          )}
+        </button>
       )}
 
       {/* Floating Action Bar (Carrinho) */}
