@@ -65,11 +65,11 @@ const App = () => {
           <Route path="/menu/:tableId" element={<PublicMenu />} />
           <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
           
-          {/* Login do Sistema Principal */}
-          <Route path="/login" element={<Login />} />
-          
           {/* Rota Pública de Aprovação - SEM LOGIN */}
           <Route path="/approve-purchase/:id/:token" element={<ApprovePurchase />} />
+          
+          {/* Login do Sistema Principal */}
+          <Route path="/login" element={<Login />} />
           
           {/* Área do Restaurante - COM SIDEBAR - PROTEGIDA */}
           <Route path="/*" element={
