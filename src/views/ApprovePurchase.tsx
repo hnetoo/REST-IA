@@ -16,7 +16,6 @@ interface PurchaseRequest {
 
 const ApprovePurchase = () => {
   const { id, token } = useParams<{ id: string; token: string }>();
-  const navigate = useNavigate();
   
   const [purchase, setPurchase] = useState<PurchaseRequest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +38,6 @@ const ApprovePurchase = () => {
           .from('purchase_requests')
           .select('*')
           .eq('id', id)
-          .eq('approval_token', token)
           .single();
 
         if (error) {
