@@ -906,6 +906,14 @@ restoreFromSupabase: async () => {
     }),
     {
       name: 'vereda-quantum-store-v8',
+      version: 1, // Adicione a versão
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          // Se for versão antiga, reseta tudo para evitar crash
+          return {}; 
+        }
+        return persistedState;
+      },
       storage: createJSONStorage(() => customPersistenceStorage),
     }
   )
