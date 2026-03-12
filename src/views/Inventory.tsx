@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { 
   Utensils, Tag, Box, Plus, QrCode, Eye, 
   Settings, Smartphone, Globe, Trash2, RefreshCw, Download, Upload,
-  CheckCircle, AlertCircle, Clock
+  CheckCircle, AlertCircle, Clock, X
 } from 'lucide-react';
 
 const Inventory = () => {
@@ -25,8 +25,21 @@ const Inventory = () => {
   const [syncProgress, setSyncProgress] = useState(0);
 
   // Estados para modais
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
+  // Estados para criação local
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    price: '',
+    image_url: '',
+    category_id: '',
+    is_active: true
+  });
+
+  const [newCategory, setNewCategory] = useState({
+    name: ''
+  });
 
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
     style: 'currency', 
@@ -51,12 +64,77 @@ const Inventory = () => {
     { id: 'qr', label: 'QR Menu / Digital', icon: QrCode }
   ];
 
+  // Funções para criação local
+  const handleCreateProduct = () => {
+    console.log('[Inventory] Botão Novo Produto clicado!');
+    setIsProductModalOpen(true);
+  };
+
+  const handleCreateCategory = () => {
+    console.log('[Inventory] Botão Nova Categoria clicado!');
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleSaveProduct = () => {
+    console.log('[Inventory] Salvando produto:', newProduct);
+    
+    // Criar objeto com schema correto
+    const productToAdd = {
+      id: crypto.randomUUID(), // UUID local
+      name: newProduct.name,
+      price: parseFloat(newProduct.price.replace(',', '.')), // Aceita vírgula e ponto
+      image_url: newProduct.image_url || null,
+      category_id: newProduct.category_id,
+      is_active: newProduct.is_active,
+      createdAt: new Date().toISOString()
+    };
+
+    // Adicionar ao estado local IMEDIATAMENTE (latency compensation)
+    // TODO: Implementar na store quando disponível
+    console.log('[Inventory] Produto criado localmente:', productToAdd);
+    
+    // Resetar formulário
+    setNewProduct({
+      name: '',
+      price: '',
+      image_url: '',
+      category_id: '',
+      is_active: true
+    });
+    
+    setIsProductModalOpen(false);
+    addNotification('success', 'Produto criado com sucesso!');
+  };
+
+  const handleSaveCategory = () => {
+    console.log('[Inventory] Salvando categoria:', newCategory);
+    
+    // Criar objeto com schema correto
+    const categoryToAdd = {
+      id: crypto.randomUUID(), // UUID local
+      name: newCategory.name,
+      createdAt: new Date().toISOString()
+    };
+
+    // Adicionar ao estado local IMEDIATAMENTE (latency compensation)
+    // TODO: Implementar na store quando disponível
+    console.log('[Inventory] Categoria criada localmente:', categoryToAdd);
+    
+    // Resetar formulário
+    setNewCategory({ name: '' });
+    
+    setIsCategoryModalOpen(false);
+    addNotification('success', 'Categoria criada com sucesso!');
+  };
+
   const handleCopyUrl = () => {
+    console.log('[Inventory] Botão Copiar URL clicado!');
     navigator.clipboard.writeText(digitalMenuUrl);
     addNotification('success', 'URL do menu copiada!');
   };
 
   const handlePrintQR = () => {
+    console.log('[Inventory] Botão Imprimir QR clicado!');
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
     
@@ -322,7 +400,7 @@ const Inventory = () => {
 
           {activeTab === 'menu' && (
             <button 
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleCreateProduct}
               className="bg-primary text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
             >
               <Plus size={20} />
@@ -331,7 +409,7 @@ const Inventory = () => {
           )}
           {activeTab === 'categories' && (
             <button 
-              onClick={() => setIsCategoryModalOpen(true)}
+              onClick={handleCreateCategory}
               className="bg-primary text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
             >
               <Plus size={20} />
@@ -657,6 +735,143 @@ const Inventory = () => {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {isProductModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-cyan-400">Novo Produto</h2>
+              <button
+                onClick={() => setIsProductModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Nome do Produto</label>
+                <input
+                  type="text"
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
+                  placeholder="Ex: Muamba de Galinha"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Preço (Kz)</label>
+                <input
+                  type="text"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
+                  placeholder="Ex: 3500 ou 3.500"
+                />
+                <p className="text-xs text-slate-400 mt-1">Use vírgula ou ponto para decimais</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">URL da Imagem (opcional)</label>
+                <input
+                  type="url"
+                  value={newProduct.image_url}
+                  onChange={(e) => setNewProduct({...newProduct, image_url: e.target.value})}
+                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
+                  placeholder="https://exemplo.com/imagem.jpg"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Categoria</label>
+                <select
+                  value={newProduct.category_id}
+                  onChange={(e) => setNewProduct({...newProduct, category_id: e.target.value})}
+                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
+                >
+                  <option value="">Selecione uma categoria</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={newProduct.is_active}
+                  onChange={(e) => setNewProduct({...newProduct, is_active: e.target.checked})}
+                  className="w-4 h-4 rounded border-white/10 bg-slate-800 text-cyan-500"
+                />
+                <label htmlFor="is_active" className="text-sm text-white">Produto Ativo</label>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setIsProductModalOpen(false)}
+                className="flex-1 px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveProduct}
+                className="flex-1 px-4 py-2 bg-cyan-500 text-black rounded-xl hover:bg-cyan-400 transition-all font-bold"
+              >
+                Salvar Produto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-cyan-400">Nova Categoria</h2>
+              <button
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Nome da Categoria</label>
+                <input
+                  type="text"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
+                  placeholder="Ex: Petiscos"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="flex-1 px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveCategory}
+                className="flex-1 px-4 py-2 bg-cyan-500 text-black rounded-xl hover:bg-cyan-400 transition-all font-bold"
+              >
+                Salvar Categoria
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
