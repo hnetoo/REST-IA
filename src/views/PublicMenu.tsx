@@ -99,54 +99,54 @@ const PublicMenu = () => {
   if (loading) return <div className="p-10 text-center font-bold text-white">A carregar menu da Tasca...</div>;
 
   return (
-    <div className="min-h-screen bg-[#0a0f1a] text-white">
-      {/* Header Discreto */}
-      <div className="p-6 text-center">
-        <h1 className="text-xl font-bold text-white mb-1">Tasca do Vereda</h1>
-        <p className="text-gray-400 text-sm">MENU DIGITAL</p>
+    <div className="min-h-screen bg-black text-white">
+      {/* Header */}
+      <div className="bg-black p-6 text-center">
+        <h1 className="text-2xl font-bold text-white mb-2">Tasca do Vereda</h1>
+        <p className="text-gray-400 text-lg">MENU DIGITAL</p>
       </div>
 
-      {/* Grid de Produtos - FIXO 2 COLUNAS COMO NA FOTO */}
-      <div className="p-4 grid grid-cols-2 gap-4 max-w-6xl mx-auto">
+      {/* Grid de Produtos */}
+      <div className="p-4 grid grid-cols-2 gap-4 max-w-4xl mx-auto">
         {items.map((item: any) => (
-          <div key={item.id} className="bg-[#111827] rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 relative">
-            {/* Imagem GRANDE do Produto */}
-            <div className="h-48 bg-[#1a1f2e] relative rounded-t-3xl overflow-hidden">
+          <div key={item.id} className="bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative">
+            {/* Imagem */}
+            <div className="h-40 bg-gray-800 relative">
               {item.image ? (
                 <img 
                   src={item.image} 
                   alt={item.name}
-                  className="w-full h-full object-cover rounded-t-3xl"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center rounded-t-3xl">
-                  <Package size={32} className="text-gray-500" />
+                <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                  <Package size={32} className="text-gray-600" />
                 </div>
               )}
             </div>
 
-            {/* Informações do Produto */}
+            {/* Conteúdo */}
             <div className="p-4">
-              <h3 className="text-white font-semibold text-base mb-2 line-clamp-2">{item.name}</h3>
-              <p className="text-white font-bold text-xl">{item.price.toLocaleString('pt-AO')} AOA</p>
+              <h3 className="text-white font-bold text-base mb-2">{item.name}</h3>
+              <div className="flex justify-between items-center">
+                <p className="text-white font-bold text-xl">{item.price.toLocaleString('pt-AO')} AOA</p>
+                <button
+                  onClick={() => addToCart(item)}
+                  className="bg-green-500 hover:bg-green-400 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                >
+                  <Plus size={20} className="text-white" />
+                </button>
+              </div>
             </div>
-
-            {/* Botão Adicionar */}
-            <button
-              onClick={() => addToCart(item)}
-              className="absolute bottom-4 right-4 w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center shadow-lg hover:bg-cyan-400 transition-colors"
-            >
-              <Plus size={24} className="text-white" />
-            </button>
           </div>
         ))}
       </div>
 
-      {/* Botão WHATSAPP VERDE - EXATAMENTE COMO NA FOTO */}
+      {/* Botão Carrinho */}
       {cart.length > 0 && (
         <button
           onClick={() => setShowSummary(true)}
-          className="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 hover:bg-green-400 transition-all hover:scale-110 z-50"
+          className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-400 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 transition-all z-50"
         >
           <ShoppingCart size={24} />
           <span className="font-bold">Faça a sua Encomenda</span>
@@ -156,10 +156,10 @@ const PublicMenu = () => {
         </button>
       )}
 
-      {/* Modal de Resumo */}
+      {/* Modal */}
       {showSummary && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-cyan-400">Resumo do Pedido</h2>
               <button
@@ -198,28 +198,28 @@ const PublicMenu = () => {
             </div>
 
             {/* Resumo Financeiro */}
-            <div className="bg-black/50 backdrop-blur-md rounded-xl p-4 space-y-2 mb-6 border border-white/10">
+            <div className="bg-gray-800 rounded-xl p-4 space-y-3 mb-6">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-300">Subtotal</span>
+                <span className="text-gray-400">Subtotal</span>
                 <span className="text-white">{calculateSubtotal().toLocaleString('pt-AO')} AOA</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-300 flex items-center gap-2">
+                <span className="text-gray-400 flex items-center gap-2">
                   <Truck size={16} />
                   Taxa de Entrega
                 </span>
                 <span className="text-white">1.000 AOA</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-300 flex items-center gap-2">
+                <span className="text-gray-400 flex items-center gap-2">
                   <Package size={16} />
-                  Embalagem (300 a 500 AKZ)
+                  Embalagem
                 </span>
                 <span className="text-white">500 AOA</span>
               </div>
-              <div className="border-t border-white/20 pt-2 mt-2">
+              <div className="border-t border-gray-700 pt-3">
                 <div className="flex justify-between font-bold text-lg">
-                  <span className="text-green-400">Total Geral</span>
+                  <span className="text-green-400">Total</span>
                   <span className="text-green-400">{calculateTotal().toLocaleString('pt-AO')} AOA</span>
                 </div>
               </div>
@@ -228,10 +228,10 @@ const PublicMenu = () => {
             {/* Botão Finalizar */}
             <button
               onClick={sendToWhatsApp}
-              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-4 rounded-xl font-bold hover:from-cyan-400 hover:to-blue-500 transition-all flex items-center justify-center gap-3"
+              className="w-full bg-green-500 hover:bg-green-400 text-white py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-3"
             >
               <ShoppingCart size={20} />
-              Enviar para WhatsApp
+              Enviar por WhatsApp
             </button>
           </div>
         </div>
