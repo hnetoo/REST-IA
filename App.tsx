@@ -58,10 +58,12 @@ const App = () => {
         <Routes>
           {/* Área do Dono - SEM SIDEBAR - INDEPENDENTE DO currentUser */}
           <Route path="/owner/login" element={<OwnerLogin />} />
+          <Route path="/owner/mobile" element={<OwnerLogin />} />
           <Route path="/owner/dashboard" element={<OwnerDashboard />} />
           
           {/* Rotas Públicas / Externas - SEM LOGIN */}
           <Route path="/menu" element={<PublicMenu />} />
+          <Route path="/menu-public" element={<PublicMenu />} />
           <Route path="/menu/:tableId" element={<PublicMenu />} />
           <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
           
