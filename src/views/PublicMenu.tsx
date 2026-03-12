@@ -95,14 +95,14 @@ const PublicMenu = () => {
     message += `📋 *RESUMO DO PEDIDO:*\n\n`;
     
     cart.forEach(item => {
-      message += `• ${item.quantity}x ${item.name} - ${item.price.toLocaleString('pt-AO')} AOA\n`;
+      message += `• ${item.quantity}x ${item.name} - ${item.price.toLocaleString('pt-AO')} Kz\n`;
     });
     
     message += `\n💰 *RESUMO FINANCEIRO:*\n`;
-    message += `• Subtotal: ${subtotal.toLocaleString('pt-AO')} AOA\n`;
-    message += `• Taxa de Entrega: ${delivery.toLocaleString('pt-AO')} AOA\n`;
-    message += `• Embalagem: ${packaging.toLocaleString('pt-AO')} AOA\n`;
-    message += `• *TOTAL GERAL: ${total.toLocaleString('pt-AO')} AOA*\n\n`;
+    message += `• Subtotal: ${subtotal.toLocaleString('pt-AO')} Kz\n`;
+    message += `• Taxa de Entrega: ${delivery.toLocaleString('pt-AO')} Kz\n`;
+    message += `• Embalagem: ${packaging.toLocaleString('pt-AO')} Kz\n`;
+    message += `• *TOTAL GERAL: ${total.toLocaleString('pt-AO')} Kz*\n\n`;
     message += `📍 *Endereço de entrega:* [Por favor, forneça seu endereço]\n`;
     message += `📞 *Contato:* [Por favor, forneça seu telefone]\n\n`;
     message += `Obrigado pela preferência! 🙏`;
@@ -181,7 +181,7 @@ const PublicMenu = () => {
             <div className="p-4">
               <h3 className="text-white font-bold text-base mb-2">{item.name}</h3>
               <div className="flex justify-between items-center">
-                <p className="text-white font-bold text-lg">{item.price.toLocaleString('pt-AO')} AOA</p>
+                <p className="text-white font-bold text-lg">{item.price.toLocaleString('pt-AO')} Kz</p>
                 <button
                   onClick={() => addToCart(item)}
                   className="bg-cyan-500 hover:bg-cyan-400 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
@@ -228,7 +228,7 @@ const PublicMenu = () => {
                 <div key={item.id} className="flex items-center justify-between bg-slate-800 p-3 rounded-xl">
                   <div className="flex-1">
                     <h4 className="font-semibold text-white">{item.name}</h4>
-                    <p className="text-cyan-400 text-sm">{item.price.toLocaleString('pt-AO')} AOA</p>
+                    <p className="text-cyan-400 text-sm">{item.price.toLocaleString('pt-AO')} Kz</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -253,19 +253,19 @@ const PublicMenu = () => {
             <div className="bg-black/50 rounded-xl p-4 space-y-3 mb-6">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Subtotal</span>
-                <span className="text-white">{calculateSubtotal().toLocaleString('pt-AO')} AOA</span>
+                <span className="text-white">{calculateSubtotal().toLocaleString('pt-AO')} Kz</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400 flex items-center gap-2">
                   <Truck size={16} />
                   Taxa de Entrega
                 </span>
-                <span className="text-white">1.000 AOA</span>
+                <span className="text-white">1.000 Kz</span>
               </div>
               <div className="border-t border-gray-700 pt-3">
                 <div className="flex justify-between font-bold text-lg">
                   <span className="text-green-400">Total</span>
-                  <span className="text-green-400">{calculateTotal().toLocaleString('pt-AO')} AOA</span>
+                  <span className="text-green-400">{calculateTotal().toLocaleString('pt-AO')} Kz</span>
                 </div>
               </div>
             </div>
