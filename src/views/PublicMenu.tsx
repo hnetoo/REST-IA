@@ -18,9 +18,24 @@ const PublicMenu = () => {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase.from('products').select('*').eq('active', true);
-      if (data) setItems(data);
-      setLoading(false);
+      console.log('[PublicMenu] Iniciando carregamento de produtos...');
+      try {
+        const { data, error } = await supabase.from('products').select('*').eq('active', true);
+        console.log('[PublicMenu] Dados recebidos:', { data, error });
+        
+        if (error) {
+          console.error('[PublicMenu] Erro ao carregar produtos:', error);
+        } else if (data) {
+          console.log('[PublicMenu] Produtos carregados:', data.length, 'itens');
+          setItems(data);
+        } else {
+          console.log('[PublicMenu] Nenhum produto encontrado');
+        }
+      } catch (err) {
+        console.error('[PublicMenu] Erro crítico:', err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
@@ -97,6 +112,18 @@ const PublicMenu = () => {
   };
 
   if (loading) return <div className="p-10 text-center font-bold text-white">A carregar menu da Tasca...</div>;
+  
+  if (!loading && items.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#0a0f1a] text-white flex items-center justify-center">
+        <div className="text-center">
+          <Package size={48} className="text-gray-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Nenhum produto disponível</h2>
+          <p className="text-gray-400">Verificando o estoque...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-white">
