@@ -101,26 +101,26 @@ const PublicMenu = () => {
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-white">
       {/* Header Discreto */}
-      <div className="p-6 text-center">
-        <h1 className="text-xl font-bold text-white mb-1">Tasca do Vereda</h1>
-        <p className="text-gray-400 text-sm">MENU DIGITAL</p>
+      <div className="p-4 sm:p-6 text-center">
+        <h1 className="text-lg sm:text-xl font-bold text-white mb-1">Tasca do Vereda</h1>
+        <p className="text-gray-400 text-xs sm:text-sm">MENU DIGITAL</p>
       </div>
 
       {/* Grid de Produtos */}
-      <div className="p-4 grid grid-cols-2 gap-4 max-w-6xl mx-auto">
+      <div className="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 max-w-7xl mx-auto">
         {items.map((item: any) => (
-          <div key={item.id} className="bg-[#111827] rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 relative">
+          <div key={item.id} className="bg-[#111827] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 relative">
             {/* Imagem do Produto */}
-            <div className="h-32 bg-[#1a1f2e] relative rounded-t-3xl overflow-hidden">
+            <div className="h-36 sm:h-32 bg-[#1a1f2e] relative rounded-t-2xl sm:rounded-t-3xl overflow-hidden">
               {item.image ? (
                 <img 
                   src={item.image} 
                   alt={item.name}
-                  className="w-full h-full object-cover rounded-t-3xl"
+                  className="w-full h-full object-cover rounded-t-2xl sm:rounded-t-3xl"
                 />
               ) : (
-                <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center rounded-t-3xl">
-                  <Package size={32} className="text-gray-500" />
+                <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center rounded-t-2xl sm:rounded-t-3xl">
+                  <Package size={28} className="text-gray-500" />
                 </div>
               )}
             </div>
@@ -128,15 +128,15 @@ const PublicMenu = () => {
             {/* Informações do Produto */}
             <div className="p-3">
               <h3 className="text-white font-semibold text-sm mb-1 line-clamp-2">{item.name}</h3>
-              <p className="text-white font-bold text-lg">{item.price.toLocaleString('pt-AO')} AOA</p>
+              <p className="text-white font-bold text-base sm:text-lg">{item.price.toLocaleString('pt-AO')} AOA</p>
             </div>
 
             {/* Botão Adicionar */}
             <button
               onClick={() => addToCart(item)}
-              className="absolute bottom-3 right-3 w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center shadow-lg hover:bg-cyan-400 transition-colors"
+              className="absolute bottom-3 right-3 w-9 h-9 sm:w-10 sm:h-10 bg-cyan-500 rounded-full flex items-center justify-center shadow-lg hover:bg-cyan-400 transition-colors"
             >
-              <Plus size={20} className="text-white" />
+              <Plus size={16} className="text-white" />
             </button>
           </div>
         ))}
@@ -146,11 +146,11 @@ const PublicMenu = () => {
       {cart.length > 0 && (
         <button
           onClick={() => setShowSummary(true)}
-          className="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 hover:bg-green-400 transition-all hover:scale-110 z-50"
+          className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 bg-green-500 text-white px-3 sm:px-6 py-3 sm:py-4 rounded-full shadow-2xl flex items-center gap-2 sm:gap-3 hover:bg-green-400 transition-all hover:scale-110 z-50"
         >
-          <ShoppingCart size={24} />
-          <span className="font-bold">Faça a sua Encomenda</span>
-          <span className="bg-white text-green-500 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
+          <ShoppingCart size={20} className="text-white" />
+          <span className="font-bold text-sm sm:text-base hidden sm:inline">Faça a sua Encomenda</span>
+          <span className="bg-white text-green-500 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm">
             {cart.reduce((sum, item) => sum + item.quantity, 0)}
           </span>
         </button>
@@ -158,8 +158,8 @@ const PublicMenu = () => {
 
       {/* Modal de Resumo */}
       {showSummary && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="bg-slate-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-cyan-400">Resumo do Pedido</h2>
               <button
