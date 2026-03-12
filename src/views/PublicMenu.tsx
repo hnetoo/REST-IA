@@ -20,7 +20,7 @@ const PublicMenu = () => {
     async function load() {
       console.log('[PublicMenu] Iniciando carregamento de produtos...');
       try {
-        const { data, error } = await supabase.from('products').select('*').eq('active', true);
+        const { data, error } = await supabase.from('products').select('*').eq('is_active', true);
         console.log('[PublicMenu] Dados recebidos:', { data, error });
         
         if (error) {
@@ -55,7 +55,7 @@ const PublicMenu = () => {
         name: item.name, 
         price: item.price, 
         quantity: 1,
-        image: item.image 
+        image: item.image_url 
       }];
     });
   };
@@ -164,9 +164,9 @@ const PublicMenu = () => {
           <div key={item.id} className="bg-[#111827] rounded-[2rem] overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative">
             {/* Imagem */}
             <div className="h-40 bg-[#1a1f2e] relative">
-              {item.image ? (
+              {item.image_url ? (
                 <img 
-                  src={item.image} 
+                  src={item.image_url} 
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />
