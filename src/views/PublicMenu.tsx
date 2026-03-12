@@ -19,11 +19,21 @@ const PublicMenu = () => {
 
   useEffect(() => {
     async function load() {
-      console.log('[PublicMenu] Iniciando carregamento de produtos (tabela products)...');
+      console.log('[PublicMenu] Carregando produtos da tabela products com categorias...');
       try {
-        // ✅ TABELA PLURAL PADRÃO SUPABASE
-        const { data, error } = await supabase.from('products').select('*').eq('is_active', true);
-        console.log('[PublicMenu] Dados recebidos da tabela products:', { data, error });
+        // ✅ TABELA PLURAL PADRÃO SUPABASE COM JOIN DE CATEGORIAS
+        const { data, error } = await supabase
+          .from('products')
+          .select(`
+            *,
+            categories (
+              id,
+              name
+            )
+          `)
+          .eq('is_active', true);
+        
+        console.log('[PublicMenu] Dados recebidos com categorias:', { data, error });
         
         if (error) {
           console.error('[PublicMenu] Erro ao carregar produtos:', error);
@@ -89,25 +99,24 @@ const PublicMenu = () => {
 
   const sendToWhatsApp = () => {
     const subtotal = calculateSubtotal();
-    const delivery = 1000;
-    const packaging = 500;
-    const total = calculateTotal();
+    const deliveryFee = cart.length >= 3 ? 500 : 300; // Taxa Takeaway: 300 a 500 Kz
+    const total = subtotal + deliveryFee;
     
-    let message = `🍽️ *ENCOMENDA - TASCA DO VEREDA*\n\n`;
-    message += `📋 *RESUMO DO PEDIDO:*\n\n`;
+    let message = `Olá! Gostaria de encomendar:\n`;
     
+    // Lista de itens formatada
     cart.forEach(item => {
-      message += `• ${item.quantity}x ${item.name} - ${item.price.toLocaleString('pt-AO')} Kz\n`;
+      message += `• ${item.quantity}x ${item.name}\n`;
     });
     
-    message += `\n💰 *RESUMO FINANCEIRO:*\n`;
-    message += `• Subtotal: ${subtotal.toLocaleString('pt-AO')} Kz\n`;
-    message += `• Taxa de Entrega: ${delivery.toLocaleString('pt-AO')} Kz\n`;
-    message += `• Embalagem: ${packaging.toLocaleString('pt-AO')} Kz\n`;
-    message += `• *TOTAL GERAL: ${total.toLocaleString('pt-AO')} Kz*\n\n`;
-    message += `📍 *Endereço de entrega:* [Por favor, forneça seu endereço]\n`;
-    message += `📞 *Contato:* [Por favor, forneça seu telefone]\n\n`;
-    message += `Obrigado pela preferência! 🙏`;
+    message += `\nSubtotal: ${subtotal.toLocaleString('pt-AO')} Kz.\n`;
+    message += `Taxa Takeaway: ${deliveryFee.toLocaleString('pt-AO')} Kz.\n`;
+    message += `Total: ${total.toLocaleString('pt-AO')} Kz.\n\n`;
+    message += `Por favor, forneça os seguintes dados:\n`;
+    message += `Nome:\n`;
+    message += `Telefone:\n`;
+    message += `Morada de Entrega:\n`;
+    message += `(Se estiver no restaurante, indique o Nome e Número da Mesa).`;
     
     const whatsappUrl = `https://wa.me/244976825520?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -129,10 +138,21 @@ const PublicMenu = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-white">
-      {/* Header com Logotipo */}
+      {/* Header com Logotipo Oficial */}
       <div className="bg-[#0a0f1a] p-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+          <img 
+            src="/logo-tasca-vereda.png" 
+            alt="Tasca do Vereda Logo"
+            className="w-12 h-12 rounded-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const fallback = target.nextElementSibling as HTMLElement;
+              if (fallback) fallback.style.display = 'flex';
+            }}
+          />
+          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center" style={{display: 'none'}}>
             <span className="text-black font-bold text-lg">TV</span>
           </div>
           <div>
@@ -145,26 +165,26 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros com Scroll Horizontal */}
       <div className="px-6 pb-4">
-        <div className="flex gap-2 overflow-x-auto">
-          <button className="px-4 py-2 bg-cyan-500 text-white rounded-full text-sm font-medium whitespace-nowrap">
+        <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800">
+          <button className="px-4 py-2 bg-cyan-500 text-white rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0">
             Todos
           </button>
-          <button className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700">
+          <button className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700 flex-shrink-0">
             Petiscos
           </button>
-          <button className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700">
+          <button className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700 flex-shrink-0">
             Pratos
           </button>
-          <button className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700">
+          <button className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700 flex-shrink-0">
             Bebidas
           </button>
         </div>
       </div>
 
-      {/* Grid de Produtos Responsivo */}
-      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl mx-auto">
+      {/* Grid de Produtos Responsivo - 2 colunas em mobile */}
+      <div className="p-4 grid grid-cols-2 gap-4 max-w-6xl mx-auto overflow-y-auto">
         {items.map((item: any) => (
           <div key={item.id} className="bg-[#111827] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
             {/* Imagem */}
