@@ -247,15 +247,8 @@ const POS = () => {
               <History size={22} className="group-hover:rotate-[-10deg] transition-transform" />
             </button>
             
-            <button 
-              onClick={() => navigate('/printer-config')}
-              className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center group"
-              title="Configurar Impressora"
-            >
-              <Settings size={20} className="group-hover:rotate-45 transition-transform" />
-            </button>
+            {/* Botão de configuração removido - Impressão direta */}
             
-            {/* Botão temporário para teste de impressão */}
             <button 
               onClick={() => {
                 const state = useStore.getState();
