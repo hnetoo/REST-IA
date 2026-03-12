@@ -99,28 +99,28 @@ const PublicMenu = () => {
   if (loading) return <div className="p-10 text-center font-bold text-white">A carregar menu da Tasca...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-cyan-500 to-blue-600 p-6 shadow-xl">
-        <h1 className="text-3xl font-black text-center uppercase">Tasca do Vereda</h1>
-        <p className="text-center text-cyan-100 mt-2">Menu Digital</p>
+    <div className="min-h-screen bg-[#0a0f1a] text-white">
+      {/* Header Discreto */}
+      <div className="p-6 text-center">
+        <h1 className="text-xl font-bold text-white mb-1">Tasca do Vereda</h1>
+        <p className="text-gray-400 text-sm">MENU DIGITAL</p>
       </div>
 
       {/* Grid de Produtos */}
       <div className="p-4 grid grid-cols-2 gap-4 max-w-6xl mx-auto">
         {items.map((item: any) => (
-          <div key={item.id} className="bg-slate-900 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+          <div key={item.id} className="bg-[#111827] rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 relative">
             {/* Imagem do Produto */}
-            <div className="h-32 bg-slate-800 relative">
+            <div className="h-32 bg-[#1a1f2e] relative rounded-t-3xl overflow-hidden">
               {item.image ? (
                 <img 
                   src={item.image} 
                   alt={item.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-t-3xl"
                 />
               ) : (
-                <div className="w-full h-full bg-slate-700 flex items-center justify-center">
-                  <Package size={32} className="text-slate-500" />
+                <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center rounded-t-3xl">
+                  <Package size={32} className="text-gray-500" />
                 </div>
               )}
             </div>
@@ -128,7 +128,7 @@ const PublicMenu = () => {
             {/* Informações do Produto */}
             <div className="p-3">
               <h3 className="text-white font-semibold text-sm mb-1 line-clamp-2">{item.name}</h3>
-              <p className="text-cyan-400 font-bold text-lg">{item.price.toLocaleString('pt-AO')} AOA</p>
+              <p className="text-white font-bold text-lg">{item.price.toLocaleString('pt-AO')} AOA</p>
             </div>
 
             {/* Botão Adicionar */}
@@ -146,11 +146,11 @@ const PublicMenu = () => {
       {cart.length > 0 && (
         <button
           onClick={() => setShowSummary(true)}
-          className="fixed bottom-6 right-6 bg-cyan-500 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 hover:bg-cyan-400 transition-all hover:scale-110 z-50"
+          className="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 hover:bg-green-400 transition-all hover:scale-110 z-50"
         >
           <ShoppingCart size={24} />
           <span className="font-bold">Faça a sua Encomenda</span>
-          <span className="bg-white text-cyan-500 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
+          <span className="bg-white text-green-500 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
             {cart.reduce((sum, item) => sum + item.quantity, 0)}
           </span>
         </button>
@@ -198,29 +198,29 @@ const PublicMenu = () => {
             </div>
 
             {/* Resumo Financeiro */}
-            <div className="bg-slate-800 rounded-xl p-4 space-y-2 mb-6">
+            <div className="bg-black/50 backdrop-blur-md rounded-xl p-4 space-y-2 mb-6 border border-white/10">
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400">Subtotal</span>
+                <span className="text-gray-300">Subtotal</span>
                 <span className="text-white">{calculateSubtotal().toLocaleString('pt-AO')} AOA</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400 flex items-center gap-2">
+                <span className="text-gray-300 flex items-center gap-2">
                   <Truck size={16} />
                   Taxa de Entrega
                 </span>
                 <span className="text-white">1.000 AOA</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400 flex items-center gap-2">
+                <span className="text-gray-300 flex items-center gap-2">
                   <Package size={16} />
-                  Embalagem
+                  Embalagem (300 a 500 AKZ)
                 </span>
                 <span className="text-white">500 AOA</span>
               </div>
-              <div className="border-t border-slate-700 pt-2 mt-2">
+              <div className="border-t border-white/20 pt-2 mt-2">
                 <div className="flex justify-between font-bold text-lg">
-                  <span className="text-cyan-400">Total Geral</span>
-                  <span className="text-cyan-400">{calculateTotal().toLocaleString('pt-AO')} AOA</span>
+                  <span className="text-green-400">Total Geral</span>
+                  <span className="text-green-400">{calculateTotal().toLocaleString('pt-AO')} AOA</span>
                 </div>
               </div>
             </div>
