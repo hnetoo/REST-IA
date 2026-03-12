@@ -8,7 +8,7 @@ import {
 
 const Inventory = () => {
   const { 
-    menu, categories, settings, addNotification
+    menu, categories, settings, addNotification, addDish, addCategory, removeDish, updateDish
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'menu' | 'categories' | 'stock' | 'qr'>('menu');
@@ -27,6 +27,7 @@ const Inventory = () => {
   // Estados para modais
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
 
   // Estados para criação local
   const [newProduct, setNewProduct] = useState({
@@ -78,20 +79,34 @@ const Inventory = () => {
   const handleSaveProduct = () => {
     console.log('[Inventory] Salvando produto:', newProduct);
     
+    // Validar preço - evitar NaN
+    const priceValue = newProduct.price.replace(',', '.');
+    const priceNumber = parseFloat(priceValue);
+    
+    if (isNaN(priceNumber)) {
+      addNotification('error', 'Preço inválido! Use apenas números.');
+      return;
+    }
+    
     // Criar objeto com schema correto
     const productToAdd = {
       id: crypto.randomUUID(), // UUID local
       name: newProduct.name,
-      price: parseFloat(newProduct.price.replace(',', '.')), // Aceita vírgula e ponto
+      price: priceNumber, // ✅ Número válido
+      costPrice: priceNumber * 0.6, // ✅ Custo estimado 60%
       image_url: newProduct.image_url || null,
-      category_id: newProduct.category_id,
+      image: newProduct.image_url || null, // ✅ Campo image obrigatório
+      categoryId: newProduct.category_id, // ✅ categoryId em vez de category_id
+      category_id: newProduct.category_id, // ✅ Manter para compatibilidade
       is_active: newProduct.is_active,
+      description: '', // ✅ Campo obrigatório
       createdAt: new Date().toISOString()
     };
 
-    // Adicionar ao estado local IMEDIATAMENTE (latency compensation)
-    // TODO: Implementar na store quando disponível
     console.log('[Inventory] Produto criado localmente:', productToAdd);
+
+    // GRAVAÇÃO LOCAL IMEDIATA (Latency Compensation)
+    addDish(productToAdd);
     
     // Resetar formulário
     setNewProduct({
@@ -113,18 +128,83 @@ const Inventory = () => {
     const categoryToAdd = {
       id: crypto.randomUUID(), // UUID local
       name: newCategory.name,
+      icon: 'Tag', // ✅ Icon obrigatório para MenuCategory
       createdAt: new Date().toISOString()
     };
 
-    // Adicionar ao estado local IMEDIATAMENTE (latency compensation)
-    // TODO: Implementar na store quando disponível
     console.log('[Inventory] Categoria criada localmente:', categoryToAdd);
+
+    // GRAVAÇÃO LOCAL IMEDIATA (Latency Compensation)
+    addCategory(categoryToAdd);
     
     // Resetar formulário
     setNewCategory({ name: '' });
     
     setIsCategoryModalOpen(false);
     addNotification('success', 'Categoria criada com sucesso!');
+  };
+
+  // Handlers para Editar/Apagar
+  const handleEdit = (product: any) => {
+    console.log('[Inventory] Editando produto:', product);
+    setEditingProduct(product);
+    setNewProduct({
+      name: product.name,
+      price: product.price.toString(),
+      image_url: product.image_url || '',
+      category_id: product.category_id,
+      is_active: product.is_active
+    });
+    setIsProductModalOpen(true);
+  };
+
+  const handleDelete = (productId: string) => {
+    console.log('[Inventory] Apagando produto:', productId);
+    
+    // REMOÇÃO LOCAL IMEDIATA
+    removeDish(productId);
+    addNotification('success', 'Produto removido com sucesso!');
+  };
+
+  const handleUpdateProduct = () => {
+    console.log('[Inventory] Atualizando produto:', editingProduct);
+    
+    // Validar preço - evitar NaN
+    const priceValue = newProduct.price.replace(',', '.');
+    const priceNumber = parseFloat(priceValue);
+    
+    if (isNaN(priceNumber)) {
+      addNotification('error', 'Preço inválido! Use apenas números.');
+      return;
+    }
+    
+    // Criar objeto atualizado
+    const updatedProduct = {
+      ...editingProduct,
+      name: newProduct.name,
+      price: priceNumber,
+      image_url: newProduct.image_url || null,
+      category_id: newProduct.category_id,
+      is_active: newProduct.is_active
+    };
+
+    console.log('[Inventory] Produto atualizado localmente:', updatedProduct);
+
+    // ATUALIZAÇÃO LOCAL IMEDIATA
+    updateDish(updatedProduct);
+    
+    // Resetar formulário
+    setEditingProduct(null);
+    setNewProduct({
+      name: '',
+      price: '',
+      image_url: '',
+      category_id: '',
+      is_active: true
+    });
+    
+    setIsProductModalOpen(false);
+    addNotification('success', 'Produto atualizado com sucesso!');
   };
 
   const handleCopyUrl = () => {
@@ -496,12 +576,14 @@ const Inventory = () => {
                     <p className="text-slate-400 text-[10px] line-clamp-2 italic mb-4 min-h-[30px]">{dish.description}</p>
                     <div className="flex gap-2">
                       <button 
+                        onClick={() => handleEdit(dish)}
                         className="flex-1 py-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-all"
                         title="Editar produto"
                       >
                         Editar
                       </button>
                       <button 
+                        onClick={() => handleDelete(dish.id)}
                         className="w-10 py-2 rounded-lg border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all"
                         title="Remover produto"
                       >
@@ -741,9 +823,14 @@ const Inventory = () => {
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
           <div className="bg-[#111827] rounded-[2rem] p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-cyan-400">Novo Produto</h2>
+              <h2 className="text-xl font-bold text-cyan-400">
+                {editingProduct ? 'Editar Produto' : 'Novo Produto'}
+              </h2>
               <button
-                onClick={() => setIsProductModalOpen(false)}
+                onClick={() => {
+                  setIsProductModalOpen(false);
+                  setEditingProduct(null);
+                }}
                 className="text-slate-400 hover:text-white"
               >
                 <X size={24} />
@@ -819,10 +906,10 @@ const Inventory = () => {
                 Cancelar
               </button>
               <button
-                onClick={handleSaveProduct}
+                onClick={editingProduct ? handleUpdateProduct : handleSaveProduct}
                 className="flex-1 px-4 py-2 bg-cyan-500 text-black rounded-xl hover:bg-cyan-400 transition-all font-bold"
               >
-                Salvar Produto
+                {editingProduct ? 'Atualizar Produto' : 'Salvar Produto'}
               </button>
             </div>
           </div>
