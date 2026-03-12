@@ -376,7 +376,7 @@ const SystemHub = () => {
       // Valores padrão atualizados
       supabaseUrl: 'https://tboiuiwlqfzcvakxrsmj.supabase.co',
       supabaseKey: 'sb_publishable_fBMKbbzNYBe8d1rzdWyerg_4We8tZEm',
-      customDigitalMenuUrl: 'https://rest-ia.vercel.app/public-menu'
+      customDigitalMenuUrl: 'https://rest-ia.vercel.app/#/menu-public'
     });
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncing, setIsSyncing] = useState<string | null>(null);
