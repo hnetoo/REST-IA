@@ -99,19 +99,44 @@ const PublicMenu = () => {
   if (loading) return <div className="p-10 text-center font-bold text-white">A carregar menu da Tasca...</div>;
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="bg-black p-6 text-center">
-        <h1 className="text-2xl font-bold text-white mb-2">Tasca do Vereda</h1>
-        <p className="text-gray-400 text-lg">MENU DIGITAL</p>
+    <div className="min-h-screen bg-[#0a0f1a] text-white">
+      {/* Header com Logotipo */}
+      <div className="bg-[#0a0f1a] p-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+            <span className="text-black font-bold text-lg">TV</span>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-white">TASCA DO VEREDA</h1>
+            <p className="text-gray-400 text-sm">MENU DIGITAL</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="px-6 pb-4">
+        <div className="flex gap-2 overflow-x-auto">
+          <button className="px-4 py-2 bg-cyan-500 text-white rounded-full text-sm font-medium whitespace-nowrap">
+            Todos
+          </button>
+          <button className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700">
+            Petiscos
+          </button>
+          <button className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700">
+            Pratos
+          </button>
+          <button className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700">
+            Bebidas
+          </button>
+        </div>
       </div>
 
       {/* Grid de Produtos */}
-      <div className="p-4 grid grid-cols-2 gap-4 max-w-4xl mx-auto">
+      <div className="p-4 grid grid-cols-2 gap-4 max-w-6xl mx-auto">
         {items.map((item: any) => (
-          <div key={item.id} className="bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative">
+          <div key={item.id} className="bg-[#111827] rounded-[2rem] overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative">
             {/* Imagem */}
-            <div className="h-40 bg-gray-800 relative">
+            <div className="h-40 bg-[#1a1f2e] relative">
               {item.image ? (
                 <img 
                   src={item.image} 
@@ -119,8 +144,8 @@ const PublicMenu = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                  <Package size={32} className="text-gray-600" />
+                <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center">
+                  <Package size={32} className="text-gray-500" />
                 </div>
               )}
             </div>
@@ -129,12 +154,12 @@ const PublicMenu = () => {
             <div className="p-4">
               <h3 className="text-white font-bold text-base mb-2">{item.name}</h3>
               <div className="flex justify-between items-center">
-                <p className="text-white font-bold text-xl">{item.price.toLocaleString('pt-AO')} AOA</p>
+                <p className="text-white font-bold text-lg">{item.price.toLocaleString('pt-AO')} AOA</p>
                 <button
                   onClick={() => addToCart(item)}
-                  className="bg-green-500 hover:bg-green-400 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                  className="bg-cyan-500 hover:bg-cyan-400 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
                 >
-                  <Plus size={20} className="text-white" />
+                  <Plus size={16} className="text-white" />
                 </button>
               </div>
             </div>
@@ -142,7 +167,7 @@ const PublicMenu = () => {
         ))}
       </div>
 
-      {/* Botão Carrinho */}
+      {/* Botão Carrinho WhatsApp */}
       {cart.length > 0 && (
         <button
           onClick={() => setShowSummary(true)}
@@ -156,10 +181,10 @@ const PublicMenu = () => {
         </button>
       )}
 
-      {/* Modal */}
+      {/* Modal de Resumo */}
       {showSummary && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-900 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-cyan-400">Resumo do Pedido</h2>
               <button
@@ -198,7 +223,7 @@ const PublicMenu = () => {
             </div>
 
             {/* Resumo Financeiro */}
-            <div className="bg-gray-800 rounded-xl p-4 space-y-3 mb-6">
+            <div className="bg-black/50 rounded-xl p-4 space-y-3 mb-6">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Subtotal</span>
                 <span className="text-white">{calculateSubtotal().toLocaleString('pt-AO')} AOA</span>
@@ -209,13 +234,6 @@ const PublicMenu = () => {
                   Taxa de Entrega
                 </span>
                 <span className="text-white">1.000 AOA</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400 flex items-center gap-2">
-                  <Package size={16} />
-                  Embalagem
-                </span>
-                <span className="text-white">500 AOA</span>
               </div>
               <div className="border-t border-gray-700 pt-3">
                 <div className="flex justify-between font-bold text-lg">
