@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
+import { supabase } from '../lib/supabase';
 import { 
   Utensils, Tag, Box, Plus, QrCode, Eye, 
   Settings, Smartphone, Globe, Trash2, RefreshCw, Download, Upload,
@@ -76,12 +77,12 @@ const Inventory = () => {
     setIsCategoryModalOpen(true);
   };
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     console.log('[Inventory] Salvando produto:', newProduct);
     
-    // Validar preço - evitar NaN
+    // Validar preço - evitar NaN, definir como 0 se vazio
     const priceValue = newProduct.price.replace(',', '.');
-    const priceNumber = parseFloat(priceValue);
+    const priceNumber = parseFloat(priceValue) || 0; // ✅ Define como 0 se vazio/inválido
     
     if (isNaN(priceNumber)) {
       addNotification('error', 'Preço inválido! Use apenas números.');
@@ -108,6 +109,30 @@ const Inventory = () => {
     // GRAVAÇÃO LOCAL IMEDIATA (Latency Compensation)
     addDish(productToAdd);
     
+    // SINCRONIZAÇÃO SUPABASE (Background)
+    try {
+      console.log('[Inventory] Enviando para Supabase...');
+      const { data, error } = await supabase.from('products').insert([{
+        id: productToAdd.id,
+        name: productToAdd.name,
+        price: productToAdd.price, // ✅ Decimal
+        image_url: productToAdd.image_url,
+        category_id: productToAdd.category_id,
+        is_active: productToAdd.is_active
+      }]).select();
+      
+      if (error) {
+        console.error('[Inventory] Erro Supabase:', error.message);
+        addNotification('warning', 'Produto salvo localmente, mas falhou sincronização com nuvem.');
+      } else {
+        console.log('[Inventory] Sucesso Supabase:', data);
+        addNotification('success', 'Produto criado e sincronizado com sucesso!');
+      }
+    } catch (err) {
+      console.error('[Inventory] Erro crítico Supabase:', err);
+      addNotification('error', 'Erro ao sincronizar com nuvem.');
+    }
+    
     // Resetar formulário
     setNewProduct({
       name: '',
@@ -118,10 +143,9 @@ const Inventory = () => {
     });
     
     setIsProductModalOpen(false);
-    addNotification('success', 'Produto criado com sucesso!');
   };
 
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     console.log('[Inventory] Salvando categoria:', newCategory);
     
     // Criar objeto com schema correto
@@ -137,11 +161,30 @@ const Inventory = () => {
     // GRAVAÇÃO LOCAL IMEDIATA (Latency Compensation)
     addCategory(categoryToAdd);
     
+    // SINCRONIZAÇÃO SUPABASE (Background)
+    try {
+      console.log('[Inventory] Enviando categoria para Supabase...');
+      const { data, error } = await supabase.from('categories').insert([{
+        id: categoryToAdd.id,
+        name: categoryToAdd.name
+      }]).select();
+      
+      if (error) {
+        console.error('[Inventory] Erro Supabase categoria:', error.message);
+        addNotification('warning', 'Categoria salva localmente, mas falhou sincronização com nuvem.');
+      } else {
+        console.log('[Inventory] Sucesso Supabase categoria:', data);
+        addNotification('success', 'Categoria criada e sincronizada com sucesso!');
+      }
+    } catch (err) {
+      console.error('[Inventory] Erro crítico Supabase categoria:', err);
+      addNotification('error', 'Erro ao sincronizar categoria com nuvem.');
+    }
+    
     // Resetar formulário
     setNewCategory({ name: '' });
     
     setIsCategoryModalOpen(false);
-    addNotification('success', 'Categoria criada com sucesso!');
   };
 
   // Handlers para Editar/Apagar
@@ -166,12 +209,12 @@ const Inventory = () => {
     addNotification('success', 'Produto removido com sucesso!');
   };
 
-  const handleUpdateProduct = () => {
+  const handleUpdateProduct = async () => {
     console.log('[Inventory] Atualizando produto:', editingProduct);
     
-    // Validar preço - evitar NaN
+    // Validar preço - evitar NaN, definir como 0 se vazio
     const priceValue = newProduct.price.replace(',', '.');
-    const priceNumber = parseFloat(priceValue);
+    const priceNumber = parseFloat(priceValue) || 0; // ✅ Define como 0 se vazio/inválido
     
     if (isNaN(priceNumber)) {
       addNotification('error', 'Preço inválido! Use apenas números.');
@@ -193,6 +236,29 @@ const Inventory = () => {
     // ATUALIZAÇÃO LOCAL IMEDIATA
     updateDish(updatedProduct);
     
+    // SINCRONIZAÇÃO SUPABASE (Background)
+    try {
+      console.log('[Inventory] Enviando atualização para Supabase...');
+      const { data, error } = await supabase.from('products').update({
+        name: updatedProduct.name,
+        price: updatedProduct.price, // ✅ Decimal
+        image_url: updatedProduct.image_url,
+        category_id: updatedProduct.category_id,
+        is_active: updatedProduct.is_active
+      }).eq('id', updatedProduct.id).select();
+      
+      if (error) {
+        console.error('[Inventory] Erro Supabase atualização:', error.message);
+        addNotification('warning', 'Produto atualizado localmente, mas falhou sincronização com nuvem.');
+      } else {
+        console.log('[Inventory] Sucesso Supabase atualização:', data);
+        addNotification('success', 'Produto atualizado e sincronizado com sucesso!');
+      }
+    } catch (err) {
+      console.error('[Inventory] Erro crítico Supabase atualização:', err);
+      addNotification('error', 'Erro ao sincronizar atualização com nuvem.');
+    }
+    
     // Resetar formulário
     setEditingProduct(null);
     setNewProduct({
@@ -204,7 +270,6 @@ const Inventory = () => {
     });
     
     setIsProductModalOpen(false);
-    addNotification('success', 'Produto atualizado com sucesso!');
   };
 
   const handleCopyUrl = () => {
