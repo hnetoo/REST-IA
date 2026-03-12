@@ -29,6 +29,10 @@ const Login = () => {
     e.preventDefault();
     if (!selectedUser || pin.length < 4) return;
     
+    // Limpar notificações de erro anteriores antes de tentar login
+    const { removeNotification, notifications } = useStore.getState();
+    notifications.forEach(n => removeNotification(n.id));
+    
     try {
       // EXCEÇÃO: Se for usuário OWNER, redirecionar para /owner/login
       if (selectedUser.role === 'OWNER') {

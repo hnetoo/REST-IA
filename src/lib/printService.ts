@@ -10,16 +10,38 @@ const formatKz = (val: number) =>
   }).format(val);
 
 const thermalStyles = `
-  @page { margin: 0; }
+  @page { 
+    margin: 0; 
+    size: 80mm auto;
+  }
+  @media print {
+    body { 
+      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace; 
+      width: 80mm; 
+      min-height: 200mm;
+      padding: 4mm; 
+      font-size: 11px; 
+      color: #000; 
+      line-height: 1.4;
+      background: #fff;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      margin: 0;
+      box-sizing: border-box;
+    }
+  }
   body { 
     font-family: 'JetBrains Mono', 'Courier New', Courier, monospace; 
-    width: 72mm; 
+    width: 80mm; 
     padding: 4mm; 
     font-size: 11px; 
     color: #000; 
     line-height: 1.4;
     background: #fff;
     -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 0;
+    box-sizing: border-box;
   }
   .text-center { text-align: center; }
   .text-right { text-align: right; }
@@ -83,11 +105,11 @@ const executePrint = (html: string) => {
       doc.head.appendChild(styleElement);
     }
     
-    // Pequeno atraso para garantir renderização antes de disparar a impressão
+    // Atraso garantido para renderização completa antes de disparar impressão
     setTimeout(() => {
       printFrame.contentWindow?.focus();
       printFrame.contentWindow?.print();
-    }, 500);
+    }, 1000); // Aumentado para 1 segundo para garantir renderização
   }
 };
 

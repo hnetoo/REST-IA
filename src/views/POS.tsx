@@ -168,7 +168,7 @@ const POS = () => {
     setSelectedPaymentMethod(null);
     setSelectedCustomerId(undefined);
     
-    // IMPRESSÃO DIRETA E LIMPEZA DO CARRINHO
+    // IMPRESSÃO DIRETA E LIMPEZA COMPLETA DO CARRINHO
     setTimeout(() => {
       try {
         console.log(`[POS] Disparando impressão direta do pedido ${orderToPrintId}`);
@@ -193,11 +193,12 @@ const POS = () => {
         // Impressão direta SEM configuração
         handleDirectPrint(orderToPrint, customerToPrint);
         
-        // Limpar carrinho após impressão bem-sucedida
+        // Reset completo para estado inicial de "Seleção de Produtos"
         setActiveOrder(null);
         setActiveTable(null);
+        setIsHistoryOpen(false); // Fechar histórico se estiver aberto
         
-        addNotification('success', 'Impressão disparada e carrinho limpo!');
+        addNotification('success', 'Impressão disparada e sistema pronto para próxima venda!');
       } catch (printError) {
         console.error('[POS] Erro crítico na impressão:', printError);
         addNotification('error', 'Falha na impressão. Tente novamente.');

@@ -201,13 +201,13 @@ export const useStore = create<StoreState>()(
       addNotification: (type, message) => {
         const id = Math.random().toString(36).substring(7);
         set(state => {
-          // Limitar a no máximo 3 notificações simultâneas
-          const currentNotifications = state.notifications.slice(-2); // Manter apenas as 2 mais recentes
+          // Limpar notificações anteriores ao adicionar nova
+          const currentNotifications = state.notifications.slice(-1); // Manter apenas a mais recente
           return { notifications: [...currentNotifications, { id, type, message }] };
         });
         
         // Tempo de duração baseado no tipo
-        const duration = type === 'success' ? 2500 : 5000; // 2.5s para sucesso, 5s para outros
+        const duration = type === 'success' ? 2000 : 5000; // 2s para sucesso, 5s para outros
         setTimeout(() => get().removeNotification(id), duration);
       },
       removeNotification: (id) => set(state => ({
