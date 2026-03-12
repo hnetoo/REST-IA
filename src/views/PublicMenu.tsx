@@ -11,17 +11,18 @@ interface CartItem {
 }
 
 const PublicMenu = () => {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
     async function load() {
-      console.log('[PublicMenu] Iniciando carregamento de produtos...');
+      console.log('[PublicMenu] Iniciando carregamento de produtos (tabela products)...');
       try {
+        // ✅ TABELA PLURAL PADRÃO SUPABASE
         const { data, error } = await supabase.from('products').select('*').eq('is_active', true);
-        console.log('[PublicMenu] Dados recebidos:', { data, error });
+        console.log('[PublicMenu] Dados recebidos da tabela products:', { data, error });
         
         if (error) {
           console.error('[PublicMenu] Erro ao carregar produtos:', error);
@@ -29,7 +30,7 @@ const PublicMenu = () => {
           console.log('[PublicMenu] Produtos carregados:', data.length, 'itens');
           setItems(data);
         } else {
-          console.log('[PublicMenu] Nenhum produto encontrado');
+          console.log('[PublicMenu] Nenhum produto encontrado na tabela products');
         }
       } catch (err) {
         console.error('[PublicMenu] Erro crítico:', err);

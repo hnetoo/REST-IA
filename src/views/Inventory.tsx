@@ -95,7 +95,7 @@ const Inventory = () => {
       return;
     }
     
-    // Criar objeto com schema correto
+    // Criar objeto com schema correto (tabelas PLURAIS Supabase)
     const productToAdd = {
       id: crypto.randomUUID(), // UUID local
       name: newProduct.name,
@@ -115,13 +115,13 @@ const Inventory = () => {
     // GRAVAÇÃO LOCAL IMEDIATA (Latency Compensation)
     addDish(productToAdd);
     
-    // SINCRONIZAÇÃO SUPABASE (Background)
+    // SINCRONIZAÇÃO SUPABASE (Background) - TABELAS PLURAIS
     try {
-      console.log('[Inventory] Sincronizando com Supabase...');
+      console.log('[Inventory] Sincronizando com Supabase (tabelas plurais)...');
       
-      // DATA MAPPING: Verificar se categoria existe no Supabase
+      // DATA MAPPING: Verificar se categoria existe no Supabase (tabela categories)
       const { data: categoryCheck, error: categoryError } = await supabase
-        .from('categories')
+        .from('categories') // ✅ TABELA PLURAL PADRÃO SUPABASE
         .select('id')
         .eq('id', newProduct.category_id)
         .single();
@@ -134,7 +134,7 @@ const Inventory = () => {
       
       console.log('[Inventory] Categoria validada no Supabase:', categoryCheck.id);
       
-      // Inserir produto no Supabase com schema correto
+      // Inserir produto no Supabase com schema correto (tabela products)
       const { data, error } = await supabase.from('products').insert([{
         id: productToAdd.id,
         name: productToAdd.name,
@@ -149,7 +149,7 @@ const Inventory = () => {
         console.error('[Inventory] Detalhes do erro:', error);
         addNotification('warning', 'Produto salvo localmente, mas falhou sincronização com nuvem.');
       } else {
-        console.log('[Inventory] Sucesso Supabase:', data);
+        console.log('[Inventory] Sucesso Supabase (tabela products):', data);
         addNotification('success', 'Produto criado e sincronizado com sucesso!');
       }
     } catch (err) {
@@ -172,7 +172,7 @@ const Inventory = () => {
   const handleSaveCategory = async () => {
     console.log('[Inventory] Salvando categoria:', newCategory);
     
-    // Criar objeto com schema correto
+    // Criar objeto com schema correto (tabela categories)
     const categoryToAdd = {
       id: crypto.randomUUID(), // UUID local
       name: newCategory.name,
@@ -185,9 +185,9 @@ const Inventory = () => {
     // GRAVAÇÃO LOCAL IMEDIATA (Latency Compensation)
     addCategory(categoryToAdd);
     
-    // SINCRONIZAÇÃO SUPABASE (Background)
+    // SINCRONIZAÇÃO SUPABASE (Background) - TABELA CATEGORIES
     try {
-      console.log('[Inventory] Sincronizando categoria com Supabase...');
+      console.log('[Inventory] Sincronizando categoria com Supabase (tabela categories)...');
       const { data, error } = await supabase.from('categories').insert([{
         id: categoryToAdd.id,
         name: categoryToAdd.name
@@ -198,7 +198,7 @@ const Inventory = () => {
         console.error('[Inventory] Detalhes do erro categoria:', error);
         addNotification('warning', 'Categoria salva localmente, mas falhou sincronização com nuvem.');
       } else {
-        console.log('[Inventory] Sucesso Supabase categoria:', data);
+        console.log('[Inventory] Sucesso Supabase categoria (tabela categories):', data);
         addNotification('success', 'Categoria criada e sincronizada com sucesso!');
       }
     } catch (err) {
