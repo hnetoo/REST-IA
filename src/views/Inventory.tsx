@@ -24,6 +24,10 @@ const Inventory = () => {
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [syncProgress, setSyncProgress] = useState(0);
 
+  // Estados para modais
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
     style: 'currency', 
     currency: 'AOA', 
@@ -318,7 +322,7 @@ const Inventory = () => {
 
           {activeTab === 'menu' && (
             <button 
-              onClick={() => {/* TODO: Implementar novo produto */}}
+              onClick={() => setIsModalOpen(true)}
               className="bg-primary text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
             >
               <Plus size={20} />
@@ -327,7 +331,7 @@ const Inventory = () => {
           )}
           {activeTab === 'categories' && (
             <button 
-              onClick={() => {/* TODO: Implementar nova categoria */}}
+              onClick={() => setIsCategoryModalOpen(true)}
               className="bg-primary text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
             >
               <Plus size={20} />
