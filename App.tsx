@@ -56,14 +56,14 @@ const App = () => {
       <div className="flex h-screen w-full bg-slate-950 font-sans overflow-hidden">
         <GlobalNotificationCenter />
         <Routes>
-          {/* 1. ZONA SOBERANA (SEM INTERFERÊNCIA DA APP PRINCIPAL) */}
+          {/* ZONA 1: ACESSO LIVRE (PÚBLICO E DONO) */}
+          <Route path="/menu-public" element={<PublicMenu />} />
           <Route path="/owner/login" element={<OwnerLogin />} />
           <Route path="/owner/mobile" element={<OwnerLogin />} />
           <Route path="/owner/dashboard" element={<OwnerDashboard />} />
-          <Route path="/menu-public" element={<PublicMenu />} />
           <Route path="/login" element={<Login />} />
           
-          {/* 2. ZONA PROTEGIDA DO RESTAURANTE (APENAS AQUI VALIDA currentUser) */}
+          {/* ZONA 2: PROTEÇÃO SAGRADA (SISTEMA DO RESTAURANTE) */}
           <Route 
             path="/*" 
             element={
