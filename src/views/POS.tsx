@@ -45,22 +45,18 @@ const POS = () => {
   
   const currentOrder = activeOrders.find(o => o.id === activeOrderId);
   
-  // Função para verificar e configurar impressora
-  const handlePrintWithCheck = (order: any, customer?: any) => {
-    const printerConfig = ThermalPrinterManager.getConfig();
+  // Função de impressão direta - SEM CONFIGURAÇÃO
+  const handleDirectPrint = (order: any, customer?: any) => {
+    console.log(`[POS] Imprimindo diretamente: ${order.invoiceNumber}`);
     
-    if (!printerConfig) {
-      // Impressora não configurada - mostrar alerta e redirecionar
-      addNotification('error', 'Impressora térmica não configurada! Configure a impressora primeiro.');
-      setTimeout(() => {
-        navigate('/printer-config');
-      }, 2000);
-      return;
+    try {
+      // Impressão direta usando window.print()
+      printThermalInvoice(order, menu, settings, customer);
+      addNotification('success', 'Impressão disparada com sucesso!');
+    } catch (printError) {
+      console.error('[POS] Erro na impressão direta:', printError);
+      addNotification('error', 'Falha na impressão. Tente novamente.');
     }
-    
-    // Impressora configurada - prosseguir com impressão
-    console.log(`[POS] Imprimindo com impressora: ${printerConfig.name}`);
-    printThermalInvoice(order, menu, settings, customer);
   };
   
   const closedToday = useMemo(() => {
@@ -172,10 +168,10 @@ const POS = () => {
     setSelectedPaymentMethod(null);
     setSelectedCustomerId(undefined);
     
-    // IMPRESSÃO GARANTIDA - Independente do sucesso da gravação
+    // IMPRESSÃO DIRETA E LIMPEZA DO CARRINHO
     setTimeout(() => {
       try {
-        console.log(`[POS] Disparando impressão garantida do pedido ${orderToPrintId}`);
+        console.log(`[POS] Disparando impressão direta do pedido ${orderToPrintId}`);
         
         // Buscar pedido atualizado do estado para ter invoiceNumber
         const state = useStore.getState();
@@ -194,21 +190,17 @@ const POS = () => {
           items: orderToPrint.items?.length || 0
         });
         
-        handlePrintWithCheck(orderToPrint, customerToPrint);
+        // Impressão direta SEM configuração
+        handleDirectPrint(orderToPrint, customerToPrint);
         
-        addNotification('success', 'Impressão disparada com sucesso!');
+        // Limpar carrinho após impressão bem-sucedida
+        setActiveOrder(null);
+        setActiveTable(null);
+        
+        addNotification('success', 'Impressão disparada e carrinho limpo!');
       } catch (printError) {
         console.error('[POS] Erro crítico na impressão:', printError);
         addNotification('error', 'Falha na impressão. Tente novamente.');
-        
-        // Tentar impressão fallback com window.print
-        try {
-          console.log('[POS] Tentando impressão fallback com window.print()');
-          window.print();
-        } catch (fallbackError) {
-          console.error('[POS] Erro na impressão fallback:', fallbackError);
-          addNotification('error', 'Sistema de impressão indisponível.');
-        }
       }
     }, 500);
   };
@@ -270,7 +262,7 @@ const POS = () => {
                 const lastOrder = state.activeOrders.find(o => o.status === 'FECHADO');
                 if (lastOrder) {
                   console.log('[POS] Reimprimindo último pedido:', lastOrder.invoiceNumber);
-                  handlePrintWithCheck(lastOrder, state.customers.find(c => c.id === lastOrder.customerId));
+                  handleDirectPrint(lastOrder, state.customers.find(c => c.id === lastOrder.customerId));
                 } else {
                   addNotification('error', 'Nenhum pedido fechado encontrado para reimprimir.');
                 }
@@ -707,7 +699,7 @@ const POS = () => {
                         <button 
                             onClick={() => {
                                 console.log(`[POS] Solicitando reimpressão do pedido ${order.invoiceNumber}`);
-                                handlePrintWithCheck(order, customers.find(c => c.id === order.customerId));
+                                handleDirectPrint(order, customers.find(c => c.id === order.customerId));
                             }} 
                             className="p-4 bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all border border-white/5" 
                             title="Reimprimir"
