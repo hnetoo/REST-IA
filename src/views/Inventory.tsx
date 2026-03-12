@@ -50,9 +50,9 @@ const Inventory = () => {
   }).format(val);
 
   // URL do Menu Digital
-  const digitalMenuUrl = useMemo(() => {
+  const [digitalMenuUrl, setDigitalMenuUrl] = useState(() => {
     return `${window.location.origin}/menu-digital?nif=${settings.nif}`;
-  }, [settings.nif]);
+  });
 
   // QR Code URL
   const qrCodeUrl = useMemo(() => {
@@ -777,6 +777,21 @@ const Inventory = () => {
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-slate-400 mb-4">URL do Menu Digital</p>
+                    <div className="flex items-center gap-2 mb-4">
+                      <input
+                        type="text"
+                        value={digitalMenuUrl}
+                        onChange={(e) => setDigitalMenuUrl(e.target.value)}
+                        className="flex-1 px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500 text-sm"
+                        placeholder="https://rest-ia.vercel.app/#/menu-public"
+                      />
+                      <button 
+                        onClick={() => setDigitalMenuUrl('https://rest-ia.vercel.app/#/menu-public')}
+                        className="px-4 py-2 bg-cyan-500 text-black rounded-xl text-xs font-bold hover:bg-cyan-400 transition-all"
+                      >
+                        Restaurar
+                      </button>
+                    </div>
                     <p className="text-sm font-mono text-primary mb-4 truncate max-w-[200px]">{digitalMenuUrl}</p>
                     <div className="flex gap-2 justify-center">
                       <button 
