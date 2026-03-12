@@ -182,7 +182,10 @@ export const useStore = create<StoreState>()(
         get().addNotification('error', 'PIN Inválido');
         return false;
       },
-      logout: () => set({ currentUser: null }),
+      logout: () => {
+        localStorage.clear();
+        set({ currentUser: null });
+      },
       addUser: (user) => set(state => ({ users: [...state.users, user] })),
       updateUser: (user) => set(state => ({ users: state.users.map(u => u.id === user.id ? user : u) })),
       removeUser: (id) => set(state => ({ users: state.users.filter(u => u.id !== id) })),

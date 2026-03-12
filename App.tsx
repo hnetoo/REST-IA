@@ -67,7 +67,8 @@ const App = () => {
           <Route 
             path="/*" 
             element={
-              !currentUser ? (
+              // Verifica se o utilizador existe E se tem um ID (prova de que veio do Supabase)
+              (!currentUser || !currentUser.id) ? (
                 <Navigate to="/login" replace />
               ) : (
                 <div className="flex h-screen w-full overflow-hidden">
