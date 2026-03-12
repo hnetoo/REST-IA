@@ -88,12 +88,18 @@ const Inventory = () => {
       addNotification('error', 'Preço inválido! Use apenas números.');
       return;
     }
+
+    // VALIDAÇÃO CRÍTICA: categoria deve existir
+    if (!newProduct.category_id) {
+      addNotification('error', 'Selecione uma categoria válida.');
+      return;
+    }
     
     // Criar objeto com schema correto
     const productToAdd = {
       id: crypto.randomUUID(), // UUID local
       name: newProduct.name,
-      price: priceNumber, // ✅ Número válido
+      price: priceNumber, // ✅ Número válido (Decimal para Kwanzas)
       costPrice: priceNumber * 0.6, // ✅ Custo estimado 60%
       image_url: newProduct.image_url || null,
       image: newProduct.image_url || null, // ✅ Campo image obrigatório
@@ -111,18 +117,36 @@ const Inventory = () => {
     
     // SINCRONIZAÇÃO SUPABASE (Background)
     try {
-      console.log('[Inventory] Enviando para Supabase...');
+      console.log('[Inventory] Sincronizando com Supabase...');
+      
+      // DATA MAPPING: Verificar se categoria existe no Supabase
+      const { data: categoryCheck, error: categoryError } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('id', newProduct.category_id)
+        .single();
+      
+      if (categoryError || !categoryCheck) {
+        console.error('[Inventory] Categoria não encontrada no Supabase:', categoryError);
+        addNotification('error', 'Categoria não encontrada na nuvem. sincronização falhou.');
+        return;
+      }
+      
+      console.log('[Inventory] Categoria validada no Supabase:', categoryCheck.id);
+      
+      // Inserir produto no Supabase com schema correto
       const { data, error } = await supabase.from('products').insert([{
         id: productToAdd.id,
         name: productToAdd.name,
-        price: productToAdd.price, // ✅ Decimal
+        price: productToAdd.price, // ✅ Decimal para Kwanzas
         image_url: productToAdd.image_url,
-        category_id: productToAdd.category_id,
-        is_active: productToAdd.is_active
+        is_active: productToAdd.is_active,
+        category_id: productToAdd.category_id // ✅ UUID real da categoria
       }]).select();
       
       if (error) {
         console.error('[Inventory] Erro Supabase:', error.message);
+        console.error('[Inventory] Detalhes do erro:', error);
         addNotification('warning', 'Produto salvo localmente, mas falhou sincronização com nuvem.');
       } else {
         console.log('[Inventory] Sucesso Supabase:', data);
@@ -163,7 +187,7 @@ const Inventory = () => {
     
     // SINCRONIZAÇÃO SUPABASE (Background)
     try {
-      console.log('[Inventory] Enviando categoria para Supabase...');
+      console.log('[Inventory] Sincronizando categoria com Supabase...');
       const { data, error } = await supabase.from('categories').insert([{
         id: categoryToAdd.id,
         name: categoryToAdd.name
@@ -171,6 +195,7 @@ const Inventory = () => {
       
       if (error) {
         console.error('[Inventory] Erro Supabase categoria:', error.message);
+        console.error('[Inventory] Detalhes do erro categoria:', error);
         addNotification('warning', 'Categoria salva localmente, mas falhou sincronização com nuvem.');
       } else {
         console.log('[Inventory] Sucesso Supabase categoria:', data);
