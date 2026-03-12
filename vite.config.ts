@@ -3,10 +3,12 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  base: './', // Altere para './' para garantir que os caminhos sejam relativos ao index.html
   build: {
     outDir: 'dist',
+    assetsDir: 'assets',
     emptyOutDir: true,
-    target: 'esnext'
+    sourcemap: false,
+    minify: 'esbuild',
   }
 })
