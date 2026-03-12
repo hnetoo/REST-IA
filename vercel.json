@@ -14,5 +14,6 @@
       "source": "/((?!assets/|api/|.*\\..*).*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "framework": "vite"
 }
