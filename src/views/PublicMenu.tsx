@@ -15,6 +15,7 @@ const PublicMenu = () => {
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showSummary, setShowSummary] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -108,7 +109,7 @@ const PublicMenu = () => {
     message += `📞 *Contato:* [Por favor, forneça seu telefone]\n\n`;
     message += `Obrigado pela preferência! 🙏`;
     
-    const whatsappUrl = `https://wa.me/244976835520?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/244976825520?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -137,6 +138,9 @@ const PublicMenu = () => {
           <div>
             <h1 className="text-xl font-bold text-white">TASCA DO VEREDA</h1>
             <p className="text-gray-400 text-sm">MENU DIGITAL</p>
+            <p className="text-gray-500 text-xs mt-1">
+              Dom a Qua: 07:30 – 22:00 | Qui a Sáb: 07:30 – 00:00
+            </p>
           </div>
         </div>
       </div>
@@ -159,10 +163,10 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Grid de Produtos */}
-      <div className="p-4 grid grid-cols-2 gap-4 max-w-6xl mx-auto">
+      {/* Grid de Produtos Responsivo */}
+      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-7xl mx-auto">
         {items.map((item: any) => (
-          <div key={item.id} className="bg-[#111827] rounded-[2rem] overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative">
+          <div key={item.id} className="bg-[#111827] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
             {/* Imagem */}
             <div className="h-40 bg-[#1a1f2e] relative">
               {item.image_url ? (
@@ -182,7 +186,7 @@ const PublicMenu = () => {
             <div className="p-4">
               <h3 className="text-white font-bold text-base mb-2">{item.name}</h3>
               <div className="flex justify-between items-center">
-                <p className="text-white font-bold text-lg">{item.price.toLocaleString('pt-AO')} Kz</p>
+                <p className="text-cyan-400 font-bold text-lg">{item.price.toLocaleString('pt-AO')} Kz</p>
                 <button
                   onClick={() => addToCart(item)}
                   className="bg-cyan-500 hover:bg-cyan-400 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
@@ -207,6 +211,69 @@ const PublicMenu = () => {
             {cart.reduce((sum, item) => sum + item.quantity, 0)}
           </span>
         </button>
+      )}
+
+      {/* Modal de Detalhe do Produto */}
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-cyan-400">{selectedProduct.name}</h2>
+              <button
+                onClick={() => setSelectedProduct(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Imagem Ampliada */}
+            <div className="h-64 bg-[#1a1f2e] rounded-xl mb-6 relative">
+              {selectedProduct.image_url ? (
+                <img 
+                  src={selectedProduct.image_url} 
+                  alt={selectedProduct.name}
+                  className="w-full h-full object-cover rounded-xl"
+                />
+              ) : (
+                <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center rounded-xl">
+                  <Package size={48} className="text-gray-500" />
+                </div>
+              )}
+            </div>
+
+            {/* Detalhes */}
+            <div className="mb-6">
+              <p className="text-gray-300 text-lg mb-4">
+                Produto selecionado da Tasca do Vereda. Clique abaixo para adicionar ao seu pedido.
+              </p>
+              <div className="text-center">
+                <p className="text-3xl font-bold text-cyan-400">
+                  {selectedProduct.price.toLocaleString('pt-AO')} Kz
+                </p>
+              </div>
+            </div>
+
+            {/* Botão de Ação */}
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  addToCart(selectedProduct);
+                  setSelectedProduct(null);
+                }}
+                className="flex-1 bg-cyan-500 hover:bg-cyan-400 text-white py-3 rounded-xl font-bold text-lg transition-colors"
+              >
+                Adicionar ao Carrinho
+              </button>
+              <button
+                onClick={() => setSelectedProduct(null)}
+                className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-bold transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal de Resumo */}
