@@ -25,7 +25,8 @@ const Login = () => {
     setPin(prev => prev.slice(0, -1));
   };
 
-  const handleLogin = () => {
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!selectedUser || pin.length < 4) return;
     
     try {
@@ -37,7 +38,9 @@ const Login = () => {
       
       // Fixed: Removed rememberMe as login only accepts (pin, userId)
       const success = login(pin, selectedUser.id);
-      if (!success) {
+      if (success) {
+        navigate('/dashboard'); // Redirecionamento explícito após sucesso
+      } else {
         setError(true);
         setPin('');
       }
@@ -196,7 +199,7 @@ const Login = () => {
                     </div>
 
                     <button 
-                        onClick={handleLogin}
+                        onClick={(e) => handleLogin(e)}
                         disabled={pin.length !== 4}
                         className="w-full py-5 bg-primary text-black rounded-[1.5rem] font-black text-sm uppercase tracking-[0.2em] shadow-glow disabled:opacity-30 hover:brightness-110 active:scale-[0.98] transition-all"
                     >

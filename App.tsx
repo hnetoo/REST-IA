@@ -56,50 +56,47 @@ const App = () => {
       <div className="flex h-screen w-full bg-slate-950 font-sans overflow-hidden">
         <GlobalNotificationCenter />
         <Routes>
-          {/* ZONA 1: ACESSO LIVRE (PÚBLICO E DONO) */}
+          {/* ZONA LIVRE: Login, Menu Público e Owner */}
+          <Route path="/login" element={<Login />} />
           <Route path="/menu-public" element={<PublicMenu />} />
           <Route path="/owner/login" element={<OwnerLogin />} />
           <Route path="/owner/mobile" element={<OwnerLogin />} />
           <Route path="/owner/dashboard" element={<OwnerDashboard />} />
-          <Route path="/login" element={<Login />} />
-          
-          {/* ZONA 2: PROTEÇÃO SAGRADA (SISTEMA DO RESTAURANTE) */}
-          <Route 
-            path="/*" 
-            element={
-              // Verifica se o utilizador existe E se tem um ID (prova de que veio do Supabase)
-              (!currentUser || !currentUser.id) ? (
-                <Navigate to="/login" replace />
-              ) : (
-                <div className="flex h-screen w-full overflow-hidden">
-                  <Sidebar />
-                  <main className="flex-1 h-full overflow-hidden relative">
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/pos" element={<POS />} />
-                      <Route path="/printer-config" element={<PrinterConfig />} />
-                      <Route path="/agt" element={<AGTControl />} />
-                      <Route path="/profit-center" element={<ProfitCenter />} />
-                      <Route path="/tables-layout" element={<TableLayout />} />
-                      <Route path="/inventory" element={<Inventory />} />
-                      <Route path="/compras" element={<Purchases />} />
-                      <Route path="/compras/owner/:id" element={<PurchaseApproval />} />
-                      <Route path="/finance" element={<Finance />} />
-                      <Route path="/analytics" element={<Analytics />} />
-                      <Route path="/reports" element={<Reports />} />
-                      <Route path="/employees" element={<Employees />} />
-                      <Route path="/settings" element={<SystemHub />} />
-                      <Route path="/menu" element={<PublicMenu />} />
-                      <Route path="/menu/:tableId" element={<PublicMenu />} />
-                      <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
-                      <Route path="/approve-purchase/:id/:token" element={<ApprovePurchase />} />
-                      <Route path="*" element={<Navigate to="/" />} />
-                    </Routes>
-                  </main>
-                </div>
-              )
-            } 
-          />
+
+          {/* BLINDAGEM SAGRADA: Só entra quem tem sessão válida */}
+          <Route path="/*" element={
+            currentUser?.id ? (
+              <div className="flex h-screen w-full overflow-hidden">
+                <Sidebar />
+                <main className="flex-1 h-full overflow-hidden relative">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/pos" element={<POS />} />
+                    <Route path="/printer-config" element={<PrinterConfig />} />
+                    <Route path="/agt" element={<AGTControl />} />
+                    <Route path="/profit-center" element={<ProfitCenter />} />
+                    <Route path="/tables-layout" element={<TableLayout />} />
+                    <Route path="/inventory" element={<Inventory />} />
+                    <Route path="/compras" element={<Purchases />} />
+                    <Route path="/compras/owner/:id" element={<PurchaseApproval />} />
+                    <Route path="/finance" element={<Finance />} />
+                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/employees" element={<Employees />} />
+                    <Route path="/settings" element={<SystemHub />} />
+                    <Route path="/menu" element={<PublicMenu />} />
+                    <Route path="/menu/:tableId" element={<PublicMenu />} />
+                    <Route path="/customer-display/:tableId" element={<CustomerDisplay />} />
+                    <Route path="/approve-purchase/:id/:token" element={<ApprovePurchase />} />
+                    <Route path="*" element={<Navigate to="/" />} />
+                  </Routes>
+                </main>
+              </div>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } />
         </Routes>
       </div>
     </Router>
