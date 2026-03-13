@@ -14,7 +14,7 @@ BEGIN
         
         -- Add unique constraint
         ALTER TABLE purchase_requests 
-        ADD CONSTRAINT IF NOT EXISTS unique_approval_token 
+        ADD CONSTRAINT unique_approval_token 
         UNIQUE (approval_token);
         
         -- Update existing records with random tokens

@@ -161,6 +161,12 @@ const OwnerDashboard = () => {
 
       if (metricsError) {
         console.error('[DASHBOARD] Erro ao buscar métricas via RPC:', metricsError);
+        console.log('[DASHBOARD] Detalhes do erro:', {
+          message: metricsError.message,
+          details: metricsError.details,
+          hint: metricsError.hint,
+          code: metricsError.code
+        });
         throw metricsError;
       }
 
@@ -184,9 +190,20 @@ const OwnerDashboard = () => {
       console.error('[DASHBOARD] Erro ao buscar métricas:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       
+      // Log detalhado para debugging
+      console.log('[DASHBOARD] Erro completo:', {
+        error: error,
+        errorMessage: errorMessage,
+        errorCode: (error as any)?.code,
+        errorDetails: (error as any)?.details,
+        errorHint: (error as any)?.hint
+      });
+      
       // Se for erro de permissão, mostrar mensagem específica
       if (errorMessage.includes('permission') || (error as any)?.code === 'PGRST301') {
         addNotification('error', 'Erro de permissão: Verifique as políticas RLS das tabelas');
+      } else if (errorMessage.includes('function') && errorMessage.includes('does not exist')) {
+        addNotification('error', 'Função get_dashboard_metrics não encontrada. Execute as migrações.');
       } else {
         addNotification('error', `Erro ao carregar métricas: ${errorMessage}`);
       }
