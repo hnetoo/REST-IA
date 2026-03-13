@@ -119,8 +119,7 @@ const PublicMenu = () => {
 
   const sendToWhatsApp = () => {
     const subtotal = calculateSubtotal();
-    const deliveryFee = cart.length >= 3 ? 500 : 300; // Taxa Takeaway: 300 a 500 Kz
-    const total = subtotal + deliveryFee;
+    const total = subtotal + (cart.length >= 3 ? 500 : 300);
     
     let message = `Olá! Gostaria de encomendar:\n`;
     
@@ -129,11 +128,10 @@ const PublicMenu = () => {
       message += `• ${item.quantity}x ${item.name}\n`;
     });
     
-    message += `\nSubtotal: ${subtotal.toLocaleString('pt-AO')} Kz.\n`;
-    message += `Taxa Takeaway: ${deliveryFee.toLocaleString('pt-AO')} Kz.\n`;
-    message += `Total: ${total.toLocaleString('pt-AO')} Kz.\n\n`;
-    message += `\nTaxa de Take-Away: O valor será de 300 à 500 AKZ, dependendo da quantidade necessária para acondicionar o seu pedido.`;
-    message += `\n\nPor favor, forneça os seguintes dados:\n`;
+    message += `\nSubtotal: ${subtotal.toLocaleString('pt-AO')} Kz\n`;
+    message += `Total: ${total.toLocaleString('pt-AO')} Kz\n\n`;
+    message += `*Nota:* A Taxa de TakeAway varia de 300 à 500 AKZ, dependendo da quantidade de embalagens necessária ao seu pedido.\n\n`;
+    message += `Por favor, forneça os seguintes dados:\n`;
     message += `Nome:\n`;
     message += `Telefone:\n`;
     message += `Morada de Entrega:\n`;
@@ -199,7 +197,7 @@ const PublicMenu = () => {
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-32">
         {filteredItems.map((item) => (
           <div key={item.id} className="w-full bg-[#111827] rounded-xl border border-gray-800 flex flex-col overflow-hidden" onClick={() => setSelectedProduct(item)}>
-            <div className="h-48 w-full flex-shrink-0">
+            <div className="h-60 w-full flex-shrink-0">
               {item.image_url ? (
                 <img 
                   src={item.image_url} 
@@ -347,17 +345,10 @@ const PublicMenu = () => {
                 <span className="text-gray-400">Subtotal</span>
                 <span className="text-white">{calculateSubtotal().toLocaleString('pt-AO')} Kz</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400 flex items-center gap-2">
-                  <Truck size={16} />
-                  Taxa de Entrega
-                </span>
-                <span className="text-white">1.000 Kz</span>
-              </div>
               <div className="border-t border-gray-700 pt-3">
                 <div className="flex justify-between font-bold text-lg">
                   <span className="text-green-400">Total</span>
-                  <span className="text-green-400">{calculateTotal().toLocaleString('pt-AO')} Kz</span>
+                  <span className="text-green-400">{(calculateSubtotal() + (cart.length >= 3 ? 500 : 300)).toLocaleString('pt-AO')} Kz</span>
                 </div>
               </div>
             </div>
