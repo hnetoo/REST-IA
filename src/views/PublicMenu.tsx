@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Plus, ShoppingCart, X, Package, Truck } from 'lucide-react';
 import { Database } from '../types/supabase';
+import { Plus, Package, Utensils } from 'lucide-react';
 
 interface CartItem {
   id: string;
@@ -158,7 +157,7 @@ const PublicMenu = () => {
 
   return (
     <div className="h-screen bg-[#0a0f1a] text-white flex flex-col">
-      {/* Header com Logotipo Oficial - CORRIGIDO */}
+      {/* Header com Logotipo Oficial - SEM FALLBACK TV */}
       <div className="bg-[#0a0f1a] p-3 flex-shrink-0">
         <div className="flex items-center gap-3">
           <img 
@@ -173,7 +172,7 @@ const PublicMenu = () => {
             }}
           />
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border-2 border-cyan-500" style={{display: 'none'}}>
-            <span className="text-black font-bold text-lg">TV</span>
+            <Utensils size={24} className="text-black" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">TASCA DO VEREDA</h1>
@@ -185,24 +184,25 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Filtros Dinâmicos com Scroll Horizontal - FORÇADO TOTAL */}
-      <div className="px-2 pb-2 flex-shrink-0 w-full">
-        <div className="flex gap-1 overflow-x-scroll overflow-y-hidden whitespace-nowrap scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800" style={{scrollbarWidth: 'auto', WebkitOverflowScrolling: 'touch'}}>
-          <button 
-            onClick={() => filterByCategory('Todos')}
-            className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
-              selectedCategory === 'Todos' 
-                ? 'bg-cyan-500 text-white' 
-                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-            }`}
-          >
-            Todos
-          </button>
-          {/* ✅ MAPEAR CATEGORIAS DINAMICAMENTE */}
-          {items && items.length > 0 && (
-            [...new Set(items.map(item => item.categories?.name).filter(Boolean))].map(categoryName => (
+      {/* Filtros Dinâmicos com Scroll Horizontal - CLASSES ESPECÍFICAS */}
+      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-hide py-2 px-1 gap-2" style={{ WebkitOverflowScrolling: 'touch', display: 'flex' }}>
+        <button 
+          onClick={() => filterByCategory('Todos')}
+          className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
+            selectedCategory === 'Todos' 
+              ? 'bg-cyan-500 text-white' 
+              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+          }`}
+        >
+          Todos
+        </button>
+        {/* ✅ MAPEAR CATEGORIAS DINAMICAMENTE COM UUID */}
+        {items && items.length > 0 && (
+          [...new Set(items.map(item => item.categories?.name).filter(Boolean))].map(categoryName => {
+            const categoryItem = items.find(item => item.categories?.name === categoryName);
+            return (
               <button 
-                key={categoryName || 'unknown'}
+                key={categoryItem?.categories?.id || categoryName || 'unknown'}
                 onClick={() => filterByCategory(categoryName || 'Todos')}
                 className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
                   selectedCategory === categoryName 
@@ -213,18 +213,18 @@ const PublicMenu = () => {
               >
                 {categoryName || 'Sem Categoria'}
               </button>
-            ))
-          )}
-        </div>
+            );
+          })
+        )}
       </div>
 
-      {/* Grid de Produtos Responsivo - MOBILE FIRST */}
+      {/* Grid de Produtos Responsivo - 2 COLUNAS REAIS SEM CORTE */}
       <div className="flex-1 p-2 overflow-y-auto" style={{height: 'calc(100vh - 160px)'}}>
-        <div className="grid grid-cols-2 gap-2 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 gap-3 p-2 w-full">
           {filteredItems.map((item: Product) => (
-            <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
-              {/* Imagem - h-32 FIXA */}
-              <div className="h-32 bg-[#1a1f2e] relative">
+            <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer w-full" onClick={() => setSelectedProduct(item)}>
+              {/* Imagem - h-32 w-full object-cover */}
+              <div className="h-32 w-full bg-[#1a1f2e] relative">
                 {item.image_url ? (
                   <img 
                     src={item.image_url} 
