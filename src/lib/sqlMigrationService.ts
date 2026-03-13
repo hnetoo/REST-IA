@@ -1,5 +1,4 @@
-
-import { SystemSettings } from '../types';
+import { SystemSettings, Order } from '../../types';
 import { supabase } from './supabaseService';
 
 /**
@@ -69,6 +68,37 @@ export const sqlMigrationService = {
             is_featured: typeof m.isFeatured === 'boolean' ? m.isFeatured : false
           })));
         if (menuError) console.error('Erro sincronizando menu:', menuError);
+      }
+
+      if (localData.activeOrders) {
+        const validOrders = localData.activeOrders.filter((o: any) => o && o.id && o.status && typeof o.total === 'number');
+        console.log("SQLSync:orders:prepare", { total: localData.activeOrders.length, valid: validOrders.length });
+        
+        // Apenas sincronizar ordens fechadas/pagas
+        const closedOrders = validOrders.filter((o: any) => o.status === 'FECHADO' || o.status === 'closed' || o.status === 'paid');
+        
+        if (closedOrders.length > 0) {
+          const { error: ordersError } = await supabase
+            .from('orders')
+            .upsert(closedOrders.map((o: any) => ({
+              id: o.id,
+              table_id: o.tableId,
+              total_amount: o.total,
+              status: o.status === 'FECHADO' ? 'closed' : o.status, // Normalizar status
+              payment_method: o.paymentMethod,
+              customer_id: o.customerId,
+              invoice_number: o.invoiceNumber,
+              hash: o.hash,
+              created_at: o.createdAt || new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })));
+          
+          if (ordersError) {
+            console.error('Erro sincronizando ordens:', ordersError);
+          } else {
+            console.log("SQLSync:orders:success", { count: closedOrders.length });
+          }
+        }
       }
 
       const { error: stateError } = await supabase
