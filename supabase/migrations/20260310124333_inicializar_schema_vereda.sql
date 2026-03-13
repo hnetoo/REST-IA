@@ -97,8 +97,11 @@ CREATE TABLE IF NOT EXISTS public.customers (
 -- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_staff_status ON public.staff(status);
 CREATE INDEX IF NOT EXISTS idx_staff_schedules_staff_id ON public.staff_schedules(staff_id);
-CREATE INDEX IF NOT EXISTS idx_products_category_id ON public.products(category_id);
-CREATE INDEX IF NOT EXISTS idx_products_visible_qr ON public.products(is_visible_qr);
+CREATE INDEX IF NOT EXISTS idx_categories_name ON public.categories(name);
+CREATE INDEX IF NOT EXISTS idx_products_name ON public.products(name);
+CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_active ON public.products(is_active);
+CREATE INDEX IF NOT EXISTS idx_products_price ON public.products(price);
 CREATE INDEX IF NOT EXISTS idx_purchase_requests_status ON public.purchase_requests(status);
 CREATE INDEX IF NOT EXISTS idx_purchase_requests_created_at ON public.purchase_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);

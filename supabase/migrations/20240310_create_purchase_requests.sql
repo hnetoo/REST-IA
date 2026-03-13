@@ -18,7 +18,28 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_purchase_requests_status ON purchase_requests(status);
-CREATE INDEX IF NOT EXISTS idx_purchase_requests_created_at ON purchase_requests(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_purchase_requests_created_at ON purchase_requests(created_at);
+
+-- Grant necessary permissions for Realtime (apenas para tabelas que existem)
+DO $$
+BEGIN
+    -- Verificar se a tabela existe antes de conceder permissões
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'purchase_requests' AND table_schema = 'public'
+    ) THEN
+        GRANT SELECT ON "purchase_requests" TO authenticated;
+        GRANT SELECT ON "purchase_requests" TO anon;
+        
+        -- Adicionar à publicação realtime se existir
+        IF EXISTS (
+            SELECT 1 FROM pg_publication 
+            WHERE pubname = 'supabase_realtime'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE "purchase_requests";
+        END IF;
+    END IF;
+END $$;
 
 -- Enable RLS (Row Level Security)
 ALTER TABLE purchase_requests ENABLE ROW LEVEL SECURITY;
