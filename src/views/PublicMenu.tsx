@@ -188,9 +188,9 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Filtros Dinâmicos com Scroll Horizontal - FORÇADO */}
+      {/* Filtros Dinâmicos com Scroll Horizontal - FORÇADO TOTAL */}
       <div className="px-2 pb-2 flex-shrink-0 w-full">
-        <div className="flex gap-1 overflow-x-scroll scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800 whitespace-nowrap" style={{scrollbarWidth: 'auto'}}>
+        <div className="flex gap-1 overflow-x-auto overflow-y-hidden whitespace-nowrap" style={{scrollbarWidth: 'auto', WebkitOverflowScrolling: 'touch'}}>
           <button className="px-3 py-1 bg-cyan-500 text-white rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0">
             Todos
           </button>
@@ -200,6 +200,7 @@ const PublicMenu = () => {
               <button 
                 key={categoryName}
                 className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs font-medium whitespace-nowrap hover:bg-gray-700 flex-shrink-0"
+                style={{minWidth: 'fit-content'}}
               >
                 {categoryName}
               </button>
