@@ -169,6 +169,81 @@ const Inventory = () => {
     setIsProductModalOpen(false);
   };
 
+  const handleUpdateProduct = async () => {
+    console.log('[Inventory] Atualizando produto:', editingProduct);
+    
+    if (!editingProduct) return;
+    
+    // Validar preço
+    const priceValue = newProduct.price.replace(',', '.');
+    const priceNumber = parseFloat(priceValue) || 0;
+    
+    if (isNaN(priceNumber)) {
+      addNotification('error', 'Preço inválido! Use apenas números.');
+      return;
+    }
+
+    if (!newProduct.category_id) {
+      addNotification('error', 'Selecione uma categoria válida.');
+      return;
+    }
+    
+    // Criar objeto atualizado
+    const productToUpdate = {
+      id: editingProduct.id,
+      name: newProduct.name,
+      price: priceNumber,
+      image_url: newProduct.image_url || null,
+      category_id: newProduct.category_id,
+      is_active: newProduct.is_active
+    };
+
+    console.log('[Inventory] Produto atualizado:', productToUpdate);
+    
+    // ✅ ATUALIZAR NO SUPABASE
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .update(productToUpdate)
+        .eq('id', editingProduct.id)
+        .select();
+
+      if (error) {
+        console.error('[Inventory] Erro ao atualizar no Supabase:', error);
+        addNotification('error', 'Erro ao atualizar produto no Supabase');
+        return;
+      }
+
+      console.log('[Inventory] Produto atualizado no Supabase:', data);
+      addNotification('success', 'Produto atualizado com sucesso!');
+      
+      // ✅ ATUALIZAR STORE LOCAL
+      const dishToUpdate = {
+        ...productToUpdate,
+        costPrice: priceNumber * 0.6,
+        categoryId: productToUpdate.category_id,
+        description: '',
+        image: productToUpdate.image_url || ''
+      };
+      updateDish(dishToUpdate);
+      
+      // Resetar formulário
+      setNewProduct({
+        name: '',
+        price: '',
+        image_url: '',
+        category_id: '',
+        is_active: true
+      });
+      setEditingProduct(null);
+      setIsProductModalOpen(false);
+      
+    } catch (err) {
+      console.error('[Inventory] Erro crítico:', err);
+      addNotification('error', 'Erro ao atualizar produto');
+    }
+  };
+
   const handleSaveCategory = async () => {
     console.log('[Inventory] Salvando categoria:', newCategory);
     
@@ -232,69 +307,6 @@ const Inventory = () => {
     // REMOÇÃO LOCAL IMEDIATA
     removeDish(productId);
     addNotification('success', 'Produto removido com sucesso!');
-  };
-
-  const handleUpdateProduct = async () => {
-    console.log('[Inventory] Atualizando produto:', editingProduct);
-    
-    // Validar preço - evitar NaN, definir como 0 se vazio
-    const priceValue = newProduct.price.replace(',', '.');
-    const priceNumber = parseFloat(priceValue) || 0; // ✅ Define como 0 se vazio/inválido
-    
-    if (isNaN(priceNumber)) {
-      addNotification('error', 'Preço inválido! Use apenas números.');
-      return;
-    }
-    
-    // Criar objeto atualizado
-    const updatedProduct = {
-      ...editingProduct,
-      name: newProduct.name,
-      price: priceNumber,
-      image_url: newProduct.image_url || null,
-      category_id: newProduct.category_id,
-      is_active: newProduct.is_active
-    };
-
-    console.log('[Inventory] Produto atualizado localmente:', updatedProduct);
-
-    // ATUALIZAÇÃO LOCAL IMEDIATA
-    updateDish(updatedProduct);
-    
-    // SINCRONIZAÇÃO SUPABASE (Background)
-    try {
-      console.log('[Inventory] Enviando atualização para Supabase...');
-      const { data, error } = await supabase.from('products').update({
-        name: updatedProduct.name,
-        price: updatedProduct.price, // ✅ Decimal
-        image_url: updatedProduct.image_url,
-        category_id: updatedProduct.category_id,
-        is_active: updatedProduct.is_active
-      }).eq('id', updatedProduct.id).select();
-      
-      if (error) {
-        console.error('[Inventory] Erro Supabase atualização:', error.message);
-        addNotification('warning', 'Produto atualizado localmente, mas falhou sincronização com nuvem.');
-      } else {
-        console.log('[Inventory] Sucesso Supabase atualização:', data);
-        addNotification('success', 'Produto atualizado e sincronizado com sucesso!');
-      }
-    } catch (err) {
-      console.error('[Inventory] Erro crítico Supabase atualização:', err);
-      addNotification('error', 'Erro ao sincronizar atualização com nuvem.');
-    }
-    
-    // Resetar formulário
-    setEditingProduct(null);
-    setNewProduct({
-      name: '',
-      price: '',
-      image_url: '',
-      category_id: '',
-      is_active: true
-    });
-    
-    setIsProductModalOpen(false);
   };
 
   const handleCopyUrl = () => {
@@ -532,7 +544,7 @@ const Inventory = () => {
   };
 
   return (
-    <div className="p-8 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar">
+    <div className="p-8 min-h-screen bg-background text-slate-200">
       <header className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight italic uppercase">Catálogo & Inventário</h2>
@@ -643,41 +655,41 @@ const Inventory = () => {
 
       <div className="animate-in fade-in duration-500">
         {activeTab === 'menu' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {menu.map(dish => {
               const cat = categories.find(c => c.id === dish.categoryId);
               return (
-                <div key={dish.id} className="glass-panel rounded-[2rem] border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
-                  <div className="aspect-video w-full overflow-hidden relative">
+                <div key={dish.id} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
+                  <div className="aspect-square w-full overflow-hidden relative h-24">
                     <img 
                       src={dish.image} 
                       alt={dish.name} 
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                     />
-                    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-white/10 z-20">
+                    <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/10 z-20">
                       {cat?.name || 'Sem Categoria'}
                     </div>
                   </div>
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-white text-sm truncate pr-2" title={dish.name}>{dish.name}</h3>
+                  <div className="p-3">
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-bold text-white text-xs truncate pr-2" title={dish.name}>{dish.name}</h3>
                       <span className="text-primary font-mono font-bold text-xs whitespace-nowrap">{formatKz(dish.price)}</span>
                     </div>
-                    <p className="text-slate-400 text-[10px] line-clamp-2 italic mb-4 min-h-[30px]">{dish.description}</p>
-                    <div className="flex gap-2">
+                    <p className="text-slate-400 text-[8px] line-clamp-1 italic mb-2 min-h-[12px]">{dish.description}</p>
+                    <div className="flex gap-1">
                       <button 
                         onClick={() => handleEdit(dish)}
-                        className="flex-1 py-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/5 text-[10px] font-black uppercase tracking-widest transition-all"
+                        className="flex-1 py-1 rounded border border-white/10 text-slate-300 hover:bg-white/5 text-[8px] font-black uppercase tracking-widest transition-all"
                         title="Editar produto"
                       >
                         Editar
                       </button>
                       <button 
                         onClick={() => handleDelete(dish.id)}
-                        className="w-10 py-2 rounded-lg border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all"
+                        className="w-8 py-1 rounded border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all"
                         title="Remover produto"
                       >
-                        <Trash2 size={14} className="mx-auto" />
+                        <Trash2 size={10} className="mx-auto" />
                       </button>
                     </div>
                   </div>
