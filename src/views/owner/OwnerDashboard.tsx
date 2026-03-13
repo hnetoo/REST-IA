@@ -410,7 +410,21 @@ const OwnerDashboard = () => {
 
         {/* GRID DE INDICADORES (KPIs) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* Card 1: Faturação Total */}
+          {/* Card 1: Vendas Hoje */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-amber-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Vendas Hoje</span>
+            </div>
+            <div className="text-3xl font-black text-amber-400 mb-2">
+              {formatAKZ(metrics.vendasHoje)}
+            </div>
+            <div className="text-xs text-white/60">Moeda: AKZ</div>
+          </div>
+
+          {/* Card 2: Faturação Total */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
@@ -424,7 +438,7 @@ const OwnerDashboard = () => {
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
 
-          {/* Card 2: Lucro Líquido */}
+          {/* Card 3: Lucro Líquido */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
@@ -432,13 +446,13 @@ const OwnerDashboard = () => {
               </div>
               <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Líquido</span>
             </div>
-            <div className="text-3xl font-black text-emerald-400 mb-2">
+            <div className="text-2xl font-black text-emerald-400 mb-2">
               {formatAKZ(lucroLiquido)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
 
-          {/* Card 3: Ticket Médio */}
+          {/* Card 4: Ticket Médio */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
@@ -447,7 +461,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Ticket Médio</span>
             </div>
             <div className="text-2xl font-black text-white mb-2">
-              {formatAKZ(ticketMedio)}
+              {ticketMedio > 0 ? formatAKZ(ticketMedio) : '---'}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
