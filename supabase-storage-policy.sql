@@ -1,113 +1,45 @@
 -- POLÍTICA RLS PARA BUCKET 'products' - ACESSO PÚBLICO
 -- Executar no Supabase SQL Editor
 
--- 1. Verificar se a política já existe
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
-        AND policyname = 'Allow public read access'
-    ) THEN
-        -- Criar política para acesso público ao bucket products
-        CREATE POLICY "Allow public read access" ON storage.objects
-        FOR SELECT
-        USING (
-            bucket_id = 'products'
-        )
-        WITH CHECK (true);
-        
-        RAISE NOTICE 'Política de acesso público ao bucket products criada';
-    ELSE
-        RAISE NOTICE 'Política de acesso público ao bucket products já existe';
-    END IF;
-END $$;
+-- 1. Criar política para SELECT público (leitura anónima)
+CREATE POLICY "Allow public read access" ON storage.objects
+FOR SELECT
+USING (
+    bucket_id = 'products'
+)
+WITH CHECK (true);
 
--- 2. Verificar se a política de inserção já existe
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
-        AND policyname = 'Allow public insert access'
-    ) THEN
-        -- Criar política para inserção pública no bucket products
-        CREATE POLICY "Allow public insert access" ON storage.objects
-        FOR INSERT
-        WITH CHECK (
-            bucket_id = 'products'
-        );
-        
-        RAISE NOTICE 'Política de inserção pública ao bucket products criada';
-    ELSE
-        RAISE NOTICE 'Política de inserção pública ao bucket products já existe';
-    END IF;
-END $$;
+-- 2. Criar política para INSERT público (upload)
+CREATE POLICY "Allow public insert access" ON storage.objects
+FOR INSERT
+WITH CHECK (
+    bucket_id = 'products'
+);
 
--- 3. Verificar se a política de atualização já existe
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
-        AND policyname = 'Allow public update access'
-    ) THEN
-        -- Criar política para atualização pública no bucket products
-        CREATE POLICY "Allow public update access" ON storage.objects
-        FOR UPDATE
-        USING (
-            bucket_id = 'products'
-        )
-        WITH CHECK (true);
-        
-        RAISE NOTICE 'Política de atualização pública ao bucket products criada';
-    ELSE
-        RAISE NOTICE 'Política de atualização pública ao bucket products já existe';
-    END IF;
-END $$;
+-- 3. Criar política para UPDATE público (atualização)
+CREATE POLICY "Allow public update access" ON storage.objects
+FOR UPDATE
+USING (
+    bucket_id = 'products'
+)
+WITH CHECK (true);
 
--- 4. Verificar se a política de deleção já existe
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies 
-        WHERE tablename = 'objects' 
-        AND policyname = 'Allow public delete access'
-    ) THEN
-        -- Criar política para deleção pública no bucket products
-        CREATE POLICY "Allow public delete access" ON storage.objects
-        FOR DELETE
-        USING (
-            bucket_id = 'products'
-        )
-        WITH CHECK (true);
-        
-        RAISE NOTICE 'Política de deleção pública ao bucket products criada';
-    ELSE
-        RAISE NOTICE 'Política de deleção pública ao bucket products já existe';
-    END IF;
-END $$;
+-- 4. Criar política para DELETE público (remoção)
+CREATE POLICY "Allow public delete access" ON storage.objects
+FOR DELETE
+USING (
+    bucket_id = 'products'
+)
+WITH CHECK (true);
 
--- 5. Verificar se RLS está ativo na tabela objects
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM pg_tables 
-        WHERE tablename = 'objects' 
-        AND rowsecurity = false
-    ) THEN
-        -- Ativar RLS na tabela objects
-        ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-        RAISE NOTICE 'RLS ativado na tabela storage.objects';
-    ELSE
-        RAISE NOTICE 'RLS já está ativado na tabela storage.objects';
-    END IF;
-END $$;
+-- 5. Ativar RLS na tabela storage.objects
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- 6. Verificação final
 SELECT 
-    'Políticas criadas/verificadas' as status,
+    'Políticas criadas para bucket products' as status,
     COUNT(*) as total_policies
 FROM pg_policies 
 WHERE tablename = 'objects' 
-AND policyname LIKE '%public%';
+AND policyname LIKE '%public%'
+AND bucket_id = 'products';

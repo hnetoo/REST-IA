@@ -768,17 +768,24 @@ const Inventory = () => {
                 <div key={dish.id} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
                   <div className="aspect-square w-full overflow-hidden relative h-32">
                     {dish.image_url ? (
-                      <img 
-                        src={dish.image_url} 
-                        alt={dish.name} 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const fallback = target.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
+                      <>
+                        <img 
+                          src={dish.image_url} 
+                          alt={dish.name} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                            console.log('[Inventory] Erro ao carregar imagem do produto:', dish.name);
+                            console.log('[Inventory] Link da imagem do produto:', dish.image_url);
+                          }}
+                        />
+                        <div className="w-full h-full bg-slate-700 flex items-center justify-center" style={{display: 'none'}}>
+                          <UploadIcon size={24} className="text-slate-500" />
+                        </div>
+                      </>
                     ) : (
                       <div className="w-full h-full bg-slate-700 flex items-center justify-center">
                         <UploadIcon size={24} className="text-slate-500" />
