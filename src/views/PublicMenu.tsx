@@ -158,68 +158,52 @@ const PublicMenu = () => {
 
   return (
     <div className="h-screen bg-[#0a0f1a] text-white flex flex-col">
-      {/* HEADER E LOGO (REMOVER O "TV") */}
+      {/* LOGO E HEADER (IDENTIDADE REAL) */}
       <div className="bg-[#0a0f1a] p-4 flex items-center gap-4 border-b border-gray-800">
-        <img 
-          src="/logo-tasca-vereda.png" 
-          className="w-14 h-14 rounded-full object-cover border-2 border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
-          alt="Logo"
-          onError={(e) => { (e.target as HTMLImageElement).src = 'https://cdn-icons-png.flaticon.com/512/1996/1996055.png'; }}
-        />
+        <div className="w-16 h-16 rounded-full border-2 border-cyan-500 overflow-hidden flex-shrink-0 bg-gray-900">
+          <img 
+            src="/logo-tasca-vereda.png" 
+            alt="Logo" 
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).src = 'https://cdn-icons-png.flaticon.com/512/1996/1996055.png'; }}
+          />
+        </div>
         <div>
-          <h1 className="text-xl font-black text-white tracking-tight">TASCA DO VEREDA</h1>
-          <p className="text-cyan-500 text-xs font-bold uppercase tracking-widest">Menu Digital</p>
+          <h1 className="text-lg font-black text-white leading-none">TASCA DO VEREDA</h1>
+          <p className="text-cyan-500 text-xs font-bold uppercase mt-1">Menu Digital</p>
         </div>
       </div>
 
-      {/* CATEGORIAS (SCROLL HORIZONTAL FORÇADO) */}
-      <div className="w-full bg-[#0a0f1a] py-3 border-b border-gray-800 sticky top-0 z-40">
-        <div className="flex overflow-x-auto whitespace-nowrap px-4 gap-2 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <button onClick={() => filterByCategory('Todos')} className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase transition-all ${selectedCategory === 'Todos' ? 'bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'bg-gray-800 text-gray-400'}`}>Todos</button>
-          {/* O MAP DE CATEGORIAS DEVE USAR A CLASSE 'flex-shrink-0' EM CADA BOTÃO */}
+      {/* CATEGORIAS (FIX DO SCROLL HORIZONTAL) */}
+      <div className="w-full overflow-hidden bg-[#0a0f1a] py-4 border-b border-gray-800">
+        <div className="flex overflow-x-auto whitespace-nowrap px-4 gap-3 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch', display: 'flex' }}>
+          <button onClick={() => filterByCategory('Todos')} className={`flex-shrink-0 px-6 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === 'Todos' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>Todos</button>
           {Array.from(new Set(items.map(i => i.categories?.name).filter(Boolean))).map(cat => (
-            <button key={cat} onClick={() => filterByCategory(cat!)} className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase transition-all ${selectedCategory === cat ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>{cat}</button>
+            <button key={cat} onClick={() => filterByCategory(cat!)} className={`flex-shrink-0 px-6 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === cat ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>{cat}</button>
           ))}
         </div>
       </div>
 
-      {/* GRID DE PRODUTOS (2 COLUNAS PERFEITAS) */}
-      <div className="flex-1 overflow-y-auto p-3 bg-[#0a0f1a]">
-        <div className="grid grid-cols-2 gap-3 pb-24">
-          {/* Cada card dentro deste grid deve ter apenas w-full. Sem max-w-xs. */}
-          {filteredItems.map((item: Product) => (
-            <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer w-full" onClick={() => setSelectedProduct(item)}>
-              {/* Imagem - h-32 w-full object-cover */}
-              <div className="h-32 w-full bg-[#1a1f2e] relative">
-                {item.image_url ? (
-                  <img 
-                    src={item.image_url} 
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center">
-                    <Package size={24} className="text-gray-500" />
-                  </div>
-                )}
-              </div>
-
-              {/* Conteúdo - OTIMIZADO */}
-              <div className="p-3">
-                <h3 className="text-white font-bold text-sm mb-2 truncate">{item.name}</h3>
-                <div className="flex justify-between items-center">
-                  <p className="text-cyan-400 font-bold text-base">{item.price.toLocaleString('pt-AO')} Kz</p>
-                  <button
-                    onClick={() => addToCart(item)}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                  >
-                    <Plus size={16} className="text-white" />
-                  </button>
-                </div>
-              </div>
+      {/* PRODUTOS (1 COLUNA - UM POR BAIXO DO OUTRO) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-28">
+        {filteredItems.map((item) => (
+          <div key={item.id} className="w-full bg-[#111827] rounded-2xl overflow-hidden border border-gray-800 flex flex-col shadow-xl" onClick={() => setSelectedProduct(item)}>
+            <div className="h-48 w-full bg-gray-800">
+              {item.image_url ? (
+                <img src={item.image_url} className="w-full h-full object-cover" alt={item.name} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold">SEM IMAGEM</div>
+              )}
             </div>
-          ))}
-        </div>
+            <div className="p-4 flex justify-between items-center">
+              <div>
+                <h3 className="text-white font-bold text-lg">{item.name}</h3>
+                <p className="text-cyan-400 font-black text-xl">{item.price.toLocaleString('pt-AO')} Kz</p>
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); addToCart(item); }} className="bg-cyan-500 p-4 rounded-full text-white shadow-lg"><Plus size={24} /></button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Botão Carrinho WhatsApp */}
