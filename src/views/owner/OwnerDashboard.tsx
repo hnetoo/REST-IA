@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { Smartphone, DollarSign, Users, TrendingUp, Wallet, Receipt, FileText, Calculator, RefreshCw, LogOut, Settings } from 'lucide-react';
+import { TrendingUp, DollarSign, Users, Wallet, Receipt, Calculator, RefreshCw, LogOut, Settings, TrendingDown, Package } from 'lucide-react';
 
 interface Metrics {
   vendasHoje: number;
@@ -193,7 +193,7 @@ const OwnerDashboard = () => {
         .from('purchase_requests')
         .select('*')
         .gte('created_at', startDate.toISOString())
-        .eq('status', 'pago'); // Corrigido: 'pago' em vez de 'approved'
+        .eq('status', 'pago');
 
       if (purchasesError) {
         console.error('[DASHBOARD] Erro ao buscar purchase_requests:', purchasesError);
@@ -222,7 +222,6 @@ const OwnerDashboard = () => {
 
       if (ownerFinancesError) {
         console.error('[DASHBOARD] Erro ao buscar owner_finances:', ownerFinancesError);
-        // Não throw error aqui, pode ser que a tabela não exista ainda
         console.log('[DASHBOARD] Continuando sem dados de owner_finances');
       }
       console.log(`[DASHBOARD] Owner finances encontrados: ${ownerFinances?.length || 0}`);
@@ -242,7 +241,7 @@ const OwnerDashboard = () => {
 
       const totalVendas = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
       const receitaTotal = totalVendas;
-      const despesas = purchases.reduce((sum, purchase) => sum + (purchase.amount_kz || 0), 0); // Corrigido: amount_kz
+      const despesas = purchases.reduce((sum, purchase) => sum + (purchase.amount_kz || 0), 0);
       const folhaSalarial = staff.reduce((sum, employee) => sum + (employee.base_salary_kz || 0), 0);
       const historicoRevenue = ownerFinances?.reduce((sum, finance) => sum + (finance.legacy_revenue_kz || 0), 0) || 0;
       const impostos = totalVendas * 0.065;
@@ -268,18 +267,13 @@ const OwnerDashboard = () => {
 
     } catch (error) {
       console.error('[DASHBOARD] Erro ao buscar métricas:', error);
-      console.error('[DASHBOARD] Detalhes do erro:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       
       // Se for erro de permissão, mostrar mensagem específica
-      if (error.message?.includes('permission') || error.code === 'PGRST301') {
+      if (errorMessage.includes('permission') || (error as any)?.code === 'PGRST301') {
         addNotification('error', 'Erro de permissão: Verifique as políticas RLS das tabelas');
       } else {
-        addNotification('error', `Erro ao carregar métricas: ${error.message}`);
+        addNotification('error', `Erro ao carregar métricas: ${errorMessage}`);
       }
       
       // Em caso de erro, definir valores padrão
@@ -331,68 +325,6 @@ const OwnerDashboard = () => {
       supabase.removeChannel(purchasesChannel);
     };
   };
-
-  // Script de Teste - Gerar Dados de Teste
-  const handleGenerateTestData = async () => {
-    if (!window.confirm('🧪 Gerar dados de teste?\n\nIsto irá criar 10 vendas reais e 5 despesas pagas.')) {
-      return;
-    }
-
-    setIsResetting(true);
-    try {
-      // Gerar 10 vendas de hoje com valores realistas
-      const today = new Date();
-      for (let i = 1; i <= 10; i++) {
-        const { error } = await supabase
-          .from('orders')
-          .insert({
-            id: `test-order-${Date.now()}-${i}`,
-            table_id: Math.floor(Math.random() * 10) + 1,
-            status: 'closed',
-            total_amount: Math.floor(Math.random() * 80000) + 20000, // 20k-100k AOA
-            created_at: today.toISOString(),
-            updated_at: today.toISOString()
-          });
-        
-        if (error) throw error;
-      }
-
-      // Gerar 5 despesas pagas com valores realistas
-      const expenses = [
-        { description: 'Matéria-prima cozinha', amount: 45000 },
-        { description: 'Bebidas e refrigerantes', amount: 35000 },
-        { description: 'Carne e pescado', amount: 65000 },
-        { description: 'Legumes e frutas', amount: 28000 },
-        { description: 'Material de limpeza', amount: 15000 }
-      ];
-
-      for (let i = 0; i < expenses.length; i++) {
-        const { error } = await supabase
-          .from('purchase_requests')
-          .insert({
-            id: `test-purchase-${Date.now()}-${i}`,
-            description: expenses[i].description,
-            amount: expenses[i].amount,
-            status: 'aprovado',
-            created_at: today.toISOString(),
-            updated_at: today.toISOString()
-          });
-        
-        if (error) throw error;
-      }
-
-      addNotification('success', 'Dados de teste gerados com sucesso!');
-      await fetchMetrics();
-
-    } catch (error) {
-      console.error('Erro ao gerar dados:', error);
-      addNotification('error', 'Erro ao gerar dados de teste');
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
-  // Reset de dados de produção
   const handleResetProduction = async () => {
     if (!window.confirm('⚠️ ATENÇÃO: Esta ação irá apagar todos os pedidos e compras.\n\nEsta função é apenas para ambiente de desenvolvimento.\n\nDeseja continuar?')) {
       return;
@@ -449,43 +381,59 @@ const OwnerDashboard = () => {
     };
   }, [period]);
 
+  // Calcular ticket médio
+  const ticketMedio = metrics.totalVendas > 0 ? metrics.totalVendas / (metrics.vendasHoje > 0 ? metrics.vendasHoje : 1) : 0;
+
+  // Calcular lucro líquido
+  const lucroLiquido = metrics.receitaTotal - metrics.despesas - metrics.folhaSalarial - metrics.impostos;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white h-screen overflow-y-auto">
-      {/* Header com Botão de Sair */}
-      <header className="sticky top-0 z-50 flex justify-between items-center p-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl mb-4">
+    <div className="min-h-screen" style={{ backgroundColor: '#070b14' }}>
+      {/* HEADER - OWNER HUB */}
+      <header className="sticky top-0 z-50 flex justify-between items-center p-4 bg-white/5 backdrop-blur-md border border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
-            <Smartphone className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Settings className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white mb-1">Owner Dashboard</h1>
+            <h1 className="text-xl font-black text-white mb-1">OWNER HUB</h1>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
-              <span className="text-xs text-white/90">{isOnline ? 'Online' : 'Offline'}</span>
+              <span className="text-xs text-white/90">Caixa: Equilibrado</span>
             </div>
           </div>
         </div>
         
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/30 transition-all backdrop-blur-sm"
-        >
-          <LogOut size={16} />
-          <span className="font-semibold">Sair</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleResetProduction}
+            disabled={isResetting}
+            className="flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition-all backdrop-blur-sm disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isResetting ? 'animate-spin' : ''}`} />
+            <span className="font-semibold text-sm">Reset Produção</span>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/30 transition-all backdrop-blur-sm"
+          >
+            <LogOut size={16} />
+            <span className="font-semibold text-sm">Sair</span>
+          </button>
+        </div>
       </header>
 
       <main className="w-full px-4 pb-24">
-        {/* Filtros de Período - Compactos */}
-        <div className="flex gap-2 mb-4 overflow-x-auto">
+        {/* Filtros de Período */}
+        <div className="flex gap-2 mb-6 overflow-x-auto">
           {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
+              className={`px-4 py-2 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
                 period === p 
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-black shadow-lg' 
-                  : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                  ? 'bg-cyan-500 text-black shadow-lg' 
+                  : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
               }`}
             >
               {p}
@@ -493,147 +441,154 @@ const OwnerDashboard = () => {
           ))}
         </div>
 
-        {/* Grid de Cards - Layout Horizontal Compacto */}
-        <div className="grid grid-cols-1 gap-2 w-full">
-          {/* Card de Faturação Consolidada - Compacto */}
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-4 rounded-xl shadow-lg border-l-4 border-indigo-400 backdrop-blur-md w-full">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-indigo-200" />
-                <div>
-                  <h3 className="text-sm font-semibold text-white">Faturação Consolidada</h3>
-                  <p className="text-xs text-indigo-200">Vereda OS + Histórico</p>
+        {/* GRID DE INDICADORES (KPIs) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Card 1: Faturação Total */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-cyan-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Faturação Total</span>
+            </div>
+            <div className="text-2xl font-black text-white mb-2">
+              {formatAKZ(metrics.totalVendas + metrics.historicoRevenue)}
+            </div>
+            <div className="text-xs text-white/60">Moeda: AKZ</div>
+          </div>
+
+          {/* Card 2: Lucro Líquido */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-emerald-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Líquido</span>
+            </div>
+            <div className="text-3xl font-black text-emerald-400 mb-2">
+              {formatAKZ(lucroLiquido)}
+            </div>
+            <div className="text-xs text-white/60">Moeda: AKZ</div>
+          </div>
+
+          {/* Card 3: Ticket Médio */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-cyan-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Ticket Médio</span>
+            </div>
+            <div className="text-2xl font-black text-white mb-2">
+              {formatAKZ(ticketMedio)}
+            </div>
+            <div className="text-xs text-white/60">Moeda: AKZ</div>
+          </div>
+
+          {/* Card 4: Custos de Staff */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-red-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Custos de Staff</span>
+            </div>
+            <div className="text-2xl font-black text-white mb-2">
+              {formatAKZ(metrics.folhaSalarial)}
+            </div>
+            <div className="text-xs text-white/60">Moeda: AKZ</div>
+          </div>
+        </div>
+
+        {/* MÓDULO FISCAL */}
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+                <Calculator className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">Imposto Devido</h3>
+                <p className="text-sm text-white/60">6.5% sobre faturação</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-black text-red-400">
+                {formatAKZ(metrics.impostos)}
+              </div>
+            </div>
+          </div>
+          {/* Barra de Progresso */}
+          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min((metrics.impostos / (metrics.totalVendas * 0.1)) * 100, 100)}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* GRÁFICOS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Gráfico de Receitas */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
+            <h3 className="text-lg font-black text-white mb-4">Receitas vs Despesas</h3>
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-cyan-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <TrendingUp className="w-8 h-8 text-cyan-400" />
                 </div>
+                <p className="text-white/60 text-sm">Gráfico em desenvolvimento</p>
+                <p className="text-white/40 text-xs mt-1">Recharts integration</p>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="text-lg font-bold text-white text-right">
-                  {formatAOA(metrics.totalVendas + metrics.historicoRevenue)}
+            </div>
+          </div>
+
+          {/* Gráfico de Tendências */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
+            <h3 className="text-lg font-black text-white mb-4">Tendências de Vendas</h3>
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <TrendingUp className="w-8 h-8 text-emerald-400" />
                 </div>
-                <button className="p-1 bg-white/20 rounded hover:bg-white/30 transition-all">
-                  <Settings className="w-3 h-3 text-white/80" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Vendas Hoje - Verde */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-green-500 hover:bg-white/10 transition-all w-full">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-gray-300">Vendas Hoje</span>
-              </div>
-              <div className="text-lg font-bold text-white text-right">
-                {formatAOA(metrics.vendasHoje)}
-              </div>
-            </div>
-          </div>
-
-          {/* Mesas Ativas - Azul */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-blue-500 hover:bg-white/10 transition-all w-full">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-gray-300">Mesas Ativas</span>
-              </div>
-              <div className="text-lg font-bold text-white text-right">
-                {metrics.mesasAtivas}
-              </div>
-            </div>
-          </div>
-
-          {/* Receita Total - Roxa */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-purple-500 hover:bg-white/10 transition-all w-full">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-purple-400" />
-                <span className="text-sm text-gray-300">Receita Total</span>
-              </div>
-              <div className="text-lg font-bold text-white text-right">
-                {formatAOA(metrics.receitaTotal)}
-              </div>
-            </div>
-          </div>
-
-          {/* Despesas - Laranja */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-orange-500 hover:bg-white/10 transition-all w-full">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-orange-400" />
-                <span className="text-sm text-gray-300">Despesas</span>
-              </div>
-              <div className="text-lg font-bold text-white text-right">
-                {formatAOA(metrics.despesas)}
-              </div>
-            </div>
-          </div>
-
-          {/* Folha Salarial - Rosa */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-pink-500 hover:bg-white/10 transition-all w-full">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-pink-400" />
-                <span className="text-sm text-gray-300">Folha Salarial</span>
-              </div>
-              <div className="text-lg font-bold text-white text-right">
-                {formatAOA(metrics.folhaSalarial)}
-              </div>
-            </div>
-          </div>
-
-          {/* Impostos - Vermelho */}
-          <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border-l-4 border-red-500 hover:bg-white/10 transition-all w-full">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
-                <Calculator className="w-4 h-4 text-red-400" />
-                <span className="text-sm text-gray-300">Impostos (6.5%)</span>
-              </div>
-              <div className="text-lg font-bold text-white text-right">
-                {formatAOA(metrics.impostos)}
+                <p className="text-white/60 text-sm">Gráfico em desenvolvimento</p>
+                <p className="text-white/40 text-xs mt-1">ResponsiveContainer ready</p>
               </div>
             </div>
           </div>
         </div>
-      </main>
 
-      {/* Botão de Reset - Limpar Dados de Teste */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-2">
-        <button
-          onClick={seedTestData}
-          className="bg-blue-500/20 border border-blue-500/30 text-blue-400 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-500/30 transition-all flex items-center gap-2"
-        >
-          <RefreshCw className="w-3 h-3" />
-          Teste 5.000 Kz
-        </button>
-        <button
-          onClick={handleGenerateTestData}
-          disabled={isResetting}
-          className="bg-green-500/20 border border-green-500/30 text-green-400 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-green-500/30 transition-all disabled:opacity-50 flex items-center gap-2"
-        >
-          {isResetting ? (
-            <>
-              <RefreshCw className="w-3 h-3 animate-spin" />
-              Gerando...
-            </>
-          ) : (
-            'Gerar Dados de Teste'
-          )}
-        </button>
-        <button
-          onClick={handleResetProduction}
-          disabled={isResetting}
-          className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-red-500/30 transition-all disabled:opacity-50 flex items-center gap-2"
-        >
-          {isResetting ? (
-            <>
-              <RefreshCw className="w-3 h-3 animate-spin" />
-              Limpando...
-            </>
-          ) : (
-            'Limpar Dados de Teste'
-          )}
-        </button>
-      </div>
+        {/* RANKING - TOP 5 PRODUTOS */}
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
+          <h3 className="text-lg font-black text-white mb-4">Top 5 Produtos</h3>
+          <div className="space-y-3">
+            {[
+              { name: 'Frango com Batata', sales: 45, image: '/api/placeholder/40/40' },
+              { name: 'Arroz com Marisco', sales: 38, image: '/api/placeholder/40/40' },
+              { name: 'Muamba de Carne', sales: 32, image: '/api/placeholder/40/40' },
+              { name: 'Calulu de Peixe', sales: 28, image: '/api/placeholder/40/40' },
+              { name: 'Feijão com Óleo', sales: 24, image: '/api/placeholder/40/40' }
+            ].map((product, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg font-black text-cyan-400 w-6">#{index + 1}</span>
+                  <div className="w-10 h-10 bg-white/10 rounded-full overflow-hidden flex items-center justify-center">
+                    <Package className="w-5 h-5 text-white/60" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">{product.name}</h4>
+                    <p className="text-xs text-white/60">{product.sales} vendas</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold text-emerald-400">{product.sales}</div>
+                  <div className="text-xs text-white/40">unidades</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
