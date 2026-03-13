@@ -158,67 +158,47 @@ const PublicMenu = () => {
 
   return (
     <div className="h-screen bg-[#0a0f1a] text-white flex flex-col">
-      {/* LOGO (Header) - SEM FALLBACK TV */}
-      <div className="bg-[#0a0f1a] p-4 flex items-center gap-4 border-b border-gray-800">
+      {/* LOGO E HEADER (O "TV" MORRE AQUI) */}
+      <div className="bg-[#0a0f1a] p-5 flex items-center gap-4 border-b border-gray-800">
         <img 
           src="/logo-tasca-vereda.png" 
-          alt="Tasca do Vereda Logo"
-          className="w-14 h-14 rounded-full object-cover border-2 border-cyan-500"
-          onError={(e) => { 
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-          }}
+          className="w-16 h-16 rounded-full object-cover border-2 border-cyan-500"
+          alt="Logo"
+          onError={(e) => { (e.target as HTMLImageElement).src = 'https://cdn-icons-png.flaticon.com/512/1996/1996055.png'; }}
         />
         <div>
-          <h1 className="text-lg font-black text-white leading-none">TASCA DO VEREDA</h1>
-          <p className="text-cyan-500 text-xs font-bold uppercase mt-1">Menu Digital</p>
+          <h1 className="text-xl font-black text-white leading-none">TASCA DO VEREDA</h1>
+          <p className="text-cyan-500 text-xs font-bold uppercase tracking-widest mt-1">Menu Digital</p>
         </div>
       </div>
 
-      {/* CATEGORIAS - SCROLL HORIZONTAL GARANTIDO */}
-      <div className="w-full overflow-hidden bg-[#0a0f1a] py-4 border-b border-gray-800">
-        <div className="flex flex-nowrap overflow-x-auto px-4 gap-3 no-scrollbar">
-          <button 
-            onClick={() => filterByCategory('Todos')} 
-            className={`flex-shrink-0 px-6 py-2 rounded-full text-xs font-bold uppercase ${
-              selectedCategory === 'Todos' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'
-            }`}
-          >
-            Todos
-          </button>
+      {/* CATEGORIAS (O SCROLL HORIZONTAL QUE FUNCIONA) */}
+      <div className="w-full bg-[#0a0f1a] py-4 border-b border-gray-800">
+        <div className="flex flex-nowrap overflow-x-auto no-scrollbar px-4 gap-3" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <button onClick={() => filterByCategory('Todos')} className={`flex-shrink-0 px-6 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === 'Todos' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>Todos</button>
           {Array.from(new Set(items.map(i => i.categories?.name).filter(Boolean))).map(cat => (
-            <button 
-              key={cat} 
-              onClick={() => filterByCategory(cat!)} 
-              className={`flex-shrink-0 px-6 py-2 rounded-full text-xs font-bold uppercase ${
-                selectedCategory === cat ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'
-              }`}
-            >
-              {cat}
-            </button>
+            <button key={cat} onClick={() => filterByCategory(cat!)} className={`flex-shrink-0 px-6 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === cat ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>{cat}</button>
           ))}
         </div>
       </div>
 
-      {/* PRODUTOS - 1 COLUNA VERTICAL */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col space-y-4 pb-28">
+      {/* PRODUTOS (1 COLUNA - UM POR BAIXO DO OUTRO) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
         {filteredItems.map((item) => (
-          <div key={item.id} className="w-full bg-[#111827] rounded-2xl overflow-hidden border border-gray-800 flex flex-col shadow-xl" onClick={() => setSelectedProduct(item)}>
-            <div className="h-48 w-full bg-gray-800">
+          <div key={item.id} className="w-full bg-[#111827] rounded-2xl overflow-hidden border border-gray-800 flex flex-col shadow-2xl" onClick={() => setSelectedProduct(item)}>
+            <div className="h-56 w-full bg-gray-900">
               {item.image_url ? (
                 <img src={item.image_url} className="w-full h-full object-cover" alt={item.name} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold">SEM IMAGEM</div>
+                <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold">TASCA DO VEREDA</div>
               )}
             </div>
-            <div className="p-4 flex justify-between items-center">
+            <div className="p-5 flex justify-between items-center bg-gradient-to-t from-black/50 to-transparent">
               <div>
                 <h3 className="text-white font-bold text-lg">{item.name}</h3>
-                <p className="text-cyan-400 font-black text-xl">{item.price.toLocaleString('pt-AO')} Kz</p>
+                <p className="text-cyan-400 font-black text-2xl">{item.price.toLocaleString('pt-AO')} Kz</p>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); addToCart(item); }} className="bg-cyan-500 p-4 rounded-full text-white shadow-lg">
-                <Plus size={24} />
-              </button>
+              <button onClick={(e) => { e.stopPropagation(); addToCart(item); }} className="bg-cyan-500 p-4 rounded-full text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] active:scale-95 transition-all"><Plus size={28} /></button>
             </div>
           </div>
         ))}
