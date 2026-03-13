@@ -176,9 +176,11 @@ const OwnerDashboard = () => {
       // Log dos dados reais recebidos para debugging
       console.table("DADOS REAIS RECEBIDOS:", metricsData);
       console.log("JSON BRUTO DO SQL:", JSON.stringify(metricsData, null, 2));
+      console.log("CHART DATA RECEBIDA:", metricsData?.chartData);
 
       // Extrair métricas do resultado JSON
       const metricsResult = metricsData?.metrics || {};
+      const chartData = metricsData?.chartData || [];
       
       console.log('[DASHBOARD] Métricas extraídas:', {
         vendasHoje: metricsResult.vendasHoje,
@@ -193,6 +195,8 @@ const OwnerDashboard = () => {
         ticketMedio: metricsResult.ticketMedio,
         lucroLiquido: metricsResult.lucroLiquido
       });
+      
+      console.log('[DASHBOARD] Chart Data:', chartData);
       
       // Remover qualquer lógica de dados estáticos - usar apenas dados reais do Supabase
       setMetrics({
