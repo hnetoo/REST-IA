@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { TrendingUp, DollarSign, Users, Wallet, Receipt, Calculator, RefreshCw, LogOut, Settings, TrendingDown, Package } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface Metrics {
   vendasHoje: number;
@@ -64,6 +65,8 @@ const OwnerDashboard = () => {
   const [period, setPeriod] = useState<'HOJE' | 'SEMANA' | 'MÊS' | 'ANO'>('HOJE');
   const [isOnline, setIsOnline] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{ id: string; type: 'success' | 'error'; message: string; timestamp: number }>>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
 
   // Verificação SIMPLES - sem complexidade
   useEffect(() => {
@@ -209,6 +212,9 @@ const OwnerDashboard = () => {
         impostos: metricsResult.impostos || 0,
         historicoRevenue: metricsResult.historicoRevenue || 0
       });
+      
+      // Armazenar chartData para uso nos gráficos
+      setChartData(chartData);
 
     } catch (error) {
       console.error('[DASHBOARD] Erro ao buscar métricas:', error);
@@ -559,31 +565,115 @@ const OwnerDashboard = () => {
 
         {/* GRÁFICOS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Gráfico de Receitas */}
+          {/* Gráfico de Receitas vs Despesas */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 min-h-[280px]">
             <h3 className="text-lg font-black text-white mb-4">Receitas vs Despesas</h3>
-            <div className="h-64 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-cyan-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <TrendingUp className="w-8 h-8 text-cyan-400" />
+            <div className="h-64">
+              {chartData && chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#ffffff60"
+                      tick={{ fill: '#ffffff60', fontSize: 12 }}
+                    />
+                    <YAxis 
+                      stroke="#ffffff60"
+                      tick={{ fill: '#ffffff60', fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#070b14', 
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '8px'
+                      }}
+                      labelStyle={{ color: '#ffffff' }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ color: '#ffffff' }}
+                    />
+                    <Bar 
+                      dataKey="total" 
+                      fill="#f59e0b" 
+                      name="Receitas"
+                      radius={[8, 8, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-cyan-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                      <TrendingUp className="w-8 h-8 text-cyan-400" />
+                    </div>
+                    <p className="text-white/60 text-sm">Sem dados para exibir</p>
+                    <p className="text-white/40 text-xs mt-1">Selecione um período para visualizar</p>
+                  </div>
                 </div>
-                <p className="text-white/60 text-sm">Gráfico em desenvolvimento</p>
-                <p className="text-white/40 text-xs mt-1">Recharts integration</p>
-              </div>
+              )}
             </div>
           </div>
 
           {/* Gráfico de Tendências */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 min-h-[280px]">
             <h3 className="text-lg font-black text-white mb-4">Tendências de Vendas</h3>
-            <div className="h-64 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <TrendingUp className="w-8 h-8 text-emerald-400" />
+            <div className="h-64">
+              {chartData && chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#ffffff60"
+                      tick={{ fill: '#ffffff60', fontSize: 12 }}
+                    />
+                    <YAxis 
+                      stroke="#ffffff60"
+                      tick={{ fill: '#ffffff60', fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#070b14', 
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '8px'
+                      }}
+                      labelStyle={{ color: '#ffffff' }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ color: '#ffffff' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="total" 
+                      stroke="#10b981" 
+                      strokeWidth={3}
+                      name="Vendas"
+                      dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="orders" 
+                      stroke="#f59e0b" 
+                      strokeWidth={2}
+                      name="Pedidos"
+                      dot={{ fill: '#f59e0b', strokeWidth: 2, r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                      <TrendingUp className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <p className="text-white/60 text-sm">Sem dados para exibir</p>
+                    <p className="text-white/40 text-xs mt-1">Selecione um período para visualizar</p>
+                  </div>
                 </div>
-                <p className="text-white/60 text-sm">Gráfico em desenvolvimento</p>
-                <p className="text-white/40 text-xs mt-1">ResponsiveContainer ready</p>
-              </div>
+              )}
             </div>
           </div>
         </div>
