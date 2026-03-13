@@ -388,7 +388,7 @@ const OwnerDashboard = () => {
   const lucroLiquido = metrics.receitaTotal - metrics.despesas - metrics.folhaSalarial - metrics.impostos;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#070b14' }}>
+    <div className="h-screen overflow-y-auto overflow-x-hidden bg-[#070b14]">
       {/* HEADER - OWNER HUB */}
       <header className="sticky top-0 z-50 flex justify-between items-center p-4 bg-white/5 backdrop-blur-md border border-white/10">
         <div className="flex items-center gap-3">
@@ -423,7 +423,7 @@ const OwnerDashboard = () => {
         </div>
       </header>
 
-      <main className="w-full px-4 pb-24">
+      <main className="w-full px-4 pb-20">
         {/* Filtros de Período */}
         <div className="flex gap-2 mb-6 overflow-x-auto">
           {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
@@ -444,7 +444,7 @@ const OwnerDashboard = () => {
         {/* GRID DE INDICADORES (KPIs) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* Card 1: Faturação Total */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-cyan-400" />
@@ -458,7 +458,7 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Card 2: Lucro Líquido */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-emerald-400" />
@@ -472,7 +472,7 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Card 3: Ticket Médio */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-cyan-400" />
@@ -486,7 +486,7 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Card 4: Custos de Staff */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6 text-red-400" />
@@ -500,8 +500,39 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
+        {/* GRÁFICOS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Gráfico de Receitas */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 min-h-[280px]">
+            <h3 className="text-lg font-black text-white mb-4">Receitas vs Despesas</h3>
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-cyan-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <TrendingUp className="w-8 h-8 text-cyan-400" />
+                </div>
+                <p className="text-white/60 text-sm">Gráfico em desenvolvimento</p>
+                <p className="text-white/40 text-xs mt-1">Recharts integration</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Gráfico de Tendências */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 min-h-[280px]">
+            <h3 className="text-lg font-black text-white mb-4">Tendências de Vendas</h3>
+            <div className="h-64 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <TrendingUp className="w-8 h-8 text-emerald-400" />
+                </div>
+                <p className="text-white/60 text-sm">Gráfico em desenvolvimento</p>
+                <p className="text-white/40 text-xs mt-1">ResponsiveContainer ready</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* MÓDULO FISCAL */}
-        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6 min-h-[140px]">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
@@ -527,39 +558,8 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
-        {/* GRÁFICOS */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Gráfico de Receitas */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
-            <h3 className="text-lg font-black text-white mb-4">Receitas vs Despesas</h3>
-            <div className="h-64 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-cyan-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <TrendingUp className="w-8 h-8 text-cyan-400" />
-                </div>
-                <p className="text-white/60 text-sm">Gráfico em desenvolvimento</p>
-                <p className="text-white/40 text-xs mt-1">Recharts integration</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Gráfico de Tendências */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
-            <h3 className="text-lg font-black text-white mb-4">Tendências de Vendas</h3>
-            <div className="h-64 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <TrendingUp className="w-8 h-8 text-emerald-400" />
-                </div>
-                <p className="text-white/60 text-sm">Gráfico em desenvolvimento</p>
-                <p className="text-white/40 text-xs mt-1">ResponsiveContainer ready</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* RANKING - TOP 5 PRODUTOS */}
-        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 min-h-[320px]">
           <h3 className="text-lg font-black text-white mb-4">Top 5 Produtos</h3>
           <div className="space-y-3">
             {[
