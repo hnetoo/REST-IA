@@ -48,3 +48,33 @@ INSERT INTO public.customers (id, name, phone, email, address) VALUES
 ('550e8400-e29b-41d4-a716-446655440501', 'Maria Santos', '+244923987654', 'maria.santos@email.com', 'Avenida 25 de Abril, 456, Luanda'),
 ('550e8400-e29b-41d4-a716-446655440502', 'Pedro Costa', '+244923456789', 'pedro.costa@email.com', 'Rua Comandante Valódias, 789, Benguela')
 ON CONFLICT DO NOTHING;
+
+-- DADOS PARA OWNER DASHBOARD
+-- Inserir dados de faturação histórica (business_stats)
+INSERT INTO public.business_stats (legacy_revenue_kz, description, period_start, period_end) VALUES
+(150000.00, 'Faturação histórica - Sistema antigo Janeiro 2026', '2026-01-01', '2026-01-31'),
+(125000.00, 'Faturação histórica - Sistema antigo Fevereiro 2026', '2026-02-01', '2026-02-28'),
+(180000.00, 'Faturação histórica - Sistema antigo Março 2026', '2026-03-01', '2026-03-31')
+ON CONFLICT DO NOTHING;
+
+-- Inserir despesas fixas (expenses)
+INSERT INTO public.expenses (description, amount_kz, category, is_recurring) VALUES
+('Salário Cozinheiro Chefe', 200000.00, 'staff', TRUE),
+('Salário Garçons (2x)', 300000.00, 'staff', TRUE),
+('Salário Caixa', 120000.00, 'staff', TRUE),
+('Salário Gerente', 180000.00, 'staff', TRUE),
+('Renda do Estabelecimento', 450000.00, 'rent', TRUE),
+('Eletricidade', 85000.00, 'utilities', TRUE),
+('Água e Gás', 45000.00, 'utilities', TRUE),
+('Material de Limpeza', 25000.00, 'supplies', FALSE),
+('Licenciamento Municipal', 35000.00, 'other', TRUE),
+('Seguro do Negócio', 55000.00, 'other', TRUE)
+ON CONFLICT DO NOTHING;
+
+-- Inserir algumas ordens de exemplo para teste
+INSERT INTO public.orders (id, table_id, status, total_amount, cost_amount, created_at, updated_at, invoice_number) VALUES
+('order-001', 1, 'closed', 15000.00, 8000.00, '2026-03-13 10:30:00', '2026-03-13 10:30:00', 'INV-2026-001'),
+('order-002', 2, 'closed', 22000.00, 12000.00, '2026-03-13 12:15:00', '2026-03-13 12:15:00', 'INV-2026-002'),
+('order-003', 3, 'closed', 18500.00, 9500.00, '2026-03-13 14:20:00', '2026-03-13 14:20:00', 'INV-2026-003'),
+('order-004', 4, 'open', 35000.00, 18000.00, '2026-03-13 18:45:00', '2026-03-13 18:45:00', 'INV-2026-004')
+ON CONFLICT DO NOTHING;
