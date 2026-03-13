@@ -132,7 +132,8 @@ const PublicMenu = () => {
     message += `\nSubtotal: ${subtotal.toLocaleString('pt-AO')} Kz.\n`;
     message += `Taxa Takeaway: ${deliveryFee.toLocaleString('pt-AO')} Kz.\n`;
     message += `Total: ${total.toLocaleString('pt-AO')} Kz.\n\n`;
-    message += `Por favor, forneça os seguintes dados:\n`;
+    message += `\nTaxa de Take-Away: O valor será de 300 à 500 AKZ, dependendo da quantidade necessária para acondicionar o seu pedido.`;
+    message += `\n\nPor favor, forneça os seguintes dados:\n`;
     message += `Nome:\n`;
     message += `Telefone:\n`;
     message += `Morada de Entrega:\n`;
@@ -198,7 +199,7 @@ const PublicMenu = () => {
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-32">
         {filteredItems.map((item) => (
           <div key={item.id} className="w-full bg-[#111827] rounded-xl border border-gray-800 flex flex-col overflow-hidden" onClick={() => setSelectedProduct(item)}>
-            <div className="h-40 w-full flex-shrink-0">
+            <div className="h-48 w-full flex-shrink-0">
               {item.image_url ? (
                 <img 
                   src={item.image_url} 
@@ -359,6 +360,13 @@ const PublicMenu = () => {
                   <span className="text-green-400">{calculateTotal().toLocaleString('pt-AO')} Kz</span>
                 </div>
               </div>
+            </div>
+
+            {/* Nota Take-Away */}
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6">
+              <p className="text-yellow-400 text-sm italic">
+                <span className="font-bold">Nota:</span> A taxa de Take-Away varia entre 300 AKZ e 500 AKZ, dependendo da quantidade de embalagens necessárias para o seu pedido.
+              </p>
             </div>
 
             {/* Botão Finalizar */}
