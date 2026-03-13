@@ -118,28 +118,33 @@ const PublicMenu = () => {
   };
 
   const sendToWhatsApp = () => {
-    const subtotal = calculateSubtotal();
-    const total = subtotal + (cart.length >= 3 ? 500 : 300);
-    
-    let message = `Olá! Gostaria de encomendar:\n`;
-    
-    // Lista de itens formatada
-    cart.forEach(item => {
-      message += `• ${item.quantity}x ${item.name}\n`;
-    });
-    
-    message += `\nSubtotal: ${subtotal.toLocaleString('pt-AO')} Kz\n`;
-    message += `Total: ${total.toLocaleString('pt-AO')} Kz\n\n`;
-    message += `*Nota:* A Taxa de TakeAway varia de 300 à 500 AKZ, dependendo da quantidade de embalagens necessária ao seu pedido.\n\n`;
-    message += `Por favor, forneça os seguintes dados:\n`;
-    message += `Nome:\n`;
-    message += `Telefone:\n`;
-    message += `Morada de Entrega:\n`;
-    message += `(Se estiver no restaurante, indique o Nome e Número da Mesa).`;
-    
-    const whatsappUrl = `https://wa.me/244976825520?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
+  const subtotal = calculateSubtotal();
+  const deliveryFee = 1000; 
+  const total = subtotal + deliveryFee;
+  
+  let message = `Olá! Gostaria de encomendar:\n\n`;
+  
+  cart.forEach(item => {
+    message += `• ${item.quantity}x ${item.name}\n`;
+  });
+  
+  message += `\nSubtotal: ${subtotal.toLocaleString('pt-AO')} Kz`;
+  message += `\nTaxa de Entrega: ${deliveryFee.toLocaleString('pt-AO')} Kz`;
+  message += `\nTotal: ${total.toLocaleString('pt-AO')} Kz`;
+  
+  message += `\n\n*NOTAS IMPORTANTES:*`;
+  message += `\n- A Taxa de Entrega pode variar em função da distância.`;
+  message += `\n- A Taxa de TakeAway (300 à 500 Kz) será ajustada conforme a quantidade de embalagens necessária.\n`;
+  
+  message += `\n*DADOS DO CLIENTE:*`;
+  message += `\nNome:`;
+  message += `\nTelefone:`;
+  message += `\nMorada de Entrega:`;
+  message += `\n(Se estiver no restaurante, indique o Nome e Número da Mesa).`;
+  
+  const whatsappUrl = `https://wa.me/244976825520?text=${encodeURIComponent(message)}`;
+  window.open(whatsappUrl, '_blank');
+};
 
   if (loading) return <div className="p-10 text-center font-bold text-white">A carregar menu da Tasca...</div>;
   
@@ -345,18 +350,22 @@ const PublicMenu = () => {
                 <span className="text-gray-400">Subtotal</span>
                 <span className="text-white">{calculateSubtotal().toLocaleString('pt-AO')} Kz</span>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Taxa de Entrega</span>
+                <span className="text-white">1.000 Kz</span>
+              </div>
               <div className="border-t border-gray-700 pt-3">
                 <div className="flex justify-between font-bold text-lg">
                   <span className="text-green-400">Total</span>
-                  <span className="text-green-400">{(calculateSubtotal() + (cart.length >= 3 ? 500 : 300)).toLocaleString('pt-AO')} Kz</span>
+                  <span className="text-green-400">{(calculateSubtotal() + 1000).toLocaleString('pt-AO')} Kz</span>
                 </div>
               </div>
             </div>
 
-            {/* Nota Take-Away */}
+            {/* Nota Informativa */}
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6">
               <p className="text-yellow-400 text-sm italic">
-                <span className="font-bold">Nota:</span> A taxa de Take-Away varia entre 300 AKZ e 500 AKZ, dependendo da quantidade de embalagens necessárias para o seu pedido.
+                <span className="font-bold">Nota:</span> A Taxa de Entrega pode variar em função da distância. A Taxa de TakeAway varia de 300 à 500 AKZ consoante a quantidade de embalagens.
               </p>
             </div>
 
