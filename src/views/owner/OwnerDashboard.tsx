@@ -152,117 +152,32 @@ const OwnerDashboard = () => {
   const fetchMetrics = async () => {
     try {
       console.log(`[DASHBOARD] Iniciando busca de métricas para período: ${period}`);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
       
-      let startDate = new Date(today);
+      // Usar a função SQL para obter métricas consolidadas
+      const { data: metricsData, error: metricsError } = await supabase
+        .rpc('get_dashboard_metrics', { 
+          p_period: period 
+        });
+
+      if (metricsError) {
+        console.error('[DASHBOARD] Erro ao buscar métricas via RPC:', metricsError);
+        throw metricsError;
+      }
+
+      console.log(`[DASHBOARD] Métricas obtidas via função SQL:`, metricsData);
+
+      // Extrair métricas do resultado JSON
+      const metricsResult = metricsData?.metrics || {};
       
-      // Ajustar data de início conforme período
-      switch (period) {
-        case 'HOJE':
-          startDate = today;
-          break;
-        case 'SEMANA':
-          startDate.setDate(today.getDate() - 7);
-          break;
-        case 'MÊS':
-          startDate.setMonth(today.getMonth() - 1);
-          break;
-        case 'ANO':
-          startDate.setFullYear(today.getFullYear() - 1);
-          break;
-      }
-
-      // Buscar pedidos
-      console.log(`[DASHBOARD] Buscando orders de ${startDate.toISOString()} até agora`);
-      const { data: orders, error: ordersError } = await supabase
-        .from('orders')
-        .select('*')
-        .gte('created_at', startDate.toISOString())
-        .eq('status', 'closed');
-
-      if (ordersError) {
-        console.error('[DASHBOARD] Erro ao buscar orders:', ordersError);
-        throw ordersError;
-      }
-      console.log(`[DASHBOARD] Orders encontrados: ${orders?.length || 0}`);
-
-      // Buscar despesas (purchase_requests)
-      console.log(`[DASHBOARD] Buscando purchase_requests de ${startDate.toISOString()} até agora`);
-      const { data: purchases, error: purchasesError } = await supabase
-        .from('purchase_requests')
-        .select('*')
-        .gte('created_at', startDate.toISOString())
-        .eq('status', 'pago');
-
-      if (purchasesError) {
-        console.error('[DASHBOARD] Erro ao buscar purchase_requests:', purchasesError);
-        throw purchasesError;
-      }
-      console.log(`[DASHBOARD] Purchase requests encontrados: ${purchases?.length || 0}`);
-
-      // Buscar folha salarial
-      console.log(`[DASHBOARD] Buscando staff`);
-      const { data: staff, error: staffError } = await supabase
-        .from('staff')
-        .select('base_salary_kz');
-
-      if (staffError) {
-        console.error('[DASHBOARD] Erro ao buscar staff:', staffError);
-        throw staffError;
-      }
-      console.log(`[DASHBOARD] Staff encontrados: ${staff?.length || 0}`);
-
-      // Buscar histórico de owner_finances
-      console.log(`[DASHBOARD] Buscando owner_finances`);
-      const { data: ownerFinances, error: ownerFinancesError } = await supabase
-        .from('owner_finances')
-        .select('legacy_revenue_kz')
-        .gte('created_at', startDate.toISOString());
-
-      if (ownerFinancesError) {
-        console.error('[DASHBOARD] Erro ao buscar owner_finances:', ownerFinancesError);
-        console.log('[DASHBOARD] Continuando sem dados de owner_finances');
-      }
-      console.log(`[DASHBOARD] Owner finances encontrados: ${ownerFinances?.length || 0}`);
-
-      // Calcular métricas
-      const vendasHoje = orders
-        .filter(order => {
-          const orderDate = new Date(order.created_at!);
-          const todayDate = new Date();
-          return orderDate.toDateString() === todayDate.toDateString();
-        })
-        .reduce((sum, order) => sum + (order.total_amount || 0), 0);
-
-      const mesasAtivas = orders
-        .filter(order => order.status === 'open')
-        .length;
-
-      const totalVendas = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
-      const receitaTotal = totalVendas;
-      const despesas = purchases.reduce((sum, purchase) => sum + (purchase.amount_kz || 0), 0);
-      const folhaSalarial = staff.reduce((sum, employee) => sum + (employee.base_salary_kz || 0), 0);
-      const historicoRevenue = ownerFinances?.reduce((sum, finance) => sum + (finance.legacy_revenue_kz || 0), 0) || 0;
-      const impostos = totalVendas * 0.065;
-
-      console.log(`[DASHBOARD] Métricas calculadas:`, {
-        totalVendas,
-        despesas,
-        folhaSalarial,
-        historicoRevenue,
-        impostos
-      });
-
       setMetrics({
-        vendasHoje,
-        mesasAtivas,
-        totalVendas,
-        receitaTotal,
-        despesas,
-        folhaSalarial,
-        impostos,
-        historicoRevenue
+        vendasHoje: metricsResult.vendasHoje || 0,
+        mesasAtivas: metricsResult.mesasAtivas || 0,
+        totalVendas: metricsResult.totalVendas || 0,
+        receitaTotal: metricsResult.receitaTotal || 0,
+        despesas: metricsResult.despesas || 0,
+        folhaSalarial: metricsResult.folhaSalarial || 0,
+        impostos: metricsResult.impostos || 0,
+        historicoRevenue: metricsResult.historicoRevenue || 0
       });
 
     } catch (error) {
