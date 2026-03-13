@@ -168,8 +168,9 @@ const Finance = () => {
   };
 
   const formatKz = (val: number | undefined | null) => {
-    const safeVal = val || 0;
-    return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(safeVal);
+    const safeVal = val?.toString()?.replace(/[^\d.-]/g, '') || "0";
+    const numVal = parseFloat(safeVal) || 0;
+    return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(numVal);
   };
 
   const getCategoryColor = (category: ExpenseCategory) => {
