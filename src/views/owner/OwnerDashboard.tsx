@@ -174,6 +174,7 @@ const OwnerDashboard = () => {
       
       // Log dos dados reais recebidos para debugging
       console.table("DADOS REAIS RECEBIDOS:", metricsData);
+      console.log("JSON BRUTO DO SQL:", JSON.stringify(metricsData, null, 2));
 
       // Extrair métricas do resultado JSON
       const metricsResult = metricsData?.metrics || {};
