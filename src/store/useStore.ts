@@ -534,28 +534,25 @@ export const useStore = create<StoreState>()(
         if (finalOrder && finalOrder.status === 'FECHADO') {
           console.log('[POS] Persistindo venda no Supabase:', {
             id: finalOrder.id,
+            customer_name: finalOrder.subAccountName || 'Cliente',
+            customer_phone: '',
+            delivery_address: '',
             total_amount: finalOrder.total,
             status: 'closed',
-            table_id: finalOrder.tableId,
-            payment_method: finalOrder.paymentMethod,
-            invoice_number: finalOrder.invoiceNumber,
-            created_at: new Date().toISOString()
+            payment_method: finalOrder.paymentMethod || 'NUMERARIO'
           });
 
-          // Inserir diretamente na tabela orders
+          // Inserir diretamente na tabela orders - APENAS COLUNAS EXISTENTES
           supabase
             .from('orders')
             .upsert({
               id: finalOrder.id,
-              table_id: finalOrder.tableId,
+              customer_name: finalOrder.subAccountName || 'Cliente',
+              customer_phone: '',
+              delivery_address: '',
               total_amount: finalOrder.total,
-              status: 'closed', // Normalizar para Dashboard
-              payment_method: finalOrder.paymentMethod,
-              customer_id: finalOrder.customerId,
-              invoice_number: finalOrder.invoiceNumber,
-              hash: finalOrder.hash,
-              created_at: finalOrder.createdAt || new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              status: 'closed',
+              payment_method: finalOrder.paymentMethod || 'NUMERARIO'
             })
             .then(({ error }) => {
               if (error) {
@@ -818,25 +815,23 @@ export const useStore = create<StoreState>()(
         try {
           console.log('[STAFF] Persistindo funcionário no Supabase:', {
             id: e.id,
-            name: e.name,
+            full_name: e.name,
             role: e.role,
             phone: e.phone,
             base_salary_kz: e.salary,
             status: e.status
           });
 
-          // Inserir diretamente na tabela staff
+          // Inserir diretamente na tabela staff - APENAS COLUNAS EXISTENTES
           const { error } = await supabase
             .from('staff')
             .insert({
               id: e.id,
-              name: e.name,
+              full_name: e.name,
               role: e.role,
               phone: e.phone,
               base_salary_kz: e.salary,
-              status: e.status,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              status: e.status
             });
 
           if (error) {

@@ -167,7 +167,10 @@ const Finance = () => {
     addNotification('success', 'Despesa aprovada com sucesso.');
   };
 
-  const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(val);
+  const formatKz = (val: number | undefined | null) => {
+    const safeVal = val || 0;
+    return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(safeVal);
+  };
 
   const getCategoryColor = (category: ExpenseCategory) => {
     switch (category) {

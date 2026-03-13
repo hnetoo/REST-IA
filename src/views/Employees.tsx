@@ -55,10 +55,17 @@ const Employees = () => {
 
   const totalPayroll = useMemo(() => employees.reduce((acc, emp) => acc + emp.salary, 0), [employees]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSaveEmployee = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevenir double submit
+    
+    setIsSubmitting(true);
+    
     if (editingEmp) {
       updateEmployee({ ...editingEmp, ...empForm } as Employee);
+      setIsSubmitting(false);
     } else {
       const newEmployeeData = {
         id: `emp-${Date.now()}`,
@@ -82,6 +89,7 @@ const Employees = () => {
       }
     }
     setIsEmpModalOpen(false);
+    setIsSubmitting(false);
   };
 
   const handleSaveShift = (e: React.FormEvent) => {
