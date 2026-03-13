@@ -7,105 +7,34 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
-      app_settings: {
-        Row: {
-          currency: string | null
-          id: string
-          is_qr_enabled: boolean | null
-          logo_url: string | null
-          restaurant_name: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          currency?: string | null
-          id?: string
-          is_qr_enabled?: boolean | null
-          logo_url?: string | null
-          restaurant_name?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          currency?: string | null
-          id?: string
-          is_qr_enabled?: boolean | null
-          logo_url?: string | null
-          restaurant_name?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       categories: {
         Row: {
           created_at: string | null
-          icon: string | null
           id: string
+          image_url: string | null
           name: string
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
-          icon?: string | null
           id?: string
+          image_url?: string | null
           name: string
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
-          icon?: string | null
           id?: string
+          image_url?: string | null
           name?: string
-        }
-        Relationships: []
-      }
-      customers: {
-        Row: {
-          address: string | null
-          created_at: string | null
-          email: string | null
-          id: string
-          name: string
-          phone: string | null
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          name: string
-          phone?: string | null
-        }
-        Update: {
-          address?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          name?: string
-          phone?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -115,27 +44,24 @@ export type Database = {
           id: string
           order_id: string | null
           product_id: string | null
-          quantity: number | null
-          total_price_kz: number | null
-          unit_price_kz: number | null
+          quantity: number
+          unit_price: number
         }
         Insert: {
           created_at?: string | null
           id?: string
           order_id?: string | null
           product_id?: string | null
-          quantity?: number | null
-          total_price_kz?: number | null
-          unit_price_kz?: number | null
+          quantity: number
+          unit_price: number
         }
         Update: {
           created_at?: string | null
           id?: string
           order_id?: string | null
           product_id?: string | null
-          quantity?: number | null
-          total_price_kz?: number | null
-          unit_price_kz?: number | null
+          quantity?: number
+          unit_price?: number
         }
         Relationships: [
           {
@@ -156,28 +82,37 @@ export type Database = {
       }
       orders: {
         Row: {
-          closed_at: string | null
           created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
           id: string
+          payment_method: string | null
           status: string | null
-          table_id: string | null
-          total_amount_kz: number | null
+          table_number: number | null
+          total_amount: number
+          updated_at: string | null
         }
         Insert: {
-          closed_at?: string | null
           created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           id?: string
+          payment_method?: string | null
           status?: string | null
-          table_id?: string | null
-          total_amount_kz?: number | null
+          table_number?: number | null
+          total_amount: number
+          updated_at?: string | null
         }
         Update: {
-          closed_at?: string | null
           created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           id?: string
+          payment_method?: string | null
           status?: string | null
-          table_id?: string | null
-          total_amount_kz?: number | null
+          table_number?: number | null
+          total_amount?: number
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -188,10 +123,11 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
-          is_visible_qr: boolean | null
+          is_active: boolean | null
+          is_available: boolean | null
           name: string
-          price_kz: number | null
-          stock_quantity: number | null
+          price: number
+          updated_at: string | null
         }
         Insert: {
           category_id?: string | null
@@ -199,10 +135,11 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
-          is_visible_qr?: boolean | null
+          is_active?: boolean | null
+          is_available?: boolean | null
           name: string
-          price_kz?: number | null
-          stock_quantity?: number | null
+          price: number
+          updated_at?: string | null
         }
         Update: {
           category_id?: string | null
@@ -210,10 +147,11 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
-          is_visible_qr?: boolean | null
+          is_active?: boolean | null
+          is_available?: boolean | null
           name?: string
-          price_kz?: number | null
-          stock_quantity?: number | null
+          price?: number
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -225,128 +163,433 @@ export type Database = {
           },
         ]
       }
-      purchase_requests: {
+      users: {
         Row: {
-          amount: number
-          approved_at: string | null
-          approved_by: string | null
           created_at: string | null
-          created_by: string | null
-          description: string
+          email: string | null
           id: string
-          notes: string | null
-          proforma_url: string | null
-          provider: string
-          receipt_url: string | null
-          status: string
-        }
-        Insert: {
-          amount: number
-          approved_at?: string | null
-          approved_by?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description: string
-          id?: string
-          notes?: string | null
-          proforma_url?: string | null
-          provider: string
-          receipt_url?: string | null
-          status?: string
-        }
-        Update: {
-          amount?: number
-          approved_at?: string | null
-          approved_by?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string
-          id?: string
-          notes?: string | null
-          proforma_url?: string | null
-          provider?: string
-          receipt_url?: string | null
-          status?: string
-        }
-        Relationships: []
-      }
-      staff: {
-        Row: {
-          base_salary_kz: number | null
-          created_at: string | null
-          full_name: string
-          id: string
-          phone: string | null
+          is_active: boolean | null
+          name: string
+          pin: string
           role: string | null
-          status: string | null
+          updated_at: string | null
         }
         Insert: {
-          base_salary_kz?: number | null
           created_at?: string | null
-          full_name: string
+          email?: string | null
           id?: string
-          phone?: string | null
+          is_active?: boolean | null
+          name: string
+          pin: string
           role?: string | null
-          status?: string | null
+          updated_at?: string | null
         }
         Update: {
-          base_salary_kz?: number | null
           created_at?: string | null
-          full_name?: string
+          email?: string | null
           id?: string
-          phone?: string | null
+          is_active?: boolean | null
+          name?: string
+          pin?: string
           role?: string | null
-          status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
-      }
-      staff_schedules: {
-        Row: {
-          created_at: string | null
-          id: string
-          shift_end: string | null
-          shift_start: string | null
-          staff_id: string | null
-          work_days: string[] | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          shift_end?: string | null
-          shift_start?: string | null
-          staff_id?: string | null
-          work_days?: string[] | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          shift_end?: string | null
-          shift_start?: string | null
-          staff_id?: string | null
-          work_days?: string[] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "staff_schedules_staff_id_fkey"
-            columns: ["staff_id"]
-            isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      __plpgsql_show_dependency_tb:
+        | {
+            Args: {
+              anycompatiblerangetype?: unknown
+              anycompatibletype?: unknown
+              anyelememttype?: unknown
+              anyenumtype?: unknown
+              anyrangetype?: unknown
+              funcoid: unknown
+              relid?: unknown
+            }
+            Returns: {
+              name: string
+              oid: unknown
+              params: string
+              schema: string
+              type: string
+            }[]
+          }
+        | {
+            Args: {
+              anycompatiblerangetype?: unknown
+              anycompatibletype?: unknown
+              anyelememttype?: unknown
+              anyenumtype?: unknown
+              anyrangetype?: unknown
+              name: string
+              relid?: unknown
+            }
+            Returns: {
+              name: string
+              oid: unknown
+              params: string
+              schema: string
+              type: string
+            }[]
+          }
+      crosstab: { Args: { "": string }; Returns: Record<string, unknown>[] }
+      crosstab2: {
+        Args: { "": string }
+        Returns: Database["public"]["CompositeTypes"]["tablefunc_crosstab_2"][]
+        SetofOptions: {
+          from: "*"
+          to: "tablefunc_crosstab_2"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      crosstab3: {
+        Args: { "": string }
+        Returns: Database["public"]["CompositeTypes"]["tablefunc_crosstab_3"][]
+        SetofOptions: {
+          from: "*"
+          to: "tablefunc_crosstab_3"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      crosstab4: {
+        Args: { "": string }
+        Returns: Database["public"]["CompositeTypes"]["tablefunc_crosstab_4"][]
+        SetofOptions: {
+          from: "*"
+          to: "tablefunc_crosstab_4"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      format_akz: { Args: { amount: number }; Returns: string }
+      format_akz_simple: { Args: { amount: number }; Returns: string }
+      get_owner_metrics: {
+        Args: { p_date: string }
+        Returns: {
+          total_despesas: number
+          total_folha: number
+          total_pedidos: number
+          total_vendas: number
+        }[]
+      }
+      parse_akz: { Args: { formatted_text: string }; Returns: number }
+      pg_get_wal_block_info: {
+        Args: { end_lsn: unknown; show_data?: boolean; start_lsn: unknown }
+        Returns: Record<string, unknown>[]
+      }
+      pg_get_wal_record_info: {
+        Args: { in_lsn: unknown }
+        Returns: Record<string, unknown>
+      }
+      pg_get_wal_records_info: {
+        Args: { end_lsn: unknown; start_lsn: unknown }
+        Returns: Record<string, unknown>[]
+      }
+      pg_get_wal_stats: {
+        Args: { end_lsn: unknown; per_record?: boolean; start_lsn: unknown }
+        Returns: Record<string, unknown>[]
+      }
+      plpgsql_check_function:
+        | {
+            Args: {
+              all_warnings?: boolean
+              anycompatiblerangetype?: unknown
+              anycompatibletype?: unknown
+              anyelememttype?: unknown
+              anyenumtype?: unknown
+              anyrangetype?: unknown
+              compatibility_warnings?: boolean
+              constant_tracing?: boolean
+              extra_warnings?: boolean
+              fatal_errors?: boolean
+              format?: string
+              funcoid: unknown
+              incomment_options_usage_warning?: boolean
+              newtable?: unknown
+              oldtable?: unknown
+              other_warnings?: boolean
+              performance_warnings?: boolean
+              relid?: unknown
+              security_warnings?: boolean
+              use_incomment_options?: boolean
+              without_warnings?: boolean
+            }
+            Returns: string[]
+          }
+        | {
+            Args: {
+              all_warnings?: boolean
+              anycompatiblerangetype?: unknown
+              anycompatibletype?: unknown
+              anyelememttype?: unknown
+              anyenumtype?: unknown
+              anyrangetype?: unknown
+              compatibility_warnings?: boolean
+              constant_tracing?: boolean
+              extra_warnings?: boolean
+              fatal_errors?: boolean
+              format?: string
+              incomment_options_usage_warning?: boolean
+              name: string
+              newtable?: unknown
+              oldtable?: unknown
+              other_warnings?: boolean
+              performance_warnings?: boolean
+              relid?: unknown
+              security_warnings?: boolean
+              use_incomment_options?: boolean
+              without_warnings?: boolean
+            }
+            Returns: string[]
+          }
+      plpgsql_check_function_tb:
+        | {
+            Args: {
+              all_warnings?: boolean
+              anycompatiblerangetype?: unknown
+              anycompatibletype?: unknown
+              anyelememttype?: unknown
+              anyenumtype?: unknown
+              anyrangetype?: unknown
+              compatibility_warnings?: boolean
+              constant_tracing?: boolean
+              extra_warnings?: boolean
+              fatal_errors?: boolean
+              funcoid: unknown
+              incomment_options_usage_warning?: boolean
+              newtable?: unknown
+              oldtable?: unknown
+              other_warnings?: boolean
+              performance_warnings?: boolean
+              relid?: unknown
+              security_warnings?: boolean
+              use_incomment_options?: boolean
+              without_warnings?: boolean
+            }
+            Returns: {
+              context: string
+              detail: string
+              functionid: unknown
+              hint: string
+              level: string
+              lineno: number
+              message: string
+              position: number
+              query: string
+              sqlstate: string
+              statement: string
+            }[]
+          }
+        | {
+            Args: {
+              all_warnings?: boolean
+              anycompatiblerangetype?: unknown
+              anycompatibletype?: unknown
+              anyelememttype?: unknown
+              anyenumtype?: unknown
+              anyrangetype?: unknown
+              compatibility_warnings?: boolean
+              constant_tracing?: boolean
+              extra_warnings?: boolean
+              fatal_errors?: boolean
+              incomment_options_usage_warning?: boolean
+              name: string
+              newtable?: unknown
+              oldtable?: unknown
+              other_warnings?: boolean
+              performance_warnings?: boolean
+              relid?: unknown
+              security_warnings?: boolean
+              use_incomment_options?: boolean
+              without_warnings?: boolean
+            }
+            Returns: {
+              context: string
+              detail: string
+              functionid: unknown
+              hint: string
+              level: string
+              lineno: number
+              message: string
+              position: number
+              query: string
+              sqlstate: string
+              statement: string
+            }[]
+          }
+      plpgsql_check_pragma: { Args: { name: string[] }; Returns: number }
+      plpgsql_check_profiler: { Args: { enable?: boolean }; Returns: boolean }
+      plpgsql_check_tracer: {
+        Args: { enable?: boolean; verbosity?: string }
+        Returns: boolean
+      }
+      plpgsql_coverage_branches:
+        | { Args: { funcoid: unknown }; Returns: number }
+        | { Args: { name: string }; Returns: number }
+      plpgsql_coverage_statements:
+        | { Args: { funcoid: unknown }; Returns: number }
+        | { Args: { name: string }; Returns: number }
+      plpgsql_profiler_function_statements_tb:
+        | {
+            Args: { funcoid: unknown }
+            Returns: {
+              avg_time: number
+              block_num: number
+              exec_stmts: number
+              exec_stmts_err: number
+              lineno: number
+              max_time: number
+              parent_note: string
+              parent_stmtid: number
+              processed_rows: number
+              queryid: number
+              stmtid: number
+              stmtname: string
+              total_time: number
+            }[]
+          }
+        | {
+            Args: { name: string }
+            Returns: {
+              avg_time: number
+              block_num: number
+              exec_stmts: number
+              exec_stmts_err: number
+              lineno: number
+              max_time: number
+              parent_note: string
+              parent_stmtid: number
+              processed_rows: number
+              queryid: number
+              stmtid: number
+              stmtname: string
+              total_time: number
+            }[]
+          }
+      plpgsql_profiler_function_tb:
+        | {
+            Args: { funcoid: unknown }
+            Returns: {
+              avg_time: number
+              cmds_on_row: number
+              exec_stmts: number
+              exec_stmts_err: number
+              lineno: number
+              max_time: number[]
+              processed_rows: number[]
+              queryids: number[]
+              source: string
+              stmt_lineno: number
+              total_time: number
+            }[]
+          }
+        | {
+            Args: { name: string }
+            Returns: {
+              avg_time: number
+              cmds_on_row: number
+              exec_stmts: number
+              exec_stmts_err: number
+              lineno: number
+              max_time: number[]
+              processed_rows: number[]
+              queryids: number[]
+              source: string
+              stmt_lineno: number
+              total_time: number
+            }[]
+          }
+      plpgsql_profiler_functions_all: {
+        Args: never
+        Returns: {
+          avg_time: number
+          exec_count: number
+          exec_stmts_err: number
+          funcoid: unknown
+          max_time: number
+          min_time: number
+          stddev_time: number
+          total_time: number
+        }[]
+      }
+      plpgsql_profiler_install_fake_queryid_hook: {
+        Args: never
+        Returns: undefined
+      }
+      plpgsql_profiler_remove_fake_queryid_hook: {
+        Args: never
+        Returns: undefined
+      }
+      plpgsql_profiler_reset: { Args: { funcoid: unknown }; Returns: undefined }
+      plpgsql_profiler_reset_all: { Args: never; Returns: undefined }
+      plpgsql_show_dependency_tb:
+        | {
+            Args: {
+              anycompatiblerangetype?: unknown
+              anycompatibletype?: unknown
+              anyelememttype?: unknown
+              anyenumtype?: unknown
+              anyrangetype?: unknown
+              fnname: string
+              relid?: unknown
+            }
+            Returns: {
+              name: string
+              oid: unknown
+              params: string
+              schema: string
+              type: string
+            }[]
+          }
+        | {
+            Args: {
+              anycompatiblerangetype?: unknown
+              anycompatibletype?: unknown
+              anyelememttype?: unknown
+              anyenumtype?: unknown
+              anyrangetype?: unknown
+              funcoid: unknown
+              relid?: unknown
+            }
+            Returns: {
+              name: string
+              oid: unknown
+              params: string
+              schema: string
+              type: string
+            }[]
+          }
     }
     Enums: {
       [_ in never]: never
     }
     CompositeTypes: {
-      [_ in never]: never
+      tablefunc_crosstab_2: {
+        row_name: string | null
+        category_1: string | null
+        category_2: string | null
+      }
+      tablefunc_crosstab_3: {
+        row_name: string | null
+        category_1: string | null
+        category_2: string | null
+        category_3: string | null
+      }
+      tablefunc_crosstab_4: {
+        row_name: string | null
+        category_1: string | null
+        category_2: string | null
+        category_3: string | null
+        category_4: string | null
+      }
     }
   }
 }
@@ -469,11 +712,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-

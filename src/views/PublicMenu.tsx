@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, ShoppingCart, X, Package, Truck } from 'lucide-react';
+import { Database } from '../types/supabase';
 
 interface CartItem {
   id: string;
@@ -10,12 +11,18 @@ interface CartItem {
   image?: string;
 }
 
+// Usar tipos do Supabase para type safety
+type Product = Database['public']['Tables']['products']['Row'] & {
+  categories?: Category;
+};
+type Category = Database['public']['Tables']['categories']['Row'];
+
 const PublicMenu = () => {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showSummary, setShowSummary] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     async function load() {
