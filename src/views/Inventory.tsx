@@ -119,14 +119,17 @@ const Inventory = () => {
         .from('products')
         .getPublicUrl(fileName);
 
-
       const publicUrl = publicUrlData.publicUrl;
       console.log('[Inventory] URL pública obtida:', publicUrl);
+      
+      // ✅ URL COMPLETA: Garantir que começa com https://
+      const fullUrl = publicUrl.startsWith('https://') ? publicUrl : `https://${publicUrl}`;
+      console.log('[Inventory] URL completa:', fullUrl);
       
       // Atualizar URL no formulário
       setNewProduct(prev => ({
         ...prev,
-        image_url: publicUrl
+        image_url: fullUrl
       }));
       
       addNotification('success', 'Imagem carregada com sucesso!');
@@ -769,6 +772,12 @@ const Inventory = () => {
                         src={dish.image_url} 
                         alt={dish.name} 
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full bg-slate-700 flex items-center justify-center">
