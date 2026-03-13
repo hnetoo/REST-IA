@@ -188,7 +188,7 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Filtros Dinâmicos com Scroll Horizontal - 1 LINHA APENAS */}
+      {/* Filtros Dinâmicos com Scroll Horizontal - EXEMPLO REDMAGIC */}
       <div className="px-6 pb-4 flex-shrink-0">
         <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800 whitespace-nowrap">
           <button className="px-4 py-2 bg-cyan-500 text-white rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0">
