@@ -528,6 +528,45 @@ export const useStore = create<StoreState>()(
             customerDisplayMode: tableId ? { ...state.customerDisplayMode, [tableId]: 'MARKETING' as const } : state.customerDisplayMode
           };
         });
+
+        // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
+        const finalOrder = get().activeOrders.find(o => o.id === orderId);
+        if (finalOrder && finalOrder.status === 'FECHADO') {
+          const { supabase } = require('../lib/supabase');
+          
+          console.log('[POS] Persistindo venda no Supabase:', {
+            id: finalOrder.id,
+            total_amount: finalOrder.total,
+            status: 'closed',
+            table_id: finalOrder.tableId,
+            payment_method: finalOrder.paymentMethod,
+            invoice_number: finalOrder.invoiceNumber,
+            created_at: new Date().toISOString()
+          });
+
+          // Inserir diretamente na tabela orders
+          supabase
+            .from('orders')
+            .upsert({
+              id: finalOrder.id,
+              table_id: finalOrder.tableId,
+              total_amount: finalOrder.total,
+              status: 'closed', // Normalizar para Dashboard
+              payment_method: finalOrder.paymentMethod,
+              customer_id: finalOrder.customerId,
+              invoice_number: finalOrder.invoiceNumber,
+              hash: finalOrder.hash,
+              created_at: finalOrder.createdAt || new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .then(({ error }) => {
+              if (error) {
+                console.error('[POS] Erro ao persistir venda no Supabase:', error);
+              } else {
+                console.log('[POS] Venda persistida com sucesso no Supabase');
+              }
+            });
+        }
       },
 
       updateOrderPaymentMethod: (orderId, newMethod) => {
