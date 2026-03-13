@@ -185,12 +185,12 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* PRODUTOS (CARD VERTICAL E ESPAÇADO) */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
+      {/* PRODUTOS (CARD COMPACTO E RESPONSIVO) */}
+      <div className="flex-1 overflow-y-auto w-full px-4 space-y-3 pb-32">
         {filteredItems.map((item) => (
-          <div key={item.id} className="w-full min-h-[380px] bg-[#111827] rounded-3xl overflow-hidden border border-gray-800 flex flex-col shadow-2xl" onClick={() => setSelectedProduct(item)}>
-            {/* IMAGEM COM ALTURA FIXA - NÃO PODE ESMAGAR */}
-            <div className="h-64 w-full bg-gray-900 flex-shrink-0">
+          <div key={item.id} className="w-full max-w-full min-h-[220px] bg-[#111827] rounded-3xl overflow-hidden border border-gray-800 flex flex-col shadow-2xl" onClick={() => setSelectedProduct(item)}>
+            {/* IMAGEM COMPACTA */}
+            <div className="h-36 w-full bg-gray-900 flex-shrink-0">
               {item.image_url ? (
                 <img src={item.image_url} className="w-full h-full object-cover" alt={item.name} />
               ) : (
@@ -198,17 +198,17 @@ const PublicMenu = () => {
               )}
             </div>
             
-            {/* INFO DO PRODUTO */}
-            <div className="p-6 flex justify-between items-center bg-[#111827]">
+            {/* INFO DO PRODUTO COMPACTA */}
+            <div className="p-4 flex justify-between items-center bg-[#111827]">
               <div className="flex-1 pr-4">
-                <h3 className="text-white font-bold text-xl mb-1">{item.name}</h3>
-                <p className="text-cyan-400 font-black text-2xl">{item.price.toLocaleString('pt-AO')} Kz</p>
+                <h3 className="text-white font-bold text-lg mb-1">{item.name}</h3>
+                <p className="text-cyan-400 font-black text-xl">{item.price.toLocaleString('pt-AO')} Kz</p>
               </div>
               <button 
                 onClick={(e) => { e.stopPropagation(); addToCart(item); }} 
-                className="bg-cyan-500 p-5 rounded-2xl text-white shadow-glow active:scale-90 transition-all flex-shrink-0"
+                className="bg-cyan-500 p-2 rounded-2xl text-white shadow-glow active:scale-90 transition-all flex-shrink-0"
               >
-                <Plus size={32} />
+                <Plus size={20} />
               </button>
             </div>
           </div>
