@@ -70,6 +70,13 @@ const Inventory = () => {
     { id: 'qr', label: 'QR Menu / Digital', icon: QrCode }
   ];
 
+  // ✅ REFRESH DE DADOS - FORÇAR RECARREGAMENTO
+  const refreshInventory = () => {
+    console.log('[Inventory] Forçando refresh do inventário...');
+    // Força um refresh dos dados do store
+    window.location.reload();
+  };
+
   // Função para upload de imagem
   const handleImageUpload = async (file: File) => {
     if (!file) return;
@@ -315,7 +322,6 @@ const Inventory = () => {
         addNotification('error', 'Erro ao atualizar produto no Supabase');
         return;
       }
-
       console.log('[Inventory] Produto atualizado no Supabase:', data);
       addNotification('success', 'Produto atualizado com sucesso!');
       
@@ -332,6 +338,7 @@ const Inventory = () => {
       
       // ✅ REFRESH AUTOMÁTICO DO INVENTÁRIO
       console.log('[Inventory] Forçando refresh do inventário...');
+      refreshInventory();
       
       // Resetar formulário
       setNewProduct({
