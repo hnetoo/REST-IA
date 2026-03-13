@@ -175,6 +175,20 @@ const OwnerDashboard = () => {
       // Extrair métricas do resultado JSON
       const metricsResult = metricsData?.metrics || {};
       
+      console.log('[DASHBOARD] Métricas extraídas:', {
+        vendasHoje: metricsResult.vendasHoje,
+        totalVendas: metricsResult.totalVendas,
+        historicoRevenue: metricsResult.historicoRevenue,
+        receitaTotal: metricsResult.receitaTotal,
+        despesas: metricsResult.despesas,
+        folhaSalarial: metricsResult.folhaSalarial,
+        impostos: metricsResult.impostos,
+        mesasAtivas: metricsResult.mesasAtivas,
+        ordersCount: metricsResult.ordersCount,
+        ticketMedio: metricsResult.ticketMedio,
+        lucroLiquido: metricsResult.lucroLiquido
+      });
+      
       setMetrics({
         vendasHoje: metricsResult.vendasHoje || 0,
         mesasAtivas: metricsResult.mesasAtivas || 0,
