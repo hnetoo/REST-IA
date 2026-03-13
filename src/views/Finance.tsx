@@ -107,7 +107,7 @@ const Finance = () => {
     addNotification('success', 'Despesa adicionada com sucesso.');
     
     // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
-    const { addExpenseWithPersistence } = require('../store/useStore').default.getState();
+    const { addExpenseWithPersistence } = useStore.getState();
     if (addExpenseWithPersistence) {
       addExpenseWithPersistence({
         id: `exp-${Date.now()}`,

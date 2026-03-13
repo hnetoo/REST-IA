@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import { sqliteService } from '../lib/sqliteService';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabaseService';
 import { versionControlService } from '../lib/versionControlService';
 import { sqlMigrationService } from '../lib/sqlMigrationService';
 import { databaseService } from '../lib/databaseService';
@@ -532,8 +532,6 @@ export const useStore = create<StoreState>()(
         // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
         const finalOrder = get().activeOrders.find(o => o.id === orderId);
         if (finalOrder && finalOrder.status === 'FECHADO') {
-          const { supabase } = require('../lib/supabase');
-          
           console.log('[POS] Persistindo venda no Supabase:', {
             id: finalOrder.id,
             total_amount: finalOrder.total,
@@ -814,12 +812,10 @@ export const useStore = create<StoreState>()(
       addEmployee: (e) => set(state => ({ employees: [...state.employees, e] })),
       
       // PERSISTÊNCIA DE FUNCIONÁRIOS NO SUPABASE - NOVO E CRÍTICO
-      addEmployeeWithPersistence: async (e) => {
+      addEmployeeWithPersistence: async (e: any) => {
         set(state => ({ employees: [...state.employees, e] }));
         
         try {
-          const { supabase } = require('../lib/supabase');
-          
           console.log('[STAFF] Persistindo funcionário no Supabase:', {
             id: e.id,
             name: e.name,
@@ -933,7 +929,7 @@ restoreFromSupabase: async () => {
       }),
       
       // PERSISTÊNCIA DE DESPESAS NO SUPABASE - NOVO E CRÍTICO
-      addExpenseWithPersistence: async (expense) => {
+      addExpenseWithPersistence: async (expense: any) => {
         set(state => {
           const newExpense = {
             ...expense,
@@ -945,8 +941,6 @@ restoreFromSupabase: async () => {
         });
         
         try {
-          const { supabase } = require('../lib/supabase');
-          
           console.log('[EXPENSE] Persistindo despesa no Supabase:', {
             id: expense.id || `exp-${Date.now()}`,
             amount_kz: expense.amount,

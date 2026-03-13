@@ -60,20 +60,6 @@ const Employees = () => {
     if (editingEmp) {
       updateEmployee({ ...editingEmp, ...empForm } as Employee);
     } else {
-      addEmployee({
-        id: `emp-${Date.now()}`,
-        name: empForm.name || '',
-        role: empForm.role as UserRole,
-        phone: empForm.phone || '',
-        salary: Number(empForm.salary) || 0,
-        status: 'ATIVO',
-        color: empForm.color || '#06b6d4',
-        workDaysPerMonth: Number(empForm.workDaysPerMonth) || 22,
-        dailyWorkHours: Number(empForm.dailyWorkHours) || 8,
-        externalBioId: empForm.externalBioId || `${Math.floor(Math.random() * 9999)}`
-      });
-      
-      // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
       const newEmployeeData = {
         id: `emp-${Date.now()}`,
         name: empForm.name || '',
@@ -87,8 +73,10 @@ const Employees = () => {
         externalBioId: empForm.externalBioId || `${Math.floor(Math.random() * 9999)}`
       };
       
-      // Chamar função de persistência
-      const { addEmployeeWithPersistence } = require('../store/useStore').default.getState();
+      addEmployee(newEmployeeData);
+      
+      // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
+      const { addEmployeeWithPersistence } = useStore.getState();
       if (addEmployeeWithPersistence) {
         addEmployeeWithPersistence(newEmployeeData);
       }
