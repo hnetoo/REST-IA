@@ -88,16 +88,25 @@ const Employees = () => {
       // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
       const { addEmployeeWithPersistence } = useStore.getState();
       if (addEmployeeWithPersistence) {
-        addEmployeeWithPersistence(newEmployeeData);
+        addEmployeeWithPersistence(newEmployeeData)
+          .then(() => {
+            // Só reabilitar botão após resposta do Supabase
+            setIsSubmitting(false);
+            setHasSubmitted(false);
+          })
+          .catch((error) => {
+            // Reabilitar botão mesmo em caso de erro
+            console.error('[STAFF] Erro na persistência:', error);
+            setIsSubmitting(false);
+            setHasSubmitted(false);
+          });
+      } else {
+        // Fallback se função não existir
+        setIsSubmitting(false);
+        setHasSubmitted(false);
       }
     }
     setIsEmpModalOpen(false);
-    
-    // Reset states após 2 segundos
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setHasSubmitted(false);
-    }, 2000);
   };
 
   const handleSaveShift = (e: React.FormEvent) => {
@@ -403,19 +412,6 @@ const Employees = () => {
                     <option value="CAIXA">Caixa</option>
                     <option value="ADMIN">Gerente</option>
                   </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Salário (Kz)</label>
-                  <input required type="number" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none font-mono" value={empForm.salary} onChange={e => setEmpForm({...empForm, salary: Number(e.target.value)})} />
-                </div>
-                <div className="col-span-2 pt-6">
-                  <button type="submit" className="w-full py-6 bg-primary text-black rounded-[2rem] font-black uppercase text-xs shadow-glow flex items-center justify-center gap-3 transition-all hover:brightness-110">
-                    <Save size={22} /> Guardar Cadastro
-                  </button>
-                </div>
-            </form>
-          </div>
-        </div>
       )}
 
       {isShiftModalOpen && (
