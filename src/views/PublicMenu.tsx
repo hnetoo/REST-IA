@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Database } from '../types/supabase';
-import { Plus, Package, Utensils } from 'lucide-react';
+import { Plus, Package, Utensils, ShoppingCart, X, Minus, Truck } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface CartItem {
   id: string;
@@ -184,8 +185,8 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Filtros Dinâmicos com Scroll Horizontal - CLASSES ESPECÍFICAS */}
-      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-hide py-2 px-1 gap-2" style={{ WebkitOverflowScrolling: 'touch', display: 'flex' }}>
+      {/* CATEGORIAS - SCROLL TOTAL */}
+      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-hide py-2 px-1 gap-2 items-center" style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
         <button 
           onClick={() => filterByCategory('Todos')}
           className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
@@ -218,9 +219,9 @@ const PublicMenu = () => {
         )}
       </div>
 
-      {/* Grid de Produtos Responsivo - 2 COLUNAS REAIS SEM CORTE */}
+      {/* PRODUTOS - 2 COLUNAS REAIS */}
       <div className="flex-1 p-2 overflow-y-auto" style={{height: 'calc(100vh - 160px)'}}>
-        <div className="grid grid-cols-2 gap-3 p-2 w-full">
+        <div className="grid grid-cols-2 gap-2 p-2 w-full max-w-full overflow-x-hidden">
           {filteredItems.map((item: Product) => (
             <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer w-full" onClick={() => setSelectedProduct(item)}>
               {/* Imagem - h-32 w-full object-cover */}
