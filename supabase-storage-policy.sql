@@ -39,4 +39,29 @@ SELECT
 FROM pg_policies 
 WHERE tablename = 'objects' 
 AND policyname LIKE '%public%'
-AND bucket_id = 'products';
+AND (
+    (EXISTS (
+        SELECT 1 FROM pg_policy 
+        WHERE policyname = policyname 
+        AND objtype = 'relation'
+        AND cmd = 'SELECT'
+    ))
+    OR (EXISTS (
+        SELECT 1 FROM pg_policy 
+        WHERE policyname = policyname 
+        AND objtype = 'relation'
+        AND cmd = 'INSERT'
+    ))
+    OR (EXISTS (
+        SELECT 1 FROM pg_policy 
+        WHERE policyname = policyname 
+        AND objtype = 'relation'
+        AND cmd = 'UPDATE'
+    ))
+    OR (EXISTS (
+        SELECT 1 FROM pg_policy 
+        WHERE policyname = policyname 
+        AND objtype = 'relation'
+        AND cmd = 'DELETE'
+    ))
+);
