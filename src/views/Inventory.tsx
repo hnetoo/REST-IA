@@ -83,6 +83,10 @@ const Inventory = () => {
     setUploadingImage(true);
     
     try {
+      console.log('[Inventory] Iniciando upload para Supabase Storage...');
+      console.log('[Inventory] Bucket: products');
+      console.log('[Inventory] Arquivo:', file.name, 'Tipo:', file.type);
+      
       // Upload para Supabase Storage
       const fileName = `${Date.now()}-${file.name}`;
       const { data, error } = await supabase.storage
@@ -90,17 +94,34 @@ const Inventory = () => {
         .upload(fileName, file);
 
       if (error) {
-        console.error('[Inventory] Erro no upload:', error);
-        addNotification('error', 'Erro ao fazer upload da imagem');
+        console.error('[Inventory] Erro no upload Supabase Storage:', error);
+        console.error('[Inventory] Detalhes do erro:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
+        // Verificar se é erro de permissão (RLS)
+        if (error.message?.includes('permission') || error.message?.includes('policy')) {
+          addNotification('error', 'Erro de permissão no Storage. Verifique as políticas RLS do bucket "products".');
+        } else if (error.message?.includes('quota') || error.message?.includes('limit')) {
+          addNotification('error', 'Cota de armazenamento excedida no Supabase Storage.');
+        } else {
+          addNotification('error', `Erro no upload: ${error.message}`);
+        }
         return;
       }
 
+      console.log('[Inventory] Upload concluído, obtendo URL pública...');
+      
       // Obter URL pública
-      const { data: { publicUrl } } = supabase.storage
+      const { data: publicUrlData } = supabase.storage
         .from('products')
         .getPublicUrl(fileName);
 
-      console.log('[Inventory] Imagem enviada:', publicUrl);
+
+      const publicUrl = publicUrlData.publicUrl;
+      console.log('[Inventory] URL pública obtida:', publicUrl);
       
       // Atualizar URL no formulário
       setNewProduct(prev => ({
@@ -262,9 +283,27 @@ const Inventory = () => {
     
     // ✅ ATUALIZAR NO SUPABASE
     try {
+      console.log('[Inventory] Atualizando produto:', editingProduct);
+      console.log('[Inventory] Tabela: public.products');
+      console.log('[Inventory] Schema:', {
+        id: editingProduct.id,
+        name: newProduct.name,
+        price: priceNumber,
+        image_url: newProduct.image_url || null,
+        is_active: newProduct.is_active,
+        category_id: newProduct.category_id
+      });
+      
       const { data, error } = await supabase
-        .from('products')
-        .update(productToUpdate)
+        .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
+        .update({
+          id: editingProduct.id,
+          name: newProduct.name,
+          price: priceNumber,
+          image_url: newProduct.image_url || null,
+          is_active: newProduct.is_active,
+          category_id: newProduct.category_id
+        })
         .eq('id', editingProduct.id)
         .select();
 
@@ -283,9 +322,13 @@ const Inventory = () => {
         costPrice: priceNumber * 0.6,
         categoryId: productToUpdate.category_id,
         description: '',
-        image: productToUpdate.image_url || ''
+        image: productToUpdate.image_url || '',
+        image_url: productToUpdate.image_url || '' // ✅ CAMPO CORRETO
       };
       updateDish(dishToUpdate);
+      
+      // ✅ REFRESH AUTOMÁTICO DO INVENTÁRIO
+      console.log('[Inventory] Forçando refresh do inventário...');
       
       // Resetar formulário
       setNewProduct({
@@ -1122,9 +1165,17 @@ const Inventory = () => {
               </button>
               <button
                 onClick={editingProduct ? handleUpdateProduct : handleSaveProduct}
-                className="flex-1 px-4 py-2 bg-cyan-500 text-black rounded-xl hover:bg-cyan-400 transition-all font-bold"
+                disabled={uploadingImage}
+                className="flex-1 px-4 py-2 bg-cyan-500 text-black rounded-xl hover:bg-cyan-400 transition-all font-bold disabled:opacity-50"
               >
-                {editingProduct ? 'Atualizar Produto' : 'Salvar Produto'}
+                {uploadingImage ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent animate-spin"></div>
+                    <span className="text-sm">A gravar...</span>
+                  </div>
+                ) : (
+                  <span>{editingProduct ? 'Atualizar Produto' : 'Salvar Produto'}</span>
+                )}
               </button>
             </div>
           </div>
