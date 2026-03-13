@@ -188,9 +188,9 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Filtros Dinâmicos com Scroll Horizontal - EXEMPLO REDMAGIC */}
-      <div className="px-2 pb-2 flex-shrink-0">
-        <div className="flex gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800 whitespace-nowrap">
+      {/* Filtros Dinâmicos com Scroll Horizontal - FORÇADO */}
+      <div className="px-2 pb-2 flex-shrink-0 w-full">
+        <div className="flex gap-1 overflow-x-scroll scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800 whitespace-nowrap" style={{scrollbarWidth: 'auto'}}>
           <button className="px-3 py-1 bg-cyan-500 text-white rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0">
             Todos
           </button>
@@ -210,11 +210,11 @@ const PublicMenu = () => {
 
       {/* Grid de Produtos Responsivo - 2 COLUNAS FIXAS MOBILE COM SCROLL VERTICAL */}
       <div className="flex-1 p-2 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-2 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 gap-1 max-w-6xl mx-auto">
           {items.map((item: Product) => (
             <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
-              {/* Imagem - h-20 REDUZIDO */}
-              <div className="h-20 bg-[#1a1f2e] relative">
+              {/* Imagem - h-24 MAIOR VERTICAL */}
+              <div className="h-24 bg-[#1a1f2e] relative">
                 {item.image_url ? (
                   <img 
                     src={item.image_url} 
@@ -228,16 +228,16 @@ const PublicMenu = () => {
                 )}
               </div>
 
-              {/* Conteúdo - REDUZIDO */}
+              {/* Conteúdo - REDUZIDO HORIZONTAL */}
               <div className="p-2">
                 <h3 className="text-white font-bold text-xs mb-1 truncate">{item.name}</h3>
                 <div className="flex justify-between items-center">
-                  <p className="text-cyan-400 font-bold text-sm">{item.price.toLocaleString('pt-AO')} Kz</p>
+                  <p className="text-cyan-400 font-bold text-xs">{item.price.toLocaleString('pt-AO')} Kz</p>
                   <button
                     onClick={() => addToCart(item)}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-white w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                    className="bg-cyan-500 hover:bg-cyan-400 text-white w-5 h-5 rounded-full flex items-center justify-center transition-colors"
                   >
-                    <Plus size={12} className="text-white" />
+                    <Plus size={10} className="text-white" />
                   </button>
                 </div>
               </div>
