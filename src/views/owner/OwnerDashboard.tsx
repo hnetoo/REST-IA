@@ -302,6 +302,17 @@ const OwnerDashboard = () => {
   // Calcular lucro líquido
   const lucroLiquido = metrics.receitaTotal - metrics.despesas - metrics.folhaSalarial - metrics.impostos;
 
+  // Calcular Break-even
+  const custoOperacionalTotal = metrics.despesas + metrics.folhaSalarial;
+  const faturacaoAtual = metrics.totalVendas + metrics.historicoRevenue;
+  const progressoBreakEven = custoOperacionalTotal > 0 ? Math.min((faturacaoAtual / custoOperacionalTotal) * 100, 100) : 0;
+  const faturacaoNecessaria = Math.max(custoOperacionalTotal - faturacaoAtual, 0);
+  const isAboveBreakEven = faturacaoAtual >= custoOperacionalTotal;
+  
+  // Verificar eficiência (break-even antes do dia 20)
+  const diaAtual = new Date().getDate();
+  const isAltaEficiencia = isAboveBreakEven && diaAtual <= 20;
+
   return (
     <div className="h-screen overflow-y-auto overflow-x-hidden bg-[#070b14]">
       {/* HEADER - OWNER HUB */}
@@ -435,6 +446,59 @@ const OwnerDashboard = () => {
                 Importado
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* CARD PONTO DE EQUILÍBRIO (BREAK-EVEN) */}
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6 min-h-[160px]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div>
+                  <h3 className="text-lg font-black text-white">Ponto de Equilíbrio (Break-even)</h3>
+                  <p className="text-sm text-white/60">Custo Operacional: {formatAKZ(custoOperacionalTotal)}</p>
+                </div>
+                {isAltaEficiencia && (
+                  <div className="bg-emerald-500/20 border border-emerald-500/30 px-2 py-1 rounded-full">
+                    <span className="text-xs text-emerald-400 font-bold">Alta Eficiência</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className={`text-2xl font-black mb-2 ${isAboveBreakEven ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {progressoBreakEven.toFixed(1)}%
+              </div>
+              <div className={`text-xs px-2 py-1 rounded-full ${
+                isAboveBreakEven 
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+              }`}>
+                {isAboveBreakEven ? 'NEGÓCIO EM LUCRO! 🚀' : `Faltam ${formatAKZ(faturacaoNecessaria)}`}
+              </div>
+            </div>
+          </div>
+          
+          {/* Barra de Progresso com Glow */}
+          <div className="relative">
+            <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+              <div 
+                className={`h-full rounded-full transition-all duration-700 ease-out ${
+                  isAboveBreakEven 
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-glow' 
+                    : 'bg-gradient-to-r from-amber-500 to-orange-400 shadow-glow'
+                }`}
+                style={{ width: `${progressoBreakEven}%` }}
+              ></div>
+            </div>
+            {/* Indicador de Break-even */}
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-0.5 h-6 bg-red-500/80"
+              style={{ left: '100%' }}
+            ></div>
           </div>
         </div>
 
