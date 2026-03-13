@@ -160,9 +160,9 @@ const PublicMenu = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f1a] text-white">
+    <div className="min-h-screen bg-[#0a0f1a] text-white flex flex-col">
       {/* Header com Logotipo Oficial */}
-      <div className="bg-[#0a0f1a] p-6">
+      <div className="bg-[#0a0f1a] p-6 flex-shrink-0">
         <div className="flex items-center gap-4">
           <img 
             src="/logo-tasca-vereda.png" 
@@ -189,7 +189,7 @@ const PublicMenu = () => {
       </div>
 
       {/* Filtros Dinâmicos com Scroll Horizontal - 1 LINHA APENAS */}
-      <div className="px-6 pb-4">
+      <div className="px-6 pb-4 flex-shrink-0">
         <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800 whitespace-nowrap">
           <button className="px-4 py-2 bg-cyan-500 text-white rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0">
             Todos
@@ -208,40 +208,42 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Grid de Produtos Responsivo - 2 COLUNAS FIXAS MOBILE */}
-      <div className="p-4 grid grid-cols-2 gap-4 max-w-6xl mx-auto overflow-y-auto">
-        {items.map((item: any) => (
-          <div key={item.id} className="bg-[#111827] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
-            {/* Imagem - h-32 FIXO */}
-            <div className="h-32 bg-[#1a1f2e] relative">
-              {item.image_url ? (
-                <img 
-                  src={item.image_url} 
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center">
-                  <Package size={24} className="text-gray-500" />
-                </div>
-              )}
-            </div>
+      {/* Grid de Produtos Responsivo - 2 COLUNAS FIXAS MOBILE COM SCROLL VERTICAL */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        <div className="grid grid-cols-2 gap-4 max-w-6xl mx-auto">
+          {items.map((item: Product) => (
+            <div key={item.id} className="bg-[#111827] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
+              {/* Imagem - h-32 FIXO */}
+              <div className="h-32 bg-[#1a1f2e] relative">
+                {item.image_url ? (
+                  <img 
+                    src={item.image_url} 
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center">
+                    <Package size={24} className="text-gray-500" />
+                  </div>
+                )}
+              </div>
 
-            {/* Conteúdo */}
-            <div className="p-4">
-              <h3 className="text-white font-bold text-base mb-2">{item.name}</h3>
-              <div className="flex justify-between items-center">
-                <p className="text-cyan-400 font-bold text-lg">{item.price.toLocaleString('pt-AO')} Kz</p>
-                <button
-                  onClick={() => addToCart(item)}
-                  className="bg-cyan-500 hover:bg-cyan-400 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                >
-                  <Plus size={16} className="text-white" />
-                </button>
+              {/* Conteúdo */}
+              <div className="p-4">
+                <h3 className="text-white font-bold text-base mb-2">{item.name}</h3>
+                <div className="flex justify-between items-center">
+                  <p className="text-cyan-400 font-bold text-lg">{item.price.toLocaleString('pt-AO')} Kz</p>
+                  <button
+                    onClick={() => addToCart(item)}
+                    className="bg-cyan-500 hover:bg-cyan-400 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                  >
+                    <Plus size={16} className="text-white" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Botão Carrinho WhatsApp */}
