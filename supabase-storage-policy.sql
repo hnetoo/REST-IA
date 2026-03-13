@@ -6,8 +6,7 @@ CREATE POLICY "Allow public read access" ON storage.objects
 FOR SELECT
 USING (
     bucket_id = 'products'
-)
-WITH CHECK (true);
+);
 
 -- 2. Criar política para INSERT público (upload)
 CREATE POLICY "Allow public insert access" ON storage.objects
@@ -21,16 +20,14 @@ CREATE POLICY "Allow public update access" ON storage.objects
 FOR UPDATE
 USING (
     bucket_id = 'products'
-)
-WITH CHECK (true);
+);
 
 -- 4. Criar política para DELETE público (remoção)
 CREATE POLICY "Allow public delete access" ON storage.objects
 FOR DELETE
 USING (
     bucket_id = 'products'
-)
-WITH CHECK (true);
+);
 
 -- 5. Ativar RLS na tabela storage.objects
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
