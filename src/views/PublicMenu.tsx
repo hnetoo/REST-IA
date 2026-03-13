@@ -161,13 +161,13 @@ const PublicMenu = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0f1a] text-white flex flex-col">
-      {/* Header com Logotipo Oficial */}
-      <div className="bg-[#0a0f1a] p-6 flex-shrink-0">
-        <div className="flex items-center gap-4">
+      {/* Header com Logotipo Oficial - REDUZIDO */}
+      <div className="bg-[#0a0f1a] p-3 flex-shrink-0">
+        <div className="flex items-center gap-3">
           <img 
             src="/logo-tasca-vereda.png" 
             alt="Tasca do Vereda Logo"
-            className="w-12 h-12 rounded-full object-cover"
+            className="w-8 h-8 rounded-full object-cover"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
@@ -175,13 +175,13 @@ const PublicMenu = () => {
               if (fallback) fallback.style.display = 'flex';
             }}
           />
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center" style={{display: 'none'}}>
-            <span className="text-black font-bold text-lg">TV</span>
+          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center" style={{display: 'none'}}>
+            <span className="text-black font-bold text-sm">TV</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">TASCA DO VEREDA</h1>
-            <p className="text-gray-400 text-sm">MENU DIGITAL</p>
-            <p className="text-gray-500 text-xs mt-1">
+            <h1 className="text-lg font-bold text-white">TASCA DO VEREDA</h1>
+            <p className="text-gray-400 text-xs">MENU DIGITAL</p>
+            <p className="text-gray-500 text-xs">
               Dom a Qua: 07:30 – 22:00 | Qui a Sáb: 07:30 – 00:00
             </p>
           </div>
@@ -189,9 +189,9 @@ const PublicMenu = () => {
       </div>
 
       {/* Filtros Dinâmicos com Scroll Horizontal - EXEMPLO REDMAGIC */}
-      <div className="px-6 pb-4 flex-shrink-0">
-        <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800 whitespace-nowrap">
-          <button className="px-4 py-2 bg-cyan-500 text-white rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0">
+      <div className="px-2 pb-2 flex-shrink-0">
+        <div className="flex gap-1 overflow-x-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800 whitespace-nowrap">
+          <button className="px-3 py-1 bg-cyan-500 text-white rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0">
             Todos
           </button>
           {/* ✅ MAPEAR CATEGORIAS DINAMICAMENTE */}
@@ -199,7 +199,7 @@ const PublicMenu = () => {
             [...new Set(items.map(item => item.categories?.name).filter(Boolean))].map(categoryName => (
               <button 
                 key={categoryName}
-                className="px-4 py-2 bg-gray-800 text-gray-300 rounded-full text-sm font-medium whitespace-nowrap hover:bg-gray-700 flex-shrink-0"
+                className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs font-medium whitespace-nowrap hover:bg-gray-700 flex-shrink-0"
               >
                 {categoryName}
               </button>
@@ -209,12 +209,12 @@ const PublicMenu = () => {
       </div>
 
       {/* Grid de Produtos Responsivo - 2 COLUNAS FIXAS MOBILE COM SCROLL VERTICAL */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-4 max-w-6xl mx-auto">
+      <div className="flex-1 p-2 overflow-y-auto">
+        <div className="grid grid-cols-2 gap-2 max-w-6xl mx-auto">
           {items.map((item: Product) => (
-            <div key={item.id} className="bg-[#111827] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
-              {/* Imagem - h-32 FIXO */}
-              <div className="h-32 bg-[#1a1f2e] relative">
+            <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
+              {/* Imagem - h-20 REDUZIDO */}
+              <div className="h-20 bg-[#1a1f2e] relative">
                 {item.image_url ? (
                   <img 
                     src={item.image_url} 
@@ -223,21 +223,21 @@ const PublicMenu = () => {
                   />
                 ) : (
                   <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center">
-                    <Package size={24} className="text-gray-500" />
+                    <Package size={20} className="text-gray-500" />
                   </div>
                 )}
               </div>
 
-              {/* Conteúdo */}
-              <div className="p-4">
-                <h3 className="text-white font-bold text-base mb-2">{item.name}</h3>
+              {/* Conteúdo - REDUZIDO */}
+              <div className="p-2">
+                <h3 className="text-white font-bold text-xs mb-1 truncate">{item.name}</h3>
                 <div className="flex justify-between items-center">
-                  <p className="text-cyan-400 font-bold text-lg">{item.price.toLocaleString('pt-AO')} Kz</p>
+                  <p className="text-cyan-400 font-bold text-sm">{item.price.toLocaleString('pt-AO')} Kz</p>
                   <button
                     onClick={() => addToCart(item)}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                    className="bg-cyan-500 hover:bg-cyan-400 text-white w-6 h-6 rounded-full flex items-center justify-center transition-colors"
                   >
-                    <Plus size={16} className="text-white" />
+                    <Plus size={12} className="text-white" />
                   </button>
                 </div>
               </div>
