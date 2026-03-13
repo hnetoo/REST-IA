@@ -218,13 +218,13 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Grid de Produtos Responsivo - 2 COLUNAS FIXAS MOBILE COM SCROLL VERTICAL */}
+      {/* Grid de Produtos Responsivo - MOBILE FIRST */}
       <div className="flex-1 p-2 overflow-y-auto" style={{height: 'calc(100vh - 160px)'}}>
-        <div className="grid grid-cols-2 gap-1 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 gap-2 max-w-6xl mx-auto">
           {filteredItems.map((item: Product) => (
             <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
-              {/* Imagem - h-24 OTIMIZADO */}
-              <div className="h-24 bg-[#1a1f2e] relative">
+              {/* Imagem - h-32 FIXA */}
+              <div className="h-32 bg-[#1a1f2e] relative">
                 {item.image_url ? (
                   <img 
                     src={item.image_url} 
@@ -233,21 +233,21 @@ const PublicMenu = () => {
                   />
                 ) : (
                   <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center">
-                    <Package size={20} className="text-gray-500" />
+                    <Package size={24} className="text-gray-500" />
                   </div>
                 )}
               </div>
 
               {/* Conteúdo - OTIMIZADO */}
-              <div className="p-2">
-                <h3 className="text-white font-bold text-xs mb-1 truncate">{item.name}</h3>
+              <div className="p-3">
+                <h3 className="text-white font-bold text-sm mb-2 truncate">{item.name}</h3>
                 <div className="flex justify-between items-center">
-                  <p className="text-cyan-400 font-bold text-sm">{item.price.toLocaleString('pt-AO')} Kz</p>
+                  <p className="text-cyan-400 font-bold text-base">{item.price.toLocaleString('pt-AO')} Kz</p>
                   <button
                     onClick={() => addToCart(item)}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-white w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                    className="bg-cyan-500 hover:bg-cyan-400 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
                   >
-                    <Plus size={12} className="text-white" />
+                    <Plus size={16} className="text-white" />
                   </button>
                 </div>
               </div>
