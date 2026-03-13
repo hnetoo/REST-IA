@@ -189,6 +189,7 @@ const OwnerDashboard = () => {
         lucroLiquido: metricsResult.lucroLiquido
       });
       
+      // Remover qualquer lógica de dados estáticos - usar apenas dados reais do Supabase
       setMetrics({
         vendasHoje: metricsResult.vendasHoje || 0,
         mesasAtivas: metricsResult.mesasAtivas || 0,
