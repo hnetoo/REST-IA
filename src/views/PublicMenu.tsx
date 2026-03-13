@@ -157,7 +157,7 @@ const PublicMenu = () => {
   }
 
   return (
-    <div className="h-screen bg-[#0a0f1a] text-white flex flex-col">
+    <div className="h-screen bg-[#0a0f1a] text-white flex flex-col overflow-x-hidden w-full">
       {/* LOGO (FIX DEFINITIVO) */}
       <div className="bg-[#0a0f1a] p-5 flex items-center gap-4 border-b border-gray-800">
         <div className="w-14 h-14 rounded-full border-2 border-cyan-500 overflow-hidden flex-shrink-0 bg-gray-900 flex items-center justify-center">
@@ -175,39 +175,36 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* CATEGORIAS (O SCROLL HORIZONTAL QUE FUNCIONA) */}
-      <div className="w-full bg-[#0a0f1a] py-4 border-b border-gray-800">
-        <div className="flex flex-nowrap overflow-x-auto no-scrollbar px-4 gap-3" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <button onClick={() => filterByCategory('Todos')} className={`flex-shrink-0 px-6 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === 'Todos' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>Todos</button>
+      {/* CATEGORIAS (SCROLL FLUIDO) */}
+      <div className="w-full flex-shrink-0 bg-[#0a0f1a] border-b border-gray-800">
+        <div className="flex flex-nowrap overflow-x-auto no-scrollbar py-4 px-4 gap-3">
+          {/* Botão Todos */}
+          <button onClick={() => filterByCategory('Todos')} className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === 'Todos' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>Todos</button>
+          
+          {/* Mapeamento Dinâmico */}
           {Array.from(new Set(items.map(i => i.categories?.name).filter(Boolean))).map(cat => (
-            <button key={cat} onClick={() => filterByCategory(cat!)} className={`flex-shrink-0 px-6 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === cat ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>{cat}</button>
+            <button key={cat} onClick={() => filterByCategory(cat!)} className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === cat ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>{cat}</button>
           ))}
         </div>
       </div>
 
-      {/* PRODUTOS (CARD COMPACTO E RESPONSIVO) */}
-      <div className="flex-1 overflow-y-auto w-full px-4 space-y-3 pb-32">
+      {/* CARDS COMPACTOS (LARGURA FIXA NO ECRÃ) */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-32">
         {filteredItems.map((item) => (
-          <div key={item.id} className="w-full max-w-full min-h-[220px] bg-[#111827] rounded-3xl overflow-hidden border border-gray-800 flex flex-col shadow-2xl" onClick={() => setSelectedProduct(item)}>
-            {/* IMAGEM COMPACTA */}
-            <div className="h-36 w-full bg-gray-900 flex-shrink-0">
+          <div key={item.id} className="w-full bg-[#111827] rounded-xl border border-gray-800 flex flex-col overflow-hidden" onClick={() => setSelectedProduct(item)}>
+            <div className="h-32 w-full flex-shrink-0">
               {item.image_url ? (
                 <img src={item.image_url} className="w-full h-full object-cover" alt={item.name} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-700 font-bold">TASCA DO VEREDA</div>
+                <div className="w-full h-full bg-gray-900 flex items-center justify-center text-[10px] text-gray-600">TASCA DO VEREDA</div>
               )}
             </div>
-            
-            {/* INFO DO PRODUTO COMPACTA */}
-            <div className="p-4 flex justify-between items-center bg-[#111827]">
-              <div className="flex-1 pr-4">
-                <h3 className="text-white font-bold text-lg mb-1">{item.name}</h3>
-                <p className="text-cyan-400 font-black text-xl">{item.price.toLocaleString('pt-AO')} Kz</p>
+            <div className="p-3 flex justify-between items-center">
+              <div className="overflow-hidden">
+                <h3 className="text-white font-bold text-sm truncate">{item.name}</h3>
+                <p className="text-cyan-400 font-black text-lg">{item.price.toLocaleString('pt-AO')} Kz</p>
               </div>
-              <button 
-                onClick={(e) => { e.stopPropagation(); addToCart(item); }} 
-                className="bg-cyan-500 p-2 rounded-2xl text-white shadow-glow active:scale-90 transition-all flex-shrink-0"
-              >
+              <button onClick={(e) => { e.stopPropagation(); addToCart(item); }} className="bg-cyan-500 p-2 rounded-lg text-white flex-shrink-0 ml-2">
                 <Plus size={20} />
               </button>
             </div>
