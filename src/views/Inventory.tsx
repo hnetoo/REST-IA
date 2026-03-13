@@ -788,6 +788,10 @@ const Inventory = () => {
                             console.log('[Inventory] Erro ao carregar imagem do produto:', dish.name);
                             console.log('[Inventory] Link da imagem do produto:', dish.image_url);
                           }}
+                          onLoad={() => {
+                            console.log('[Inventory] Imagem carregada com sucesso:', dish.name);
+                            console.log('[Inventory] URL do Produto:', dish.image_url);
+                          }}
                         />
                         <div className="w-full h-full bg-slate-700 flex items-center justify-center" style={{display: 'none'}}>
                           <UploadIcon size={24} className="text-slate-500" />
