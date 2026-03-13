@@ -151,6 +151,7 @@ const OwnerDashboard = () => {
   // Buscar métricas do Supabase
   const fetchMetrics = async () => {
     try {
+      console.log(`[DASHBOARD] Data enviada para SQL:`, new Date().toISOString().split('T')[0]);
       console.log(`[DASHBOARD] Iniciando busca de métricas para período: ${period}`);
       
       // Usar a função SQL para obter métricas consolidadas
