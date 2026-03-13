@@ -173,7 +173,7 @@ const OwnerDashboard = () => {
       console.log(`[DASHBOARD] Métricas obtidas via função SQL:`, metricsData);
       
       // Log dos dados reais recebidos para debugging
-      console.log("DADOS REAIS RECEBIDOS:", metricsData);
+      console.table("DADOS REAIS RECEBIDOS:", metricsData);
 
       // Extrair métricas do resultado JSON
       const metricsResult = metricsData?.metrics || {};
