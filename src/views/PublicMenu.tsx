@@ -19,6 +19,8 @@ type Category = Database['public']['Tables']['categories']['Row'];
 
 const PublicMenu = () => {
   const [items, setItems] = useState<Product[]>([]);
+  const [filteredItems, setFilteredItems] = useState<Product[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showSummary, setShowSummary] = useState(false);
@@ -38,42 +40,37 @@ const PublicMenu = () => {
               name
             )
           `)
-          .eq('is_active', true);
-        
-        console.log('[PublicMenu] Produtos recebidos:', { productsData, productsError });
-        
-        // ✅ CARREGAR CATEGORIAS SEPARADAMENTE - SELECT * SEM FILTROS
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from('categories')
-          .select('*');
-        
-        console.log('[PublicMenu] Categorias no Menu:', categoriesData);
-        console.log('[PublicMenu] Produtos no Menu:', productsData);
+          .eq('is_active', true); // Apenas produtos ativos
         
         if (productsError) {
           console.error('[PublicMenu] Erro ao carregar produtos:', productsError);
-        } else if (productsData) {
-          console.log('[PublicMenu] Produtos carregados:', productsData.length, 'itens');
-          setItems(productsData);
-        } else {
-          console.log('[PublicMenu] Nenhum produto encontrado na tabela products');
+          return;
         }
-        
-        if (categoriesError) {
-          console.error('[PublicMenu] Erro ao carregar categorias:', categoriesError);
-        } else if (categoriesData) {
-          console.log('[PublicMenu] Categorias carregadas:', categoriesData.length, 'categorias');
-        } else {
-          console.log('[PublicMenu] Nenhuma categoria encontrada na tabela categories');
-        }
-      } catch (err) {
-        console.error('[PublicMenu] Erro crítico:', err);
+
+        console.log('[PublicMenu] Produtos carregados:', productsData);
+        setItems(productsData || []);
+        setFilteredItems(productsData || []); // Inicializa com todos os produtos
+      } catch (error) {
+        console.error('[PublicMenu] Exceção ao carregar produtos:', error);
       } finally {
         setLoading(false);
       }
     }
+
     load();
   }, []);
+
+  // ✅ FUNÇÃO PARA FILTRAR POR CATEGORIA
+  const filterByCategory = (categoryName: string) => {
+    setSelectedCategory(categoryName);
+    
+    if (categoryName === 'Todos') {
+      setFilteredItems(items); // Mostra todos os produtos
+    } else {
+      const filtered = items.filter(item => item.categories?.name === categoryName);
+      setFilteredItems(filtered); // Mostra apenas produtos da categoria
+    }
+  };
 
   const addToCart = (item: any) => {
     setCart(prev => {
@@ -191,18 +188,30 @@ const PublicMenu = () => {
       {/* Filtros Dinâmicos com Scroll Horizontal - FORÇADO TOTAL */}
       <div className="px-2 pb-2 flex-shrink-0 w-full">
         <div className="flex gap-1 overflow-x-auto overflow-y-hidden whitespace-nowrap" style={{scrollbarWidth: 'auto', WebkitOverflowScrolling: 'touch'}}>
-          <button className="px-3 py-1 bg-cyan-500 text-white rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0">
+          <button 
+            onClick={() => filterByCategory('Todos')}
+            className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
+              selectedCategory === 'Todos' 
+                ? 'bg-cyan-500 text-white' 
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
             Todos
           </button>
           {/* ✅ MAPEAR CATEGORIAS DINAMICAMENTE */}
           {items && items.length > 0 && (
             [...new Set(items.map(item => item.categories?.name).filter(Boolean))].map(categoryName => (
               <button 
-                key={categoryName}
-                className="px-3 py-1 bg-gray-800 text-gray-300 rounded-full text-xs font-medium whitespace-nowrap hover:bg-gray-700 flex-shrink-0"
+                key={categoryName || 'unknown'}
+                onClick={() => filterByCategory(categoryName || 'Todos')}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
+                  selectedCategory === categoryName 
+                    ? 'bg-cyan-500 text-white' 
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                }`}
                 style={{minWidth: 'fit-content'}}
               >
-                {categoryName}
+                {categoryName || 'Sem Categoria'}
               </button>
             ))
           )}
@@ -212,7 +221,7 @@ const PublicMenu = () => {
       {/* Grid de Produtos Responsivo - 2 COLUNAS FIXAS MOBILE COM SCROLL VERTICAL */}
       <div className="flex-1 p-2 overflow-y-auto" style={{height: 'calc(100vh - 140px)'}}>
         <div className="grid grid-cols-2 gap-1 max-w-6xl mx-auto">
-          {items.map((item: Product) => (
+          {filteredItems.map((item: Product) => (
             <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
               {/* Imagem - h-24 MAIOR VERTICAL */}
               <div className="h-24 bg-[#1a1f2e] relative">
