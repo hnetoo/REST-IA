@@ -164,7 +164,7 @@ const PublicMenu = () => {
           <img 
             src="/logo-tasca-vereda.png" 
             alt="Tasca do Vereda Logo"
-            className="w-8 h-8 rounded-full object-cover"
+            className="w-10 h-10 rounded-full object-cover border-2 border-cyan-500"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
@@ -172,7 +172,7 @@ const PublicMenu = () => {
               if (fallback) fallback.style.display = 'flex';
             }}
           />
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center" style={{display: 'none'}}>
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-cyan-500" style={{display: 'none'}}>
             <span className="text-black font-bold text-sm">TV</span>
           </div>
           <div>
@@ -187,7 +187,7 @@ const PublicMenu = () => {
 
       {/* Filtros Dinâmicos com Scroll Horizontal - FORÇADO TOTAL */}
       <div className="px-2 pb-2 flex-shrink-0 w-full">
-        <div className="flex gap-1 overflow-x-auto overflow-y-hidden whitespace-nowrap" style={{scrollbarWidth: 'auto', WebkitOverflowScrolling: 'touch'}}>
+        <div className="flex gap-1 overflow-x-scroll overflow-y-hidden whitespace-nowrap scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800" style={{scrollbarWidth: 'auto', WebkitOverflowScrolling: 'touch'}}>
           <button 
             onClick={() => filterByCategory('Todos')}
             className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
