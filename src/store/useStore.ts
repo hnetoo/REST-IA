@@ -812,6 +812,46 @@ export const useStore = create<StoreState>()(
       })),
 
       addEmployee: (e) => set(state => ({ employees: [...state.employees, e] })),
+      
+      // PERSISTÊNCIA DE FUNCIONÁRIOS NO SUPABASE - NOVO E CRÍTICO
+      addEmployeeWithPersistence: async (e) => {
+        set(state => ({ employees: [...state.employees, e] }));
+        
+        try {
+          const { supabase } = require('../lib/supabase');
+          
+          console.log('[STAFF] Persistindo funcionário no Supabase:', {
+            id: e.id,
+            name: e.name,
+            role: e.role,
+            phone: e.phone,
+            base_salary_kz: e.salary,
+            status: e.status
+          });
+
+          // Inserir diretamente na tabela staff
+          const { error } = await supabase
+            .from('staff')
+            .insert({
+              id: e.id,
+              name: e.name,
+              role: e.role,
+              phone: e.phone,
+              base_salary_kz: e.salary,
+              status: e.status,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+
+          if (error) {
+            console.error('[STAFF] Erro ao persistir funcionário no Supabase:', error);
+          } else {
+            console.log('[STAFF] Funcionário persistido com sucesso no Supabase');
+          }
+        } catch (error) {
+          console.error('[STAFF] Erro na persistência do funcionário:', error);
+        }
+      },
       updateEmployee: (e) => set(state => ({ employees: state.employees.map(x => x.id === e.id ? e : x) })),
       removeEmployee: (id) => set(state => ({ employees: state.employees.filter(x => x.id !== id) })),
       clockIn: (empId) => {
@@ -891,6 +931,51 @@ restoreFromSupabase: async () => {
         };
         return { expenses: [...state.expenses, newExpense] };
       }),
+      
+      // PERSISTÊNCIA DE DESPESAS NO SUPABASE - NOVO E CRÍTICO
+      addExpenseWithPersistence: async (expense) => {
+        set(state => {
+          const newExpense = {
+            ...expense,
+            id: `exp-${Date.now()}`,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          return { expenses: [...state.expenses, newExpense] };
+        });
+        
+        try {
+          const { supabase } = require('../lib/supabase');
+          
+          console.log('[EXPENSE] Persistindo despesa no Supabase:', {
+            id: expense.id || `exp-${Date.now()}`,
+            amount_kz: expense.amount,
+            description: expense.description,
+            category: expense.category
+          });
+
+          // Inserir diretamente na tabela expenses
+          const { error } = await supabase
+            .from('expenses')
+            .insert({
+              id: expense.id || `exp-${Date.now()}`,
+              amount_kz: expense.amount,
+              description: expense.description,
+              category: expense.category,
+              status: 'PENDING',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+
+          if (error) {
+            console.error('[EXPENSE] Erro ao persistir despesa no Supabase:', error);
+          } else {
+            console.log('[EXPENSE] Despesa persistida com sucesso no Supabase');
+          }
+        } catch (error) {
+          console.error('[EXPENSE] Erro na persistência da despesa:', error);
+        }
+      },
 
       updateExpense: (id, expense) => set(state => ({
         expenses: state.expenses.map(e => e.id === id ? { ...e, ...expense, updatedAt: new Date() } : e)

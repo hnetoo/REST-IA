@@ -100,15 +100,23 @@ const Finance = () => {
     setNewExpense({
       description: '',
       amount: 0,
-      category: 'OUTROS',
-      status: 'PENDENTE',
-      date: new Date(),
-      paymentMethod: 'NUMERARIO',
-      receipt: '',
+      category: 'OPERATIONAL',
       notes: ''
     });
     setIsAddingExpense(false);
     addNotification('success', 'Despesa adicionada com sucesso.');
+    
+    // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
+    const { addExpenseWithPersistence } = require('../store/useStore').default.getState();
+    if (addExpenseWithPersistence) {
+      addExpenseWithPersistence({
+        id: `exp-${Date.now()}`,
+        description: newExpense.description,
+        amount: newExpense.amount,
+        category: newExpense.category,
+        notes: newExpense.notes
+      });
+    }
   };
 
   const handleEditExpense = (expense: Expense) => {
