@@ -21,7 +21,7 @@ const PublicMenu = () => {
     async function load() {
       console.log('[PublicMenu] Carregando produtos da tabela products com categorias...');
       try {
-        // ✅ TABELA PLURAL PADRÃO SUPABASE COM JOIN DE CATEGORIAS
+        // ✅ TABELA PLURAL PADRÃO SUPABASE - SEM FILTROS FIXOS
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select(`
@@ -35,7 +35,7 @@ const PublicMenu = () => {
         
         console.log('[PublicMenu] Produtos recebidos:', { productsData, productsError });
         
-        // ✅ CARREGAR CATEGORIAS SEPARADAMENTE PARA DEBUG
+        // ✅ CARREGAR CATEGORIAS SEPARADAMENTE - SELECT * SEM FILTROS
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('categories')
           .select('*');
@@ -181,9 +181,9 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Filtros Dinâmicos com Scroll Horizontal */}
+      {/* Filtros Dinâmicos com Scroll Horizontal - 1 LINHA APENAS */}
       <div className="px-6 pb-4">
-        <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800">
+        <div className="flex gap-2 overflow-x-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-gray-800 whitespace-nowrap">
           <button className="px-4 py-2 bg-cyan-500 text-white rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0">
             Todos
           </button>
@@ -201,12 +201,12 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* Grid de Produtos Responsivo - 2 colunas em mobile */}
+      {/* Grid de Produtos Responsivo - 2 COLUNAS FIXAS MOBILE */}
       <div className="p-4 grid grid-cols-2 gap-4 max-w-6xl mx-auto overflow-y-auto">
         {items.map((item: any) => (
           <div key={item.id} className="bg-[#111827] rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
-            {/* Imagem */}
-            <div className="h-40 bg-[#1a1f2e] relative">
+            {/* Imagem - h-32 FIXO */}
+            <div className="h-32 bg-[#1a1f2e] relative">
               {item.image_url ? (
                 <img 
                   src={item.image_url} 
@@ -215,7 +215,7 @@ const PublicMenu = () => {
                 />
               ) : (
                 <div className="w-full h-full bg-[#1a1f2e] flex items-center justify-center">
-                  <Package size={32} className="text-gray-500" />
+                  <Package size={24} className="text-gray-500" />
                 </div>
               )}
             </div>
