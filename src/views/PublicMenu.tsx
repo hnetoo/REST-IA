@@ -172,6 +172,12 @@ const PublicMenu = () => {
         <div>
           <h1 className="text-xl font-black text-white leading-none">TASCA DO VEREDA</h1>
           <p className="text-cyan-500 text-xs font-bold uppercase mt-1">Menu Digital</p>
+          <p className="text-gray-400 text-[10px] leading-tight mt-1">
+            Dom a Qua: 07:30 – 22:00 | Qui a Sáb: 07:30 – 00:00
+          </p>
+          <p className="text-cyan-500 text-[10px] font-bold mt-1">
+            📞 +244 976 825 520
+          </p>
         </div>
       </div>
 
@@ -194,7 +200,7 @@ const PublicMenu = () => {
           <div key={item.id} className="w-full bg-[#111827] rounded-xl border border-gray-800 flex flex-col overflow-hidden" onClick={() => setSelectedProduct(item)}>
             <div className="h-32 w-full flex-shrink-0">
               {item.image_url ? (
-                <img src={item.image_url} className="w-full h-full object-cover" alt={item.name} />
+                <img src={item.image_url} className="w-full h-full object-cover" style={{ objectPosition: 'center' }} alt={item.name} />
               ) : (
                 <div className="w-full h-full bg-gray-900 flex items-center justify-center text-[10px] text-gray-600">TASCA DO VEREDA</div>
               )}
