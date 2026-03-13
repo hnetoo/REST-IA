@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { 
   Utensils, Tag, Box, Plus, QrCode, Eye, 
   Settings, Smartphone, Globe, Trash2, RefreshCw, Download, Upload,
-  CheckCircle, AlertCircle, Clock, X
+  CheckCircle, AlertCircle, X, Upload as UploadIcon
 } from 'lucide-react';
 
 const Inventory = () => {
@@ -39,6 +39,10 @@ const Inventory = () => {
     is_active: true
   });
 
+  // Estados para upload de imagem
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const [newCategory, setNewCategory] = useState({
     name: ''
   });
@@ -66,7 +70,63 @@ const Inventory = () => {
     { id: 'qr', label: 'QR Menu / Digital', icon: QrCode }
   ];
 
-  // Funções para criação local
+  // Função para upload de imagem
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      addNotification('error', 'Apenas arquivos de imagem são permitidos');
+      return;
+    }
+
+    setUploadingImage(true);
+    
+    try {
+      // Upload para Supabase Storage
+      const fileName = `${Date.now()}-${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('products')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('[Inventory] Erro no upload:', error);
+        addNotification('error', 'Erro ao fazer upload da imagem');
+        return;
+      }
+
+      // Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('products')
+        .getPublicUrl(fileName);
+
+      console.log('[Inventory] Imagem enviada:', publicUrl);
+      
+      // Atualizar URL no formulário
+      setNewProduct(prev => ({
+        ...prev,
+        image_url: publicUrl
+      }));
+      
+      addNotification('success', 'Imagem carregada com sucesso!');
+      
+    } catch (err) {
+      console.error('[Inventory] Erro crítico no upload:', err);
+      addNotification('error', 'Erro ao carregar imagem');
+    } finally {
+      setUploadingImage(false);
+      setImageFile(null);
+    }
+  };
+
+  // Função para selecionar arquivo
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      handleImageUpload(file);
+    }
+  };
   const handleCreateProduct = () => {
     console.log('[Inventory] Botão Novo Produto clicado!');
     setIsProductModalOpen(true);
@@ -660,12 +720,18 @@ const Inventory = () => {
               const cat = categories.find(c => c.id === dish.categoryId);
               return (
                 <div key={dish.id} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
-                  <div className="aspect-square w-full overflow-hidden relative h-24">
-                    <img 
-                      src={dish.image} 
-                      alt={dish.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                    />
+                  <div className="aspect-square w-full overflow-hidden relative h-32">
+                    {dish.image_url ? (
+                      <img 
+                        src={dish.image_url} 
+                        alt={dish.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-slate-700 flex items-center justify-center">
+                        <UploadIcon size={24} className="text-slate-500" />
+                      </div>
+                    )}
                     <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/10 z-20">
                       {cat?.name || 'Sem Categoria'}
                     </div>
@@ -979,14 +1045,46 @@ const Inventory = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">URL da Imagem (opcional)</label>
-                <input
-                  type="url"
-                  value={newProduct.image_url}
-                  onChange={(e) => setNewProduct({...newProduct, image_url: e.target.value})}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
-                  placeholder="https://exemplo.com/imagem.jpg"
-                />
+                <label className="block text-sm font-medium text-white mb-2">Foto do Produto</label>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      id="image-upload"
+                      placeholder="Escolher ficheiro de imagem"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('image-upload')?.click()}
+                      disabled={uploadingImage}
+                      className="flex-1 px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-white hover:bg-white/5 transition-all disabled:opacity-50"
+                    >
+                      {uploadingImage ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent animate-spin"></div>
+                          <span className="text-sm">A carregar...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <UploadIcon size={16} />
+                          <span className="text-sm">Escolher Ficheiro</span>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                  {newProduct.image_url && (
+                    <div className="mt-2">
+                      <img 
+                        src={newProduct.image_url} 
+                        alt="Preview" 
+                        className="w-full h-32 object-cover rounded-xl"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
