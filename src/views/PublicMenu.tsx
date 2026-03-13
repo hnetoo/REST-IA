@@ -158,70 +158,35 @@ const PublicMenu = () => {
 
   return (
     <div className="h-screen bg-[#0a0f1a] text-white flex flex-col">
-      {/* Header com Logotipo Oficial - SEM FALLBACK TV */}
-      <div className="bg-[#0a0f1a] p-3 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <img 
-            src="/logo-tasca-vereda.png" 
-            alt="Tasca do Vereda Logo"
-            className="w-12 h-12 rounded-full object-cover border-2 border-cyan-500"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const fallback = target.nextElementSibling as HTMLElement;
-              if (fallback) fallback.style.display = 'flex';
-            }}
-          />
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border-2 border-cyan-500" style={{display: 'none'}}>
-            <Utensils size={24} className="text-black" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">TASCA DO VEREDA</h1>
-            <p className="text-gray-400 text-sm">MENU DIGITAL</p>
-            <p className="text-gray-500 text-xs mt-1">
-              Dom a Qua: 07:30 – 22:00 | Qui a Sáb: 07:30 – 00:00
-            </p>
-          </div>
+      {/* HEADER E LOGO (REMOVER O "TV") */}
+      <div className="bg-[#0a0f1a] p-4 flex items-center gap-4 border-b border-gray-800">
+        <img 
+          src="/logo-tasca-vereda.png" 
+          className="w-14 h-14 rounded-full object-cover border-2 border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
+          alt="Logo"
+          onError={(e) => { (e.target as HTMLImageElement).src = 'https://cdn-icons-png.flaticon.com/512/1996/1996055.png'; }}
+        />
+        <div>
+          <h1 className="text-xl font-black text-white tracking-tight">TASCA DO VEREDA</h1>
+          <p className="text-cyan-500 text-xs font-bold uppercase tracking-widest">Menu Digital</p>
         </div>
       </div>
 
-      {/* CATEGORIAS - SCROLL TOTAL */}
-      <div className="flex overflow-x-auto whitespace-nowrap scrollbar-hide py-2 px-1 gap-2 items-center" style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-        <button 
-          onClick={() => filterByCategory('Todos')}
-          className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
-            selectedCategory === 'Todos' 
-              ? 'bg-cyan-500 text-white' 
-              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-          }`}
-        >
-          Todos
-        </button>
-        {/* ✅ MAPEAR CATEGORIAS DINAMICAMENTE COM UUID */}
-        {items && items.length > 0 && (
-          [...new Set(items.map(item => item.categories?.name).filter(Boolean))].map(categoryName => {
-            const categoryItem = items.find(item => item.categories?.name === categoryName);
-            return (
-              <button 
-                key={categoryItem?.categories?.id || categoryName || 'unknown'}
-                onClick={() => filterByCategory(categoryName || 'Todos')}
-                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
-                  selectedCategory === categoryName 
-                    ? 'bg-cyan-500 text-white' 
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                }`}
-                style={{minWidth: 'fit-content'}}
-              >
-                {categoryName || 'Sem Categoria'}
-              </button>
-            );
-          })
-        )}
+      {/* CATEGORIAS (SCROLL HORIZONTAL FORÇADO) */}
+      <div className="w-full bg-[#0a0f1a] py-3 border-b border-gray-800 sticky top-0 z-40">
+        <div className="flex overflow-x-auto whitespace-nowrap px-4 gap-2 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <button onClick={() => filterByCategory('Todos')} className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase transition-all ${selectedCategory === 'Todos' ? 'bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'bg-gray-800 text-gray-400'}`}>Todos</button>
+          {/* O MAP DE CATEGORIAS DEVE USAR A CLASSE 'flex-shrink-0' EM CADA BOTÃO */}
+          {Array.from(new Set(items.map(i => i.categories?.name).filter(Boolean))).map(cat => (
+            <button key={cat} onClick={() => filterByCategory(cat!)} className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase transition-all ${selectedCategory === cat ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>{cat}</button>
+          ))}
+        </div>
       </div>
 
-      {/* PRODUTOS - 2 COLUNAS REAIS */}
-      <div className="flex-1 p-2 overflow-y-auto" style={{height: 'calc(100vh - 160px)'}}>
-        <div className="grid grid-cols-2 gap-2 p-2 w-full max-w-full overflow-x-hidden">
+      {/* GRID DE PRODUTOS (2 COLUNAS PERFEITAS) */}
+      <div className="flex-1 overflow-y-auto p-3 bg-[#0a0f1a]">
+        <div className="grid grid-cols-2 gap-3 pb-24">
+          {/* Cada card dentro deste grid deve ter apenas w-full. Sem max-w-xs. */}
           {filteredItems.map((item: Product) => (
             <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer w-full" onClick={() => setSelectedProduct(item)}>
               {/* Imagem - h-32 w-full object-cover */}
