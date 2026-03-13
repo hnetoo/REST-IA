@@ -160,7 +160,7 @@ const PublicMenu = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f1a] text-white flex flex-col">
+    <div className="h-screen bg-[#0a0f1a] text-white flex flex-col">
       {/* Header com Logotipo Oficial - REDUZIDO */}
       <div className="bg-[#0a0f1a] p-3 flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -210,7 +210,7 @@ const PublicMenu = () => {
       </div>
 
       {/* Grid de Produtos Responsivo - 2 COLUNAS FIXAS MOBILE COM SCROLL VERTICAL */}
-      <div className="flex-1 p-2 overflow-y-auto">
+      <div className="flex-1 p-2 overflow-y-auto" style={{height: 'calc(100vh - 140px)'}}>
         <div className="grid grid-cols-2 gap-1 max-w-6xl mx-auto">
           {items.map((item: Product) => (
             <div key={item.id} className="bg-[#111827] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative cursor-pointer" onClick={() => setSelectedProduct(item)}>
