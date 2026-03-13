@@ -158,17 +158,20 @@ const PublicMenu = () => {
 
   return (
     <div className="h-screen bg-[#0a0f1a] text-white flex flex-col">
-      {/* LOGO E HEADER (O "TV" MORRE AQUI) */}
+      {/* LOGO (FIX DEFINITIVO) */}
       <div className="bg-[#0a0f1a] p-5 flex items-center gap-4 border-b border-gray-800">
-        <img 
-          src="/logo-tasca-vereda.png" 
-          className="w-16 h-16 rounded-full object-cover border-2 border-cyan-500"
-          alt="Logo"
-          onError={(e) => { (e.target as HTMLImageElement).src = 'https://cdn-icons-png.flaticon.com/512/1996/1996055.png'; }}
-        />
+        <div className="w-14 h-14 rounded-full border-2 border-cyan-500 overflow-hidden flex-shrink-0 bg-gray-900 flex items-center justify-center">
+          <img 
+            src="/logo-tasca-vereda.png" 
+            className="w-full h-full object-cover" 
+            alt="Logo"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          <Package className="text-cyan-500" size={24} /> 
+        </div>
         <div>
           <h1 className="text-xl font-black text-white leading-none">TASCA DO VEREDA</h1>
-          <p className="text-cyan-500 text-xs font-bold uppercase tracking-widest mt-1">Menu Digital</p>
+          <p className="text-cyan-500 text-xs font-bold uppercase mt-1">Menu Digital</p>
         </div>
       </div>
 
@@ -182,23 +185,31 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* PRODUTOS (1 COLUNA - UM POR BAIXO DO OUTRO) */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
+      {/* PRODUTOS (CARD VERTICAL E ESPAÇADO) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
         {filteredItems.map((item) => (
-          <div key={item.id} className="w-full bg-[#111827] rounded-2xl overflow-hidden border border-gray-800 flex flex-col shadow-2xl" onClick={() => setSelectedProduct(item)}>
-            <div className="h-56 w-full bg-gray-900">
+          <div key={item.id} className="w-full min-h-[380px] bg-[#111827] rounded-3xl overflow-hidden border border-gray-800 flex flex-col shadow-2xl" onClick={() => setSelectedProduct(item)}>
+            {/* IMAGEM COM ALTURA FIXA - NÃO PODE ESMAGAR */}
+            <div className="h-64 w-full bg-gray-900 flex-shrink-0">
               {item.image_url ? (
                 <img src={item.image_url} className="w-full h-full object-cover" alt={item.name} />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold">TASCA DO VEREDA</div>
+                <div className="w-full h-full flex items-center justify-center text-gray-700 font-bold">TASCA DO VEREDA</div>
               )}
             </div>
-            <div className="p-5 flex justify-between items-center bg-gradient-to-t from-black/50 to-transparent">
-              <div>
-                <h3 className="text-white font-bold text-lg">{item.name}</h3>
+            
+            {/* INFO DO PRODUTO */}
+            <div className="p-6 flex justify-between items-center bg-[#111827]">
+              <div className="flex-1 pr-4">
+                <h3 className="text-white font-bold text-xl mb-1">{item.name}</h3>
                 <p className="text-cyan-400 font-black text-2xl">{item.price.toLocaleString('pt-AO')} Kz</p>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); addToCart(item); }} className="bg-cyan-500 p-4 rounded-full text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] active:scale-95 transition-all"><Plus size={28} /></button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); addToCart(item); }} 
+                className="bg-cyan-500 p-5 rounded-2xl text-white shadow-glow active:scale-90 transition-all flex-shrink-0"
+              >
+                <Plus size={32} />
+              </button>
             </div>
           </div>
         ))}
