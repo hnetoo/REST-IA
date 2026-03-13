@@ -500,6 +500,29 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
+        {/* CARD HISTÓRICO DE FATURAÇÃO */}
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6 min-h-[140px]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">Histórico Externo</h3>
+                <p className="text-sm text-white/60">Faturação Histórica</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-black text-purple-400 mb-2">
+                {formatAKZ(metrics.historicoRevenue)}
+              </div>
+              <div className="text-xs text-purple-300 bg-purple-500/20 px-2 py-1 rounded-full">
+                Importado
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* GRÁFICOS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Gráfico de Receitas */}
