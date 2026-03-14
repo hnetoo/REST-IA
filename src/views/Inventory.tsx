@@ -94,13 +94,14 @@ const Inventory = () => {
       console.log('[Inventory] Bucket: products');
       console.log('[Inventory] Arquivo:', file.name, 'Tipo:', file.type);
       
-      // Upload para Supabase Storage - SEM AUTENTICAÇÃO (PÚBLICO)
-      const fileName = `${Date.now()}-${file.name}`;
+      // Upload para Supabase Storage - COM UPSERT E LIMPEZA DE NOME
+      const cleanFileName = file.name.replace(/\s+/g, '_').replace(/[()]/g, '');
+      const fileName = `${Date.now()}-${cleanFileName}`;
       const { data, error } = await supabase.storage
         .from('products')
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true  // ✅ PERMITE SOBRESCREVER SE EXISTIR
         });
 
       if (error) {
@@ -323,13 +324,35 @@ const Inventory = () => {
       
       // ✅ VALIDAÇÃO DE UUID - ANTES DO UPDATE
       const productId = editingProduct.id;
-      if (!productId || typeof productId !== 'string' || productId.length < 10) {
-        console.error('[Inventory] ID inválido para update:', productId);
-        addNotification('error', 'ID do produto inválido. Recarregue a página.');
+      
+      // ✅ VERIFICAÇÃO SEQUENCIAL DE UUID
+      if (!productId) {
+        console.error('[Inventory] ID nulo para update:', productId);
+        addNotification('error', 'ID do produto não encontrado. Recarregue a página.');
         return;
       }
       
-      console.log('[Inventory] UUID validado, executando update...');
+      if (typeof productId !== 'string') {
+        console.error('[Inventory] ID não é string:', typeof productId, productId);
+        addNotification('error', 'ID do produto inválido (deve ser UUID). Recarregue a página.');
+        return;
+      }
+      
+      if (productId.length < 10) {
+        console.error('[Inventory] ID muito curto (não é UUID):', productId, 'comprimento:', productId.length);
+        addNotification('error', 'ID do produto muito curto. Deve ser um UUID válido. Recarregue a página.');
+        return;
+      }
+      
+      // ✅ VERIFICAÇÃO DE FORMATO UUID (básico)
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidPattern.test(productId)) {
+        console.error('[Inventory] ID não tem formato UUID:', productId);
+        addNotification('error', 'ID do produto não tem formato UUID válido. Recarregue a página.');
+        return;
+      }
+      
+      console.log('[Inventory] ✅ UUID validado e formatado corretamente:', productId);
       
       const { data, error } = await supabase
         .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
