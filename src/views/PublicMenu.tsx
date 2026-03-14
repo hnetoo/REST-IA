@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Database } from '../types/supabase';
-import { Plus, Package, Utensils, ShoppingCart, X, Minus, Truck } from 'lucide-react';
+import { Plus, Package, ShoppingCart, X, Truck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { fallbackProducts } from '../data/fallbackProducts';
 
 // Fallback para settings - evitar ReferenceError
 const defaultSettings = {
@@ -35,6 +35,7 @@ const PublicMenu = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showSummary, setShowSummary] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -48,6 +49,14 @@ const PublicMenu = () => {
         
         if (productsError) {
           console.error('[PublicMenu] Erro ao carregar produtos:', productsError);
+          
+          // 🚨 MODO OFFLINE - USAR FALLBACK SE ERRO 42501
+          if (productsError.message?.includes('permission denied') || productsError.code === '42501') {
+            console.log('[PublicMenu] Erro de permissão detectado - ativando modo offline');
+            setIsOfflineMode(true);
+            setItems(fallbackProducts);
+            setFilteredItems(fallbackProducts);
+          }
           return;
         }
 
