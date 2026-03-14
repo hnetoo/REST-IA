@@ -3,6 +3,12 @@ import { Database } from '../types/supabase';
 import { Plus, Package, Utensils, ShoppingCart, X, Minus, Truck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+// Fallback para settings - evitar ReferenceError
+const defaultSettings = {
+  currency: 'Kz',
+  restaurantName: 'Tasca do Vereda'
+};
+
 interface CartItem {
   id: string;
   name: string;
