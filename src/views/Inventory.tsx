@@ -37,7 +37,8 @@ const Inventory = () => {
     price: '',
     image_url: '',
     category_id: '',
-    is_active: true
+    is_active: true,
+    description: '' // ✅ CAMPO DO SUPABASE ADICIONADO
   });
 
   // Estados para upload de imagem
@@ -232,7 +233,9 @@ const Inventory = () => {
       // PASSO 1: Inserir produto no Supabase PRIMEIRO
       const { data: insertedProduct, error: insertError } = await supabase.from('products').insert([{
         name: newProduct.name,
+        description: newProduct.description || '', // ✅ CAMPO DO SUPABASE
         price: parseFloat(newProduct.price), // ✅ Decimal para Kwanzas
+        cost_price: parseFloat(newProduct.price) * 0.6, // ✅ CAMPO DO SUPABASE
         image_url: null, // ✅ Inicialmente null, será atualizado depois
         is_active: newProduct.is_active,
         category_id: newProduct.category_id // ✅ UUID real da categoria
@@ -328,7 +331,8 @@ const Inventory = () => {
       price: '',
       image_url: '',
       category_id: '',
-      is_active: true
+      is_active: true,
+      description: '' // ✅ CAMPO DO SUPABASE RESETADO
     });
     
     setIsProductModalOpen(false);
@@ -368,10 +372,12 @@ const Inventory = () => {
     // ✅ ATUALIZAR NO SUPABASE
     try {
       console.log('[Inventory] Atualizando produto:', editingProduct);
-      // ✅ LIMPEZA DE SCHEMA - APENAS CAMPOS VÁLIDOS
+      // ✅ LIMPEZA DE CAMPOS - APENAS COLUNAS DO SUPABASE
       const cleanUpdateData = {
         name: newProduct.name?.trim(),
+        description: newProduct.description?.trim() || '', // ✅ CAMPO DO SUPABASE
         price: priceNumber,
+        cost_price: priceNumber * 0.6, // ✅ CAMPO DO SUPABASE
         image_url: newProduct.image_url?.trim() || null,
         is_active: newProduct.is_active,
         category_id: newProduct.category_id?.trim() || null
@@ -518,7 +524,8 @@ const Inventory = () => {
       price: product.price.toString(),
       image_url: product.image_url || '',
       category_id: product.category_id,
-      is_active: product.is_active
+      is_active: product.is_active,
+      description: product.description || '' // ✅ CAMPO DO SUPABASE ADICIONADO
     });
     setIsProductModalOpen(true);
   };
