@@ -100,7 +100,7 @@ const OwnerMobile = () => {
     }).format(value || 0);
   };
 
-  // Buscar métricas do Supabase (MESMA LÓGICA DO DASHBOARD)
+  // Buscar métricas do Supabase (MESMA LÓGICA DO DASHBOARD - VALOR REAL DO STAFF)
   const fetchMetrics = async () => {
     try {
       setIsLoading(true);
@@ -125,13 +125,29 @@ const OwnerMobile = () => {
         console.error('[MOBILE] Erro ao buscar vendas:', ordersError);
       }
 
+      // Buscar folha salarial REAL (SEM DIVISÃO POR 30)
+      let folhaSalarial = 0;
+      try {
+        const { data: staffData, error: staffError } = await supabase
+          .from('staff')
+          .select('base_salary_kz, full_name, status');
+
+        if (!staffError && staffData && staffData.length > 0) {
+          // VALOR REAL DA FOLHA - SEM DIVISÃO DIÁRIA
+          folhaSalarial = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
+          console.log('[MOBILE] Custo real da folha salarial:', folhaSalarial);
+        }
+      } catch (staffError) {
+        console.error('[MOBILE] Erro ao buscar folha salarial:', staffError);
+      }
+
       const metricsResult = {
         vendasHoje: 0,
         mesasAtivas: 0,
         totalVendas: totalVendas || 0,
         receitaTotal: totalVendas || 0,
         despesas: 0,
-        folhaSalarial: 0,
+        folhaSalarial: folhaSalarial || 0, // VALOR REAL 313.000 Kz
         impostos: (totalVendas || 0) * 0.14, // IVA 14%
         historicoRevenue: 0
       };

@@ -177,57 +177,54 @@ const OwnerDashboard = () => {
 
       if (orderItemsError) {
         console.error('[DASHBOARD] Erro ao buscar itens dos pedidos:', orderItemsError);
-        return;
-      }
-
-      // Se não tivermos product_id, tentar com product_name
-      if (!orderItemsData || orderItemsData.length === 0) {
+        
+        // FALLBACK: Tentar com product_name se product_id falhar
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('order_items')
           .select('quantity, total_price, product_name');
 
-        if (fallbackError) {
-          console.error('[DASHBOARD] Erro no fallback:', fallbackError);
+        if (!fallbackError && fallbackData && fallbackData.length > 0) {
+          // Agrupar por product_name no fallback
+          const productSales = fallbackData?.reduce((acc: any, item) => {
+            const productName = item.product_name || 'Produto Sem Nome';
+            const quantity = item.quantity || 0;
+            const totalPrice = item.total_price || 0;
+            
+            if (!acc[productName]) {
+              acc[productName] = {
+                name: productName,
+                totalQuantity: 0,
+                totalRevenue: 0,
+                count: 0
+              };
+            }
+            
+            acc[productName].totalQuantity += quantity;
+            acc[productName].totalRevenue += totalPrice;
+            acc[productName].count += 1;
+            
+            return acc;
+          }, {});
+
+          // Converter para array e ordenar
+          const sortedProducts = Object.values(productSales)
+            .sort((a: any, b: any) => b.totalQuantity - a.totalQuantity)
+            .slice(0, 5)
+            .map((product: any, index: number) => ({
+              id: index + 1,
+              name: product.name,
+              quantity: product.totalQuantity,
+              revenue: product.totalRevenue,
+              image: '/api/placeholder/40/40'
+            }));
+
+          setTopProducts(sortedProducts);
+          console.log('[DASHBOARD] Produtos mais vendidos (fallback product_name):', sortedProducts);
+          return;
+        } else {
+          console.error('[DASHBOARD] Erro no fallback product_name:', fallbackError);
           return;
         }
-
-        // Agrupar por product_name
-        const productSales = fallbackData?.reduce((acc: any, item) => {
-          const productName = item.product_name || 'Produto Sem Nome';
-          const quantity = item.quantity || 0;
-          const totalPrice = item.total_price || 0;
-          
-          if (!acc[productName]) {
-            acc[productName] = {
-              name: productName,
-              totalQuantity: 0,
-              totalRevenue: 0,
-              count: 0
-            };
-          }
-          
-          acc[productName].totalQuantity += quantity;
-          acc[productName].totalRevenue += totalPrice;
-          acc[productName].count += 1;
-          
-          return acc;
-        }, {});
-
-        // Converter para array e ordenar
-        const sortedProducts = Object.values(productSales)
-          .sort((a: any, b: any) => b.totalQuantity - a.totalQuantity)
-          .slice(0, 5)
-          .map((product: any, index: number) => ({
-            id: index + 1,
-            name: product.name,
-            quantity: product.totalQuantity,
-            revenue: product.totalRevenue,
-            image: '/api/placeholder/40/40'
-          }));
-
-        setTopProducts(sortedProducts);
-        console.log('[DASHBOARD] Produtos mais vendidos (fallback):', sortedProducts);
-        return;
       }
 
       // Agrupar por product_id primeiro
@@ -278,6 +275,8 @@ const OwnerDashboard = () => {
 
           setTopProducts(sortedProducts);
           console.log('[DASHBOARD] Produtos mais vendidos:', sortedProducts);
+        } else {
+          console.error('[DASHBOARD] Erro ao buscar nomes dos produtos:', productsError);
         }
       }
       
@@ -407,16 +406,9 @@ const OwnerDashboard = () => {
         if (!staffError && staffData && staffData.length > 0) {
           const monthlyTotal = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
           
-          // Para qualquer período, mostrar o valor mensal completo (183.000 Kz)
-          if (period === 'HOJE') {
-            // Para HOJE, mostrar o valor diário proporcional
-            folhaSalarial = Math.round(monthlyTotal / 30);
-            console.log('[DASHBOARD] Custo diário calculado (Mensal/30):', folhaSalarial);
-          } else {
-            // Para SEMANA, MÊS e ANO, mostrar o custo total mensal
-            folhaSalarial = monthlyTotal;
-            console.log('[DASHBOARD] Custo mensal completo:', folhaSalarial);
-          }
+          // PARA QUALQUER PERÍODO, MOSTRAR SEMPRE O VALOR REAL DA FOLHA SALARIAL
+          folhaSalarial = monthlyTotal;
+          console.log('[DASHBOARD] Custo real da folha salarial:', folhaSalarial);
           
           console.log('[DASHBOARD] Total folha salarial final:', folhaSalarial);
         } else {
