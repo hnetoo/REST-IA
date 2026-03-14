@@ -78,6 +78,7 @@ export const sqlMigrationService = {
         // Apenas sincronizar ordens fechadas/pagas
         const closedOrders = validOrders.filter((o: any) => o.status === 'FECHADO' || o.status === 'closed' || o.status === 'paid');
         
+        // ✅ REMOVIDAS COLUNAS INEXISTENTES: customer_id (orders)
         if (closedOrders.length > 0) {
           const { error: ordersError } = await supabase
             .from('orders')
@@ -87,11 +88,11 @@ export const sqlMigrationService = {
               total_amount: o.total,
               status: o.status === 'FECHADO' ? 'closed' : o.status, // Normalizar status
               payment_method: o.paymentMethod,
-              customer_id: o.customerId,
               invoice_number: o.invoiceNumber,
               hash: o.hash,
               created_at: o.createdAt || new Date().toISOString(),
               updated_at: new Date().toISOString()
+              // ✅ REMOVIDO: 'customer_id' não existe na tabela
             })));
           
           if (ordersError) {
@@ -103,9 +104,9 @@ export const sqlMigrationService = {
       }
 
       const { error: stateError } = await supabase
-        .from('application_state')
+        .from('app_settings') // ✅ CORRIGIDO: app_settings em vez de application_state
         .upsert({
-          id: 'current_state',
+          id: 'current_settings',
           data: JSON.stringify(localData),
           updated_at: new Date().toISOString()
         });

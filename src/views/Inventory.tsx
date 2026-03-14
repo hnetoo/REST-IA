@@ -215,11 +215,60 @@ const Inventory = () => {
     try {
       console.log('[Inventory] Criando produto no Supabase primeiro...');
       
-      // DATA MAPPING: Verificar se categoria existe no Supabase (tabela categories)
+      // ✅ CORREÇÃO DAS CATEGORIAS - USA UUIDS REAIS DO SUPABASE
+      // Primeiro, buscar todas as categorias com UUIDs reais
+      const { data: allCategories, error: categoriesError } = await supabase
+        .from('categories') // ✅ TABELA CATEGORIES COM UUID
+        .select('id, name') // ✅ APENAS CAMPOS EXISTENTES
+        .order('name');
+      
+      if (categoriesError) {
+        console.error('[Inventory] Erro ao buscar categorias:', categoriesError);
+        addNotification('error', `Erro ao carregar categorias: ${categoriesError.message}`);
+        return;
+      }
+      
+      console.log('[Inventory] Categorias encontradas no Supabase:', allCategories);
+      
+      // Se não houver categorias, criar padrão
+      if (!allCategories || allCategories.length === 0) {
+        console.log('[Inventory] Criando categorias padrão...');
+        const defaultCategories = [
+          { name: 'Bebidas' },
+          { name: 'Comidas' },
+          { name: 'Sobremesas' }
+        ];
+        
+        for (const cat of defaultCategories) {
+          const { data: newCat, error: catError } = await supabase
+            .from('categories')
+            .insert({ name: cat.name })
+            .select()
+            .single();
+          
+          if (catError) {
+            console.error('[Inventory] Erro ao criar categoria:', catError);
+          } else {
+            console.log('[Inventory] Categoria criada:', newCat);
+          }
+        }
+        
+        // Buscar novamente após criar
+        const { data: refreshedCategories } = await supabase
+          .from('categories')
+          .select('id, name')
+          .order('name');
+        
+        if (refreshedCategories) {
+          console.log('[Inventory] Categorias após criação:', refreshedCategories);
+        }
+      }
+      
+      // ✅ VERIFICAÇÃO DE CATEGORIA - USA UUID REAL
       const { data: categoryCheck, error: categoryError } = await supabase
-        .from('categories') // ✅ TABELA PLURAL PADRÃO SUPABASE
+        .from('categories') // ✅ TABELA CATEGORIES COM UUID
         .select('id')
-        .eq('id', newProduct.category_id)
+        .eq('id', newProduct.category_id) // ✅ USA UUID REAL DA CATEGORIA
         .single();
       
       if (categoryError || !categoryCheck) {
@@ -228,7 +277,7 @@ const Inventory = () => {
         return;
       }
       
-      console.log('[Inventory] Categoria validada no Supabase:', categoryCheck.id);
+      console.log('[Inventory] Categoria validada no Supabase (UUID):', categoryCheck.id);
       
       // PASSO 1: Inserir produto no Supabase PRIMEIRO
       const { data: insertedProduct, error: insertError } = await supabase.from('products').insert([{
