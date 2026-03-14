@@ -30,16 +30,10 @@ const PublicMenu = () => {
     async function load() {
       console.log('[PublicMenu] Carregando produtos da tabela products com categorias...');
       try {
-        // ✅ TABELA PLURAL PADRÃO SUPABASE - SEM FILTROS FIXOS
+        // ✅ QUERY SIMPLIFICADA - APENAS PRODUCTS E CATEGORIES
         const { data: productsData, error: productsError } = await supabase
           .from('products')
-          .select(`
-            *,
-            categories (
-              id,
-              name
-            )
-          `)
+          .select('*, categories(id, name)')
           .eq('is_active', true); // Apenas produtos ativos
         
         if (productsError) {
