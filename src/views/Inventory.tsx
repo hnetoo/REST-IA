@@ -351,6 +351,140 @@ const Inventory = () => {
     addNotification('success', 'Produto removido com sucesso!');
   };
 
+  const handleUpdateProduct = async () => {
+    console.log('[Inventory] Atualizando produto:', editingProduct);
+    
+    if (!editingProduct) return;
+    
+    // Validar preço
+    const priceValue = newProduct.price.replace(',', '.');
+    const priceNumber = parseFloat(priceValue) || 0;
+    
+    if (isNaN(priceNumber)) {
+      addNotification('error', 'Preço inválido! Use apenas números.');
+      return;
+    }
+
+    if (!newProduct.category_id) {
+      addNotification('error', 'Selecione uma categoria válida.');
+      return;
+    }
+    
+    // Criar objeto atualizado
+    const productToUpdate = {
+      id: editingProduct.id,
+      name: newProduct.name,
+      price: priceNumber,
+      image_url: newProduct.image_url || null,
+      category_id: newProduct.category_id,
+      is_active: newProduct.is_active
+    };
+
+    console.log('[Inventory] Produto atualizado:', productToUpdate);
+    
+    // ✅ ATUALIZAR NO SUPABASE
+    try {
+      console.log('[Inventory] Atualizando produto:', editingProduct);
+      // ✅ LIMPEZA ABSOLUTA DO SCHEMA - APENAS COLUNAS EXATAS DO SUPABASE
+      const cleanUpdateData = {
+        name: newProduct.name?.trim(), // ✅ text
+        price: Number(priceNumber), // ✅ numeric - garanta que é Number
+        image_url: newProduct.image_url?.trim() || null, // ✅ text - apenas URL string
+        is_active: newProduct.is_active, // ✅ boolean
+        category_id: newProduct.category_id?.trim() || null // ✅ uuid
+        // ✅ REMOVIDOS: description, cost_price, categoryId, isFeatured, isVisibleDigital (não existem na tabela)
+      };
+      
+      // ✅ VALIDAÇÃO DE CAMPOS
+      if (!cleanUpdateData.name) {
+        addNotification('error', 'Nome do produto é obrigatório');
+        return;
+      }
+      
+      if (!cleanUpdateData.price || cleanUpdateData.price <= 0) {
+        addNotification('error', 'Preço do produto deve ser maior que zero');
+        return;
+      }
+      
+      console.log('[Inventory] Schema limpo:', cleanUpdateData);
+      console.log('[Inventory] Produto completo para DEBUG:', editingProduct);
+      console.log('[Inventory] Produto ID (BANCO):', editingProduct.id);
+      console.log('[Inventory] Tipo do ID:', typeof editingProduct.id);
+      console.log('[Inventory] Formato do ID:', editingProduct.id?.length, 'caracteres');
+      
+      // ✅ VALIDAÇÃO OBRIGATÓRIA - SÓ PERMITE UPDATE SE FOR UUID REAL
+      const productId = editingProduct.id;
+      if (!productId) {
+        console.error('[Inventory] ID nulo para update:', productId);
+        addNotification('error', 'ID do produto não encontrado. Recarregue a página.');
+        return;
+      }
+      
+      // ✅ VERIFICAÇÃO SEQUENCIAL DO UUID - BLOQUEIA IDS CURTOS
+      if (typeof productId !== 'string') {
+        console.error('[Inventory] ID não é string:', typeof productId, productId);
+        addNotification('error', `ERRO FATAL: ID é ${typeof productId}, mas deve ser string UUID. Recarregue a página.`);
+        return;
+      }
+      
+      if (productId.length < 36) {
+        console.error('[Inventory] ID muito curto (não é UUID):', productId, 'comprimento:', productId.length);
+        addNotification('error', `ERRO FATAL: ID "${productId}" tem ${productId.length} caracteres, mas UUID tem 36. Use o painel do Supabase para converter este produto.`);
+        return;
+      }
+      
+      // ✅ VERIFICAÇÃO DE FORMATO UUID
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidPattern.test(productId)) {
+        console.error('[Inventory] ID não tem formato UUID:', productId);
+        addNotification('error', `ERRO FATAL: ID "${productId}" não tem formato UUID válido. Use o painel do Supabase para converter.`);
+        return;
+      }
+      
+      console.log('[Inventory] ✅ UUID VALIDADO - executando update:', productId);
+      
+      const { data, error } = await supabase
+        .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
+        .update(cleanUpdateData)
+        .eq('id', productId) // ✅ USANDO UUID VALIDADO
+        .select();
+
+      if (error) {
+        console.error('[Inventory] Erro ao atualizar no Supabase:', error);
+        addNotification('error', 'Erro ao atualizar produto no Supabase');
+        return;
+      }
+      console.log('[Inventory] Produto atualizado no Supabase:', data);
+      addNotification('success', 'Produto atualizado com sucesso!');
+      
+      // ✅ ATUALIZAR STORE LOCAL
+      const dishToUpdate = {
+        ...productToUpdate,
+        costPrice: priceNumber * 0.6,
+        categoryId: productToUpdate.category_id,
+        description: '',
+        image: productToUpdate.image_url || '',
+        image_url: productToUpdate.image_url || '' // ✅ CAMPO CORRETO
+      };
+      updateDish(dishToUpdate);
+      
+      // Resetar formulário
+      setNewProduct({
+        name: '',
+        price: '',
+        image_url: '',
+        category_id: '',
+        is_active: true
+      });
+      setEditingProduct(null);
+      setIsProductModalOpen(false);
+      
+    } catch (err) {
+      console.error('[Inventory] Erro crítico:', err);
+      addNotification('error', 'Erro ao atualizar produto');
+    }
+  };
+
   const handleCopyUrl = () => {
     console.log('[Inventory] Botão Copiar URL clicado!');
     navigator.clipboard.writeText(digitalMenuUrl);
