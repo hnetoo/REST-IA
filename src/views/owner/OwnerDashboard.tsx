@@ -249,14 +249,14 @@ const OwnerDashboard = () => {
       try {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
-          .select('total_amount_kz, created_at, status')
+          .select('total_amount, created_at, status')
           .eq('status', 'FECHADO');
 
         console.log('[DASHBOARD] Dados brutos das vendas:', ordersData);
         console.error('[DASHBOARD] Erro detalhado vendas:', ordersError);
 
         if (!ordersError && ordersData && ordersData.length > 0) {
-          totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount_kz) || 0), 0);
+          totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
           console.log('[DASHBOARD] Total vendas calculado:', totalVendas);
         } else {
           console.log('[DASHBOARD] Sem dados de vendas ou array vazio');
@@ -270,12 +270,12 @@ const OwnerDashboard = () => {
       try {
         const { data: todayOrdersData, error: todayOrdersError } = await supabase
           .from('orders')
-          .select('total_amount_kz, created_at, status')
+          .select('total_amount, created_at, status')
           .eq('status', 'FECHADO')
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
 
         if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
-          vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount_kz) || 0), 0);
+          vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
         }
       } catch (todayError) {
         console.error('[DASHBOARD] Erro ao buscar vendas de hoje:', todayError);
