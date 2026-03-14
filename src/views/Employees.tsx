@@ -390,7 +390,7 @@ const Employees = () => {
       {/* Modais de Funcionário e Turno omitidos para brevidade */}
       {isEmpModalOpen && (
         <div className="fixed inset-0 bg-black/90 z-[120] flex items-center justify-center p-6 backdrop-blur-xl animate-in fade-in">
-          <div className="glass-panel rounded-[4rem] w-full max-w-2xl p-12 border border-white/10 shadow-2xl relative">
+          <div className="glass-panel rounded-[4rem] w-full max-w-2xl p-12 border border-white/10 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onClick={() => setIsEmpModalOpen(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white"><X size={32} /></button>
             <div className="flex items-center gap-4 mb-12">
                <div className="w-16 h-16 bg-primary/20 rounded-3xl flex items-center justify-center text-primary shadow-glow"><UserPlus size={32} /></div>
