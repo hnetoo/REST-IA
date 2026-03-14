@@ -224,43 +224,42 @@ const OwnerDashboard = () => {
       console.log(`[DASHBOARD] Data enviada para SQL:`, new Date().toISOString().split('T')[0]);
       console.log(`[DASHBOARD] Iniciando busca de métricas para período: ${period}`);
       
-      // Buscar despesas reais do Supabase
+      // Buscar despesas reais do Supabase (SEM FILTRO DE DATA TEMPORARIAMENTE)
       let totalDespesas = 0;
       try {
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
-          .select('amount')
-          .gte('date', period === 'HOJE' ? new Date().toISOString().split('T')[0] : 
-                   period === 'MÊS' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] :
-                   new Date(new Date().getFullYear(), 1, 1).toISOString().split('T')[0]);
+          .select('amount');
+
+        console.log('[DASHBOARD] Dados brutos das despesas:', expensesData);
+        console.log('[DASHBOARD] Erro despesas:', expensesError);
 
         if (!expensesError && expensesData) {
           totalDespesas = expensesData.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+          console.log('[DASHBOARD] Total despesas calculado:', totalDespesas);
         }
       } catch (expError) {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
       }
 
-      // Buscar vendas reais do Supabase
+      // Buscar vendas reais do Supabase (SEM FILTRO DE DATA TEMPORARIAMENTE)
       let totalVendas = 0;
       try {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount')
-          .eq('status', 'FECHADO')
-          .gte('created_at', period === 'HOJE' ? new Date().toISOString().split('T')[0] : 
-                        period === 'MÊS' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] :
-                        new Date(new Date().getFullYear(), 1, 1).toISOString().split('T')[0]);
+          .eq('status', 'FECHADO');
+
+        console.log('[DASHBOARD] Dados brutos das vendas:', ordersData);
+        console.log('[DASHBOARD] Erro vendas:', ordersError);
 
         if (!ordersError && ordersData) {
           totalVendas = ordersData.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+          console.log('[DASHBOARD] Total vendas calculado:', totalVendas);
         }
       } catch (ordersError) {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
-
-      // Calcular lucro líquido automaticamente
-      const lucroLiquido = totalVendas - totalDespesas;
 
       // Buscar vendas de hoje (para o indicador específico)
       let vendasHoje = 0;
@@ -291,11 +290,11 @@ const OwnerDashboard = () => {
 
       setMetrics(metricsResult);
       
-      console.log('[DASHBOARD] Métricas calculadas com dados reais:', {
-        totalVendas,
-        totalDespesas,
-        lucroLiquido,
-        vendasHoje
+      console.log('[DASHBOARD] Métricas finais:', {
+        totalVendas: metricsResult.totalVendas,
+        totalDespesas: metricsResult.despesas,
+        lucroLiquido: metricsResult.totalVendas - metricsResult.despesas,
+        vendasHoje: metricsResult.vendasHoje
       });
       
     } catch (error) {
