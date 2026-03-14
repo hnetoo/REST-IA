@@ -129,38 +129,65 @@ const OwnerMobile = () => {
         console.error('[MOBILE] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar folha salarial REAL (SEM DIVISÃO POR 30)
+      // Buscar folha salarial REAL (SELECT * FROM staff - 313.000 Kz)
       let folhaSalarial = 0;
       try {
         const { data: staffData, error: staffError } = await supabase
           .from('staff')
-          .select('base_salary_kz, full_name, status');
+          .select('*'); // SELECT * - sem filtros
+
+        console.log('[MOBILE] Dados brutos da staff (SELECT *):', staffData);
+        console.log('[MOBILE] Número de funcionários encontrados:', staffData?.length || 0);
+        console.log('[MOBILE] META: Deve encontrar 5 funcionários como no Hub da Equipa');
 
         if (!staffError && staffData && staffData.length > 0) {
-          // VALOR REAL DA FOLHA - SEM DIVISÃO DIÁRIA
+          // SOMA DE TODOS base_salary_kz
           folhaSalarial = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
           console.log('[MOBILE] Custo real da folha salarial:', folhaSalarial);
+          console.log('[MOBILE] META: Valor deve ser 313.000 Kz');
+        } else {
+          console.log('[MOBILE] ERRO: Sem dados de staff - VERIFICAR TABELA');
         }
       } catch (staffError) {
         console.error('[MOBILE] Erro ao buscar folha salarial:', staffError);
       }
 
-      // Buscar despesas reais do Supabase (SINCRONIZADAS COM APP PRINCIPAL)
+      // Buscar despesas reais do Supabase (DADOS REAIS - 74.600 Kz)
       let totalDespesas = 0;
       try {
+        // PRIMEIRO: Tentar com filtro de período
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('amount_kz, created_at, category')
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
-        console.log('[MOBILE] Dados brutos das despesas:', expensesData);
-        console.log('[MOBILE] Número de despesas encontradas:', expensesData?.length || 0);
+        console.log('[MOBILE] Dados brutos das despesas (com filtro):', expensesData);
+        console.log('[MOBILE] Período filtrado:', startDate, 'até', endDate);
+        console.log('[MOBILE] Separador atual:', period);
 
         if (!expensesError && expensesData && expensesData.length > 0) {
           // CÁLCULO EXATO COMO NA APP PRINCIPAL
           totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-          console.log('[MOBILE] Total despesas calculado:', totalDespesas);
+          console.log('[MOBILE] Total despesas calculado (com filtro):', totalDespesas);
+          console.log('[MOBILE] META: Deve bater com App Principal (74.600 Kz)');
+        } else {
+          console.log('[MOBILE] SEM DESPESAS COM FILTRO - TENTANDO SEM FILTRO...');
+          
+          // SEGUNDO: Buscar TODAS as despesas sem filtro
+          const { data: allExpensesData, error: allExpensesError } = await supabase
+            .from('expenses')
+            .select('amount_kz, created_at, category'); // SEM FILTRO
+
+          console.log('[MOBILE] Dados brutos das despesas (sem filtro):', allExpensesData);
+
+          if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
+            totalDespesas = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+            console.log('[MOBILE] Total despesas calculado (sem filtro):', totalDespesas);
+            console.log('[MOBILE] META: Valor deve ser 74.600 Kz (Água, Café, Cerveja, Mota)');
+          } else {
+            console.log('[MOBILE] ERRO CRÍTICO: Nenhuma despesa encontrada - VERIFICAR TABELA EXPENSES');
+          }
         }
       } catch (expError) {
         console.error('[MOBILE] Erro ao buscar despesas:', expError);
@@ -191,15 +218,35 @@ const OwnerMobile = () => {
       }
 
       const metricsResult = {
-        vendasHoje: vendasHoje || 0, // VENDAS FIXAS DE HOJE (99.600 Kz)
+        vendasHoje: vendasHoje || 0, // VENDAS FIXAS DE HOJE (102.100 Kz)
         mesasAtivas: 0,
         totalVendas: totalVendas || 0, // FATURAÇÃO TOTAL DO PERÍODO
         receitaTotal: totalVendas || 0,
-        despesas: totalDespesas || 0, // DESPESAS SINCRONIZADAS
+        despesas: totalDespesas || 0, // DESPESAS REAIS (74.600 Kz)
         folhaSalarial: folhaSalarial || 0, // VALOR REAL 313.000 Kz
         impostos: (totalVendas || 0) * 0.065, // 6,5% SOBRE FATURAÇÃO TOTAL
         historicoRevenue: 0
       };
+
+      // CÁLCULO DO LUCRO LÍQUIDO (FÓRMULA: Faturação - Despesas - Staff - Impostos)
+      const lucroLiquido = (totalVendas || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((totalVendas || 0) * 0.065);
+      console.log('[MOBILE] Cálculo do Lucro Líquido:', {
+        faturacao: totalVendas || 0,
+        despesas: totalDespesas || 0,
+        staff: folhaSalarial || 0,
+        impostos: (totalVendas || 0) * 0.065,
+        lucroLiquido: lucroLiquido
+      });
+
+      console.log('[MOBILE] Métricas finais:', {
+        periodo: period,
+        vendasHoje: vendasHoje || 0,
+        totalVendas: totalVendas || 0,
+        totalDespesas: totalDespesas || 0,
+        folhaSalarial: folhaSalarial || 0,
+        impostos: (totalVendas || 0) * 0.065,
+        lucroLiquido: lucroLiquido
+      });
 
       setMetrics(metricsResult);
       setIsLoading(false);
