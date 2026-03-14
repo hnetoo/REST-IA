@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
+import { idCleanupService } from '../services/idCleanupService';
 import { 
   Utensils, Tag, Box, Plus, QrCode, Eye, 
   Settings, Smartphone, Globe, Trash2, RefreshCw, Download, Upload,
@@ -70,11 +71,31 @@ const Inventory = () => {
     { id: 'qr', label: 'QR Menu / Digital', icon: QrCode }
   ];
 
-  // ✅ REFRESH DE DADOS - FORÇAR RECARREGAMENTO
-  const refreshInventory = () => {
-    console.log('[Inventory] Forçando refresh do inventário...');
-    // Força um refresh dos dados do store
-    window.location.reload();
+  // ✅ REFRESH DE DADOS - LIMPEZA DE IDS INCOMPATÍVEIS
+  const refreshInventory = async () => {
+    console.log('[Inventory] Forçando refresh com limpeza de IDs...');
+    
+    try {
+      // Executar limpeza de IDs incompatíveis primeiro
+      await idCleanupService.cleanupLocalProducts();
+      
+      // Verificar status após limpeza
+      const status = idCleanupService.getCleanupStatus();
+      console.log('[Inventory] Status após limpeza:', status);
+      
+      if (status.needsCleanup) {
+        addNotification('warning', `Foram convertidos ${status.incompatible} produtos para UUIDs válidos.`);
+      } else {
+        addNotification('success', 'Todos os produtos já têm UUIDs válidos.');
+      }
+      
+      // Forçar refresh da página para carregar dados atualizados
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('[Inventory] Erro na limpeza de IDs:', error);
+      addNotification('error', 'Erro ao limpar IDs incompatíveis. Tente novamente.');
+    }
   };
 
   // Função para upload de imagem
