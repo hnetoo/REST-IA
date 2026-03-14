@@ -411,15 +411,60 @@ const Employees = () => {
                     <option value="COZINHA">Chef / Cozinha</option>
                     <option value="CAIXA">Caixa</option>
                     <option value="ADMIN">Gerente</option>
+                    <option value="GERENTE">Gerente</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Telefone</label>
+                  <input type="tel" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.phone} onChange={e => setEmpForm({...empForm, phone: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Salário (Kz)</label>
+                  <input required type="number" min="0" step="1000" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.salary} onChange={e => setEmpForm({...empForm, salary: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Cor</label>
+                  <input type="color" className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-primary" value={empForm.color} onChange={e => setEmpForm({...empForm, color: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Dias Trabalho/Mês</label>
+                  <input required type="number" min="1" max="31" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.workDaysPerMonth} onChange={e => setEmpForm({...empForm, workDaysPerMonth: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Horas/Dia</label>
+                  <input required type="number" min="1" max="12" step="0.5" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.dailyWorkHours} onChange={e => setEmpForm({...empForm, dailyWorkHours: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">ID Bio (Externo)</label>
+                  <input type="text" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.externalBioId} onChange={e => setEmpForm({...empForm, externalBioId: e.target.value})} />
+                </div>
+                <div className="col-span-2 flex justify-between items-center gap-6 mt-8">
+                  <button 
+                    type="submit"
+                    disabled={isSubmitting || hasSubmitted}
+                    className="px-6 py-3 bg-primary text-black rounded-xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center gap-2 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? 'Guardando...' : 'Guardar Staff'}
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setIsEmpModalOpen(false)}
+                    className="px-6 py-3 bg-white/5 border border-white/10 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+            </form>
+          </div>
+        </div>
       )}
-
+      
       {isShiftModalOpen && (
         <div className="fixed inset-0 bg-black/90 z-[120] flex items-center justify-center p-6 backdrop-blur-xl animate-in fade-in">
-           <div className="glass-panel rounded-[4rem] w-full max-w-md p-12 border border-white/10 shadow-2xl relative">
-              <button onClick={() => setIsShiftModalOpen(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white"><X size={32} /></button>
-              <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-10 flex items-center gap-3"><Timer className="text-primary"/> Configurar Turno</h3>
-              <form onSubmit={handleSaveShift} className="space-y-6">
+          <div className="glass-panel rounded-[4rem] w-full max-w-md p-12 border border-white/10 shadow-2xl relative">
+            <button onClick={() => setIsShiftModalOpen(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white"><X size={32} /></button>
+            <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-10 flex items-center gap-3"><Timer className="text-primary"/> Configurar Turno</h3>
+            <form onSubmit={handleSaveShift} className="space-y-6">
                  <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Selecionar Colaborador</label>
                     <select required className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none font-bold" value={shiftForm.employeeId} onChange={e => setShiftForm({...shiftForm, employeeId: e.target.value})}>
@@ -437,8 +482,8 @@ const Employees = () => {
                     </div>
                  </div>
                  <button type="submit" className="w-full py-6 bg-primary text-black rounded-[2rem] font-black uppercase text-xs shadow-glow">Confirmar Escala</button>
-              </form>
-           </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
