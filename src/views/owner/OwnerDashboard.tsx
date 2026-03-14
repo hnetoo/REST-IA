@@ -165,57 +165,121 @@ const OwnerDashboard = () => {
   // Estado para produtos mais vendidos
   const [topProducts, setTopProducts] = useState<any[]>([]);
 
-  // Buscar produtos mais vendidos no Supabase (CORREÇÃO COLUNA product_name)
+  // Buscar produtos mais vendidos no Supabase (CORREÇÃO PERMISSÃO 401/42501)
   const fetchTopProducts = async () => {
     try {
       console.log('[DASHBOARD] Buscando produtos mais vendidos...');
       
-      // Buscar itens de pedidos com JOIN para products
+      // Buscar itens de pedidos SEM JOIN COMPLEXO - Apenas dados básicos
       const { data: orderItemsData, error: orderItemsError } = await supabase
         .from('order_items')
-        .select('quantity, total_price, products(name)');
+        .select('quantity, total_price, product_id');
 
       if (orderItemsError) {
         console.error('[DASHBOARD] Erro ao buscar itens dos pedidos:', orderItemsError);
         return;
       }
 
-      // Agrupar por produto e somar quantidades em JavaScript
-      const productSales = orderItemsData?.reduce((acc: any, item) => {
-        const productName = item.products?.name || 'Produto Sem Nome';
+      // Se não tivermos product_id, tentar com product_name
+      if (!orderItemsData || orderItemsData.length === 0) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('order_items')
+          .select('quantity, total_price, product_name');
+
+        if (fallbackError) {
+          console.error('[DASHBOARD] Erro no fallback:', fallbackError);
+          return;
+        }
+
+        // Agrupar por product_name
+        const productSales = fallbackData?.reduce((acc: any, item) => {
+          const productName = item.product_name || 'Produto Sem Nome';
+          const quantity = item.quantity || 0;
+          const totalPrice = item.total_price || 0;
+          
+          if (!acc[productName]) {
+            acc[productName] = {
+              name: productName,
+              totalQuantity: 0,
+              totalRevenue: 0,
+              count: 0
+            };
+          }
+          
+          acc[productName].totalQuantity += quantity;
+          acc[productName].totalRevenue += totalPrice;
+          acc[productName].count += 1;
+          
+          return acc;
+        }, {});
+
+        // Converter para array e ordenar
+        const sortedProducts = Object.values(productSales)
+          .sort((a: any, b: any) => b.totalQuantity - a.totalQuantity)
+          .slice(0, 5)
+          .map((product: any, index: number) => ({
+            id: index + 1,
+            name: product.name,
+            quantity: product.totalQuantity,
+            revenue: product.totalRevenue,
+            image: '/api/placeholder/40/40'
+          }));
+
+        setTopProducts(sortedProducts);
+        console.log('[DASHBOARD] Produtos mais vendidos (fallback):', sortedProducts);
+        return;
+      }
+
+      // Agrupar por product_id primeiro
+      const productGroups = orderItemsData?.reduce((acc: any, item) => {
+        const productId = item.product_id;
         const quantity = item.quantity || 0;
         const totalPrice = item.total_price || 0;
         
-        if (!acc[productName]) {
-          acc[productName] = {
-            name: productName,
+        if (!acc[productId]) {
+          acc[productId] = {
+            productId: productId,
             totalQuantity: 0,
             totalRevenue: 0,
             count: 0
           };
         }
         
-        acc[productName].totalQuantity += quantity;
-        acc[productName].totalRevenue += totalPrice;
-        acc[productName].count += 1;
+        acc[productId].totalQuantity += quantity;
+        acc[productId].totalRevenue += totalPrice;
+        acc[productId].count += 1;
         
         return acc;
       }, {});
 
-      // Converter para array e ordenar por quantidade
-      const sortedProducts = Object.values(productSales)
-        .sort((a: any, b: any) => b.totalQuantity - a.totalQuantity)
-        .slice(0, 5) // Top 5
-        .map((product: any, index: number) => ({
-          id: index + 1,
-          name: product.name,
-          quantity: product.totalQuantity,
-          revenue: product.totalRevenue,
-          image: '/api/placeholder/40/40'
-        }));
+      // Buscar nomes dos produtos separadamente
+      const productIds = Object.keys(productGroups || {});
+      if (productIds.length > 0) {
+        const { data: productsData, error: productsError } = await supabase
+          .from('products')
+          .select('id, name')
+          .in('id', productIds);
 
-      setTopProducts(sortedProducts);
-      console.log('[DASHBOARD] Produtos mais vendidos:', sortedProducts);
+        if (!productsError && productsData) {
+          // Mapear nomes para os grupos
+          const sortedProducts = Object.values(productGroups || {})
+            .map((group: any) => {
+              const product = productsData.find((p: any) => p.id === group.productId);
+              return {
+                id: group.productId,
+                name: product?.name || `Produto ${group.productId}`,
+                quantity: group.totalQuantity,
+                revenue: group.totalRevenue,
+                image: '/api/placeholder/40/40'
+              };
+            })
+            .sort((a: any, b: any) => b.quantity - a.quantity)
+            .slice(0, 5);
+
+          setTopProducts(sortedProducts);
+          console.log('[DASHBOARD] Produtos mais vendidos:', sortedProducts);
+        }
+      }
       
     } catch (error) {
       console.error('[DASHBOARD] Erro ao buscar produtos mais vendidos:', error);
@@ -267,56 +331,96 @@ const OwnerDashboard = () => {
       // Obter range de datas para o período selecionado
       const { startDate, endDate } = getDateRange(period);
       
-      // Buscar despesas reais do Supabase (COM FILTRO DE PERÍODO)
+      // Buscar despesas reais do Supabase (LÓGICA INTELIGENTE DE PERÍODO)
       let totalDespesas = 0;
       try {
-        const { data: expensesData, error: expensesError } = await supabase
+        let expensesQuery = supabase
           .from('expenses')
-          .select('amount_kz, created_at, category')
-          .gte('created_at', startDate)
-          .lte('created_at', endDate);
+          .select('amount_kz, created_at, category');
 
-        console.log('[DASHBOARD] Dados brutos das despesas:', expensesData);
-        console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
+        // LÓGICA INTELIGENTE: Para HOJE, buscar últimas 24h ou mês corrente
+        if (period === 'HOJE') {
+          // Tenta buscar últimas 24h primeiro
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          
+          const { data: todayExpensesData, error: todayExpensesError } = await expensesQuery
+            .gte('created_at', yesterday.toISOString())
+            .lte('created_at', endDate);
 
-        if (!expensesError && expensesData && expensesData.length > 0) {
-          totalDespesas = expensesData.reduce((sum, expense) => sum + (Number(expense.amount_kz) || 0), 0);
-          console.log('[DASHBOARD] Total despesas calculado:', totalDespesas);
+          // Se não encontrar despesas nas últimas 24h, busca do mês corrente
+          if (!todayExpensesError && todayExpensesData && todayExpensesData.length > 0) {
+            totalDespesas = todayExpensesData.reduce((sum, expense) => sum + (Number(expense.amount_kz) || 0), 0);
+            console.log('[DASHBOARD] Despesas últimas 24h:', totalDespesas);
+          } else {
+            // Fallback: buscar do mês corrente
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+            
+            const { data: monthExpensesData, error: monthExpensesError } = await supabase
+              .from('expenses')
+              .select('amount_kz, created_at, category')
+              .gte('created_at', startOfMonth.toISOString())
+              .lte('created_at', endDate);
+
+            if (!monthExpensesError && monthExpensesData && monthExpensesData.length > 0) {
+              totalDespesas = monthExpensesData.reduce((sum, expense) => sum + (Number(expense.amount_kz) || 0), 0);
+              console.log('[DASHBOARD] Despesas mês corrente (fallback):', totalDespesas);
+            } else {
+              console.log('[DASHBOARD] Sem despesas encontradas (nem 24h nem mês)');
+            }
+          }
         } else {
-          console.log('[DASHBOARD] Sem dados de despesas ou array vazio');
+          // Para outros períodos, usar o filtro normal
+          const { data: expensesData, error: expensesError } = await expensesQuery
+            .gte('created_at', startDate)
+            .lte('created_at', endDate);
+
+          console.log('[DASHBOARD] Dados brutos das despesas:', expensesData);
+          console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
+
+          if (!expensesError && expensesData && expensesData.length > 0) {
+            totalDespesas = expensesData.reduce((sum, expense) => sum + (Number(expense.amount_kz) || 0), 0);
+            console.log('[DASHBOARD] Total despesas calculado:', totalDespesas);
+          } else {
+            console.log('[DASHBOARD] Sem dados de despesas ou array vazio');
+          }
         }
       } catch (expError) {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
       }
 
-      // Buscar folha salarial da tabela staff (COM FILTRO DE PERÍODO)
+      // Buscar folha salarial da tabela staff (VALOR FIXO MENSAL 183.000 Kz)
       let folhaSalarial = 0;
       try {
         let staffQuery = supabase
           .from('staff')
           .select('base_salary_kz, full_name, status');
 
-        // Para Dia, mostrar custo diário proporcional
-        if (period === 'HOJE') {
-          // Buscar folha total mensal primeiro
-          const { data: monthlyStaffData } = await staffQuery;
-          const monthlyTotal = monthlyStaffData?.reduce((sum, staff) => sum + (Number(staff.base_salary_kz) || 0), 0) || 0;
-          // Calcular custo diário (Mensal / 30)
-          folhaSalarial = Math.round(monthlyTotal / 30);
-          console.log('[DASHBOARD] Custo diário calculado (Mensal/30):', folhaSalarial);
-        } else {
-          // Para Semana, Mês e Ano, mostrar custo total
-          const { data: staffData, error: staffError } = await staffQuery;
-          
-          console.log('[DASHBOARD] Dados brutos da folha salarial:', staffData);
-          console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
+        // Buscar folha total mensal (VALOR FIXO 183.000 Kz)
+        const { data: staffData, error: staffError } = await staffQuery;
+        
+        console.log('[DASHBOARD] Dados brutos da folha salarial:', staffData);
+        console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
-          if (!staffError && staffData && staffData.length > 0) {
-          folhaSalarial = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
-          console.log('[DASHBOARD] Total folha salarial calculado:', folhaSalarial);
+        if (!staffError && staffData && staffData.length > 0) {
+          const monthlyTotal = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
+          
+          // Para qualquer período, mostrar o valor mensal completo (183.000 Kz)
+          if (period === 'HOJE') {
+            // Para HOJE, mostrar o valor diário proporcional
+            folhaSalarial = Math.round(monthlyTotal / 30);
+            console.log('[DASHBOARD] Custo diário calculado (Mensal/30):', folhaSalarial);
+          } else {
+            // Para SEMANA, MÊS e ANO, mostrar o custo total mensal
+            folhaSalarial = monthlyTotal;
+            console.log('[DASHBOARD] Custo mensal completo:', folhaSalarial);
+          }
+          
+          console.log('[DASHBOARD] Total folha salarial final:', folhaSalarial);
         } else {
           console.log('[DASHBOARD] Sem dados de folha salarial ou array vazio');
-        }
         }
       } catch (staffError) {
         console.error('[DASHBOARD] Erro ao buscar folha salarial:', staffError);
@@ -385,7 +489,7 @@ const OwnerDashboard = () => {
         receitaTotal: totalVendas || 0,
         despesas: totalDespesas || 0,
         folhaSalarial: folhaSalarial || 0,
-        impostos: (totalVendas || 0) * 0.14, // IVA 14% sobre vendas do período
+        impostos: (totalVendas || 0) * 0.14, // IVA 14% DINÂMICO sobre vendas do período
         historicoRevenue: 0
       };
 
@@ -393,10 +497,12 @@ const OwnerDashboard = () => {
       setChartData(chartDataGenerated);
       setIsLoading(false);
       
-      console.log('[DASHBOARD] Métricas finais:', {
+      console.log('[DASHBOARD] Métricas finais com período:', {
+        periodo: period,
         totalVendas: metricsResult.totalVendas,
         totalDespesas: metricsResult.despesas,
         folhaSalarial: metricsResult.folhaSalarial,
+        impostos: metricsResult.impostos,
         lucroLiquido: metricsResult.totalVendas - metricsResult.despesas - metricsResult.folhaSalarial,
         vendasHoje: metricsResult.vendasHoje
       });

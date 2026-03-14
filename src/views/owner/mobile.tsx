@@ -158,6 +158,7 @@ const OwnerMobile = () => {
           <button
             onClick={() => navigate('/owner/dashboard')}
             className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all"
+            title="Voltar para Dashboard"
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
@@ -167,6 +168,7 @@ const OwnerMobile = () => {
         <button
           onClick={handleLogout}
           className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-all"
+          title="Sair do Sistema"
         >
           <LogOut className="w-5 h-5 text-red-400" />
         </button>
