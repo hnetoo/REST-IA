@@ -330,75 +330,66 @@ const OwnerDashboard = () => {
       // Obter range de datas para o período selecionado
       const { startDate, endDate } = getDateRange(period);
       
-      // Buscar despesas reais do Supabase (74.600 Kz - STATUS APROVADO)
+      // Buscar despesas reais do Supabase (VALOR REAL 74.600 Kz - SEM FALLBACK)
       let totalDespesas = 0;
       try {
-        // PRIMEIRO: Tentar com filtro de período + status
+        // FORÇAR LEITURA REAL DA TABELA EXPENSES
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('amount_kz, created_at, category, status')
           .gte('created_at', startDate)
           .lte('created_at', endDate)
-          .neq('status', 'PENDENTE'); // IGNORAR PENDENTES
+          .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
 
-        console.log('[DASHBOARD] Dados brutos das despesas (com filtro):', expensesData);
+        console.log('[DASHBOARD] Dados brutos das despesas (LEITURA REAL):', expensesData);
         console.log('[DASHBOARD] Período filtrado:', startDate, 'até', endDate);
         console.log('[DASHBOARD] Status: Ignorando PENDENTE');
+        console.log('[DASHBOARD] APP PRINCIPAL DIZ: 74.600 Kz');
         console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
 
         if (!expensesError && expensesData && expensesData.length > 0) {
-          // CÁLCULO EXATO COMO NA APP PRINCIPAL
+          // CÁLCULO REAL - SEM FALLBACK 78.000 Kz
           totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-          console.log('[DASHBOARD] Total despesas calculado (com filtro):', totalDespesas);
-          console.log('[DASHBOARD] META: Deve bater com App Principal (74.600 Kz)');
+          console.log('[DASHBOARD] Total despesas calculado (REAL):', totalDespesas);
+          console.log('[DASHBOARD] DEVE BATER COM APP PRINCIPAL: 74.600 Kz');
         } else {
-          console.log('[DASHBOARD] SEM DESPESAS COM FILTRO - TENTANDO SEM FILTRO...');
-          
-          // SEGUNDO: Buscar TODAS as despesas (exceto PENDENTES)
-          const { data: allExpensesData, error: allExpensesError } = await supabase
-            .from('expenses')
-            .select('amount_kz, created_at, category, status')
-            .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
-
-          console.log('[DASHBOARD] Dados brutos das despesas (sem filtro):', allExpensesData);
-          console.log('[DASHBOARD] Status: Apenas despesas APROVADAS');
-
-          if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
-            totalDespesas = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-            console.log('[DASHBOARD] Total despesas calculado (sem filtro):', totalDespesas);
-            console.log('[DASHBOARD] META: Valor deve ser 74.600 Kz (6 despesas APROVADAS)');
-          } else {
-            console.log('[DASHBOARD] ERRO CRÍTICO: Nenhuma despesa APROVADA encontrada - VERIFICAR TABELA EXPENSES');
-          }
+          console.log('[DASHBOARD] SEM DESPESAS NO PERÍODO - VALOR ZERO');
+          console.log('[DASHBOARD] NÃO USAR FALLBACK 78.000 Kz');
+          totalDespesas = 0; // VALOR ZERO SE NÃO HOUVER DESPESAS
         }
       } catch (expError) {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
+        totalDespesas = 0; // ERRO = ZERO
       }
 
-      // Buscar folha salarial da tabela staff (SELECT * - 313.000 Kz)
+      // Buscar folha salarial da tabela staff (TABELA VAZIA - CACHE LIMPO)
       let folhaSalarial = 0;
       try {
+        // FORÇAR REFRESH SEM CACHE
         const { data: staffData, error: staffError } = await supabase
           .from('staff')
-          .select('*'); // SELECT * - SEM FILTROS NENHUM
+          .select('*')
+          .order('created_at', { ascending: false }); // FORÇAR LEITURA RECENTE
 
-        console.log('[DASHBOARD] Dados brutos da staff (SELECT *):', staffData);
+        console.log('[DASHBOARD] Dados brutos da staff (TABELA VAZIA):', staffData);
         console.log('[DASHBOARD] Número de funcionários encontrados:', staffData?.length || 0);
-        console.log('[DASHBOARD] META: Deve encontrar 5 funcionários como no Hub da Equipa');
+        console.log('[DASHBOARD] TABELA STAFF ESTÁ VAZIA - VALOR DEVE SER 0,00 Kz');
         console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
+        // TABELA VAZIA = FOLHA SALARIAL = 0
         if (!staffError && staffData && staffData.length > 0) {
           const monthlyTotal = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
-          
-          // VALOR REAL DA FOLHA - 313.000 Kz (PROVA DO HUB DA EQUIPA)
           folhaSalarial = monthlyTotal;
           console.log('[DASHBOARD] Custo real da folha salarial:', folhaSalarial);
-          console.log('[DASHBOARD] META: Valor deve ser 313.000 Kz');
         } else {
-          console.log('[DASHBOARD] ERRO CRÍTICO: Sem dados de staff - VERIFICAR TABELA');
+          // TABELA VAZIA - VALOR ZERO
+          folhaSalarial = 0;
+          console.log('[DASHBOARD] TABELA STAFF VAZIA - FOLHA SALARIAL = 0,00 Kz');
+          console.log('[DASHBOARD] CARD DEVE MOSTRAR: 0,00 Kz');
         }
       } catch (staffError) {
         console.error('[DASHBOARD] Erro ao buscar folha salarial:', staffError);
+        folhaSalarial = 0; // ERRO = ZERO
       }
 
       // Buscar vendas reais do Supabase (COM FILTRO DE PERÍODO)
