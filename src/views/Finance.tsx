@@ -30,7 +30,7 @@ const Finance = () => {
   const [newExpense, setNewExpense] = useState<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>({
     description: '',
     amount: 0,
-    category: 'OUTROS',
+    category: '', // CATEGORIA VAZIA - USUÁRIO ESCREVE TEXTO EXATO
     status: 'PENDENTE',
     date: new Date(),
     paymentMethod: 'NUMERARIO',
@@ -110,7 +110,7 @@ const Finance = () => {
       setNewExpense({
         description: '',
         amount: 0,
-        category: 'OUTROS',
+        category: '', // CATEGORIA VAZIA - USUÁRIO ESCREVE TEXTO EXATO
         status: 'PENDENTE',
         date: new Date(),
         paymentMethod: 'NUMERARIO',
@@ -462,7 +462,7 @@ const Finance = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-black text-white">
-                      {formatKz(expenses?.reduce((acc, item) => acc + (Number(item.amount || 0), 0), 0))}
+                      {formatKz(expenses?.reduce((acc, exp) => acc + Number(exp.amount_kz || exp.amount || 0), 0))}
                     </div>
                     <p className="text-xs text-red-300 uppercase tracking-wider">
                       {expenses?.length || 0} despesas
@@ -603,19 +603,13 @@ const Finance = () => {
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Categoria</label>
-                <select 
+                <input 
+                  type="text"
                   className="w-full p-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
+                  placeholder="Ex: REPARACOES, ALIMENTACAO, etc."
                   value={newExpense.category}
-                  onChange={e => setNewExpense({...newExpense, category: e.target.value as ExpenseCategory})}
-                >
-                  <option value="ALIMENTACAO">Alimentação</option>
-                  <option value="BEBIDAS">Bebidas</option>
-                  <option value="MATERIAL_LIMPEZA">Material de Limpeza</option>
-                  <option value="UTILIDADES">Utilidades</option>
-                  <option value="REPARACOES">Reparações</option>
-                  <option value="MARKETING">Marketing</option>
-                  <option value="OUTROS">Outros</option>
-                </select>
+                  onChange={e => setNewExpense({...newExpense, category: e.target.value.toUpperCase()})}
+                />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Valor (Kz)</label>
@@ -678,7 +672,7 @@ const Finance = () => {
                     setNewExpense({
                       description: '',
                       amount: 0,
-                      category: 'OUTROS',
+                      category: '', // CATEGORIA VAZIA - USUÁRIO ESCREVE TEXTO EXATO
                       status: 'PENDENTE',
                       date: new Date(),
                       paymentMethod: 'NUMERARIO',
