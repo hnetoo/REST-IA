@@ -165,15 +165,15 @@ const OwnerDashboard = () => {
   // Estado para produtos mais vendidos
   const [topProducts, setTopProducts] = useState<any[]>([]);
 
-  // Buscar produtos mais vendidos no Supabase (CORREÇÃO PGRST100)
+  // Buscar produtos mais vendidos no Supabase (CORREÇÃO COLUNA product_name)
   const fetchTopProducts = async () => {
     try {
       console.log('[DASHBOARD] Buscando produtos mais vendidos...');
       
-      // Buscar itens de pedidos sem joins complexos
+      // Buscar itens de pedidos com JOIN para products
       const { data: orderItemsData, error: orderItemsError } = await supabase
         .from('order_items')
-        .select('product_name, quantity, total_price');
+        .select('quantity, total_price, products(name)');
 
       if (orderItemsError) {
         console.error('[DASHBOARD] Erro ao buscar itens dos pedidos:', orderItemsError);
@@ -182,7 +182,7 @@ const OwnerDashboard = () => {
 
       // Agrupar por produto e somar quantidades em JavaScript
       const productSales = orderItemsData?.reduce((acc: any, item) => {
-        const productName = item.product_name || 'Produto Sem Nome';
+        const productName = item.products?.name || 'Produto Sem Nome';
         const quantity = item.quantity || 0;
         const totalPrice = item.total_price || 0;
         
@@ -312,11 +312,11 @@ const OwnerDashboard = () => {
           console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
           if (!staffError && staffData && staffData.length > 0) {
-            folhaSalarial = staffData.reduce((sum, staff) => sum + (Number(staff.base_salary_kz) || 0), 0);
-            console.log('[DASHBOARD] Total folha salarial calculado:', folhaSalarial);
-          } else {
-            console.log('[DASHBOARD] Sem dados de folha salarial ou array vazio');
-          }
+          folhaSalarial = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
+          console.log('[DASHBOARD] Total folha salarial calculado:', folhaSalarial);
+        } else {
+          console.log('[DASHBOARD] Sem dados de folha salarial ou array vazio');
+        }
         }
       } catch (staffError) {
         console.error('[DASHBOARD] Erro ao buscar folha salarial:', staffError);
@@ -352,7 +352,8 @@ const OwnerDashboard = () => {
           .from('orders')
           .select('total_amount, created_at, status')
           .eq('status', 'closed')
-          .gte('created_at', startDate);
+          .gte('created_at', startDate)
+          .lte('created_at', endDate);
 
         if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
           vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
