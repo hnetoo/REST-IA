@@ -1008,6 +1008,88 @@ restoreFromSupabase: async () => {
       setMenu: (menu: Dish[]) => set({ menu }),
       setCategories: (categories: MenuCategory[]) => set({ categories }),
       
+      // ✅ FUNÇÃO DE LIMPEZA TOTAL - HARD RESET
+      clearAllData: () => {
+        console.log('[Store] 🧹 LIMPANDO TODOS OS DADOS LOCAIS...');
+        set(() => ({
+          // Estado inicial limpo
+          menu: [],
+          categories: [],
+          activeOrders: [],
+          tables: MOCK_TABLES,
+          customers: MOCK_CUSTOMERS,
+          users: MOCK_USERS,
+          employees: [],
+          attendance: [],
+          stock: MOCK_STOCK,
+          reservations: MOCK_RESERVATIONS,
+          workShifts: [],
+          expenses: [],
+          orders: [],
+          auditLogs: [],
+          notifications: [],
+          paymentMethods: [],
+          tablesConfig: {},
+          menuConfig: {},
+          settings: {
+            restaurantName: 'Tasca do Vereda',
+            currency: 'AOA',
+            taxRate: 6.5,
+            logo: defaultLogo,
+            address: '',
+            phone: '',
+            email: '',
+            website: '',
+            description: '',
+            operatingHours: {
+              monday: { open: '08:00', close: '23:00' },
+              tuesday: { open: '08:00', close: '23:00' },
+              wednesday: { open: '08:00', close: '23:00' },
+              thursday: { open: '08:00', close: '23:00' },
+              friday: { open: '08:00', close: '23:00' },
+              saturday: { open: '08:00', close: '23:00' },
+              sunday: { open: '08:00', close: '23:00' }
+            },
+            supabaseUrl: '',
+            supabaseKey: ''
+          },
+          invoiceCounter: 1,
+          activeTableId: null,
+          activeOrderId: null,
+          metrics: {
+            dailyRevenue: 0,
+            monthlyRevenue: 0,
+            ordersCount: 0,
+            customersCount: 0,
+            averageTicket: 0
+          }
+        }));
+        
+        // Limpar localStorage manualmente
+        try {
+          localStorage.clear();
+          console.log('[Store] 🗑️ localStorage limpo');
+        } catch (error) {
+          console.error('[Store] ❌ Erro ao limpar localStorage:', error);
+        }
+        
+        // Limpar IndexedDB se existir
+        try {
+          if ('indexedDB' in window) {
+            indexedDB.databases().then((databases) => {
+              databases.forEach((db) => {
+                if (db.name.includes('tasca') || db.name.includes('zustand') || db.name.includes('vereda')) {
+                  indexedDB.deleteDatabase(db.name);
+                  console.log('[Store] 🗑️ IndexedDB apagado:', db.name);
+                }
+              });
+            });
+          }
+        } catch (error) {
+          console.error('[Store] ❌ Erro ao limpar IndexedDB:', error);
+        }
+      },
+      
       resetFinancialData: () => {
         set(state => ({
           activeOrders: [],
