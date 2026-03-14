@@ -107,8 +107,7 @@ const Inventory = () => {
         console.error('[Inventory] Erro no upload Supabase Storage:', error);
         console.error('[Inventory] Detalhes do erro:', {
           message: error.message,
-          details: error.details,
-          hint: error.hint
+          // Removido campos que não existem em StorageError
         });
         
         // Verificar se é erro de permissão (RLS)
@@ -297,25 +296,32 @@ const Inventory = () => {
     // ✅ ATUALIZAR NO SUPABASE
     try {
       console.log('[Inventory] Atualizando produto:', editingProduct);
-      console.log('[Inventory] Tabela: public.products');
-      console.log('[Inventory] Schema:', {
-        id: editingProduct.id,
-        name: newProduct.name,
+      // ✅ LIMPEZA DE SCHEMA - APENAS CAMPOS VÁLIDOS
+      const cleanUpdateData = {
+        name: newProduct.name?.trim(),
         price: priceNumber,
-        image_url: newProduct.image_url || null,
+        image_url: newProduct.image_url?.trim() || null,
         is_active: newProduct.is_active,
-        category_id: newProduct.category_id
-      });
+        category_id: newProduct.category_id?.trim() || null
+      };
+      
+      // ✅ VALIDAÇÃO DE CAMPOS
+      if (!cleanUpdateData.name) {
+        addNotification('error', 'Nome do produto é obrigatório');
+        return;
+      }
+      
+      if (!cleanUpdateData.price || cleanUpdateData.price <= 0) {
+        addNotification('error', 'Preço do produto deve ser maior que zero');
+        return;
+      }
+      
+      console.log('[Inventory] Schema limpo:', cleanUpdateData);
+      console.log('[Inventory] Produto ID (UUID?):', editingProduct.id);
       
       const { data, error } = await supabase
         .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
-        .update({
-          name: newProduct.name,
-          price: priceNumber,
-          image_url: newProduct.image_url || null,
-          is_active: newProduct.is_active,
-          category_id: newProduct.category_id
-        })
+        .update(cleanUpdateData)
         .eq('id', editingProduct.id)
         .select();
 
