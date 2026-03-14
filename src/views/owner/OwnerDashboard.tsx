@@ -244,18 +244,18 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
       }
 
-      // Buscar folha salarial da tabela staff (CORREÇÃO DE COLUNAS)
+      // Buscar folha salarial da tabela staff (COLUNAS REAIS CONFIRMADAS)
       let folhaSalarial = 0;
       try {
         const { data: staffData, error: staffError } = await supabase
           .from('staff')
-          .select('salary, base_salary_kz');
+          .select('base_salary_kz, full_name, status');
 
         console.log('[DASHBOARD] Dados brutos da folha salarial:', staffData);
         console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
         if (!staffError && staffData && staffData.length > 0) {
-          folhaSalarial = staffData.reduce((sum, staff) => sum + (Number(staff.salary || staff.base_salary_kz || 0), 0), 0);
+          folhaSalarial = staffData.reduce((sum, staff) => sum + (Number(staff.base_salary_kz || 0), 0), 0);
           console.log('[DASHBOARD] Total folha salarial calculado:', folhaSalarial);
         } else {
           console.log('[DASHBOARD] Sem dados de folha salarial ou array vazio');
@@ -264,13 +264,13 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar folha salarial:', staffError);
       }
 
-      // Buscar vendas reais do Supabase (CORREÇÃO DE FILTRO)
+      // Buscar vendas reais do Supabase (STATUS CORRETO: closed)
       let totalVendas = 0;
       try {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .or('status.eq.pago,status.eq.concluido');
+          .eq('status', 'closed');
 
         console.log('[DASHBOARD] Dados brutos das vendas:', ordersData);
         console.error('[DASHBOARD] Erro detalhado vendas:', ordersError);
@@ -291,8 +291,7 @@ const OwnerDashboard = () => {
         const { data: todayOrdersData, error: todayOrdersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .or('status.eq.pago,status.eq.concluido')
-          .gte('created_at', '2026-03-01');
+          .eq('status', 'closed');
 
         if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
           vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
