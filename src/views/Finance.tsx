@@ -25,6 +25,7 @@ const Finance = () => {
   // Estados para despesas
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // ESTADO DE CARREGAMENTO
   const [newExpense, setNewExpense] = useState<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>({
     description: '',
     amount: 0,
@@ -90,32 +91,56 @@ const Finance = () => {
   };
 
   // Funções para despesas
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     if (!newExpense.description || newExpense.amount <= 0) {
       addNotification('error', 'Preencha todos os campos obrigatórios.');
       return;
     }
     
-    addExpense(newExpense);
-    setNewExpense({
-      description: '',
-      amount: 0,
-      category: 'OPERATIONAL',
-      notes: ''
-    });
-    setIsAddingExpense(false);
-    addNotification('success', 'Despesa adicionada com sucesso.');
+    // BLOQUEAR BOTÃO IMEDIATAMENTE
+    setIsSubmitting(true);
     
-    // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
-    const { addExpenseWithPersistence } = useStore.getState();
-    if (addExpenseWithPersistence) {
-      addExpenseWithPersistence({
-        id: `exp-${Date.now()}`,
-        description: newExpense.description,
-        amount: newExpense.amount,
-        category: newExpense.category,
-        notes: newExpense.notes
+    try {
+      // Adicionar ao estado local (Optimistic UI)
+      addExpense(newExpense);
+      
+      // LIMPEZA DE FORMULÁRIO IMEDIATA
+      setNewExpense({
+        description: '',
+        amount: 0,
+        category: 'OUTROS',
+        status: 'PENDENTE',
+        date: new Date(),
+        paymentMethod: 'NUMERARIO',
+        receipt: '',
+        notes: ''
       });
+      setIsAddingExpense(false);
+      
+      // PERSISTÊNCIA NO SUPABASE (APENAS UMA VEZ)
+      const { addExpenseWithPersistence } = useStore.getState();
+      if (addExpenseWithPersistence) {
+        await addExpenseWithPersistence({
+          id: `exp-${Date.now()}`,
+          description: newExpense.description,
+          amount: newExpense.amount,
+          category: newExpense.category,
+          status: newExpense.status,
+          date: newExpense.date,
+          paymentMethod: newExpense.paymentMethod,
+          receipt: newExpense.receipt,
+          notes: newExpense.notes
+        });
+      }
+      
+      addNotification('success', 'Despesa adicionada com sucesso.');
+      
+    } catch (error) {
+      console.error('Erro ao adicionar despesa:', error);
+      addNotification('error', 'Erro ao adicionar despesa. Tente novamente.');
+      
+      // REATIVAR BOTÃO APENAS EM CASO DE ERRO
+      setIsSubmitting(false);
     }
   };
 
@@ -641,9 +666,21 @@ const Finance = () => {
                 </button>
                 <button 
                   onClick={editingExpense ? handleUpdateExpense : handleAddExpense}
-                  className="flex-1 py-4 bg-primary text-black font-black uppercase text-[10px] tracking-widest rounded-2xl shadow-glow"
+                  disabled={isSubmitting} // BLOQUEAR BOTÃO DURANTE ENVIO
+                  className={`flex-1 py-4 font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all ${
+                    isSubmitting 
+                      ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
+                      : 'bg-primary text-black shadow-glow hover:bg-primary/90'
+                  }`}
                 >
-                  {editingExpense ? 'Atualizar' : 'Adicionar'}
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Salvando...
+                    </span>
+                  ) : (
+                    editingExpense ? 'Atualizar' : 'Adicionar'
+                  )}
                 </button>
               </div>
             </div>
