@@ -397,21 +397,41 @@ const Inventory = () => {
       }
       
       console.log('[Inventory] Schema limpo:', cleanUpdateData);
-      console.log('[Inventory] Produto ID (UUID?):', editingProduct.id);
+      console.log('[Inventory] Produto completo para DEBUG:', editingProduct);
+      console.log('[Inventory] Produto ID (BANCO):', editingProduct.id);
       console.log('[Inventory] Tipo do ID:', typeof editingProduct.id);
       console.log('[Inventory] Formato do ID:', editingProduct.id?.length, 'caracteres');
       
-      // ✅ VERIFICAÇÃO SIMPLES - APENAS ID EXISTE (SEM VALIDAÇÃO DE COMPRIMENTO)
-      const productId = editingProduct.id; // ✅ USA ID EXATO DO BANCO (UUID REAL)
+      // ✅ VALIDAÇÃO OBRIGATÓRIA - SÓ PERMITE UPDATE SE FOR UUID REAL
+      const productId = editingProduct.id;
       if (!productId) {
         console.error('[Inventory] ID nulo para update:', productId);
         addNotification('error', 'ID do produto não encontrado. Recarregue a página.');
         return;
       }
       
-      console.log('[Inventory] ✅ UUID real do Supabase será usado no update:', productId);
-      console.log('[Inventory] ✅ Tipo do ID:', typeof productId);
-      console.log('[Inventory] ✅ Comprimento do ID:', productId?.length);
+      // ✅ VERIFICAÇÃO SEQUENCIAL DO UUID - BLOQUEIA IDs CURTOS
+      if (typeof productId !== 'string') {
+        console.error('[Inventory] ID não é string:', typeof productId, productId);
+        addNotification('error', `ERRO FATAL: ID é ${typeof productId}, mas deve ser string UUID. Recarregue a página.`);
+        return;
+      }
+      
+      if (productId.length < 36) {
+        console.error('[Inventory] ID muito curto (não é UUID):', productId, 'comprimento:', productId.length);
+        addNotification('error', `ERRO FATAL: ID "${productId}" tem ${productId.length} caracteres, mas UUID tem 36. Use o painel do Supabase para converter este produto.`);
+        return;
+      }
+      
+      // ✅ VERIFICAÇÃO DE FORMATO UUID
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidPattern.test(productId)) {
+        console.error('[Inventory] ID não tem formato UUID:', productId);
+        addNotification('error', `ERRO FATAL: ID "${productId}" não tem formato UUID válido. Use o painel do Supabase para converter.`);
+        return;
+      }
+      
+      console.log('[Inventory] ✅ UUID VALIDADO - executando update:', productId);
       
       const { data, error } = await supabase
         .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
