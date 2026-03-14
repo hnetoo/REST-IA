@@ -432,7 +432,7 @@ const Finance = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {expenses.slice(-20).map(expense => (
+                  {(expenses || []).slice(-20).map(expense => (
                     <tr key={expense.id} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4">
                         <div>
@@ -442,17 +442,17 @@ const Finance = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`text-[8px] font-black uppercase ${getCategoryColor(expense.category)}`}>
-                          {expense.category.replace('_', ' ')}
+                          {expense.category?.replace('_', ' ') || 'OUTROS'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount)}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount || 0)}</td>
                       <td className="px-6 py-4">
                         <span className={`text-[8px] font-black uppercase ${getStatusColor(expense.status)}`}>
-                          {expense.status.replace('_', ' ')}
+                          {expense.status?.replace('_', ' ') || 'PENDENTE'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs text-slate-500 font-mono">
-                        {new Date(expense.date).toLocaleDateString('pt-AO')}
+                        {new Date(expense.date || new Date()).toLocaleDateString('pt-AO')}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex gap-2 justify-end">
