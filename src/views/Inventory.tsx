@@ -279,16 +279,17 @@ const Inventory = () => {
       
       console.log('[Inventory] Categoria validada no Supabase (UUID):', categoryCheck.id);
       
-      // PASSO 1: Inserir produto no Supabase PRIMEIRO
+      // PASSO 1: Inserir produto no Supabase PRIMEIRO - ✅ SEM ENVIAR ID
       const { data: insertedProduct, error: insertError } = await supabase.from('products').insert([{
+        // ✅ NÃO ENVIAR O CAMPO ID - DEIXAR O SUPABASE GERAR AUTOMATICAMENTE
         name: newProduct.name,
         description: newProduct.description || '', // ✅ text
         price: Number(parseFloat(newProduct.price)), // ✅ numeric - garanta que é Number
         cost_price: Number(parseFloat(newProduct.price) * 0.6), // ✅ numeric - garanta que é Number
         image_url: null, // ✅ text - inicialmente null
         is_active: newProduct.is_active, // ✅ boolean
-        category_id: newProduct.category_id // ✅ uuid
-        // ✅ REMOVIDOS: categoryId, isFeatured, isVisibleDigital (não existem na tabela)
+        category_id: newProduct.category_id // ✅ category_id NÃO categoryId
+        // ✅ REMOVIDOS: id, categoryId, isFeatured, isVisibleDigital (não existem na tabela)
       }]).select().single();
       
       if (insertError) {
@@ -303,7 +304,22 @@ const Inventory = () => {
         return;
       }
       
-      console.log('[Inventory] ✅ Produto criado no Supabase com ID:', insertedProduct.id);
+      // ✅ VALIDAÇÃO CRÍTICA - VERIFICAR SE ID TEM 36 CARACTERES
+      if (insertedProduct.id.length !== 36) {
+        console.error('[Inventory] ❌ ID INVÁLIDO RETORNADO:', {
+          id: insertedProduct.id,
+          length: insertedProduct.id.length,
+          expected: 36
+        });
+        addNotification('error', `ID inválido retornado: ${insertedProduct.id} (comprimento: ${insertedProduct.id.length})`);
+        return;
+      }
+      
+      console.log('[Inventory] ✅ Produto criado no Supabase com UUID VÁLIDO:', {
+        id: insertedProduct.id,
+        length: insertedProduct.id.length,
+        isValid: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(insertedProduct.id)
+      });
       
       // PASSO 2: Upload da imagem (se existir)
       let imageUrl = null;
