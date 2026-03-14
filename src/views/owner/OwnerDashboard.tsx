@@ -330,77 +330,38 @@ const OwnerDashboard = () => {
       // Obter range de datas para o período selecionado
       const { startDate, endDate } = getDateRange(period);
       
-      // Buscar despesas reais do Supabase (LÓGICA INTELIGENTE DE PERÍODO)
+      // Buscar despesas reais do Supabase (EXATAMENTE IGUAL À APP PRINCIPAL)
       let totalDespesas = 0;
       try {
-        let expensesQuery = supabase
+        const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
-          .select('amount_kz, created_at, category');
+          .select('amount_kz, created_at, category')
+          .gte('created_at', startDate)
+          .lte('created_at', endDate);
 
-        // LÓGICA INTELIGENTE: Para HOJE, buscar últimas 24h ou mês corrente
-        if (period === 'HOJE') {
-          // Tenta buscar últimas 24h primeiro
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          
-          const { data: todayExpensesData, error: todayExpensesError } = await expensesQuery
-            .gte('created_at', yesterday.toISOString())
-            .lte('created_at', endDate);
+        console.log('[DASHBOARD] Dados brutos das despesas:', expensesData);
+        console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
 
-          // Se não encontrar despesas nas últimas 24h, busca do mês corrente
-          if (!todayExpensesError && todayExpensesData && todayExpensesData.length > 0) {
-            totalDespesas = todayExpensesData.reduce((sum, expense) => sum + (Number(expense.amount_kz) || 0), 0);
-            console.log('[DASHBOARD] Despesas últimas 24h:', totalDespesas);
-          } else {
-            // Fallback: buscar do mês corrente
-            const startOfMonth = new Date();
-            startOfMonth.setDate(1);
-            startOfMonth.setHours(0, 0, 0, 0);
-            
-            const { data: monthExpensesData, error: monthExpensesError } = await supabase
-              .from('expenses')
-              .select('amount_kz, created_at, category')
-              .gte('created_at', startOfMonth.toISOString())
-              .lte('created_at', endDate);
-
-            if (!monthExpensesError && monthExpensesData && monthExpensesData.length > 0) {
-              totalDespesas = monthExpensesData.reduce((sum, expense) => sum + (Number(expense.amount_kz) || 0), 0);
-              console.log('[DASHBOARD] Despesas mês corrente (fallback):', totalDespesas);
-            } else {
-              console.log('[DASHBOARD] Sem despesas encontradas (nem 24h nem mês)');
-            }
-          }
+        if (!expensesError && expensesData && expensesData.length > 0) {
+          // CÁLCULO EXATO COMO NA APP PRINCIPAL
+          totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+          console.log('[DASHBOARD] Total despesas calculado:', totalDespesas);
         } else {
-          // Para outros períodos, usar o filtro normal
-          const { data: expensesData, error: expensesError } = await expensesQuery
-            .gte('created_at', startDate)
-            .lte('created_at', endDate);
-
-          console.log('[DASHBOARD] Dados brutos das despesas:', expensesData);
-          console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
-
-          if (!expensesError && expensesData && expensesData.length > 0) {
-            totalDespesas = expensesData.reduce((sum, expense) => sum + (Number(expense.amount_kz) || 0), 0);
-            console.log('[DASHBOARD] Total despesas calculado:', totalDespesas);
-          } else {
-            console.log('[DASHBOARD] Sem dados de despesas ou array vazio');
-          }
+          console.log('[DASHBOARD] Sem dados de despesas ou array vazio');
         }
       } catch (expError) {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
       }
 
-      // Buscar folha salarial da tabela staff (VALOR FIXO MENSAL 183.000 Kz)
+      // Buscar folha salarial da tabela staff (SEM FILTROS - TODOS FUNCIONÁRIOS)
       let folhaSalarial = 0;
       try {
-        let staffQuery = supabase
+        const { data: staffData, error: staffError } = await supabase
           .from('staff')
-          .select('base_salary_kz, full_name, status');
+          .select('base_salary_kz, full_name, status'); // SEM FILTRO DE STATUS/ACTIVE
 
-        // Buscar folha total mensal (VALOR FIXO 183.000 Kz)
-        const { data: staffData, error: staffError } = await staffQuery;
-        
         console.log('[DASHBOARD] Dados brutos da folha salarial:', staffData);
+        console.log('[DASHBOARD] Número de funcionários encontrados:', staffData?.length || 0);
         console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
         if (!staffError && staffData && staffData.length > 0) {

@@ -108,7 +108,7 @@ const OwnerMobile = () => {
       // Obter range de datas para o período selecionado
       const { startDate, endDate } = getDateRange(period);
       
-      // Buscar vendas reais do Supabase (MESMA LÓGICA DO DASHBOARD)
+      // Buscar vendas reais do Supabase (VALOR REAL 99.600 Kz)
       let totalVendas = 0;
       try {
         const { data: ordersData, error: ordersError } = await supabase
@@ -118,8 +118,12 @@ const OwnerMobile = () => {
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
+        console.log('[MOBILE] Dados brutos das vendas:', ordersData);
+        console.log('[MOBILE] Número de vendas encontradas:', ordersData?.length || 0);
+
         if (!ordersError && ordersData && ordersData.length > 0) {
           totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+          console.log('[MOBILE] Total vendas calculado:', totalVendas);
         }
       } catch (ordersError) {
         console.error('[MOBILE] Erro ao buscar vendas:', ordersError);
