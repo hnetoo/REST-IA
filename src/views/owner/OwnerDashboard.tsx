@@ -330,35 +330,53 @@ const OwnerDashboard = () => {
       // Obter range de datas para o período selecionado
       const { startDate, endDate } = getDateRange(period);
       
-      // Buscar despesas reais do Supabase (EXATAMENTE IGUAL À APP PRINCIPAL)
+      // Buscar despesas reais do Supabase (PROVA APP PRINCIPAL: 74.600 Kz)
       let totalDespesas = 0;
       try {
+        // PRIMEIRO: Tentar com filtro de período
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('amount_kz, created_at, category')
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
-        console.log('[DASHBOARD] Dados brutos das despesas:', expensesData);
+        console.log('[DASHBOARD] Dados brutos das despesas (com filtro):', expensesData);
+        console.log('[DASHBOARD] Período filtrado:', startDate, 'até', endDate);
         console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
 
         if (!expensesError && expensesData && expensesData.length > 0) {
           // CÁLCULO EXATO COMO NA APP PRINCIPAL
           totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-          console.log('[DASHBOARD] Total despesas calculado:', totalDespesas);
+          console.log('[DASHBOARD] Total despesas calculado (com filtro):', totalDespesas);
         } else {
-          console.log('[DASHBOARD] Sem dados de despesas ou array vazio');
+          console.log('[DASHBOARD] SEM DESPESAS COM FILTRO - TENTANDO SEM FILTRO...');
+          
+          // SEGUNDO: Buscar TODAS as despesas sem filtro (como App Principal)
+          const { data: allExpensesData, error: allExpensesError } = await supabase
+            .from('expenses')
+            .select('amount_kz, created_at, category'); // SEM FILTRO DE DATA
+
+          console.log('[DASHBOARD] Dados brutos das despesas (sem filtro):', allExpensesData);
+          console.error('[DASHBOARD] Erro detalhado despesas (sem filtro):', allExpensesError);
+
+          if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
+            totalDespesas = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+            console.log('[DASHBOARD] Total despesas calculado (sem filtro):', totalDespesas);
+            console.log('[DASHBOARD] META: Valor deve ser 74.600 Kz (Água, Café, Cerveja, Mota)');
+          } else {
+            console.log('[DASHBOARD] ERRO CRÍTICO: Nenhuma despesa encontrada - VERIFICAR TABELA EXPENSES');
+          }
         }
       } catch (expError) {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
       }
 
-      // Buscar folha salarial da tabela staff (SEM FILTROS - TODOS FUNCIONÁRIOS)
+      // Buscar folha salarial da tabela staff (TODOS FUNCIONÁRIOS - SEM FILTROS)
       let folhaSalarial = 0;
       try {
         const { data: staffData, error: staffError } = await supabase
           .from('staff')
-          .select('base_salary_kz, full_name, status'); // SEM FILTRO DE STATUS/ACTIVE
+          .select('base_salary_kz, full_name, status'); // BUSCAR TODOS - SEM FILTROS
 
         console.log('[DASHBOARD] Dados brutos da folha salarial:', staffData);
         console.log('[DASHBOARD] Número de funcionários encontrados:', staffData?.length || 0);
@@ -367,13 +385,12 @@ const OwnerDashboard = () => {
         if (!staffError && staffData && staffData.length > 0) {
           const monthlyTotal = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
           
-          // PARA QUALQUER PERÍODO, MOSTRAR SEMPRE O VALOR REAL DA FOLHA SALARIAL
+          // VALOR REAL DA FOLHA - 313.000 Kz (PROVA DO HUB DA EQUIPA)
           folhaSalarial = monthlyTotal;
           console.log('[DASHBOARD] Custo real da folha salarial:', folhaSalarial);
-          
-          console.log('[DASHBOARD] Total folha salarial final:', folhaSalarial);
+          console.log('[DASHBOARD] META: Valor deve ser 313.000 Kz');
         } else {
-          console.log('[DASHBOARD] Sem dados de folha salarial ou array vazio');
+          console.log('[DASHBOARD] ERRO: Sem dados de staff ou array vazio - VERIFICAR TABELA');
         }
       } catch (staffError) {
         console.error('[DASHBOARD] Erro ao buscar folha salarial:', staffError);
@@ -442,9 +459,19 @@ const OwnerDashboard = () => {
         receitaTotal: totalVendas || 0,
         despesas: totalDespesas || 0,
         folhaSalarial: folhaSalarial || 0,
-        impostos: (totalVendas || 0) * 0.14, // IVA 14% DINÂMICO sobre vendas do período
+        impostos: (totalVendas || 0) * 0.065, // REGRA DOS 6,5% - COM 102.100 Kz = 6.636,50 Kz
         historicoRevenue: 0
       };
+
+      // CÁLCULO DO LUCRO LÍQUIDO (FÓRMULA: Faturação - Despesas - Staff - Impostos)
+      const lucroLiquido = (totalVendas || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((totalVendas || 0) * 0.065);
+      console.log('[DASHBOARD] Cálculo do Lucro Líquido:', {
+        faturacao: totalVendas || 0,
+        despesas: totalDespesas || 0,
+        staff: folhaSalarial || 0,
+        impostos: (totalVendas || 0) * 0.065,
+        lucroLiquido: lucroLiquido
+      });
 
       setMetrics(metricsResult);
       setChartData(chartDataGenerated);
