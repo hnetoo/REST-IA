@@ -83,7 +83,8 @@ const Employees = () => {
         externalBioId: empForm.externalBioId || `${Math.floor(Math.random() * 9999)}`
       };
       
-      addEmployee(newEmployeeData);
+      // NÃO ADICIONAR MANUALMENTE AO ESTADO LOCAL - DEIXAR O SNAPSHOT/REVALIDATE TRABALHAR
+      // addEmployee(newEmployeeData); // REMOVIDO - EVITA DUPLICAÇÃO NA UI
       
       // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
       const { addEmployeeWithPersistence } = useStore.getState();
@@ -93,17 +94,26 @@ const Employees = () => {
             // Só reabilitar botão após resposta do Supabase
             setIsSubmitting(false);
             setHasSubmitted(false);
+            setEmpForm({
+              name: '',
+              role: 'GARCOM',
+              phone: '',
+              salary: 0,
+              workDaysPerMonth: 22,
+              dailyWorkHours: 8,
+              color: '#06b6d4',
+              externalBioId: ''
+            });
+            setIsEmpModalOpen(false);
+            setEditingEmp(null);
+            addNotification('success', 'Funcionário adicionado com sucesso!');
           })
           .catch((error) => {
-            // Reabilitar botão mesmo em caso de erro
-            console.error('[STAFF] Erro na persistência:', error);
+            console.error('Erro ao adicionar funcionário:', error);
             setIsSubmitting(false);
             setHasSubmitted(false);
+            addNotification('error', 'Erro ao adicionar funcionário. Tente novamente.');
           });
-      } else {
-        // Fallback se função não existir
-        setIsSubmitting(false);
-        setHasSubmitted(false);
       }
     }
     setIsEmpModalOpen(false);
@@ -136,7 +146,11 @@ const Employees = () => {
     }
   };
 
-  const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredEmployees = useMemo(() => {
+  // LIMPEZA DE LISTA - REMOVER IDs REPETIDOS
+  const uniqueStaff = employees.filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => t.id === v.id) === i);
+  return uniqueStaff.filter((e: any) => e.name.toLowerCase().includes(searchTerm.toLowerCase()));
+}, [employees, searchTerm]);
   const filteredShifts = workShifts.filter(s => s.dayOfWeek === selectedDay);
 
   const daysOfWeek = [

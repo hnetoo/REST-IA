@@ -381,6 +381,7 @@ const OwnerDashboard = () => {
           const monthlyTotal = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
           folhaSalarial = monthlyTotal;
           console.log('[DASHBOARD] Custo real da folha salarial:', folhaSalarial);
+          console.log('[DASHBOARD] NÚMERO DE FUNCIONÁRIOS ENCONTRADOS:', staffData.length);
         } else {
           // TABELA VAZIA - VALOR ZERO
           folhaSalarial = 0;
