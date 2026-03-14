@@ -925,16 +925,7 @@ restoreFromSupabase: async () => {
       
       // PERSISTÊNCIA DE DESPESAS NO SUPABASE - NOVO E CRÍTICO
       addExpenseWithPersistence: async (expense: any) => {
-        set(state => {
-          const newExpense = {
-            ...expense,
-            id: `exp-${Date.now()}`,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
-          return { expenses: [...state.expenses, newExpense] };
-        });
-        
+        // BLOQUEAR ESTADO DE LOADING
         try {
           console.log('[EXPENSE] Persistindo despesa no Supabase:', {
             id: expense.id || `exp-${Date.now()}`,

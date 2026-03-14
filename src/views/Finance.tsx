@@ -26,6 +26,7 @@ const Finance = () => {
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false); // ESTADO DE CARREGAMENTO
+  const [loading, setLoading] = useState(false); // ESTADO DE BLOQUEIO TOTAL
   const [newExpense, setNewExpense] = useState<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>({
     description: '',
     amount: 0,
@@ -97,8 +98,9 @@ const Finance = () => {
       return;
     }
     
-    // BLOQUEAR BOTÃO IMEDIATAMENTE
+    // BLOQUEIO TOTAL - IMPEDIR CLIQUES DUPLOS
     setIsSubmitting(true);
+    setLoading(true);
     
     try {
       // Adicionar ao estado local (Optimistic UI)
@@ -141,6 +143,7 @@ const Finance = () => {
       
       // REATIVAR BOTÃO APENAS EM CASO DE ERRO
       setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -459,7 +462,7 @@ const Finance = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-black text-white">
-                      {formatKz(expenses?.reduce((acc, item) => acc + (Number(item.amount_kz || item.amount || 0), 0), 0))}
+                      {formatKz(expenses?.reduce((acc, item) => acc + (Number(item.amount || 0), 0), 0))}
                     </div>
                     <p className="text-xs text-red-300 uppercase tracking-wider">
                       {expenses?.length || 0} despesas
@@ -689,14 +692,14 @@ const Finance = () => {
                 </button>
                 <button 
                   onClick={editingExpense ? handleUpdateExpense : handleAddExpense}
-                  disabled={isSubmitting} // BLOQUEAR BOTÃO DURANTE ENVIO
+                  disabled={isSubmitting || loading} // BLOQUEIO TOTAL - CLIQUES DUPLOS
                   className={`flex-1 py-4 font-black uppercase text-[10px] tracking-widest rounded-2xl transition-all ${
-                    isSubmitting 
+                    isSubmitting || loading
                       ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
                       : 'bg-primary text-black shadow-glow hover:bg-primary/90'
                   }`}
                 >
-                  {isSubmitting ? (
+                  {(isSubmitting || loading) ? (
                     <span className="flex items-center justify-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
                       A guardar...
