@@ -233,12 +233,13 @@ const Inventory = () => {
       // PASSO 1: Inserir produto no Supabase PRIMEIRO
       const { data: insertedProduct, error: insertError } = await supabase.from('products').insert([{
         name: newProduct.name,
-        description: newProduct.description || '', // ✅ CAMPO DO SUPABASE
-        price: parseFloat(newProduct.price), // ✅ Decimal para Kwanzas
-        cost_price: parseFloat(newProduct.price) * 0.6, // ✅ CAMPO DO SUPABASE
-        image_url: null, // ✅ Inicialmente null, será atualizado depois
-        is_active: newProduct.is_active,
-        category_id: newProduct.category_id // ✅ UUID real da categoria
+        description: newProduct.description || '', // ✅ text
+        price: Number(parseFloat(newProduct.price)), // ✅ numeric - garanta que é Number
+        cost_price: Number(parseFloat(newProduct.price) * 0.6), // ✅ numeric - garanta que é Number
+        image_url: null, // ✅ text - inicialmente null
+        is_active: newProduct.is_active, // ✅ boolean
+        category_id: newProduct.category_id // ✅ uuid
+        // ✅ REMOVIDOS: categoryId, isFeatured, isVisibleDigital (não existem na tabela)
       }]).select().single();
       
       if (insertError) {
@@ -372,15 +373,16 @@ const Inventory = () => {
     // ✅ ATUALIZAR NO SUPABASE
     try {
       console.log('[Inventory] Atualizando produto:', editingProduct);
-      // ✅ LIMPEZA DE CAMPOS - APENAS COLUNAS DO SUPABASE
+      // ✅ LIMPEZA ABSOLUTA DO SCHEMA - APENAS COLUNAS EXATAS DO SUPABASE
       const cleanUpdateData = {
-        name: newProduct.name?.trim(),
-        description: newProduct.description?.trim() || '', // ✅ CAMPO DO SUPABASE
-        price: priceNumber,
-        cost_price: priceNumber * 0.6, // ✅ CAMPO DO SUPABASE
-        image_url: newProduct.image_url?.trim() || null,
-        is_active: newProduct.is_active,
-        category_id: newProduct.category_id?.trim() || null
+        name: newProduct.name?.trim(), // ✅ text
+        description: newProduct.description?.trim() || '', // ✅ text
+        price: Number(priceNumber), // ✅ numeric - garanta que é Number
+        cost_price: Number(priceNumber * 0.6), // ✅ numeric - garanta que é Number
+        image_url: newProduct.image_url?.trim() || null, // ✅ text - apenas URL string
+        is_active: newProduct.is_active, // ✅ boolean
+        category_id: newProduct.category_id?.trim() || null // ✅ uuid
+        // ✅ REMOVIDOS: categoryId, isFeatured, isVisibleDigital (não existem na tabela)
       };
       
       // ✅ VALIDAÇÃO DE CAMPOS
