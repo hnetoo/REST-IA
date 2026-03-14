@@ -244,6 +244,26 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
       }
 
+      // Buscar folha salarial da tabela staff (CORREÇÃO)
+      let folhaSalarial = 0;
+      try {
+        const { data: staffData, error: staffError } = await supabase
+          .from('staff')
+          .select('base_salary_kz');
+
+        console.log('[DASHBOARD] Dados brutos da folha salarial:', staffData);
+        console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
+
+        if (!staffError && staffData && staffData.length > 0) {
+          folhaSalarial = staffData.reduce((sum, staff) => sum + (Number(staff.base_salary_kz) || 0), 0);
+          console.log('[DASHBOARD] Total folha salarial calculado:', folhaSalarial);
+        } else {
+          console.log('[DASHBOARD] Sem dados de folha salarial ou array vazio');
+        }
+      } catch (staffError) {
+        console.error('[DASHBOARD] Erro ao buscar folha salarial:', staffError);
+      }
+
       // Buscar vendas reais do Supabase (CORREÇÃO DE COLUNA)
       let totalVendas = 0;
       try {
@@ -287,7 +307,7 @@ const OwnerDashboard = () => {
         totalVendas: totalVendas || 0,
         receitaTotal: totalVendas || 0,
         despesas: totalDespesas || 0,
-        folhaSalarial: 0, // Calcular depois se necessário
+        folhaSalarial: folhaSalarial || 0,
         impostos: 0, // Calcular depois se necessário
         historicoRevenue: 0
       };
@@ -297,7 +317,8 @@ const OwnerDashboard = () => {
       console.log('[DASHBOARD] Métricas finais:', {
         totalVendas: metricsResult.totalVendas,
         totalDespesas: metricsResult.despesas,
-        lucroLiquido: metricsResult.totalVendas - metricsResult.despesas,
+        folhaSalarial: metricsResult.folhaSalarial,
+        lucroLiquido: metricsResult.totalVendas - metricsResult.despesas - metricsResult.folhaSalarial,
         vendasHoje: metricsResult.vendasHoje
       });
       
