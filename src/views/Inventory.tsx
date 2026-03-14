@@ -318,11 +318,23 @@ const Inventory = () => {
       
       console.log('[Inventory] Schema limpo:', cleanUpdateData);
       console.log('[Inventory] Produto ID (UUID?):', editingProduct.id);
+      console.log('[Inventory] Tipo do ID:', typeof editingProduct.id);
+      console.log('[Inventory] Formato do ID:', editingProduct.id?.length, 'caracteres');
+      
+      // ✅ VALIDAÇÃO DE UUID - ANTES DO UPDATE
+      const productId = editingProduct.id;
+      if (!productId || typeof productId !== 'string' || productId.length < 10) {
+        console.error('[Inventory] ID inválido para update:', productId);
+        addNotification('error', 'ID do produto inválido. Recarregue a página.');
+        return;
+      }
+      
+      console.log('[Inventory] UUID validado, executando update...');
       
       const { data, error } = await supabase
         .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
         .update(cleanUpdateData)
-        .eq('id', editingProduct.id)
+        .eq('id', productId) // ✅ USANDO UUID VALIDADO
         .select();
 
       if (error) {
