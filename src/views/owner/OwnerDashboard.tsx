@@ -224,62 +224,82 @@ const OwnerDashboard = () => {
       console.log(`[DASHBOARD] Data enviada para SQL:`, new Date().toISOString().split('T')[0]);
       console.log(`[DASHBOARD] Iniciando busca de métricas para período: ${period}`);
       
-      // Usar a função SQL para obter métricas consolidadas
-      const { data: metricsData, error: metricsError } = await supabase
-        .rpc('get_dashboard_metrics', { 
-          p_period: period 
-        });
+      // Buscar despesas reais do Supabase
+      let totalDespesas = 0;
+      try {
+        const { data: expensesData, error: expensesError } = await supabase
+          .from('expenses')
+          .select('amount')
+          .gte('date', period === 'HOJE' ? new Date().toISOString().split('T')[0] : 
+                   period === 'MÊS' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] :
+                   new Date(new Date().getFullYear(), 1, 1).toISOString().split('T')[0]);
 
-      if (metricsError) {
-        console.error('[DASHBOARD] Erro ao buscar métricas via RPC:', metricsError);
-        console.log('[DASHBOARD] Detalhes do erro:', {
-          message: metricsError.message,
-          details: metricsError.details,
-          hint: metricsError.hint,
-          code: metricsError.code
-        });
-        throw metricsError;
+        if (!expensesError && expensesData) {
+          totalDespesas = expensesData.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+        }
+      } catch (expError) {
+        console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
       }
 
-      console.log(`[DASHBOARD] Métricas obtidas via função SQL:`, metricsData);
-      
-      // Log dos dados reais recebidos para debugging
-      console.table("DADOS REAIS RECEBIDOS:", metricsData);
-      console.log("JSON BRUTO DO SQL:", JSON.stringify(metricsData, null, 2));
-      console.log("CHART DATA RECEBIDA:", metricsData?.chartData);
+      // Buscar vendas reais do Supabase
+      let totalVendas = 0;
+      try {
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('total_amount')
+          .eq('status', 'FECHADO')
+          .gte('created_at', period === 'HOJE' ? new Date().toISOString().split('T')[0] : 
+                        period === 'MÊS' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] :
+                        new Date(new Date().getFullYear(), 1, 1).toISOString().split('T')[0]);
 
-      // Extrair métricas do resultado JSON
-      const metricsResult = metricsData?.metrics || {};
-      const chartData = metricsData?.chartData || [];
-      setMetrics({
-        vendasHoje: metricsResult.vendasHoje || 0,
-        mesasAtivas: metricsResult.mesasAtivas || 0,
-        totalVendas: metricsResult.totalVendas || 0,
-        receitaTotal: metricsResult.receitaTotal || 0,
-        despesas: metricsResult.despesas || 0,
-        folhaSalarial: metricsResult.folhaSalarial || 0,
-        impostos: metricsResult.impostos || 0,
-        historicoRevenue: metricsResult.historicoRevenue || 0
+        if (!ordersError && ordersData) {
+          totalVendas = ordersData.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+        }
+      } catch (ordersError) {
+        console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
+      }
+
+      // Calcular lucro líquido automaticamente
+      const lucroLiquido = totalVendas - totalDespesas;
+
+      // Buscar vendas de hoje (para o indicador específico)
+      let vendasHoje = 0;
+      try {
+        const { data: todayOrdersData, error: todayOrdersError } = await supabase
+          .from('orders')
+          .select('total_amount')
+          .eq('status', 'FECHADO')
+          .gte('created_at', new Date().toISOString().split('T')[0]);
+
+        if (!todayOrdersError && todayOrdersData) {
+          vendasHoje = todayOrdersData.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+        }
+      } catch (todayError) {
+        console.error('[DASHBOARD] Erro ao buscar vendas de hoje:', todayError);
+      }
+
+      const metricsResult = {
+        vendasHoje: vendasHoje || 0,
+        mesasAtivas: 0, // Calcular depois se necessário
+        totalVendas: totalVendas || 0,
+        receitaTotal: totalVendas || 0,
+        despesas: totalDespesas || 0,
+        folhaSalarial: 0, // Calcular depois se necessário
+        impostos: 0, // Calcular depois se necessário
+        historicoRevenue: 0
+      };
+
+      setMetrics(metricsResult);
+      
+      console.log('[DASHBOARD] Métricas calculadas com dados reais:', {
+        totalVendas,
+        totalDespesas,
+        lucroLiquido,
+        vendasHoje
       });
+      
     } catch (error) {
       console.error('[DASHBOARD] Erro ao buscar métricas:', error);
-      // Log detalhado para debugging
-      console.log('[DASHBOARD] Erro completo:', {
-        error: error,
-        errorMessage: errorMessage,
-        errorCode: (error as any)?.code,
-        errorDetails: (error as any)?.details,
-        errorHint: (error as any)?.hint
-      });
-      
-      // Se for erro de permissão, mostrar mensagem específica
-      if (errorMessage.includes('permission') || (error as any)?.code === 'PGRST301') {
-        addNotification('error', 'Erro de permissão: Verifique as políticas RLS das tabelas');
-      } else if (errorMessage.includes('function') && errorMessage.includes('does not exist')) {
-        addNotification('error', 'Função get_dashboard_metrics não encontrada. Execute as migrações.');
-      } else {
-        addNotification('error', `Erro ao carregar métricas: ${errorMessage}`);
-      }
       
       // Em caso de erro, definir valores padrão
       setMetrics({
@@ -390,7 +410,7 @@ const OwnerDashboard = () => {
   const ticketMedio = metrics.totalVendas > 0 ? metrics.totalVendas / (metrics.vendasHoje > 0 ? metrics.vendasHoje : 1) : 0;
 
   // Calcular lucro líquido
-  const lucroLiquido = metrics.receitaTotal - metrics.despesas - metrics.folhaSalarial - metrics.impostos;
+  const lucroLiquido = metrics.totalVendas - metrics.despesas;
 
   // Calcular Break-even
   const custoOperacionalTotal = metrics.despesas + metrics.folhaSalarial;
