@@ -67,6 +67,51 @@ const OwnerDashboard = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [notifications, setNotifications] = useState<Array<{ id: string; type: 'success' | 'error'; message: string; timestamp: number }>>([]);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Função para obter range de datas baseado no período
+  const getDateRange = (periodo: 'HOJE' | 'SEMANA' | 'MÊS' | 'ANO') => {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    switch (periodo) {
+      case 'HOJE':
+        return {
+          startDate: startOfDay.toISOString(),
+          endDate: endOfDay.toISOString()
+        };
+      
+      case 'SEMANA':
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay()); // Domingo como início da semana
+        startOfWeek.setHours(0, 0, 0, 0);
+        return {
+          startDate: startOfWeek.toISOString(),
+          endDate: endOfDay.toISOString()
+        };
+      
+      case 'MÊS':
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        return {
+          startDate: startOfMonth.toISOString(),
+          endDate: endOfDay.toISOString()
+        };
+      
+      case 'ANO':
+        const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        return {
+          startDate: startOfYear.toISOString(),
+          endDate: endOfDay.toISOString()
+        };
+      
+      default:
+        return {
+          startDate: startOfDay.toISOString(),
+          endDate: endOfDay.toISOString()
+        };
+    }
+  };
 
   // Verificação SIMPLES - sem complexidade
   useEffect(() => {
@@ -215,15 +260,21 @@ const OwnerDashboard = () => {
   // Buscar métricas do Supabase
   const fetchMetrics = async () => {
     try {
+      setIsLoading(true);
       console.log(`[DASHBOARD] Data enviada para SQL:`, new Date().toISOString().split('T')[0]);
       console.log(`[DASHBOARD] Iniciando busca de métricas para período: ${period}`);
       
-      // Buscar despesas reais do Supabase (CORREÇÃO DE COLUNA)
+      // Obter range de datas para o período selecionado
+      const { startDate, endDate } = getDateRange(period);
+      
+      // Buscar despesas reais do Supabase (COM FILTRO DE PERÍODO)
       let totalDespesas = 0;
       try {
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
-          .select('amount_kz, created_at, category');
+          .select('amount_kz, created_at, category')
+          .gte('created_at', startDate)
+          .lte('created_at', endDate);
 
         console.log('[DASHBOARD] Dados brutos das despesas:', expensesData);
         console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
@@ -238,33 +289,48 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
       }
 
-      // Buscar folha salarial da tabela staff (COLUNAS REAIS CONFIRMADAS)
+      // Buscar folha salarial da tabela staff (COM FILTRO DE PERÍODO)
       let folhaSalarial = 0;
       try {
-        const { data: staffData, error: staffError } = await supabase
+        let staffQuery = supabase
           .from('staff')
           .select('base_salary_kz, full_name, status');
 
-        console.log('[DASHBOARD] Dados brutos da folha salarial:', staffData);
-        console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
-
-        if (!staffError && staffData && staffData.length > 0) {
-          folhaSalarial = staffData.reduce((sum, staff) => sum + (Number(staff.base_salary_kz || 0), 0), 0);
-          console.log('[DASHBOARD] Total folha salarial calculado:', folhaSalarial);
+        // Para Dia, mostrar custo diário proporcional
+        if (period === 'HOJE') {
+          // Buscar folha total mensal primeiro
+          const { data: monthlyStaffData } = await staffQuery;
+          const monthlyTotal = monthlyStaffData?.reduce((sum, staff) => sum + (Number(staff.base_salary_kz) || 0), 0) || 0;
+          // Calcular custo diário (Mensal / 30)
+          folhaSalarial = Math.round(monthlyTotal / 30);
+          console.log('[DASHBOARD] Custo diário calculado (Mensal/30):', folhaSalarial);
         } else {
-          console.log('[DASHBOARD] Sem dados de folha salarial ou array vazio');
+          // Para Semana, Mês e Ano, mostrar custo total
+          const { data: staffData, error: staffError } = await staffQuery;
+          
+          console.log('[DASHBOARD] Dados brutos da folha salarial:', staffData);
+          console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
+
+          if (!staffError && staffData && staffData.length > 0) {
+            folhaSalarial = staffData.reduce((sum, staff) => sum + (Number(staff.base_salary_kz) || 0), 0);
+            console.log('[DASHBOARD] Total folha salarial calculado:', folhaSalarial);
+          } else {
+            console.log('[DASHBOARD] Sem dados de folha salarial ou array vazio');
+          }
         }
       } catch (staffError) {
         console.error('[DASHBOARD] Erro ao buscar folha salarial:', staffError);
       }
 
-      // Buscar vendas reais do Supabase (STATUS CORRETO: closed)
+      // Buscar vendas reais do Supabase (COM FILTRO DE PERÍODO)
       let totalVendas = 0;
       try {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .eq('status', 'closed');
+          .eq('status', 'closed')
+          .gte('created_at', startDate)
+          .lte('created_at', endDate);
 
         console.log('[DASHBOARD] Dados brutos das vendas:', ordersData);
         console.error('[DASHBOARD] Erro detalhado vendas:', ordersError);
@@ -285,7 +351,8 @@ const OwnerDashboard = () => {
         const { data: todayOrdersData, error: todayOrdersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .eq('status', 'closed');
+          .eq('status', 'closed')
+          .gte('created_at', startDate);
 
         if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
           vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
@@ -317,12 +384,13 @@ const OwnerDashboard = () => {
         receitaTotal: totalVendas || 0,
         despesas: totalDespesas || 0,
         folhaSalarial: folhaSalarial || 0,
-        impostos: (totalVendas || 0) * 0.14, // IVA 14%
+        impostos: (totalVendas || 0) * 0.14, // IVA 14% sobre vendas do período
         historicoRevenue: 0
       };
 
       setMetrics(metricsResult);
       setChartData(chartDataGenerated);
+      setIsLoading(false);
       
       console.log('[DASHBOARD] Métricas finais:', {
         totalVendas: metricsResult.totalVendas,
@@ -499,14 +567,18 @@ const OwnerDashboard = () => {
           {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
             <button
               key={p}
-              onClick={() => setPeriod(p)}
+              onClick={() => {
+                setPeriod(p);
+                fetchMetrics(); // Recarregar dados ao mudar período
+              }}
+              disabled={isLoading}
               className={`px-4 py-2 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
                 period === p 
                   ? 'bg-cyan-500 text-black shadow-lg' 
                   : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
-              }`}
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {p}
+              {isLoading ? 'Carregando...' : p}
             </button>
           ))}
         </div>
