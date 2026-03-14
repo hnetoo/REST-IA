@@ -703,9 +703,9 @@ const SystemHub = () => {
     const [localSettings, setLocalSettings] = useState(settings);
     const [isSaving, setIsSaving] = useState(false);
     const [logs, setLogs] = useState([
-      { id: 1, timestamp: new Date().toISOString(), level: 'INFO', message: 'Sistema inicializado com sucesso' },
-      { id: 2, timestamp: new Date(Date.now() - 3600000).toISOString(), level: 'WARNING', message: 'Conexao com banco de dados instavel' },
-      { id: 3, timestamp: new Date(Date.now() - 7200000).toISOString(), level: 'ERROR', message: 'Falha ao processar pagamento #1234' }
+      { id: crypto.randomUUID(), timestamp: new Date().toISOString(), level: 'INFO', message: 'Sistema inicializado com sucesso' },
+      { id: crypto.randomUUID(), timestamp: new Date(Date.now() - 3600000).toISOString(), level: 'WARNING', message: 'Conexao com banco de dados instavel' },
+      { id: crypto.randomUUID(), timestamp: new Date(Date.now() - 7200000).toISOString(), level: 'ERROR', message: 'Falha ao processar pagamento #1234' }
     ]);
 
     const handleSaveSettings = async (e: React.FormEvent) => {

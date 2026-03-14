@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
-import { idCleanupService } from '../services/idCleanupService';
+import { forceRealSyncService } from '../services/forceRealSyncService';
 import { 
   Utensils, Tag, Box, Plus, QrCode, Eye, 
   Settings, Smartphone, Globe, Trash2, RefreshCw, Download, Upload,
@@ -72,32 +72,23 @@ const Inventory = () => {
     { id: 'qr', label: 'QR Menu / Digital', icon: QrCode }
   ];
 
-  // ✅ REFRESH DE DADOS - LIMPEZA DE IDS INCOMPATÍVEIS
-  const refreshInventory = async () => {
-    console.log('[Inventory] Forçando refresh com limpeza de IDs...');
-    
-    try {
-      // Executar limpeza de IDs incompatíveis primeiro
-      await idCleanupService.cleanupLocalProducts();
+  // ✅ FORÇA SINCRONIZAÇÃO REAL - Fetch obrigatório do Supabase
+  useEffect(() => {
+    const forceRealSync = async () => {
+      console.log('[Inventory] 🔄 FORÇANDO SINCRONIZAÇÃO REAL COM SUPABASE...');
       
-      // Verificar status após limpeza
-      const status = idCleanupService.getCleanupStatus();
-      console.log('[Inventory] Status após limpeza:', status);
-      
-      if (status.needsCleanup) {
-        addNotification('warning', `Foram convertidos ${status.incompatible} produtos para UUIDs válidos.`);
-      } else {
-        addNotification('success', 'Todos os produtos já têm UUIDs válidos.');
+      try {
+        await forceRealSyncService.forceRealSync();
+        addNotification('success', 'Sincronização real com Supabase concluída!');
+      } catch (error) {
+        console.error('[Inventory] ❌ ERRO NA SINCRONIZAÇÃO FORÇADA:', error);
+        addNotification('error', 'Erro na sincronização com Supabase. Tente novamente.');
       }
-      
-      // Forçar refresh da página para carregar dados atualizados
-      window.location.reload();
-      
-    } catch (error) {
-      console.error('[Inventory] Erro na limpeza de IDs:', error);
-      addNotification('error', 'Erro ao limpar IDs incompatíveis. Tente novamente.');
-    }
-  };
+    };
+
+    // Executar sincronização forçada ao montar
+    forceRealSync();
+  }, [addNotification]);
 
   // Função para upload de imagem
   const handleImageUpload = async (file: File) => {
@@ -196,6 +187,12 @@ const Inventory = () => {
   const handleSaveProduct = async () => {
     console.log('[Inventory] Salvando produto:', newProduct);
     
+    // ✅ VALIDAÇÃO DE COMPRIMENTO - BLOQUEAR IDS CURTOS
+    if (newProduct.id && newProduct.id.toString().length < 10) {
+      addNotification('error', 'ID INVÁLIDO DETECTADO: IDs curtos não são permitidos');
+      return;
+    }
+    
     // Validar preço - evitar NaN, definir como 0 se vazio
     const priceValue = newProduct.price.replace(',', '.');
     const priceNumber = parseFloat(priceValue) || 0; // ✅ Define como 0 se vazio/inválido
@@ -211,380 +208,109 @@ const Inventory = () => {
       return;
     }
     
-    // ✅ CRIAÇÃO OBRIGATÓRIA NO SUPABASE - SEM MODO OPTIMISTA
+    // ✅ CRIAÇÃO OBRIGATÓRIA NO BANCO PRIMEIRO - SEM MODO OPTIMISTA
     try {
       console.log('[Inventory] Criando produto no Supabase primeiro...');
       
-      // ✅ CORREÇÃO DAS CATEGORIAS - USA UUIDS REAIS DO SUPABASE
-      // Primeiro, buscar todas as categorias com UUIDs reais
-      const { data: allCategories, error: categoriesError } = await supabase
-        .from('categories') // ✅ TABELA CATEGORIES COM UUID
-        .select('id, name') // ✅ APENAS CAMPOS EXISTENTES
-        .order('name');
-      
-      if (categoriesError) {
-        console.error('[Inventory] Erro ao buscar categorias:', categoriesError);
-        addNotification('error', `Erro ao carregar categorias: ${categoriesError.message}`);
-        return;
-      }
-      
-      console.log('[Inventory] Categorias encontradas no Supabase:', allCategories);
-      
-      // Se não houver categorias, criar padrão
-      if (!allCategories || allCategories.length === 0) {
-        console.log('[Inventory] Criando categorias padrão...');
-        const defaultCategories = [
-          { name: 'Bebidas' },
-          { name: 'Comidas' },
-          { name: 'Sobremesas' }
-        ];
-        
-        for (const cat of defaultCategories) {
-          const { data: newCat, error: catError } = await supabase
-            .from('categories')
-            .insert({ name: cat.name })
-            .select()
-            .single();
-          
-          if (catError) {
-            console.error('[Inventory] Erro ao criar categoria:', catError);
-          } else {
-            console.log('[Inventory] Categoria criada:', newCat);
-          }
-        }
-        
-        // Buscar novamente após criar
-        const { data: refreshedCategories } = await supabase
-          .from('categories')
-          .select('id, name')
-          .order('name');
-        
-        if (refreshedCategories) {
-          console.log('[Inventory] Categorias após criação:', refreshedCategories);
-        }
-      }
-      
-      // ✅ VERIFICAÇÃO DE CATEGORIA - USA UUID REAL
-      const { data: categoryCheck, error: categoryError } = await supabase
-        .from('categories') // ✅ TABELA CATEGORIES COM UUID
-        .select('id')
-        .eq('id', newProduct.category_id) // ✅ USA UUID REAL DA CATEGORIA
-        .single();
-      
-      if (categoryError || !categoryCheck) {
-        console.error('[Inventory] Categoria não encontrada no Supabase:', categoryError);
-        addNotification('error', `Categoria não encontrada na nuvem: ${categoryError?.message || 'Erro desconhecido'}`);
-        return;
-      }
-      
-      console.log('[Inventory] Categoria validada no Supabase (UUID):', categoryCheck.id);
-      
-      // PASSO 1: Inserir produto no Supabase PRIMEIRO - ✅ SEM ENVIAR ID
-      const { data: insertedProduct, error: insertError } = await supabase.from('products').insert([{
-        // ✅ NÃO ENVIAR O CAMPO ID - DEIXAR O SUPABASE GERAR AUTOMATICAMENTE
+      // ✅ CRIAR PRODUTO REAL NO BANCO PRIMEIRO
+      const realProduct = await forceRealSyncService.createRealProduct({
         name: newProduct.name,
-        description: newProduct.description || '', // ✅ text
-        price: Number(parseFloat(newProduct.price)), // ✅ numeric - garanta que é Number
-        cost_price: Number(parseFloat(newProduct.price) * 0.6), // ✅ numeric - garanta que é Number
-        image_url: null, // ✅ text - inicialmente null
-        is_active: newProduct.is_active, // ✅ boolean
-        category_id: newProduct.category_id // ✅ category_id NÃO categoryId
-        // ✅ REMOVIDOS: id, categoryId, isFeatured, isVisibleDigital (não existem na tabela)
-      }]).select().single();
+        description: newProduct.description || '',
+        price: priceNumber,
+        cost_price: priceNumber * 0.6,
+        image_url: newProduct.image_url || null,
+        is_active: newProduct.is_active,
+        category_id: newProduct.category_id
+      });
       
-      if (insertError) {
-        console.error('[Inventory] Erro ao criar produto no Supabase:', insertError);
-        addNotification('error', `ERRO FATAL AO GRAVAR: ${insertError.message}`);
-        return;
+      if (!realProduct || !realProduct.id) {
+        throw new Error('Produto criado mas sem ID retornado');
       }
       
-      if (!insertedProduct || !insertedProduct.id) {
-        console.error('[Inventory] Produto criado mas sem ID retornado:', insertedProduct);
-        addNotification('error', 'Produto criado mas sem ID. Contacte o suporte.');
-        return;
-      }
-      
-      // ✅ VALIDAÇÃO CRÍTICA - VERIFICAR SE ID TEM 36 CARACTERES
-      if (insertedProduct.id.length !== 36) {
-        console.error('[Inventory] ❌ ID INVÁLIDO RETORNADO:', {
-          id: insertedProduct.id,
-          length: insertedProduct.id.length,
-          expected: 36
-        });
-        addNotification('error', `ID inválido retornado: ${insertedProduct.id} (comprimento: ${insertedProduct.id.length})`);
-        return;
+      // ✅ VALIDAR SE O ID TEM 36 CARACTERES
+      if (realProduct.id.length !== 36) {
+        throw new Error(`ID inválido retornado: ${realProduct.id} (comprimento: ${realProduct.id.length})`);
       }
       
       console.log('[Inventory] ✅ Produto criado no Supabase com UUID VÁLIDO:', {
-        id: insertedProduct.id,
-        length: insertedProduct.id.length,
-        isValid: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(insertedProduct.id)
+        id: realProduct.id,
+        name: realProduct.name,
+        length: realProduct.id.length,
+        isValid: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(realProduct.id)
       });
       
-      // PASSO 2: Upload da imagem (se existir)
-      let imageUrl = null;
-      if (imageFile) {
-        console.log('[Inventory] Fazendo upload da imagem...');
-        
-        try {
-          const cleanFileName = imageFile.name.replace(/\s+/g, '_').replace(/[()]/g, '');
-          const fileName = `${insertedProduct.id}-${cleanFileName}`;
-          
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('products')
-            .upload(fileName, imageFile, {
-              cacheControl: '3600',
-              upsert: true
-            });
-          
-          if (uploadError) {
-            console.error('[Inventory] Erro no upload:', uploadError);
-            addNotification('warning', `Produto criado mas falhou upload: ${uploadError.message}`);
-          } else {
-            // PASSO 3: Obter URL pública (COM RETORNO GARANTIDO)
-            const { data: publicUrlData } = supabase.storage
-              .from('products')
-              .getPublicUrl(fileName);
-            
-            imageUrl = publicUrlData.publicUrl;
-            console.log('[Inventory] ✅ Upload concluído, URL pública:', imageUrl);
-            
-            // PASSO 4: Atualizar produto com image_url
-            const { error: updateError } = await supabase
-              .from('products')
-              .update({ image_url: imageUrl })
-              .eq('id', insertedProduct.id);
-            
-            if (updateError) {
-              console.error('[Inventory] Erro ao atualizar image_url:', updateError);
-              addNotification('warning', `Produto criado mas falhou atualizar imagem: ${updateError.message}`);
-            } else {
-              console.log('[Inventory] ✅ Imagem atualizada no produto');
-            }
-          }
-        } catch (uploadErr) {
-          console.error('[Inventory] Exceção no upload:', uploadErr);
-          addNotification('warning', 'Produto criado mas ocorreu erro no upload da imagem');
-        }
-      }
+      // ✅ SÓ DEPOIS DE CRIAR NO BANCO, ADICIONAR AO STORE LOCAL
+      addDish(realProduct);
       
-      // PASSO 5: Adicionar localmente SÓ DEPOIS do sucesso no Supabase
-      const finalProduct = {
-        ...insertedProduct,
-        id: insertedProduct.id, // ✅ ID do Supabase
-        costPrice: parseFloat(newProduct.price) * 0.6,
-        categoryId: newProduct.category_id,
-        description: '',
-        image: imageUrl || '',
-        image_url: imageUrl || null,
-        createdAt: new Date().toISOString()
-      };
-      
-      addDish(finalProduct);
-      
-      console.log('[Inventory] ✅ Produto criado com sucesso no Supabase e localmente');
-      addNotification('success', 'Produto criado e sincronizado com sucesso!');
-      
-    } catch (err) {
-      console.error('[Inventory] Erro crítico na criação:', err);
-      addNotification('error', `ERRO CRÍTICO: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
-      return;
-    }
-    
-    // Resetar formulário
-    setNewProduct({
-      name: '',
-      price: '',
-      image_url: '',
-      category_id: '',
-      is_active: true,
-      description: '' // ✅ CAMPO DO SUPABASE RESETADO
-    });
-    
-    setIsProductModalOpen(false);
-  };
-
-  const handleUpdateProduct = async () => {
-    console.log('[Inventory] Atualizando produto:', editingProduct);
-    
-    if (!editingProduct) return;
-    
-    // Validar preço
-    const priceValue = newProduct.price.replace(',', '.');
-    const priceNumber = parseFloat(priceValue) || 0;
-    
-    if (isNaN(priceNumber)) {
-      addNotification('error', 'Preço inválido! Use apenas números.');
-      return;
-    }
-
-    if (!newProduct.category_id) {
-      addNotification('error', 'Selecione uma categoria válida.');
-      return;
-    }
-    
-    // Criar objeto atualizado
-    const productToUpdate = {
-      id: editingProduct.id,
-      name: newProduct.name,
-      price: priceNumber,
-      image_url: newProduct.image_url || null,
-      category_id: newProduct.category_id,
-      is_active: newProduct.is_active
-    };
-
-    console.log('[Inventory] Produto atualizado:', productToUpdate);
-    
-    // ✅ ATUALIZAR NO SUPABASE
-    try {
-      console.log('[Inventory] Atualizando produto:', editingProduct);
-      // ✅ LIMPEZA ABSOLUTA DO SCHEMA - APENAS COLUNAS EXATAS DO SUPABASE
-      const cleanUpdateData = {
-        name: newProduct.name?.trim(), // ✅ text
-        description: newProduct.description?.trim() || '', // ✅ text
-        price: Number(priceNumber), // ✅ numeric - garanta que é Number
-        cost_price: Number(priceNumber * 0.6), // ✅ numeric - garanta que é Number
-        image_url: newProduct.image_url?.trim() || null, // ✅ text - apenas URL string
-        is_active: newProduct.is_active, // ✅ boolean
-        category_id: newProduct.category_id?.trim() || null // ✅ uuid
-        // ✅ REMOVIDOS: categoryId, isFeatured, isVisibleDigital (não existem na tabela)
-      };
-      
-      // ✅ VALIDAÇÃO DE CAMPOS
-      if (!cleanUpdateData.name) {
-        addNotification('error', 'Nome do produto é obrigatório');
-        return;
-      }
-      
-      if (!cleanUpdateData.price || cleanUpdateData.price <= 0) {
-        addNotification('error', 'Preço do produto deve ser maior que zero');
-        return;
-      }
-      
-      console.log('[Inventory] Schema limpo:', cleanUpdateData);
-      console.log('[Inventory] Produto completo para DEBUG:', editingProduct);
-      console.log('[Inventory] Produto ID (BANCO):', editingProduct.id);
-      console.log('[Inventory] Tipo do ID:', typeof editingProduct.id);
-      console.log('[Inventory] Formato do ID:', editingProduct.id?.length, 'caracteres');
-      
-      // ✅ VALIDAÇÃO OBRIGATÓRIA - SÓ PERMITE UPDATE SE FOR UUID REAL
-      const productId = editingProduct.id;
-      if (!productId) {
-        console.error('[Inventory] ID nulo para update:', productId);
-        addNotification('error', 'ID do produto não encontrado. Recarregue a página.');
-        return;
-      }
-      
-      // ✅ VERIFICAÇÃO SEQUENCIAL DO UUID - BLOQUEIA IDs CURTOS
-      if (typeof productId !== 'string') {
-        console.error('[Inventory] ID não é string:', typeof productId, productId);
-        addNotification('error', `ERRO FATAL: ID é ${typeof productId}, mas deve ser string UUID. Recarregue a página.`);
-        return;
-      }
-      
-      if (productId.length < 36) {
-        console.error('[Inventory] ID muito curto (não é UUID):', productId, 'comprimento:', productId.length);
-        addNotification('error', `ERRO FATAL: ID "${productId}" tem ${productId.length} caracteres, mas UUID tem 36. Use o painel do Supabase para converter este produto.`);
-        return;
-      }
-      
-      // ✅ VERIFICAÇÃO DE FORMATO UUID
-      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidPattern.test(productId)) {
-        console.error('[Inventory] ID não tem formato UUID:', productId);
-        addNotification('error', `ERRO FATAL: ID "${productId}" não tem formato UUID válido. Use o painel do Supabase para converter.`);
-        return;
-      }
-      
-      console.log('[Inventory] ✅ UUID VALIDADO - executando update:', productId);
-      
-      const { data, error } = await supabase
-        .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
-        .update(cleanUpdateData)
-        .eq('id', productId) // ✅ USANDO UUID VALIDADO
-        .select();
-
-      if (error) {
-        console.error('[Inventory] Erro ao atualizar no Supabase:', error);
-        addNotification('error', 'Erro ao atualizar produto no Supabase');
-        return;
-      }
-      console.log('[Inventory] Produto atualizado no Supabase:', data);
-      addNotification('success', 'Produto atualizado com sucesso!');
-      
-      // ✅ ATUALIZAR STORE LOCAL
-      const dishToUpdate = {
-        ...productToUpdate,
-        costPrice: priceNumber * 0.6,
-        categoryId: productToUpdate.category_id,
-        description: '',
-        image: productToUpdate.image_url || '',
-        image_url: productToUpdate.image_url || '' // ✅ CAMPO CORRETO
-      };
-      updateDish(dishToUpdate);
-      
-      // ✅ REFRESH AUTOMÁTICO DO INVENTÁRIO
-      console.log('[Inventory] Forçando refresh do inventário...');
-      refreshInventory();
-      
-      // Resetar formulário
+      // Limpar formulário
       setNewProduct({
         name: '',
         price: '',
         image_url: '',
         category_id: '',
-        is_active: true
+        is_active: true,
+        description: ''
       });
-      setEditingProduct(null);
-      setIsProductModalOpen(false);
       
-    } catch (err) {
-      console.error('[Inventory] Erro crítico:', err);
-      addNotification('error', 'Erro ao atualizar produto');
+      setIsProductModalOpen(false);
+      addNotification('success', 'Produto criado com sucesso no Supabase!');
+      
+    } catch (error) {
+      console.error('[Inventory] ❌ ERRO AO CRIAR PRODUTO:', error);
+      addNotification('error', `Erro ao criar produto: ${error.message}`);
     }
   };
 
   const handleSaveCategory = async () => {
     console.log('[Inventory] Salvando categoria:', newCategory);
     
-    // Criar objeto com schema correto (tabela categories)
-    const categoryToAdd = {
-      id: crypto.randomUUID(), // UUID local
-      name: newCategory.name,
-      icon: 'Tag', // ✅ Icon obrigatório para MenuCategory
-      createdAt: new Date().toISOString()
-    };
-
-    console.log('[Inventory] Categoria criada localmente:', categoryToAdd);
-
-    // GRAVAÇÃO LOCAL IMEDIATA (Latency Compensation)
-    addCategory(categoryToAdd);
-    
-    // SINCRONIZAÇÃO SUPABASE (Background) - TABELA CATEGORIES
     try {
-      console.log('[Inventory] Sincronizando categoria com Supabase (tabela categories)...');
-      const { data, error } = await supabase.from('categories').insert([{
-        id: categoryToAdd.id,
-        name: categoryToAdd.name
-      }]).select();
-      
+      // ✅ CRIAR CATEGORIA REAL NO BANCO PRIMEIRO
+      const { data, error } = await supabase
+        .from('categories')
+        .insert({
+          name: newCategory.name
+        })
+        .select()
+        .single();
+
       if (error) {
-        console.error('[Inventory] Erro Supabase categoria:', error.message);
-        console.error('[Inventory] Detalhes do erro categoria:', error);
-        addNotification('warning', 'Categoria salva localmente, mas falhou sincronização com nuvem.');
-      } else {
-        console.log('[Inventory] Sucesso Supabase categoria (tabela categories):', data);
-        addNotification('success', 'Categoria criada e sincronizada com sucesso!');
+        console.error('[Inventory] Erro ao criar categoria:', error);
+        addNotification('error', `Erro ao criar categoria: ${error.message}`);
+        return;
       }
-    } catch (err) {
-      console.error('[Inventory] Erro crítico Supabase categoria:', err);
-      addNotification('error', 'Erro ao sincronizar categoria com nuvem.');
+
+      if (!data || !data.id) {
+        console.error('[Inventory] Categoria criada mas sem ID:', data);
+        addNotification('error', 'Categoria criada mas sem ID');
+        return;
+      }
+
+      // ✅ VALIDAR SE O ID TEM 36 CARACTERES
+      if (data.id.length !== 36) {
+        console.error('[Inventory] ❌ ID INVÁLIDO RETORNADO:', data.id);
+        addNotification('error', `ID inválido retornado: ${data.id}`);
+        return;
+      }
+
+      console.log('[Inventory] ✅ Categoria criada com UUID VÁLIDO:', {
+        id: data.id,
+        name: data.name,
+        length: data.id.length
+      });
+
+      // ✅ ADICIONAR AO STORE LOCAL
+      addCategory(data);
+      
+      // Limpar formulário
+      setNewCategory({ name: '' });
+      setIsCategoryModalOpen(false);
+      addNotification('success', 'Categoria criada com sucesso!');
+      
+    } catch (error) {
+      console.error('[Inventory] ❌ ERRO AO CRIAR CATEGORIA:', error);
+      addNotification('error', `Erro ao criar categoria: ${error.message}`);
     }
-    
-    // Resetar formulário
-    setNewCategory({ name: '' });
-    
-    setIsCategoryModalOpen(false);
   };
 
   // Handlers para Editar/Apagar
