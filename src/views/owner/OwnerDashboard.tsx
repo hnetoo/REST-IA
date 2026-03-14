@@ -410,7 +410,7 @@ const OwnerDashboard = () => {
   const ticketMedio = metrics.totalVendas > 0 ? metrics.totalVendas / (metrics.vendasHoje > 0 ? metrics.vendasHoje : 1) : 0;
 
   // Calcular lucro líquido
-  const lucroLiquido = metrics.totalVendas - metrics.despesas;
+  const lucroLiquido = metrics.totalVendas - metrics.despesas - metrics.folhaSalarial;
 
   // Calcular Break-even
   const custoOperacionalTotal = metrics.despesas + metrics.folhaSalarial;
@@ -535,7 +535,21 @@ const OwnerDashboard = () => {
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
 
-          {/* Card 4: Custos de Staff */}
+          {/* Card 4: Despesas Gerais */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                <Receipt className="w-6 h-6 text-orange-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Gerais</span>
+            </div>
+            <div className="text-2xl font-black text-orange-400 mb-2">
+              {formatAKZ(metrics.despesas)}
+            </div>
+            <div className="text-xs text-white/60">Moeda: AKZ</div>
+          </div>
+
+          {/* Card 5: Custos de Staff */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
