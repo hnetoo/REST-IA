@@ -94,11 +94,14 @@ const Inventory = () => {
       console.log('[Inventory] Bucket: products');
       console.log('[Inventory] Arquivo:', file.name, 'Tipo:', file.type);
       
-      // Upload para Supabase Storage
+      // Upload para Supabase Storage - SEM AUTENTICAÇÃO (PÚBLICO)
       const fileName = `${Date.now()}-${file.name}`;
       const { data, error } = await supabase.storage
         .from('products')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (error) {
         console.error('[Inventory] Erro no upload Supabase Storage:', error);
