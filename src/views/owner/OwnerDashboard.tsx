@@ -78,6 +78,7 @@ const OwnerDashboard = () => {
 
     // Carregar dados reais do Supabase
     fetchMetrics();
+    fetchTopProducts();
   }, [navigate]);
 
   // Função de logout
@@ -116,7 +117,72 @@ const OwnerDashboard = () => {
     }).format(value || 0);
   };
 
-  // Função para criar dados de teste
+  // Estado para produtos mais vendidos
+  const [topProducts, setTopProducts] = useState<any[]>([]);
+
+  // Buscar produtos mais vendidos no Supabase
+  const fetchTopProducts = async () => {
+    try {
+      console.log('[DASHBOARD] Buscando produtos mais vendidos...');
+      
+      // Buscar itens de pedidos fechados e agrupar por produto
+      const { data: orderItemsData, error: orderItemsError } = await supabase
+        .from('order_items')
+        .select(`
+          product_id,
+          quantity,
+          unit_price,
+          total_price,
+          orders!inner(
+            created_at,
+            status
+          )
+        `)
+        .in('status', 'eq', 'FECHADO')
+        .order('orders!inner(created_at)', { ascending: false });
+
+      if (orderItemsError) {
+        console.error('[DASHBOARD] Erro ao buscar itens dos pedidos:', orderItemsError);
+        return;
+      }
+
+      // Agrupar por produto e somar quantidades
+      const productSales = orderItemsData?.reduce((acc: any, item) => {
+        const productId = item.product_id;
+        const quantity = item.quantity || 0;
+        
+        if (!acc[productId]) {
+          acc[productId] = {
+            id: productId,
+            name: `Produto #${productId}`,
+            totalSold: 0,
+            revenue: 0
+          };
+        }
+        
+        acc[productId].totalSold += quantity;
+        acc[productId].revenue += (item.total_price || 0);
+        
+        return acc;
+      }, {});
+
+      // Converter para array e ordenar por vendas
+      const sortedProducts = Object.values(productSales)
+        .sort((a: any, b: any) => b.totalSold - a.totalSold)
+        .slice(0, 5)
+        .map((product: any) => ({
+          ...product,
+          sales: product.totalSold,
+          image: '/api/placeholder/40/40'
+        }));
+
+      setTopProducts(sortedProducts);
+      console.log('[DASHBOARD] Produtos mais vendidos:', sortedProducts);
+      
+    } catch (error) {
+      console.error('[DASHBOARD] Erro ao buscar produtos mais vendidos:', error);
+    }
+  };
   const seedTestData = async () => {
     try {
       console.log('[DASHBOARD] Inserindo dados de teste...');
@@ -141,9 +207,10 @@ const OwnerDashboard = () => {
 
       console.log('[DASHBOARD] Dados de teste inseridos com sucesso!');
       
-      // Atualizar métricas após inserção
+      // Atualizar métricas e produtos após inserção
       setTimeout(() => {
         fetchMetrics();
+        fetchTopProducts();
       }, 1000);
       
     } catch (error) {
@@ -685,30 +752,36 @@ const OwnerDashboard = () => {
         <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 min-h-[320px]">
           <h3 className="text-lg font-black text-white mb-4">Top 5 Produtos</h3>
           <div className="space-y-3">
-            {[
-              { name: 'Frango com Batata', sales: 45, image: '/api/placeholder/40/40' },
-              { name: 'Arroz com Marisco', sales: 38, image: '/api/placeholder/40/40' },
-              { name: 'Muamba de Carne', sales: 32, image: '/api/placeholder/40/40' },
-              { name: 'Calulu de Peixe', sales: 28, image: '/api/placeholder/40/40' },
-              { name: 'Feijão com Óleo', sales: 24, image: '/api/placeholder/40/40' }
-            ].map((product, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg font-black text-cyan-400 w-6">#{index + 1}</span>
-                  <div className="w-10 h-10 bg-white/10 rounded-full overflow-hidden flex items-center justify-center">
-                    <Package className="w-5 h-5 text-white/60" />
+            {topProducts.length > 0 ? (
+              topProducts.map((product, index) => (
+                <div key={product.id || index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-black text-cyan-400 w-6">#{index + 1}</span>
+                    <div className="w-10 h-10 bg-white/10 rounded-full overflow-hidden flex items-center justify-center">
+                      <Package className="w-5 h-5 text-white/60" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-white">{product.name}</h4>
+                      <p className="text-xs text-white/60">{product.sales} vendas</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-white">{product.name}</h4>
-                    <p className="text-xs text-white/60">{product.sales} vendas</p>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-emerald-400">{product.sales}</div>
+                    <div className="text-xs text-white/40">unidades</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-bold text-emerald-400">{product.sales}</div>
-                  <div className="text-xs text-white/40">unidades</div>
+              ))
+            ) : (
+              <div className="h-64 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <TrendingUp className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <p className="text-white/60 text-sm">Sem vendas registadas</p>
+                  <p className="text-white/40 text-xs mt-1">Selecione um período para visualizar</p>
                 </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </main>
