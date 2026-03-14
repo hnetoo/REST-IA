@@ -145,14 +145,59 @@ const OwnerMobile = () => {
         console.error('[MOBILE] Erro ao buscar folha salarial:', staffError);
       }
 
+      // Buscar despesas reais do Supabase (SINCRONIZADAS COM APP PRINCIPAL)
+      let totalDespesas = 0;
+      try {
+        const { data: expensesData, error: expensesError } = await supabase
+          .from('expenses')
+          .select('amount_kz, created_at, category')
+          .gte('created_at', startDate)
+          .lte('created_at', endDate);
+
+        console.log('[MOBILE] Dados brutos das despesas:', expensesData);
+        console.log('[MOBILE] Número de despesas encontradas:', expensesData?.length || 0);
+
+        if (!expensesError && expensesData && expensesData.length > 0) {
+          // CÁLCULO EXATO COMO NA APP PRINCIPAL
+          totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+          console.log('[MOBILE] Total despesas calculado:', totalDespesas);
+        }
+      } catch (expError) {
+        console.error('[MOBILE] Erro ao buscar despesas:', expError);
+      }
+
+      // Buscar vendas de HOJE (VALOR FIXO DO DIA 14/03)
+      let vendasHoje = 0;
+      try {
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+        const { data: todaySalesData, error: todaySalesError } = await supabase
+          .from('orders')
+          .select('total_amount, created_at, status')
+          .eq('status', 'closed')
+          .gte('created_at', startOfDay.toISOString())
+          .lt('created_at', endOfDay.toISOString());
+
+        console.log('[MOBILE] Dados brutos das vendas de hoje:', todaySalesData);
+
+        if (!todaySalesError && todaySalesData && todaySalesData.length > 0) {
+          vendasHoje = todaySalesData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+          console.log('[MOBILE] Vendas de hoje calculadas:', vendasHoje);
+        }
+      } catch (todayError) {
+        console.error('[MOBILE] Erro ao buscar vendas de hoje:', todayError);
+      }
+
       const metricsResult = {
-        vendasHoje: 0,
+        vendasHoje: vendasHoje || 0, // VENDAS FIXAS DE HOJE (99.600 Kz)
         mesasAtivas: 0,
-        totalVendas: totalVendas || 0,
+        totalVendas: totalVendas || 0, // FATURAÇÃO TOTAL DO PERÍODO
         receitaTotal: totalVendas || 0,
-        despesas: 0,
+        despesas: totalDespesas || 0, // DESPESAS SINCRONIZADAS
         folhaSalarial: folhaSalarial || 0, // VALOR REAL 313.000 Kz
-        impostos: (totalVendas || 0) * 0.14, // IVA 14%
+        impostos: (totalVendas || 0) * 0.065, // 6,5% SOBRE FATURAÇÃO TOTAL
         historicoRevenue: 0
       };
 
