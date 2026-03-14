@@ -322,37 +322,15 @@ const Inventory = () => {
       console.log('[Inventory] Tipo do ID:', typeof editingProduct.id);
       console.log('[Inventory] Formato do ID:', editingProduct.id?.length, 'caracteres');
       
-      // ✅ VALIDAÇÃO DE UUID - ANTES DO UPDATE
+      // ✅ VERIFICAÇÃO SIMPLES - APENAS ID EXISTE
       const productId = editingProduct.id;
-      
-      // ✅ VERIFICAÇÃO SEQUENCIAL DE UUID
       if (!productId) {
         console.error('[Inventory] ID nulo para update:', productId);
         addNotification('error', 'ID do produto não encontrado. Recarregue a página.');
         return;
       }
       
-      if (typeof productId !== 'string') {
-        console.error('[Inventory] ID não é string:', typeof productId, productId);
-        addNotification('error', 'ID do produto inválido (deve ser UUID). Recarregue a página.');
-        return;
-      }
-      
-      if (productId.length < 10) {
-        console.error('[Inventory] ID muito curto (não é UUID):', productId, 'comprimento:', productId.length);
-        addNotification('error', 'ID do produto muito curto. Deve ser um UUID válido. Recarregue a página.');
-        return;
-      }
-      
-      // ✅ VERIFICAÇÃO DE FORMATO UUID (básico)
-      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidPattern.test(productId)) {
-        console.error('[Inventory] ID não tem formato UUID:', productId);
-        addNotification('error', 'ID do produto não tem formato UUID válido. Recarregue a página.');
-        return;
-      }
-      
-      console.log('[Inventory] ✅ UUID validado e formatado corretamente:', productId);
+      console.log('[Inventory] ✅ ID validado - executando update:', productId);
       
       const { data, error } = await supabase
         .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
@@ -446,37 +424,16 @@ const Inventory = () => {
   // Handlers para Editar/Apagar
   const handleEdit = (product: any) => {
     console.log('[Inventory] Editando produto:', product);
-    console.log('[Inventory] ID do produto (UUID):', product.id);
-    console.log('[Inventory] Tipo do ID:', typeof product.id);
+    console.log('[Inventory] ID do produto:', product.id);
     
-    // ✅ VERIFICAÇÃO SEQUENCIAL DO UUID ANTES DE EDITAR
+    // ✅ VERIFICAÇÃO SIMPLES - APENAS ID EXISTE
     if (!product.id) {
       console.error('[Inventory] Produto sem ID - não é possível editar');
       addNotification('error', 'Produto não tem ID válido. Recarregue a página.');
       return;
     }
     
-    if (typeof product.id !== 'string') {
-      console.error('[Inventory] ID não é string:', typeof product.id, product.id);
-      addNotification('error', 'ID do produto inválido. Recarregue a página.');
-      return;
-    }
-    
-    if (product.id.length < 10) {
-      console.error('[Inventory] ID muito curto (não é UUID):', product.id, 'comprimento:', product.id.length);
-      addNotification('error', 'ID do produto muito curto. Deve ser UUID do Supabase. Recarregue a página.');
-      return;
-    }
-    
-    // ✅ VERIFICAÇÃO DE FORMATO UUID
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidPattern.test(product.id)) {
-      console.error('[Inventory] ID não tem formato UUID:', product.id);
-      addNotification('error', 'ID do produto não tem formato UUID válido. Recarregue a página.');
-      return;
-    }
-    
-    console.log('[Inventory] ✅ UUID validado - produto pode ser editado:', product.id);
+    console.log('[Inventory] ✅ Produto pode ser editado - ID:', product.id);
     
     setEditingProduct(product);
     setNewProduct({
