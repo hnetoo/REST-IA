@@ -234,9 +234,11 @@ const OwnerDashboard = () => {
         console.log('[DASHBOARD] Dados brutos das despesas:', expensesData);
         console.log('[DASHBOARD] Erro despesas:', expensesError);
 
-        if (!expensesError && expensesData) {
-          totalDespesas = expensesData.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+        if (!expensesError && expensesData && expensesData.length > 0) {
+          totalDespesas = expensesData.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
           console.log('[DASHBOARD] Total despesas calculado:', totalDespesas);
+        } else {
+          console.log('[DASHBOARD] Sem dados de despesas ou array vazio');
         }
       } catch (expError) {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
@@ -253,9 +255,11 @@ const OwnerDashboard = () => {
         console.log('[DASHBOARD] Dados brutos das vendas:', ordersData);
         console.log('[DASHBOARD] Erro vendas:', ordersError);
 
-        if (!ordersError && ordersData) {
-          totalVendas = ordersData.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+        if (!ordersError && ordersData && ordersData.length > 0) {
+          totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
           console.log('[DASHBOARD] Total vendas calculado:', totalVendas);
+        } else {
+          console.log('[DASHBOARD] Sem dados de vendas ou array vazio');
         }
       } catch (ordersError) {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
@@ -270,8 +274,8 @@ const OwnerDashboard = () => {
           .eq('status', 'FECHADO')
           .gte('created_at', new Date().toISOString().split('T')[0]);
 
-        if (!todayOrdersError && todayOrdersData) {
-          vendasHoje = todayOrdersData.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+        if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
+          vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
         }
       } catch (todayError) {
         console.error('[DASHBOARD] Erro ao buscar vendas de hoje:', todayError);
