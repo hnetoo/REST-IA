@@ -445,6 +445,29 @@ const Finance = () => {
 
             {/* Lista de Despesas */}
             <div className="glass-panel rounded-[3rem] border border-white/5 overflow-hidden">
+              {/* Total de Despesas - Card em Destaque */}
+              <div className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border-b border-white/10 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-red-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-white">Total de Despesas</h3>
+                      <p className="text-sm text-red-300">Soma de todas as despesas</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-black text-white">
+                      {formatKz(expenses?.reduce((acc, item) => acc + (Number(item.amount_kz || item.amount || 0), 0), 0))}
+                    </div>
+                    <p className="text-xs text-red-300 uppercase tracking-wider">
+                      {expenses?.length || 0} despesas
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               <table className="w-full text-left">
                 <thead className="bg-white/5 border-b border-white/5">
                   <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
