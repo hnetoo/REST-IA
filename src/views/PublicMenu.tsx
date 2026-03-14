@@ -17,7 +17,7 @@ interface CartItem {
   image?: string;
 }
 
-// Usar tipos básicos para type safety - SEM CATEGORIES
+// Tipos para products e categories
 type Product = {
   id: string;
   name: string;
@@ -27,8 +27,14 @@ type Product = {
   is_active: boolean | null;
 };
 
+type Category = {
+  id: string;
+  name: string;
+};
+
 const PublicMenu = () => {
   const [items, setItems] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [filteredItems, setFilteredItems] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [loading, setLoading] = useState(true);
@@ -39,9 +45,22 @@ const PublicMenu = () => {
 
   useEffect(() => {
     async function load() {
-      console.log('[PublicMenu] Carregando produtos da tabela products com categorias...');
+      console.log('[PublicMenu] Carregando produtos e categorias...');
       try {
-        // ✅ QUERY MÁXIMA SIMPLIFICADA - APENAS PRODUCTS BÁSICOS
+        // ✅ BUSCAR CATEGORIAS PRIMEIRO
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('categories')
+          .select('id, name')
+          .order('name');
+        
+        if (categoriesError) {
+          console.error('[PublicMenu] Erro ao carregar categorias:', categoriesError);
+        } else {
+          console.log('[PublicMenu] Categorias do Supabase:', categoriesData);
+          setCategories(categoriesData || []);
+        }
+
+        // ✅ BUSCAR PRODUTOS COM CATEGORIAS
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select('id, name, price, image_url, category_id, is_active') // Apenas campos básicos
@@ -61,6 +80,12 @@ const PublicMenu = () => {
         }
 
         console.log('[PublicMenu] Produtos carregados:', productsData);
+        console.log('[PublicMenu] Ligação produto-categoria:', productsData?.map(p => ({
+          produto: p.name,
+          category_id: p.category_id,
+          tem_categoria: categoriesData?.some(c => c.id === p.category_id)
+        })));
+        
         setItems(productsData || []);
         setFilteredItems(productsData || []); // Inicializa com todos os produtos
       } catch (error) {
@@ -73,15 +98,23 @@ const PublicMenu = () => {
     load();
   }, []);
 
-  // ✅ FUNÇÃO PARA FILTRAR POR CATEGORIA - SEM CATEGORIES
+  // ✅ FUNÇÃO PARA FILTRAR POR CATEGORIA - COM CATEGORIES REAIS
   const filterByCategory = (categoryName: string) => {
     setSelectedCategory(categoryName);
     
     if (categoryName === 'Todos') {
       setFilteredItems(items); // Mostra todos os produtos
     } else {
-      // Sem categories - mostrar todos por enquanto
-      setFilteredItems(items);
+      // Filtrar produtos por category_id correspondente
+      const category = categories.find(c => c.name === categoryName);
+      if (category) {
+        const filtered = items.filter(item => item.category_id === category.id);
+        console.log('[PublicMenu] Filtrando por categoria:', categoryName, 'ID:', category.id, 'Produtos:', filtered.length);
+        setFilteredItems(filtered);
+      } else {
+        console.log('[PublicMenu] Categoria não encontrada:', categoryName);
+        setFilteredItems([]);
+      }
     }
   };
 
@@ -204,8 +237,16 @@ const PublicMenu = () => {
           {/* Botão Todos */}
           <button onClick={() => filterByCategory('Todos')} className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === 'Todos' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>Todos</button>
           
-          {/* Mapeamento Dinâmico - SEM CATEGORIES */}
-          {/* Temporariamente apenas botão "Todos" */}
+          {/* Mapeamento Dinâmico - CATEGORIES REAIS */}
+          {categories.map((category) => (
+            <button 
+              key={category.id}
+              onClick={() => filterByCategory(category.name)} 
+              className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === category.name ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}
+            >
+              {category.name}
+            </button>
+          ))}
         </div>
       </div>
 
