@@ -373,14 +373,16 @@ const Inventory = () => {
       console.log('[Inventory] Formato do ID:', editingProduct.id?.length, 'caracteres');
       
       // ✅ VERIFICAÇÃO SIMPLES - APENAS ID EXISTE
-      const productId = editingProduct.id;
+      const productId = editingProduct.id; // ✅ USA ID EXATO DO BANCO SEM ALTERAR
       if (!productId) {
         console.error('[Inventory] ID nulo para update:', productId);
         addNotification('error', 'ID do produto não encontrado. Recarregue a página.');
         return;
       }
       
-      console.log('[Inventory] ✅ ID validado - executando update:', productId);
+      console.log('[Inventory] ✅ ID original do banco será usado no update:', productId);
+      console.log('[Inventory] ✅ Tipo do ID:', typeof productId);
+      console.log('[Inventory] ✅ Comprimento do ID:', productId?.length);
       
       const { data, error } = await supabase
         .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
@@ -474,16 +476,21 @@ const Inventory = () => {
   // Handlers para Editar/Apagar
   const handleEdit = (product: any) => {
     console.log('[Inventory] Editando produto:', product);
-    console.log('[Inventory] ID do produto:', product.id);
+    console.log('[Inventory] ID do produto (ORIGINAL DO BANCO):', product.id);
+    console.log('[Inventory] Tipo do ID:', typeof product.id);
+    console.log('[Inventory] Comprimento do ID:', product.id?.length);
     
-    // ✅ VERIFICAÇÃO SIMPLES - APENAS ID EXISTE
+    // ✅ VERIFICAÇÃO BÁSICA - APENAS ID EXISTE
     if (!product.id) {
       console.error('[Inventory] Produto sem ID - não é possível editar');
       addNotification('error', 'Produto não tem ID válido. Recarregue a página.');
       return;
     }
     
-    console.log('[Inventory] ✅ Produto pode ser editado - ID:', product.id);
+    // ✅ DIAGNÓSTICO DO ID - SEM TRANSFORMAÇÃO
+    const productId = product.id; // ✅ USA ID EXATO DO BANCO SEM ALTERAR
+    console.log('[Inventory] ✅ ID original será usado no update:', productId);
+    console.log('[Inventory] ✅ Produto pode ser editado - ID ORIGINAL:', productId);
     
     setEditingProduct(product);
     setNewProduct({
