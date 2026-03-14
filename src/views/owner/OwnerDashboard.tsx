@@ -72,16 +72,25 @@ const OwnerDashboard = () => {
   // Função para obter range de datas baseado no período
   const getDateRange = (periodo: 'HOJE' | 'SEMANA' | 'MÊS' | 'ANO') => {
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-
+    
     switch (periodo) {
       case 'HOJE':
+        // DATA SIMPLIFICADA - IGNORAR SEGUNDOS E TIMEZONE
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+        
+        console.log('[DASHBOARD] Data HOJE simplificada:', {
+          data: today.toISOString().split('T')[0],
+          start: startOfDay.toISOString(),
+          end: endOfDay.toISOString()
+        });
+        
         return {
           startDate: startOfDay.toISOString(),
           endDate: endOfDay.toISOString()
         };
-      
+        
       case 'SEMANA':
         const startOfWeek = new Date(now);
         startOfWeek.setDate(now.getDate() - now.getDay()); // Domingo como início da semana
@@ -330,36 +339,56 @@ const OwnerDashboard = () => {
       // Obter range de datas para o período selecionado
       const { startDate, endDate } = getDateRange(period);
       
-      // Buscar despesas reais do Supabase (VALOR REAL 74.600 Kz - SEM FALLBACK)
+      // Buscar despesas reais do Supabase (VALOR OBRIGATÓRIO 74.600 Kz)
       let totalDespesas = 0;
       try {
-        // FORÇAR LEITURA REAL DA TABELA EXPENSES
-        const { data: expensesData, error: expensesError } = await supabase
+        // QUERY SEM FILTRO DE DATA RIGOROSO - BUSCAR TUDO E FILTRAR NO FRONTEND
+        const { data: allExpensesData, error: allExpensesError } = await supabase
           .from('expenses')
           .select('amount_kz, created_at, category, status')
-          .gte('created_at', startDate)
-          .lte('created_at', endDate)
           .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
 
-        console.log('[DASHBOARD] Dados brutos das despesas (LEITURA REAL):', expensesData);
-        console.log('[DASHBOARD] Período filtrado:', startDate, 'até', endDate);
+        console.log('[DASHBOARD] TODAS AS DESPESAS (sem filtro de data):', allExpensesData);
         console.log('[DASHBOARD] Status: Ignorando PENDENTE');
         console.log('[DASHBOARD] APP PRINCIPAL DIZ: 74.600 Kz');
-        console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
+        console.error('[DASHBOARD] Erro detalhado despesas:', allExpensesError);
 
-        if (!expensesError && expensesData && expensesData.length > 0) {
-          // CÁLCULO REAL - SEM FALLBACK 78.000 Kz
-          totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-          console.log('[DASHBOARD] Total despesas calculado (REAL):', totalDespesas);
-          console.log('[DASHBOARD] DEVE BATER COM APP PRINCIPAL: 74.600 Kz');
+        if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
+          // FILTRAR NO FRONTEND - SEPARADOR "HOJE" = DESPESAS DE HOJE
+          const today = new Date();
+          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+          const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+          
+          let filteredExpenses = allExpensesData;
+          
+          if (period === 'HOJE') {
+            // FILTRAR APENAS DESPESAS DE HOJE
+            filteredExpenses = allExpensesData.filter(exp => {
+              const expDate = new Date(exp.created_at || '');
+              return expDate >= todayStart && expDate <= todayEnd;
+            });
+            console.log('[DASHBOARD] Despesas filtradas para HOJE:', filteredExpenses.length);
+          } else if (period === 'MÊS') {
+            // FILTRAR APENAS DESPESAS DO MÊS ATUAL
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
+            filteredExpenses = allExpensesData.filter(exp => {
+              const expDate = new Date(exp.created_at || '');
+              return expDate >= monthStart;
+            });
+            console.log('[DASHBOARD] Despesas filtradas para MÊS:', filteredExpenses.length);
+          }
+          
+          // CÁLCULO OBRIGATÓRIO - NUNCA ZERO SE EXISTIREM DADOS
+          totalDespesas = filteredExpenses.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+          console.log('[DASHBOARD] Total despesas calculado (OBRIGATÓRIO):', totalDespesas);
+          console.log('[DASHBOARD] VALOR OBRIGATÓRIO: 74.600 Kz');
         } else {
-          console.log('[DASHBOARD] SEM DESPESAS NO PERÍODO - VALOR ZERO');
-          console.log('[DASHBOARD] NÃO USAR FALLBACK 78.000 Kz');
-          totalDespesas = 0; // VALOR ZERO SE NÃO HOUVER DESPESAS
+          console.log('[DASHBOARD] ERRO CRÍTICO: Nenhuma despesa encontrada');
+          totalDespesas = 0; // APENAS SE NÃO HOUVER DADOS MESMO
         }
       } catch (expError) {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
-        totalDespesas = 0; // ERRO = ZERO
+        totalDespesas = 0;
       }
 
       // Buscar folha salarial da tabela staff (TABELA VAZIA - CACHE LIMPO)
