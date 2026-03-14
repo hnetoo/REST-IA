@@ -40,6 +40,7 @@ const POS = () => {
   const [isChangePaymentModalOpen, setIsChangePaymentModalOpen] = useState(false);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [lastAddedItemId, setLastAddedItemId] = useState<string | null>(null);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   
   const [orderToChangeId, setOrderToChangeId] = useState<string | null>(null);
   
@@ -157,10 +158,16 @@ const POS = () => {
     // Tentar finalização no banco (pode falhar com 401)
     try {
       checkoutTable(currentOrder.id, method, customerId);
+      addNotification('success', 'Venda registada com sucesso!');
     } catch (dbError) {
       console.error('[POS] Erro na gravação do pedido:', dbError);
       addNotification('error', 'Erro ao salvar pedido. Tentando imprimir mesmo assim...');
     }
+    
+    // Resetar estado de finalização após sucesso
+    setTimeout(() => {
+      setIsFinalizing(false);
+    }, 2000);
     
     // Fechar modal e resetar estado
     setIsCheckoutModalOpen(false);
@@ -582,11 +589,15 @@ const POS = () => {
                     Suspender
                   </button>
                   <button 
-                    onClick={() => setIsCheckoutModalOpen(true)} 
-                    disabled={!currentOrder?.items.length} 
+                    onClick={() => {
+                      if (isFinalizing) return;
+                      setIsFinalizing(true);
+                      handleCheckoutFinal(selectedPaymentMethod!, selectedCustomerId);
+                    }} 
+                    disabled={!currentOrder?.items.length || isFinalizing} 
                     className="flex-[2] py-5 bg-primary text-black rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-glow hover:brightness-110 active:scale-[0.98] disabled:opacity-10 transition-all"
                   >
-                    Finalizar Pedido
+                    {isFinalizing ? 'Finalizando...' : 'Finalizar Pedido'}
                   </button>
                 </div>
              </div>

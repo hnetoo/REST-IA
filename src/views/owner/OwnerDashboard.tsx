@@ -184,24 +184,6 @@ const OwnerDashboard = () => {
       // Extrair métricas do resultado JSON
       const metricsResult = metricsData?.metrics || {};
       const chartData = metricsData?.chartData || [];
-      
-      console.log('[DASHBOARD] Métricas extraídas:', {
-        vendasHoje: metricsResult.vendasHoje,
-        totalVendas: metricsResult.totalVendas,
-        historicoRevenue: metricsResult.historicoRevenue,
-        receitaTotal: metricsResult.receitaTotal,
-        despesas: metricsResult.despesas,
-        folhaSalarial: metricsResult.folhaSalarial,
-        impostos: metricsResult.impostos,
-        mesasAtivas: metricsResult.mesasAtivas,
-        ordersCount: metricsResult.ordersCount,
-        ticketMedio: metricsResult.ticketMedio,
-        lucroLiquido: metricsResult.lucroLiquido
-      });
-      
-      console.log('[DASHBOARD] Chart Data:', chartData);
-      
-      // Remover qualquer lógica de dados estáticos - usar apenas dados reais do Supabase
       setMetrics({
         vendasHoje: metricsResult.vendasHoje || 0,
         mesasAtivas: metricsResult.mesasAtivas || 0,
@@ -212,14 +194,8 @@ const OwnerDashboard = () => {
         impostos: metricsResult.impostos || 0,
         historicoRevenue: metricsResult.historicoRevenue || 0
       });
-      
-      // Armazenar chartData para uso nos gráficos
-      setChartData(chartData);
-
     } catch (error) {
       console.error('[DASHBOARD] Erro ao buscar métricas:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      
       // Log detalhado para debugging
       console.log('[DASHBOARD] Erro completo:', {
         error: error,
