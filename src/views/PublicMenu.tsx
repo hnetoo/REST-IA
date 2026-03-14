@@ -17,11 +17,15 @@ interface CartItem {
   image?: string;
 }
 
-// Usar tipos do Supabase para type safety
-type Product = Database['public']['Tables']['products']['Row'] & {
-  categories?: Category;
+// Usar tipos básicos para type safety - SEM CATEGORIES
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string | null;
+  category_id: string | null;
+  is_active: boolean | null;
 };
-type Category = Database['public']['Tables']['categories']['Row'];
 
 const PublicMenu = () => {
   const [items, setItems] = useState<Product[]>([]);
@@ -36,10 +40,10 @@ const PublicMenu = () => {
     async function load() {
       console.log('[PublicMenu] Carregando produtos da tabela products com categorias...');
       try {
-        // ✅ QUERY SIMPLIFICADA - APENAS PRODUCTS E CATEGORIES
+        // ✅ QUERY MÁXIMA SIMPLIFICADA - APENAS PRODUCTS BÁSICOS
         const { data: productsData, error: productsError } = await supabase
           .from('products')
-          .select('*, categories(id, name)')
+          .select('id, name, price, image_url, category_id, is_active') // Apenas campos básicos
           .eq('is_active', true); // Apenas produtos ativos
         
         if (productsError) {
@@ -60,15 +64,15 @@ const PublicMenu = () => {
     load();
   }, []);
 
-  // ✅ FUNÇÃO PARA FILTRAR POR CATEGORIA
+  // ✅ FUNÇÃO PARA FILTRAR POR CATEGORIA - SEM CATEGORIES
   const filterByCategory = (categoryName: string) => {
     setSelectedCategory(categoryName);
     
     if (categoryName === 'Todos') {
       setFilteredItems(items); // Mostra todos os produtos
     } else {
-      const filtered = items.filter(item => item.categories?.name === categoryName);
-      setFilteredItems(filtered); // Mostra apenas produtos da categoria
+      // Sem categories - mostrar todos por enquanto
+      setFilteredItems(items);
     }
   };
 
@@ -191,10 +195,8 @@ const PublicMenu = () => {
           {/* Botão Todos */}
           <button onClick={() => filterByCategory('Todos')} className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === 'Todos' ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>Todos</button>
           
-          {/* Mapeamento Dinâmico */}
-          {Array.from(new Set(items.map(i => i.categories?.name).filter(Boolean))).map(cat => (
-            <button key={cat} onClick={() => filterByCategory(cat!)} className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold uppercase ${selectedCategory === cat ? 'bg-cyan-500 text-white' : 'bg-gray-800 text-gray-400'}`}>{cat}</button>
-          ))}
+          {/* Mapeamento Dinâmico - SEM CATEGORIES */}
+          {/* Temporariamente apenas botão "Todos" */}
         </div>
       </div>
 
