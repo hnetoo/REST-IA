@@ -249,13 +249,13 @@ const OwnerDashboard = () => {
       try {
         const { data: staffData, error: staffError } = await supabase
           .from('staff')
-          .select('base_salary_kz, total_liquid, salary');
+          .select('salary, base_salary_kz');
 
         console.log('[DASHBOARD] Dados brutos da folha salarial:', staffData);
         console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
         if (!staffError && staffData && staffData.length > 0) {
-          folhaSalarial = staffData.reduce((sum, staff) => sum + (Number(staff.total_liquid || staff.salary || staff.base_salary_kz || 0), 0), 0);
+          folhaSalarial = staffData.reduce((sum, staff) => sum + (Number(staff.salary || staff.base_salary_kz || 0), 0), 0);
           console.log('[DASHBOARD] Total folha salarial calculado:', folhaSalarial);
         } else {
           console.log('[DASHBOARD] Sem dados de folha salarial ou array vazio');
@@ -270,7 +270,7 @@ const OwnerDashboard = () => {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .or('status.eq.pago,status.eq.concluido,status.eq.finalizado,status.eq.FECHADO');
+          .or('status.eq.pago,status.eq.concluido');
 
         console.log('[DASHBOARD] Dados brutos das vendas:', ordersData);
         console.error('[DASHBOARD] Erro detalhado vendas:', ordersError);
@@ -291,8 +291,8 @@ const OwnerDashboard = () => {
         const { data: todayOrdersData, error: todayOrdersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .or('status.eq.pago,status.eq.concluido,status.eq.finalizado,status.eq.FECHADO')
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
+          .or('status.eq.pago,status.eq.concluido')
+          .gte('created_at', '2026-03-01');
 
         if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
           vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
