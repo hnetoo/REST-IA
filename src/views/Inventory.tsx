@@ -189,29 +189,9 @@ const Inventory = () => {
       return;
     }
     
-    // Criar objeto com schema correto (tabelas PLURAIS Supabase)
-    const productToAdd = {
-      id: crypto.randomUUID(), // UUID local
-      name: newProduct.name,
-      price: priceNumber, // ✅ Número válido (Decimal para Kwanzas)
-      costPrice: priceNumber * 0.6, // ✅ Custo estimado 60%
-      image_url: newProduct.image_url || null,
-      image: newProduct.image_url || null, // ✅ Campo image obrigatório
-      categoryId: newProduct.category_id, // ✅ categoryId em vez de category_id
-      category_id: newProduct.category_id, // ✅ Manter para compatibilidade
-      is_active: newProduct.is_active,
-      description: '', // ✅ Campo obrigatório
-      createdAt: new Date().toISOString()
-    };
-
-    console.log('[Inventory] Produto criado localmente:', productToAdd);
-
-    // GRAVAÇÃO LOCAL IMEDIATA (Latency Compensation)
-    addDish(productToAdd);
-    
-    // SINCRONIZAÇÃO SUPABASE (Background) - TABELAS PLURAIS
+    // ✅ CRIAÇÃO OBRIGATÓRIA NO SUPABASE - SEM MODO OPTIMISTA
     try {
-      console.log('[Inventory] Sincronizando com Supabase (tabelas plurais)...');
+      console.log('[Inventory] Criando produto no Supabase primeiro...');
       
       // DATA MAPPING: Verificar se categoria existe no Supabase (tabela categories)
       const { data: categoryCheck, error: categoryError } = await supabase
@@ -222,33 +202,103 @@ const Inventory = () => {
       
       if (categoryError || !categoryCheck) {
         console.error('[Inventory] Categoria não encontrada no Supabase:', categoryError);
-        addNotification('error', 'Categoria não encontrada na nuvem. sincronização falhou.');
+        addNotification('error', `Categoria não encontrada na nuvem: ${categoryError?.message || 'Erro desconhecido'}`);
         return;
       }
       
       console.log('[Inventory] Categoria validada no Supabase:', categoryCheck.id);
       
-      // Inserir produto no Supabase com schema correto (tabela products)
-      const { data, error } = await supabase.from('products').insert([{
-        id: productToAdd.id,
-        name: productToAdd.name,
-        price: productToAdd.price, // ✅ Decimal para Kwanzas
-        image_url: productToAdd.image_url,
-        is_active: productToAdd.is_active,
-        category_id: productToAdd.category_id // ✅ UUID real da categoria
-      }]).select();
+      // PASSO 1: Inserir produto no Supabase PRIMEIRO
+      const { data: insertedProduct, error: insertError } = await supabase.from('products').insert([{
+        name: newProduct.name,
+        price: parseFloat(newProduct.price), // ✅ Decimal para Kwanzas
+        image_url: null, // ✅ Inicialmente null, será atualizado depois
+        is_active: newProduct.is_active,
+        category_id: newProduct.category_id // ✅ UUID real da categoria
+      }]).select().single();
       
-      if (error) {
-        console.error('[Inventory] Erro Supabase:', error.message);
-        console.error('[Inventory] Detalhes do erro:', error);
-        addNotification('warning', 'Produto salvo localmente, mas falhou sincronização com nuvem.');
-      } else {
-        console.log('[Inventory] Sucesso Supabase (tabela products):', data);
-        addNotification('success', 'Produto criado e sincronizado com sucesso!');
+      if (insertError) {
+        console.error('[Inventory] Erro ao criar produto no Supabase:', insertError);
+        addNotification('error', `ERRO FATAL AO GRAVAR: ${insertError.message}`);
+        return;
       }
+      
+      if (!insertedProduct || !insertedProduct.id) {
+        console.error('[Inventory] Produto criado mas sem ID retornado:', insertedProduct);
+        addNotification('error', 'Produto criado mas sem ID. Contacte o suporte.');
+        return;
+      }
+      
+      console.log('[Inventory] ✅ Produto criado no Supabase com ID:', insertedProduct.id);
+      
+      // PASSO 2: Upload da imagem (se existir)
+      let imageUrl = null;
+      if (imageFile) {
+        console.log('[Inventory] Fazendo upload da imagem...');
+        
+        try {
+          const cleanFileName = imageFile.name.replace(/\s+/g, '_').replace(/[()]/g, '');
+          const fileName = `${insertedProduct.id}-${cleanFileName}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('products')
+            .upload(fileName, imageFile, {
+              cacheControl: '3600',
+              upsert: true
+            });
+          
+          if (uploadError) {
+            console.error('[Inventory] Erro no upload:', uploadError);
+            addNotification('warning', `Produto criado mas falhou upload: ${uploadError.message}`);
+          } else {
+            // PASSO 3: Obter URL pública
+            const { data: { publicUrl } } = supabase.storage
+              .from('products')
+              .getPublicUrl(fileName);
+            
+            imageUrl = publicUrl;
+            console.log('[Inventory] ✅ Upload concluído, URL:', imageUrl);
+            
+            // PASSO 4: Atualizar produto com image_url
+            const { error: updateError } = await supabase
+              .from('products')
+              .update({ image_url: imageUrl })
+              .eq('id', insertedProduct.id);
+            
+            if (updateError) {
+              console.error('[Inventory] Erro ao atualizar image_url:', updateError);
+              addNotification('warning', `Produto criado mas falhou atualizar imagem: ${updateError.message}`);
+            } else {
+              console.log('[Inventory] ✅ Imagem atualizada no produto');
+            }
+          }
+        } catch (uploadErr) {
+          console.error('[Inventory] Exceção no upload:', uploadErr);
+          addNotification('warning', 'Produto criado mas ocorreu erro no upload da imagem');
+        }
+      }
+      
+      // PASSO 5: Adicionar localmente SÓ DEPOIS do sucesso no Supabase
+      const finalProduct = {
+        ...insertedProduct,
+        id: insertedProduct.id, // ✅ ID do Supabase
+        costPrice: parseFloat(newProduct.price) * 0.6,
+        categoryId: newProduct.category_id,
+        description: '',
+        image: imageUrl || '',
+        image_url: imageUrl || null,
+        createdAt: new Date().toISOString()
+      };
+      
+      addDish(finalProduct);
+      
+      console.log('[Inventory] ✅ Produto criado com sucesso no Supabase e localmente');
+      addNotification('success', 'Produto criado e sincronizado com sucesso!');
+      
     } catch (err) {
-      console.error('[Inventory] Erro crítico Supabase:', err);
-      addNotification('error', 'Erro ao sincronizar com nuvem.');
+      console.error('[Inventory] Erro crítico na criação:', err);
+      addNotification('error', `ERRO CRÍTICO: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+      return;
     }
     
     // Resetar formulário
