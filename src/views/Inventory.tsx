@@ -272,13 +272,13 @@ const Inventory = () => {
             console.error('[Inventory] Erro no upload:', uploadError);
             addNotification('warning', `Produto criado mas falhou upload: ${uploadError.message}`);
           } else {
-            // PASSO 3: Obter URL pública
-            const { data: { publicUrl } } = supabase.storage
+            // PASSO 3: Obter URL pública (COM RETORNO GARANTIDO)
+            const { data: publicUrlData } = supabase.storage
               .from('products')
               .getPublicUrl(fileName);
             
-            imageUrl = publicUrl;
-            console.log('[Inventory] ✅ Upload concluído, URL:', imageUrl);
+            imageUrl = publicUrlData.publicUrl;
+            console.log('[Inventory] ✅ Upload concluído, URL pública:', imageUrl);
             
             // PASSO 4: Atualizar produto com image_url
             const { error: updateError } = await supabase
@@ -393,15 +393,15 @@ const Inventory = () => {
       console.log('[Inventory] Tipo do ID:', typeof editingProduct.id);
       console.log('[Inventory] Formato do ID:', editingProduct.id?.length, 'caracteres');
       
-      // ✅ VERIFICAÇÃO SIMPLES - APENAS ID EXISTE
-      const productId = editingProduct.id; // ✅ USA ID EXATO DO BANCO SEM ALTERAR
+      // ✅ VERIFICAÇÃO SIMPLES - APENAS ID EXISTE (SEM VALIDAÇÃO DE COMPRIMENTO)
+      const productId = editingProduct.id; // ✅ USA ID EXATO DO BANCO (UUID REAL)
       if (!productId) {
         console.error('[Inventory] ID nulo para update:', productId);
         addNotification('error', 'ID do produto não encontrado. Recarregue a página.');
         return;
       }
       
-      console.log('[Inventory] ✅ ID original do banco será usado no update:', productId);
+      console.log('[Inventory] ✅ UUID real do Supabase será usado no update:', productId);
       console.log('[Inventory] ✅ Tipo do ID:', typeof productId);
       console.log('[Inventory] ✅ Comprimento do ID:', productId?.length);
       
@@ -497,21 +497,20 @@ const Inventory = () => {
   // Handlers para Editar/Apagar
   const handleEdit = (product: any) => {
     console.log('[Inventory] Editando produto:', product);
-    console.log('[Inventory] ID do produto (ORIGINAL DO BANCO):', product.id);
+    console.log('[Inventory] ID do produto (UUID REAL DO SUPABASE):', product.id);
     console.log('[Inventory] Tipo do ID:', typeof product.id);
     console.log('[Inventory] Comprimento do ID:', product.id?.length);
     
-    // ✅ VERIFICAÇÃO BÁSICA - APENAS ID EXISTE
+    // ✅ VERIFICAÇÃO BÁSICA - APENAS ID EXISTE (SEM VALIDAÇÃO DE COMPRIMENTO)
     if (!product.id) {
       console.error('[Inventory] Produto sem ID - não é possível editar');
       addNotification('error', 'Produto não tem ID válido. Recarregue a página.');
       return;
     }
     
-    // ✅ DIAGNÓSTICO DO ID - SEM TRANSFORMAÇÃO
+    // ✅ USA ID EXATO DO BANCO (UUID REAL DA IMAGEM 1151)
     const productId = product.id; // ✅ USA ID EXATO DO BANCO SEM ALTERAR
-    console.log('[Inventory] ✅ ID original será usado no update:', productId);
-    console.log('[Inventory] ✅ Produto pode ser editado - ID ORIGINAL:', productId);
+    console.log('[Inventory] ✅ UUID real do Supabase será usado no update:', productId);
     
     setEditingProduct(product);
     setNewProduct({
