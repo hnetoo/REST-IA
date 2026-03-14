@@ -224,15 +224,15 @@ const OwnerDashboard = () => {
       console.log(`[DASHBOARD] Data enviada para SQL:`, new Date().toISOString().split('T')[0]);
       console.log(`[DASHBOARD] Iniciando busca de métricas para período: ${period}`);
       
-      // Buscar despesas reais do Supabase (SEM FILTRO DE DATA TEMPORARIAMENTE)
+      // Buscar despesas reais do Supabase (SIMPLIFICADO)
       let totalDespesas = 0;
       try {
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
-          .select('amount');
+          .select('amount, created_at');
 
         console.log('[DASHBOARD] Dados brutos das despesas:', expensesData);
-        console.log('[DASHBOARD] Erro despesas:', expensesError);
+        console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
 
         if (!expensesError && expensesData && expensesData.length > 0) {
           totalDespesas = expensesData.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
@@ -244,7 +244,7 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
       }
 
-      // Buscar vendas reais do Supabase (SEM FILTRO DE DATA TEMPORARIAMENTE)
+      // Buscar vendas reais do Supabase (SIMPLIFICADO)
       let totalVendas = 0;
       try {
         const { data: ordersData, error: ordersError } = await supabase
@@ -253,7 +253,7 @@ const OwnerDashboard = () => {
           .eq('status', 'FECHADO');
 
         console.log('[DASHBOARD] Dados brutos das vendas:', ordersData);
-        console.log('[DASHBOARD] Erro vendas:', ordersError);
+        console.error('[DASHBOARD] Erro detalhado vendas:', ordersError);
 
         if (!ordersError && ordersData && ordersData.length > 0) {
           totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
