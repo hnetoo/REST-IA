@@ -307,7 +307,6 @@ const Inventory = () => {
       const { data, error } = await supabase
         .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
         .update({
-          id: editingProduct.id,
           name: newProduct.name,
           price: priceNumber,
           image_url: newProduct.image_url || null,

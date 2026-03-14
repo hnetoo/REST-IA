@@ -56,7 +56,7 @@ export const sqlMigrationService = {
         const dishesWithValidCategory = validDishes.filter((m: any) => !m.categoryId || categoryIds.has(m.categoryId));
         console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: dishesWithValidCategory.length });
         const { error: menuError } = await supabase
-          .from('dishes')
+          .from('products')
           .upsert(dishesWithValidCategory.map((m: any) => ({
             id: m.id,
             name: m.name,
@@ -65,7 +65,8 @@ export const sqlMigrationService = {
             image_url: m.image,
             category_id: m.categoryId,
             is_visible_digital: typeof m.isVisibleDigital === 'boolean' ? m.isVisibleDigital : true,
-            is_featured: typeof m.isFeatured === 'boolean' ? m.isFeatured : false
+            is_featured: typeof m.isFeatured === 'boolean' ? m.isFeatured : false,
+            is_active: true
           })));
         if (menuError) console.error('Erro sincronizando menu:', menuError);
       }
