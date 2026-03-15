@@ -535,7 +535,7 @@ const Inventory = () => {
   const handleDeleteCategory = async (categoryId: string) => {
     console.log('[Inventory] Apagando categoria:', categoryId);
     
-    const productsInCategory = menu.filter(product => product.categoryId === categoryId);
+    const productsInCategory = menu.filter(product => product.category_id === categoryId);
     
     if (productsInCategory.length > 0) {
       addNotification('error', `Não é possível apagar categoria. Existem ${productsInCategory.length} produtos ligados a ela.`);
@@ -882,7 +882,7 @@ const Inventory = () => {
           <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
             <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
               {menu.map(dish => {
-                const cat = categories.find(c => c.id === dish.categoryId);
+                const cat = categories.find(c => c.id === dish.category_id);
                 return (
                   <div key={`${dish.id}-${imageRefreshKey}`} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
                     <div className="aspect-square w-full overflow-hidden relative h-32">
@@ -984,7 +984,7 @@ const Inventory = () => {
                     <div>
                       <h3 className="font-bold text-white mb-1">{category.name}</h3>
                       <p className="text-slate-400 text-sm">
-                        {menu.filter(product => product.categoryId === category.id).length} produtos
+                        {menu.filter(product => product.category_id === category.id).length} produtos
                       </p>
                     </div>
                     <div className="flex gap-2">
