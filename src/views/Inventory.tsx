@@ -440,21 +440,58 @@ const Inventory = () => {
       if (!uuidPattern.test(productId)) {
         console.error('[Inventory] ID não tem formato UUID:', productId);
         addNotification('error', `ERRO FATAL: ID "${productId}" não tem formato UUID válido. Use o painel do Supabase para converter.`);
-        return;
-      }
-      
-      console.log('[Inventory] ✅ UUID VALIDADO - executando update:', productId);
-      
-      const handleEditCategory = (category: any) => {
+      return;
+    }
+    
+    const { data, error } = await supabase
+      .from('products')
+      .update(cleanUpdateData)
+      .eq('id', productId)
+      .select();
+
+    if (error) {
+      console.error('[Inventory] Erro ao atualizar no Supabase:', error);
+      addNotification('error', 'Erro ao atualizar produto no Supabase');
+      return;
+    }
+    console.log('[Inventory] Produto atualizado no Supabase:', data);
+    addNotification('success', 'Produto atualizado com sucesso!');
+    
+    const dishToUpdate = {
+      ...productToUpdate,
+      costPrice: priceNumber * 0.6,
+      categoryId: productToUpdate.category_id,
+      description: '',
+      image: productToUpdate.image_url || '',
+      image_url: productToUpdate.image_url || ''
+    };
+    updateDish(dishToUpdate);
+    
+    setNewProduct({
+      name: '',
+      price: '',
+      image_url: '',
+      category_id: '',
+      is_active: true,
+      description: ''
+    });
+    setEditingProduct(null);
+    setIsProductModalOpen(false);
+    
+  } catch (err) {
+    console.error('[Inventory] Erro crítico:', err);
+    addNotification('error', 'Erro ao atualizar produto');
+  }
+  };
+
+  const handleEditCategory = (category: any) => {
     console.log('[Inventory] Editando categoria:', category);
-    // TODO: Implementar modal de edição de categoria
     addNotification('info', 'Edição de categoria em desenvolvimento');
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
     console.log('[Inventory] Apagando categoria:', categoryId);
     
-    // Verificar se existem produtos ligados a esta categoria
     const productsInCategory = menu.filter(product => product.categoryId === categoryId);
     
     if (productsInCategory.length > 0) {
@@ -463,7 +500,6 @@ const Inventory = () => {
     }
     
     try {
-      // Apagar do Supabase
       const { error } = await supabase
         .from('categories')
         .delete()
@@ -475,7 +511,6 @@ const Inventory = () => {
         return;
       }
       
-      // Remover do store local
       removeCategory(categoryId);
       addNotification('success', 'Categoria apagada com sucesso!');
       
@@ -483,141 +518,19 @@ const Inventory = () => {
       console.error('[Inventory] ❌ ERRO AO APAGAR CATEGORIA:', error);
       addNotification('error', `Erro ao apagar categoria: ${error.message}`);
     }
-  };    
-      const { data, error } = await supabase
-        .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
-        .update(cleanUpdateData)
-        .eq('id', productId) // ✅ USANDO UUID VALIDADO
-        .select();
-
-      if (error) {
-        console.error('[Inventory] Erro ao atualizar no Supabase:', error);
-        addNotification('error', 'Erro ao atualizar produto no Supabase');
-        return;
-      }
-      console.log('[Inventory] Produto atualizado no Supabase:', data);
-      addNotification('success', 'Produto atualizado com sucesso!');
-      
-      // ✅ ATUALIZAR STORE LOCAL
-      const dishToUpdate = {
-        ...productToUpdate,
-        costPrice: priceNumber * 0.6,
-        categoryId: productToUpdate.category_id,
-        description: '',
-        image: productToUpdate.image_url || '',
-        image_url: productToUpdate.image_url || '' // ✅ CAMPO CORRETO
-      };
-      updateDish(dishToUpdate);
-      
-      // Resetar formulário
-      setNewProduct({
-        name: '',
-        price: '',
-        image_url: '',
-        category_id: '',
-        is_active: true,
-        description: ''
-      });
-      setEditingProduct(null);
-      setIsProductModalOpen(false);
-      
-    } catch (err) {
-      console.error('[Inventory] Erro crítico:', err);
-      addNotification('error', 'Erro ao atualizar produto');
-    }
   };
 
-  const handleCopyUrl = () => {
-    console.log('[Inventory] Botão Copiar URL clicado!');
-    navigator.clipboard.writeText(digitalMenuUrl);
-    addNotification('success', 'URL do menu copiada!');
-  };
-
-  const handlePrintQR = () => {
-    console.log('[Inventory] Botão Imprimir QR clicado!');
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-    
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>QR Menu - ${settings.restaurantName}</title>
-          <style>
-            body { 
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-              display: flex; 
-              flex-direction: column; 
-              align-items: center; 
-              justify-content: center; 
-              height: 100vh; 
-              margin: 0; 
-              text-align: center;
-              background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-            }
-            .card { 
-              background: white;
-              border-radius: 24px; 
-              padding: 48px; 
-              box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
-              max-width: 420px;
-              text-align: center;
-            }
-            .logo {
-              width: 80px;
-              height: 80px;
-              margin: 0 auto 24px;
-              border-radius: 16px;
-              background: #f3f4f6;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            h1 { 
-              margin: 0 0 8px 0; 
-              text-transform: uppercase; 
-              font-size: 28px; 
-              font-weight: 800;
-              color: #1f2937;
-            }
-            .subtitle {
-              margin: 0 0 32px 0;
-              color: #6b7280;
-              font-size: 14px;
-              font-weight: 600;
-              letter-spacing: 0.05em;
-            }
-            img { 
-              width: 200px; 
-              height: 200px; 
-              margin: 24px 0;
-              border-radius: 16px;
-            }
-            .footer {
-              margin-top: 32px;
-              color: #374151;
-              font-size: 12px;
-              font-weight: 500;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <div class="logo">
-              ${settings.appLogoUrl ? 
-                `<img src="${settings.appLogoUrl}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;" />` :
-                `<div style="font-size: 32px; color: #06b6d4;">🍽️</div>`
-              }
-            </div>
-            <h1>${settings.restaurantName}</h1>
-            <p class="subtitle">MENU DIGITAL</p>
-            <img src="${qrCodeUrl}" alt="QR Code" />
-            <p class="footer">Aponte a câmara para aceder ao menu</p>
-          </div>
-          <script>window.onload = () => { window.print(); window.close(); }</script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+  const handleDuplicateProduct = (product: any) => {
+    console.log('[Inventory] Duplicando produto:', product);
+    setNewProduct({
+      name: `${product.name} (Cópia)`,
+      price: product.price.toString(),
+      image_url: product.image_url || '',
+      category_id: product.category_id,
+      is_active: true,
+      description: product.description || ''
+    });
+    setIsProductModalOpen(true);
   };
 
   const toggleQrSetting = (key: keyof typeof qrSettings) => {
@@ -741,6 +654,15 @@ const Inventory = () => {
     };
     
     input.click();
+  };
+
+  const handlePrintQR = () => {
+    switch (syncStatus) {
+      case 'syncing': return <RefreshCw size={20} className="animate-spin" />;
+      case 'success': return <CheckCircle size={20} />;
+      case 'error': return <AlertCircle size={20} />;
+      default: return <RefreshCw size={20} />;
+    }
   };
 
   const getSyncIcon = () => {
@@ -917,22 +839,29 @@ const Inventory = () => {
                       <span className="text-primary font-mono font-bold text-xs whitespace-nowrap">{formatKz(dish.price)}</span>
                     </div>
                     <p className="text-slate-400 text-[8px] line-clamp-1 italic mb-2 min-h-[12px]">{dish.description}</p>
-                    <div className="flex gap-1">
-                      <button 
-                        onClick={() => handleEdit(dish)}
-                        className="flex-1 py-1 rounded border border-white/10 text-slate-300 hover:bg-white/5 text-[8px] font-black uppercase tracking-widest transition-all"
-                        title="Editar produto"
-                      >
-                        Editar
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(dish.id)}
-                        className="w-8 py-1 rounded border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all"
-                        title="Remover produto"
-                      >
-                        <Trash2 size={10} className="mx-auto" />
-                      </button>
-                    </div>
+                    <div className="flex gap-2">
+                  <button 
+                    onClick={() => handleEdit(dish)}
+                    className="flex-1 py-1 rounded border border-white/10 text-slate-300 hover:bg-white/5 text-[8px] font-black uppercase tracking-widest transition-all"
+                    title="Editar produto"
+                  >
+                    Editar
+                  </button>
+                  <button 
+                    onClick={() => handleDuplicateProduct(dish)}
+                    className="flex-1 py-1 rounded border border-primary/10 text-primary hover:bg-primary/20 text-[8px] font-black uppercase tracking-widest transition-all"
+                    title="Duplicar produto"
+                  >
+                    Duplicar
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(dish.id)}
+                    className="w-8 py-1 rounded border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all"
+                    title="Remover produto"
+                  >
+                    <Trash2 size={10} className="mx-auto" />
+                  </button>
+                </div>
                   </div>
                 </div>
               );
