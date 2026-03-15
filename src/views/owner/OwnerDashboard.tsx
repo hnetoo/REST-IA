@@ -648,7 +648,7 @@ const OwnerDashboard = () => {
   const isAltaEficiencia = isAboveBreakEven && diaAtual <= 20;
 
   return (
-    <div className="h-screen overflow-y-auto overflow-x-hidden bg-[#070b14]">
+    <div className="min-h-screen overflow-y-auto overflow-x-hidden bg-[#070b14] scrollbar-thin scrollbar-thumb-orange-500">
       {/* HEADER - OWNER HUB */}
       <header className="sticky top-0 z-50 flex justify-between items-center p-4 bg-white/5 backdrop-blur-md border border-white/10">
         <div className="flex items-center gap-3">
@@ -708,7 +708,7 @@ const OwnerDashboard = () => {
         {/* GRID DE INDICADORES (KPIs) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* Card 1: Vendas Hoje */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-amber-400" />
@@ -722,7 +722,7 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Card 2: Faturação Total */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-cyan-400" />
@@ -736,7 +736,7 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Card 3: Lucro Líquido */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-emerald-400" />
@@ -750,7 +750,7 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Card 4: Ticket Médio */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-cyan-400" />
@@ -764,7 +764,7 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Card 4: Despesas Gerais */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
                 <Receipt className="w-6 h-6 text-orange-400" />
@@ -778,7 +778,7 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Card 5: Custos de Staff */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all min-h-[140px]">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6 text-red-400" />
@@ -793,7 +793,7 @@ const OwnerDashboard = () => {
         </div>
 
         {/* CARD HISTÓRICO DE FATURAÇÃO */}
-        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6 min-h-[140px]">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
@@ -816,7 +816,7 @@ const OwnerDashboard = () => {
         </div>
 
         {/* CARD PONTO DE EQUILÍBRIO (BREAK-EVEN) */}
-        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6 min-h-[160px]">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -871,7 +871,7 @@ const OwnerDashboard = () => {
         {/* GRÁFICOS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Gráfico de Receitas vs Despesas */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 min-h-[280px]">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <h3 className="text-lg font-black text-white mb-4">Receitas vs Despesas</h3>
             <div className="h-64">
               {chartData && chartData.length > 0 ? (
@@ -921,7 +921,7 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Gráfico de Tendências */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 min-h-[280px]">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <h3 className="text-lg font-black text-white mb-4">Tendências de Vendas</h3>
             <div className="h-64">
               {chartData && chartData.length > 0 ? (
@@ -984,7 +984,7 @@ const OwnerDashboard = () => {
         </div>
 
         {/* MÓDULO FISCAL */}
-        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 mb-6 min-h-[140px]">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
@@ -1011,7 +1011,7 @@ const OwnerDashboard = () => {
         </div>
 
         {/* RANKING - TOP 5 PRODUTOS */}
-        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 min-h-[320px]">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
           <h3 className="text-lg font-black text-white mb-4">Top 5 Produtos</h3>
           <div className="space-y-3">
             {topProducts.length > 0 ? (
