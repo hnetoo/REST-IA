@@ -1397,130 +1397,134 @@ const SystemHub = () => {
           </h4>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl text-center">
-              <div className="text-2xl font-bold text-green-500 mb-2">{formatKz(totalRevenue)}</div>
-              <div className="text-[8px] text-slate-400 uppercase">Receita Total</div>
+            <div className="text-center p-4 bg-green-500/10 rounded-2xl border border-green-500/20">
+              <div className="text-2xl font-black text-green-400">{formatKz(totalRevenue)}</div>
+              <div className="text-xs text-green-300 uppercase tracking-widest mt-1">Receita Total</div>
             </div>
-            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-center">
-              <div className="text-2xl font-bold text-blue-500 mb-2">{formatKz(totalProfit)}</div>
-              <div className="text-[8px] text-slate-400 uppercase">Lucro Total</div>
+            <div className="text-center p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+              <div className="text-2xl font-black text-blue-400">{formatKz(totalProfit)}</div>
+              <div className="text-xs text-blue-300 uppercase tracking-widest mt-1">Lucro Total</div>
             </div>
-            <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl text-center">
-              <div className="text-2xl font-bold text-purple-500 mb-2">{avgProfitMargin.toFixed(1)}%</div>
-              <div className="text-[8px] text-slate-400 uppercase">Margem Média</div>
+            <div className="text-center p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
+              <div className="text-2xl font-black text-purple-400">{avgProfitMargin.toFixed(1)}%</div>
+              <div className="text-xs text-purple-300 uppercase tracking-widest mt-1">Margem Média</div>
             </div>
           </div>
         </div>
 
-        {/* Adicionar Novo Registro */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <div className="flex justify-between items-center">
+        {/* Formulário de Adição */}
+        {showForm && (
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
+            <h4 className="text-sm font-black text-white italic uppercase mb-6">Adicionar Registro Histórico</h4>
+            <form onSubmit={handleAddRecord} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Sistema</label>
+                <input 
+                  type="text" 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
+                  value={formData.system}
+                  onChange={e => setFormData({...formData, system: e.target.value})}
+                  placeholder="Nome do sistema"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Período</label>
+                <input 
+                  type="text" 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
+                  value={formData.period}
+                  onChange={e => setFormData({...formData, period: e.target.value})}
+                  placeholder="Ex: Jan-Dez 2024"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Receita (Kz)</label>
+                <input 
+                  type="number" 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
+                  value={formData.revenue}
+                  onChange={e => setFormData({...formData, revenue: e.target.value})}
+                  placeholder="0"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Lucro (Kz)</label>
+                <input 
+                  type="number" 
+                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
+                  value={formData.profit}
+                  onChange={e => setFormData({...formData, profit: e.target.value})}
+                  placeholder="0"
+                  required
+                />
+              </div>
+              <div className="md:col-span-2 flex gap-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="flex-1 py-4 bg-white/5 border border-white/10 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-4 bg-primary text-black rounded-xl font-black uppercase text-[10px] tracking-widest shadow-glow hover:bg-primary/80 transition-all"
+                >
+                  Adicionar Registro
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Tabela de Registros com Botões de Ação */}
+        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
+          <div className="flex justify-between items-center mb-6">
             <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
               <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
               Registros Históricos
             </h4>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="px-4 py-2 bg-[#06b6d4] text-black rounded-xl text-sm font-black uppercase hover:brightness-110 transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-primary text-black rounded-xl font-black uppercase text-[10px] tracking-widest shadow-glow hover:bg-primary/80 transition-all flex items-center gap-2"
             >
-              <Plus size={16} />
-              {showForm ? 'Cancelar' : 'Adicionar Registro'}
+              <Plus size={16}/> Novo Registro
             </button>
           </div>
-
-          {showForm && (
-            <form onSubmit={handleAddRecord} className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-2xl">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">Sistema Anterior</label>
-                  <input
-                    type="text"
-                    value={formData.system}
-                    onChange={(e) => setFormData({...formData, system: e.target.value})}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#06b6d4]"
-                    placeholder="Nome do sistema"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">Período</label>
-                  <input
-                    type="text"
-                    value={formData.period}
-                    onChange={(e) => setFormData({...formData, period: e.target.value})}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#06b6d4]"
-                    placeholder="Ex: Jan-Jun 2024"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">Receita (Kz)</label>
-                  <input
-                    type="number"
-                    value={formData.revenue}
-                    onChange={(e) => setFormData({...formData, revenue: e.target.value})}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#06b6d4]"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">Lucro (Kz)</label>
-                  <input
-                    type="number"
-                    value={formData.profit}
-                    onChange={(e) => setFormData({...formData, profit: e.target.value})}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#06b6d4]"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="w-full py-4 bg-green-500 text-white rounded-xl font-black uppercase text-sm tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105"
-              >
-                <Save size={20} />
-                Salvar Registro
-              </button>
-            </form>
-          )}
-        </div>
-
-        {/* Lista de Registros */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
-            Histórico de Sistemas
-          </h4>
           
-          <div className="space-y-4">
-            {records.map((record) => (
-              <div key={record.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h5 className="text-white font-bold text-lg">{record.system}</h5>
-                    <p className="text-xs text-slate-400">{record.period}</p>
+          <div className="space-y-3">
+            {records.map(record => (
+              <div key={record.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all group">
+                <div className="flex-1">
+                  <div className="flex items-center gap-4">
+                    <div className="text-white font-bold">{record.system}</div>
+                    <div className="text-slate-400 text-sm">{record.period}</div>
+                    <div className="text-xs text-slate-500">{record.date}</div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-slate-400">Margem</p>
-                    <p className="text-lg font-bold text-purple-400">
-                      {((record.profit / record.revenue) * 100).toFixed(1)}%
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-slate-400">Receita</p>
-                    <p className="text-xl font-bold text-green-400">{formatKz(record.revenue)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">Lucro</p>
-                    <p className="text-xl font-bold text-blue-400">{formatKz(record.profit)}</p>
+                  <div className="flex items-center gap-6 mt-2">
+                    <div className="text-green-400 font-bold">{formatKz(record.revenue)}</div>
+                    <div className="text-blue-400 font-bold">{formatKz(record.profit)}</div>
+                    <div className="text-purple-400 text-sm">
+                      {record.revenue > 0 ? ((record.profit / record.revenue) * 100).toFixed(1) : 0}% margem
+                    </div>
                   </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-white/10">
-                  <p className="text-xs text-slate-500">Registrado em: {new Date(record.date).toLocaleDateString('pt-AO')}</p>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                    <Edit2 size={16}/>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setRecords(records.filter(r => r.id !== record.id));
+                      addNotification('success', 'Registro removido com sucesso!');
+                    }}
+                    className="p-2 text-red-500/30 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                  >
+                    <Trash2 size={16}/>
+                  </button>
                 </div>
               </div>
             ))}

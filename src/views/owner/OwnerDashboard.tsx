@@ -248,6 +248,28 @@ const OwnerDashboard = () => {
     }
   };
 
+  // Buscar faturação histórica do SystemHub
+  const fetchHistoricoRevenue = async () => {
+    try {
+      const { data: historicoData, error: historicoError } = await supabase
+        .from('financial_history')
+        .select('revenue')
+        .neq('status', 'INACTIVE');
+
+      if (historicoError) {
+        console.error('[DASHBOARD] Erro ao buscar faturação histórica:', historicoError);
+        return 0;
+      }
+
+      const totalHistorico = historicoData?.reduce((sum, record) => sum + Number(record.revenue || 0), 0) || 0;
+      console.log('[DASHBOARD] Faturação histórica total:', totalHistorico);
+      return totalHistorico;
+    } catch (error) {
+      console.error('[DASHBOARD] Erro na busca de faturação histórica:', error);
+      return 0;
+    }
+  };
+
   // Buscar despesas do dia atual (HOJE)
   const fetchTodayExpenses = async () => {
     try {
@@ -487,7 +509,7 @@ const OwnerDashboard = () => {
         despesas: totalDespesas || 0,
         folhaSalarial: folhaSalarial || 0,
         impostos: (totalVendas || 0) * 0.065, // REGRA DOS 6,5% - COM 102.100 Kz = 6.636,50 Kz
-        historicoRevenue: 0,
+        historicoRevenue: await fetchHistoricoRevenue(),
         lucroLiquido: lucroLiquido,
         margem: totalVendas > 0 ? (lucroLiquido / totalVendas) * 100 : 0
       };
