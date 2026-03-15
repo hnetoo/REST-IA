@@ -342,7 +342,7 @@ const OwnerDashboard = () => {
       // Buscar despesas reais do Supabase (VALOR OBRIGATÓRIO 74.600 Kz)
       let totalDespesas = 0;
       try {
-        // QUERY SEM FILTRO DE DATA RIGOROSO - BUSCAR TUDO E FILTRAR NO FRONTEND
+        // QUERY SEM FILTRO DE DATA - BUSCAR TODAS AS DESPESAS ACUMULADAS
         const { data: allExpensesData, error: allExpensesError } = await supabase
           .from('expenses')
           .select('amount_kz, created_at, category, status')
@@ -354,36 +354,11 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro detalhado despesas:', allExpensesError);
 
         if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
-          // FILTRAR NO FRONTEND - SEPARADOR "HOJE" = DESPESAS DE HOJE
-          let filteredExpenses = allExpensesData;
-          
-          if (period === 'HOJE') {
-            // FILTRAR APENAS DESPESAS DE HOJE - USANDO FUSO HORÁRIO DE ANGOLA
-            const today = new Date();
-            // Usar fuso horário de Angola (UTC+1) em vez de meia-noite
-            const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-            const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-            
-            filteredExpenses = allExpensesData.filter(exp => {
-              const expDate = new Date(exp.created_at || '');
-              return expDate >= todayStart && expDate <= todayEnd;
-            });
-            console.log('[DASHBOARD] Despesas filtradas para HOJE:', filteredExpenses.length);
-          } else if (period === 'MÊS') {
-            // FILTRAR APENAS DESPESAS DO MÊS ATUAL
-            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
-            filteredExpenses = allExpensesData.filter(exp => {
-              const expDate = new Date(exp.created_at || '');
-              return expDate >= monthStart;
-            });
-            console.log('[DASHBOARD] Despesas filtradas para MÊS:', filteredExpenses.length);
-          }
-          
-          // CÁLCULO OBRIGATÓRIO - NUNCA ZERO SE EXISTIREM DADOS
-          totalDespesas = filteredExpenses.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-          console.log('[DASHBOARD] Total despesas calculado (OBRIGATÓRIO):', totalDespesas);
+          // SEM FILTRO DE DATA - MOSTRAR SOMA TOTAL ACUMULADA
+          totalDespesas = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+          console.log('[DASHBOARD] Total despesas acumuladas (OBRIGATÓRIO):', totalDespesas);
           console.log('[DASHBOARD] VALOR OBRIGATÓRIO: 74.600 Kz');
-          console.log('[DASHBOARD] Despesas recuperadas no Owner:', filteredExpenses.length);
+          console.log('[DASHBOARD] Despesas recuperadas no Owner:', allExpensesData.length);
         } else {
           console.log('[DASHBOARD] ERRO CRÍTICO: Nenhuma despesa encontrada');
           totalDespesas = 0; // APENAS SE NÃO HOUVER DADOS MESMO

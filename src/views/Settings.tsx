@@ -156,7 +156,7 @@ const Settings = () => {
       <div className="glass-panel rounded-[3rem] p-10 min-h-[500px] border border-white/5 relative animate-in fade-in duration-500">
         
         {activeTab === 'GENERAL' && (
-          <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+          <div className="max-h-[80vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
             <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10">
              <div className="grid grid-cols-1 gap-8">
                 <div>
@@ -349,7 +349,7 @@ const Settings = () => {
         )}
 
         {activeTab === 'FISCAL' && (
-           <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+           <div className="max-h-[80vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
              <div className="space-y-12">
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
@@ -418,7 +418,7 @@ const Settings = () => {
         )}
 
         {activeTab === 'OPERATORS' && (
-          <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+          <div className="max-h-[80vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
              <div className="space-y-8">
              <div className="flex justify-between items-center">
                 <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">Gestão de Operadores & Permissões</h3>

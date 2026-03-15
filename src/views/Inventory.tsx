@@ -217,6 +217,7 @@ const Inventory = () => {
         name: newProduct.name,
         description: newProduct.description || '',
         price: priceNumber,
+        cost_price: priceNumber * 0.6,
         image_url: newProduct.image_url || null,
         is_active: newProduct.is_active,
         category_id: newProduct.category_id
@@ -388,10 +389,11 @@ const Inventory = () => {
       const cleanUpdateData = {
         name: newProduct.name?.trim(), // ✅ text
         price: Number(priceNumber), // ✅ numeric - garanta que é Number
+        cost_price: Number(priceNumber) * 0.6, // ✅ numeric - 60% do preço de venda
         image_url: newProduct.image_url?.trim() || null, // ✅ text - apenas URL string
         is_active: newProduct.is_active, // ✅ boolean
         category_id: newProduct.category_id?.trim() || null // ✅ uuid
-        // ✅ REMOVIDOS: description, cost_price, categoryId, isFeatured, isVisibleDigital (não existem na tabela)
+        // ✅ REMOVIDOS: description, categoryId, isFeatured, isVisibleDigital (não existem na tabela)
       };
       
       // ✅ VALIDAÇÃO DE CAMPOS
