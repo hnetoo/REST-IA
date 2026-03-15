@@ -5,12 +5,12 @@ import { forceRealSyncService } from '../services/forceRealSyncService';
 import { 
   Utensils, Tag, Box, Plus, QrCode, Eye, 
   Settings, Smartphone, Globe, Trash2, RefreshCw, Download, Upload,
-  CheckCircle, AlertCircle, X, Upload as UploadIcon
+  CheckCircle, AlertCircle, X, Upload as UploadIcon, Edit2
 } from 'lucide-react';
 
 const Inventory = () => {
   const { 
-    menu, categories, settings, addNotification, addDish, addCategory, removeDish, updateDish
+    menu, categories, settings, addNotification, addDish, addCategory, removeDish, updateDish, removeCategory
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'menu' | 'categories' | 'stock' | 'qr'>('menu');
@@ -390,10 +390,11 @@ const Inventory = () => {
         name: newProduct.name?.trim(), // ✅ text
         price: Number(priceNumber), // ✅ numeric - garanta que é Number
         cost_price: Number(priceNumber) * 0.6, // ✅ numeric - 60% do preço de venda
+        description: newProduct.description?.trim() || '', // ✅ text - agora existe
         image_url: newProduct.image_url?.trim() || null, // ✅ text - apenas URL string
         is_active: newProduct.is_active, // ✅ boolean
         category_id: newProduct.category_id?.trim() || null // ✅ uuid
-        // ✅ REMOVIDOS: description, categoryId, isFeatured, isVisibleDigital (não existem na tabela)
+        // ✅ REMOVIDOS: categoryId, isFeatured, isVisibleDigital (não existem na tabela)
       };
       
       // ✅ VALIDAÇÃO DE CAMPOS
@@ -444,6 +445,45 @@ const Inventory = () => {
       
       console.log('[Inventory] ✅ UUID VALIDADO - executando update:', productId);
       
+      const handleEditCategory = (category: any) => {
+    console.log('[Inventory] Editando categoria:', category);
+    // TODO: Implementar modal de edição de categoria
+    addNotification('info', 'Edição de categoria em desenvolvimento');
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    console.log('[Inventory] Apagando categoria:', categoryId);
+    
+    // Verificar se existem produtos ligados a esta categoria
+    const productsInCategory = menu.filter(product => product.categoryId === categoryId);
+    
+    if (productsInCategory.length > 0) {
+      addNotification('error', `Não é possível apagar categoria. Existem ${productsInCategory.length} produtos ligados a ela.`);
+      return;
+    }
+    
+    try {
+      // Apagar do Supabase
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryId);
+      
+      if (error) {
+        console.error('[Inventory] Erro ao apagar categoria:', error);
+        addNotification('error', 'Erro ao apagar categoria');
+        return;
+      }
+      
+      // Remover do store local
+      removeCategory(categoryId);
+      addNotification('success', 'Categoria apagada com sucesso!');
+      
+    } catch (error) {
+      console.error('[Inventory] ❌ ERRO AO APAGAR CATEGORIA:', error);
+      addNotification('error', `Erro ao apagar categoria: ${error.message}`);
+    }
+  };    
       const { data, error } = await supabase
         .from('products') // ✅ TABELA PLURAL PADRÃO SUPABASE
         .update(cleanUpdateData)
@@ -475,7 +515,8 @@ const Inventory = () => {
         price: '',
         image_url: '',
         category_id: '',
-        is_active: true
+        is_active: true,
+        description: ''
       });
       setEditingProduct(null);
       setIsProductModalOpen(false);
@@ -838,10 +879,10 @@ const Inventory = () => {
               return (
                 <div key={dish.id} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
                   <div className="aspect-square w-full overflow-hidden relative h-32">
-                    {dish.image_url ? (
+                    {dish.image ? (
                       <>
                         <img 
-                          src={dish.image_url} 
+                          src={dish.image} 
                           alt={dish.name} 
                           className="w-full h-full object-cover aspect-video"
                           onError={(e) => {
@@ -850,11 +891,11 @@ const Inventory = () => {
                             const fallback = target.nextElementSibling as HTMLElement;
                             if (fallback) fallback.style.display = 'flex';
                             console.log('[Inventory] Erro ao carregar imagem do produto:', dish.name);
-                            console.log('[Inventory] Link da imagem do produto:', dish.image_url);
+                            console.log('[Inventory] Link da imagem do produto:', dish.image);
                           }}
                           onLoad={() => {
                             console.log('[Inventory] Imagem carregada com sucesso:', dish.name);
-                            console.log('[Inventory] URL do Produto:', dish.image_url);
+                            console.log('[Inventory] URL do Produto:', dish.image);
                           }}
                         />
                         <div className="w-full h-full bg-slate-700 flex items-center justify-center" style={{display: 'none'}}>
@@ -908,24 +949,24 @@ const Inventory = () => {
                     <Tag size={20} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-lg tracking-tight leading-none">{cat.name}</h3>
-                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1">
-                      {menu.filter(d => d.categoryId === cat.id).length} Produtos
-                    </p>
+                    <h3 className="font-bold text-white text-lg">{cat.name}</h3>
+                    <p className="text-slate-400 text-sm">Sem descrição</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button 
-                    className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+                    onClick={() => handleEditCategory(cat)}
+                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all"
                     title="Editar categoria"
                   >
-                    <Tag size={14}/>
+                    <Edit2 size={16} />
                   </button>
                   <button 
-                    className="p-2 rounded-lg text-red-500/50 hover:text-red-500 hover:bg-red-500/10"
-                    title="Remover categoria"
+                    onClick={() => handleDeleteCategory(cat.id)}
+                    className="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-500/50 hover:text-red-400 transition-all"
+                    title="Apagar categoria"
                   >
-                    <Trash2 size={14}/>
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>

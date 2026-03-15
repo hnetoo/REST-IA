@@ -157,7 +157,7 @@ const Settings = () => {
         
         {activeTab === 'GENERAL' && (
           <div>
-            <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
+            <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 max-h-[70vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
              <div className="grid grid-cols-1 gap-8">
                 <div>
                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome do Restaurante</label>
