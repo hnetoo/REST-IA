@@ -60,7 +60,8 @@ const DashboardV2 = () => {
     totalOrders: 0,
     averageTicket: 0,
     taxProvision: 0,
-    totalLiquidez: 0,
+    reservaFiscal: 0,
+    caixaDisponivel: 0,
     liquidezStatus: 'seguro' as 'seguro' | 'risco',
     paymentMethods: [] as PaymentMethodData[],
     hourlySales: [] as HourlySales[],
@@ -193,9 +194,10 @@ const DashboardV2 = () => {
       const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
       const taxProvision = totalRevenue * 0.065; // 6.5% de provisão
 
-      // Cálculo de liquidez fiscal
-      const totalLiquidez = totalProfit; // Faturamento líquido (Vendas - Despesas)
-      const liquidezStatus = totalLiquidez >= taxProvision ? 'seguro' : 'risco';
+      // Cálculo de liquidez fiscal (TOQUE DE MESTRE)
+      const reservaFiscal = taxProvision + (Math.max(0, totalProfit) * 0.25); // Retenção + Industrial
+      const caixaDisponivel = totalRevenue - totalExpenses; // Faturamento - Despesas
+      const liquidezStatus = caixaDisponivel >= reservaFiscal ? 'seguro' : 'risco';
 
       // Processar métodos de pagamento
       const paymentMethods: PaymentMethodData[] = Array.from(paymentMethodsMap.entries())
@@ -226,7 +228,8 @@ const DashboardV2 = () => {
         totalOrders,
         averageTicket,
         taxProvision,
-        totalLiquidez,
+        reservaFiscal,
+        caixaDisponivel,
         liquidezStatus,
         paymentMethods,
         hourlySales,
@@ -236,6 +239,8 @@ const DashboardV2 = () => {
         },
         auditLogs: auditData || []
       });
+
+      console.log('[TASCA] Dashboard V2: Dados sincronizados com sucesso.');
 
       console.log('[DashboardV2] Dados processados:', {
         totalRevenue,
@@ -428,7 +433,7 @@ const DashboardV2 = () => {
               <span className={`font-bold ${
                 metrics.liquidezStatus === 'seguro' ? 'text-green-400' : 'text-red-400'
               }`}>
-                {formatKz(metrics.totalLiquidez)}
+                {formatKz(metrics.caixaDisponivel)}
               </span>
             </div>
             {/* Alerta de Liquidez Fiscal */}
@@ -438,14 +443,14 @@ const DashboardV2 = () => {
                   ? 'bg-green-500/10 border-green-500/20' 
                   : 'bg-red-500/10 border-red-500/20'
               }`}
-              title="Este valor representa o montante que deves manter em reserva para as obrigações com a AGT no final do período."
+              title="Este alerta compara o teu saldo disponível com a provisão de impostos calculada (Retenção + Industrial). Garante que tens liquidez para o fecho do exercício."
             >
               <p className={`text-sm font-medium ${
                 metrics.liquidezStatus === 'seguro' ? 'text-green-400' : 'text-red-400'
               }`}>
                 {metrics.liquidezStatus === 'seguro' 
-                  ? 'Reserva Fiscal Coberta ✅' 
-                  : 'Atenção: Risco de Liquidez Fiscal ⚠️'
+                  ? '✅ RESERVA COBERTA' 
+                  : '⚠️ RISCO DE LIQUIDEZ'
                 }
               </p>
             </div>
