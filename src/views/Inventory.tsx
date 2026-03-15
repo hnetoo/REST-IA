@@ -217,7 +217,6 @@ const Inventory = () => {
         name: newProduct.name,
         description: newProduct.description || '',
         price: priceNumber,
-        cost_price: priceNumber * 0.6,
         image_url: newProduct.image_url || null,
         is_active: newProduct.is_active,
         category_id: newProduct.category_id
@@ -842,7 +841,7 @@ const Inventory = () => {
                         <img 
                           src={dish.image_url} 
                           alt={dish.name} 
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover aspect-video"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
