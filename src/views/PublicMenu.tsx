@@ -228,6 +228,9 @@ const PublicMenu = () => {
           <p className="text-cyan-500 text-[10px] font-bold mt-1">
             Telefone: +244 976 825 520
           </p>
+          <p className="text-gray-500 text-xs text-center mt-1">
+            Imagens Ilustrativas
+          </p>
         </div>
       </div>
 
