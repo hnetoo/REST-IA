@@ -326,7 +326,7 @@ return (
       ))}
     </div>
 
-    <div className="glass-panel rounded-[3rem] p-10 h-[50vh] overflow-y-auto pr-2 border border-white/5 relative animate-in fade-in duration-500 scrollbar-thin scrollbar-thumb-orange-500">
+    <div className="glass-panel rounded-[3rem] p-10 h-[40vh] overflow-y-scroll border border-white/5 relative animate-in fade-in duration-500" style={{scrollbarWidth: 'thin', scrollbarColor: '#f97316 transparent'}}>
         
       {activeTab === 'GENERAL' && (
           <div>
