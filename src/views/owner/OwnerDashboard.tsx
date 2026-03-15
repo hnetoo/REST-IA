@@ -363,7 +363,7 @@ const OwnerDashboard = () => {
       // Obter range de datas para o período selecionado
       const { startDate, endDate } = getDateRange(period);
       
-      // Buscar despesas reais do Supabase (VALOR OBRIGATÓRIO 74.600 Kz)
+      // Buscar despesas reais do Supabase
       let totalDespesas = 0;
       try {
         // QUERY SEM FILTRO DE DATA - BUSCAR TODAS AS DESPESAS ACUMULADAS
@@ -372,55 +372,44 @@ const OwnerDashboard = () => {
           .select('amount_kz, created_at, category, status')
           .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
 
-        console.log('[DASHBOARD] TODAS AS DESPESAS (sem filtro de data):', allExpensesData);
-        console.log('[DASHBOARD] Status: Ignorando PENDENTE');
-        console.log('[DASHBOARD] APP PRINCIPAL DIZ: 74.600 Kz');
+        console.log('[DASHBOARD] Despesas encontradas:', allExpensesData?.length || 0);
         console.error('[DASHBOARD] Erro detalhado despesas:', allExpensesError);
 
         if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
           // SEM FILTRO DE DATA - MOSTRAR SOMA TOTAL ACUMULADA
           totalDespesas = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-          console.log('[DASHBOARD] Total despesas acumuladas (OBRIGATÓRIO):', totalDespesas);
-          console.log('[DASHBOARD] VALOR OBRIGATÓRIO: 74.600 Kz');
-          console.log('[DASHBOARD] Despesas recuperadas no Owner:', allExpensesData.length);
+          console.log('[DASHBOARD] Total despesas acumuladas:', totalDespesas);
         } else {
-          console.log('[DASHBOARD] ERRO CRÍTICO: Nenhuma despesa encontrada');
-          totalDespesas = 0; // APENAS SE NÃO HOUVER DADOS MESMO
+          console.log('[DASHBOARD] Nenhuma despesa encontrada');
+          totalDespesas = 0;
         }
       } catch (expError) {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
         totalDespesas = 0;
       }
 
-      // Buscar folha salarial da tabela staff (TABELA VAZIA - CACHE LIMPO)
+      // Buscar folha salarial da tabela staff
       let folhaSalarial = 0;
       try {
-        // FORÇAR REFRESH SEM CACHE
         const { data: staffData, error: staffError } = await supabase
           .from('staff')
           .select('*')
-          .order('created_at', { ascending: false }); // FORÇAR LEITURA RECENTE
+          .order('created_at', { ascending: false });
 
-        console.log('[DASHBOARD] Dados brutos da staff (TABELA VAZIA):', staffData);
-        console.log('[DASHBOARD] Número de funcionários encontrados:', staffData?.length || 0);
-        console.log('[DASHBOARD] TABELA STAFF ESTÁ VAZIA - VALOR DEVE SER 0,00 Kz');
+        console.log('[DASHBOARD] Funcionários encontrados:', staffData?.length || 0);
         console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
-        // TABELA VAZIA = FOLHA SALARIAL = 0
         if (!staffError && staffData && staffData.length > 0) {
           const monthlyTotal = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
           folhaSalarial = monthlyTotal;
           console.log('[DASHBOARD] Custo real da folha salarial:', folhaSalarial);
-          console.log('[DASHBOARD] NÚMERO DE FUNCIONÁRIOS ENCONTRADOS:', staffData.length);
         } else {
-          // TABELA VAZIA - VALOR ZERO
           folhaSalarial = 0;
-          console.log('[DASHBOARD] TABELA STAFF VAZIA - FOLHA SALARIAL = 0,00 Kz');
-          console.log('[DASHBOARD] CARD DEVE MOSTRAR: 0,00 Kz');
+          console.log('[DASHBOARD] Tabela staff vazia - folha salarial = 0');
         }
       } catch (staffError) {
         console.error('[DASHBOARD] Erro ao buscar folha salarial:', staffError);
-        folhaSalarial = 0; // ERRO = ZERO
+        folhaSalarial = 0;
       }
 
       // Buscar vendas reais do Supabase (COM FILTRO DE PERÍODO)
@@ -506,7 +495,7 @@ const OwnerDashboard = () => {
       // Calcular margem de lucro com tratamento de zeros
       const margem = totalVendas > 0 ? (lucroLiquido / totalVendas) * 100 : 0;
 
-      console.log('[DASHBOARD] Métricas finais com período:', {
+      console.log('[DASHBOARD] Métricas finais:', {
         periodo: period,
         totalVendas: metricsResult.totalVendas,
         totalDespesas: metricsResult.despesas,
@@ -518,16 +507,6 @@ const OwnerDashboard = () => {
       setMetrics(metricsResult);
       setChartData(chartDataGenerated);
       setIsLoading(false);
-      
-      console.log('[DASHBOARD] Métricas finais com período:', {
-        periodo: period,
-        totalVendas: metricsResult.totalVendas,
-        totalDespesas: metricsResult.despesas,
-        folhaSalarial: metricsResult.folhaSalarial,
-        impostos: metricsResult.impostos,
-        lucroLiquido: metricsResult.totalVendas - metricsResult.despesas - metricsResult.folhaSalarial,
-        vendasHoje: metricsResult.vendasHoje
-      });
       
     } catch (error) {
       console.error('[DASHBOARD] Erro ao buscar métricas:', error);
@@ -639,7 +618,7 @@ const OwnerDashboard = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [period, fetchMetrics]); // Adicionar fetchMetrics como dependência para forçar refetch
+  }, [period]); // Removido fetchMetrics das dependências para evitar loops
 
   // Calcular ticket médio
   const ticketMedio = metrics.totalVendas > 0 ? metrics.totalVendas / (metrics.vendasHoje > 0 ? metrics.vendasHoje : 1) : 0;
