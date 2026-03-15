@@ -355,14 +355,15 @@ const OwnerDashboard = () => {
 
         if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
           // FILTRAR NO FRONTEND - SEPARADOR "HOJE" = DESPESAS DE HOJE
-          const today = new Date();
-          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-          const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-          
           let filteredExpenses = allExpensesData;
           
           if (period === 'HOJE') {
-            // FILTRAR APENAS DESPESAS DE HOJE
+            // FILTRAR APENAS DESPESAS DE HOJE - USANDO FUSO HORÁRIO DE ANGOLA
+            const today = new Date();
+            // Usar fuso horário de Angola (UTC+1) em vez de meia-noite
+            const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+            const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+            
             filteredExpenses = allExpensesData.filter(exp => {
               const expDate = new Date(exp.created_at || '');
               return expDate >= todayStart && expDate <= todayEnd;
@@ -382,6 +383,7 @@ const OwnerDashboard = () => {
           totalDespesas = filteredExpenses.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
           console.log('[DASHBOARD] Total despesas calculado (OBRIGATÓRIO):', totalDespesas);
           console.log('[DASHBOARD] VALOR OBRIGATÓRIO: 74.600 Kz');
+          console.log('[DASHBOARD] Despesas recuperadas no Owner:', filteredExpenses.length);
         } else {
           console.log('[DASHBOARD] ERRO CRÍTICO: Nenhuma despesa encontrada');
           totalDespesas = 0; // APENAS SE NÃO HOUVER DADOS MESMO
@@ -619,6 +621,7 @@ const OwnerDashboard = () => {
     const session = localStorage.getItem('ownerSession');
     if (!session) return;
 
+    // Forçar atualização dos dados ao entrar no Owner Hub
     fetchMetrics();
     const unsubscribe = subscribeToChanges();
 
@@ -634,7 +637,7 @@ const OwnerDashboard = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [period]);
+  }, [period, fetchMetrics]); // Adicionar fetchMetrics como dependência para forçar refetch
 
   // Calcular ticket médio
   const ticketMedio = metrics.totalVendas > 0 ? metrics.totalVendas / (metrics.vendasHoje > 0 ? metrics.vendasHoje : 1) : 0;
