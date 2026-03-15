@@ -839,54 +839,55 @@ const Inventory = () => {
 
       <div className="animate-in fade-in duration-500">
         {activeTab === 'menu' && (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
-            {menu.map(dish => {
-              const cat = categories.find(c => c.id === dish.categoryId);
-              return (
-                <div key={dish.id} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
-                  <div className="aspect-square w-full overflow-hidden relative h-32">
-                    {dish.image ? (
-                      <>
-                        <img 
-                          src={dish.image} 
-                          alt={dish.name} 
-                          className="w-full h-full object-cover aspect-video"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const fallback = target.nextElementSibling as HTMLElement;
-                            if (fallback) fallback.style.display = 'flex';
-                            console.log('[Inventory] Erro ao carregar imagem do produto:', dish.name);
-                            console.log('[Inventory] Link da imagem do produto:', dish.image);
-                          }}
-                          onLoad={() => {
-                            console.log('[Inventory] Imagem carregada com sucesso:', dish.name);
-                            console.log('[Inventory] URL do Produto:', dish.image);
-                          }}
-                        />
-                        <div className="w-full h-full bg-slate-700 flex items-center justify-center" style={{display: 'none'}}>
+          <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
+              {menu.map(dish => {
+                const cat = categories.find(c => c.id === dish.categoryId);
+                return (
+                  <div key={dish.id} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
+                    <div className="aspect-square w-full overflow-hidden relative h-32">
+                      {dish.image ? (
+                        <>
+                          <img 
+                            src={dish.image} 
+                            alt={dish.name} 
+                            className="w-full h-full object-cover aspect-video"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                              console.log('[Inventory] Erro ao carregar imagem do produto:', dish.name);
+                              console.log('[Inventory] Link da imagem do produto:', dish.image);
+                            }}
+                            onLoad={() => {
+                              console.log('[Inventory] Imagem carregada com sucesso:', dish.name);
+                              console.log('[Inventory] URL do Produto:', dish.image);
+                            }}
+                          />
+                          <div className="w-full h-full bg-slate-700 flex items-center justify-center" style={{display: 'none'}}>
+                            <UploadIcon size={24} className="text-slate-500" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full bg-slate-700 flex items-center justify-center">
                           <UploadIcon size={24} className="text-slate-500" />
                         </div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full bg-slate-700 flex items-center justify-center">
-                        <UploadIcon size={24} className="text-slate-500" />
+                      )}
+                      <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/10 z-20">
+                        {cat?.name || 'Sem Categoria'}
                       </div>
-                    )}
-                    <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/10 z-20">
-                      {cat?.name || 'Sem Categoria'}
                     </div>
-                  </div>
-                  <div className="p-3">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-bold text-white text-xs truncate pr-2" title={dish.name}>{dish.name}</h3>
-                      <span className="text-primary font-mono font-bold text-xs whitespace-nowrap">{formatKz(dish.price)}</span>
-                    </div>
-                    <p className="text-slate-400 text-[8px] line-clamp-1 italic mb-2 min-h-[12px]">{dish.description}</p>
-                    <div className="flex gap-2">
-                  <button 
-                    onClick={() => handleEdit(dish)}
-                    className="flex-1 py-1 rounded border border-white/10 text-slate-300 hover:bg-white/5 text-[8px] font-black uppercase tracking-widest transition-all"
+                    <div className="p-3">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-bold text-white text-xs truncate pr-2" title={dish.name}>{dish.name}</h3>
+                        <span className="text-primary font-mono font-bold text-xs whitespace-nowrap">{formatKz(dish.price)}</span>
+                      </div>
+                      <p className="text-slate-400 text-[8px] line-clamp-1 italic mb-2 min-h-[12px]">{dish.description}</p>
+                      <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleEdit(dish)}
+                      className="flex-1 py-1 rounded border border-white/10 text-slate-300 hover:bg-white/5 text-[8px] font-black uppercase tracking-widest transition-all"
                     title="Editar produto"
                   >
                     Editar
@@ -910,11 +911,13 @@ const Inventory = () => {
                 </div>
               );
             })}
+            </div>
           </div>
         )}
 
         {activeTab === 'categories' && (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
+          <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
             {categories.map(cat => (
               <div key={cat.id} className="glass-panel p-6 rounded-[2rem] border border-white/5 flex items-center justify-between hover:border-primary/40 transition-all group">
                 <div className="flex items-center gap-4">
@@ -945,9 +948,11 @@ const Inventory = () => {
               </div>
             ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {activeTab === 'stock' && (
+      {activeTab === 'stock' && (
+        <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
           <div className="glass-panel rounded-[2rem] border border-white/5 overflow-hidden">
             <table className="w-full text-left">
               <thead className="bg-white/5 border-b border-white/5">
@@ -964,29 +969,26 @@ const Inventory = () => {
                   <td className="px-8 py-6 font-mono text-xs">
                     <span className="text-green-500">50 unidades</span>
                   </td>
-                  <td className="px-8 py-6 text-slate-500 font-mono text-xs">10 unidades</td>
+                  <td className="px-8 py-6 font-mono text-xs">
+                    <span className="text-orange-500">10 unidades</span>
+                  </td>
                   <td className="px-8 py-6 text-right">
-                    <div className="inline-flex gap-2">
-                      <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center">-</button>
-                      <button className="w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-black flex items-center justify-center">+</button>
-                    </div>
+                    <button className="w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-black flex items-center justify-center">+</button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-        )}
+        </div>
+      )}
 
-        {activeTab === 'qr' && (
-          <div className="space-y-8">
-            {/* QR Code Generator */}
-            <div className="glass-panel p-8 rounded-[3rem] border border-white/5 bg-white/5">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white shadow-lg">
-                  <QrCode size={32} />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">QR Menu Digital</h3>
+      {activeTab === 'qr' && (
+        <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 space-y-8">
+          {/* QR Code Generator */}
+          <div className="glass-panel p-8 rounded-[3rem] border border-white/5 bg-white/5">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white shadow-lg">
+                <QrCode size={32} />
                   <p className="text-slate-400 text-sm">Gerador de código QR para o seu menu</p>
                 </div>
               </div>
