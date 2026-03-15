@@ -61,19 +61,44 @@ const Inventory = () => {
     maximumFractionDigits: 0 
   }).format(val);
 
-  // URL do Menu Digital - Campo editável com fallback para NIF
-  const [customNif, setCustomNif] = useState(() => settings.nif || '');
+  // URL do Menu Digital - Campo editável com persistência
+  const [customUrl, setCustomUrl] = useState(() => settings.digitalMenuUrl || '');
   const [digitalMenuUrl, setDigitalMenuUrl] = useState(() => {
-    const nifValue = settings.nif || '';
-    return `https://rest-ia.vercel.app/menu-digital?nif=${nifValue}`;
+    return settings.digitalMenuUrl || 'https://rest-ia.vercel.app/#/menu-public';
   });
 
-  // Atualizar URL quando o NIF customizado mudar
+  // Atualizar URL quando o campo mudar
   useEffect(() => {
-    const nifValue = customNif.trim() || settings.nif || '';
-    const newUrl = `https://rest-ia.vercel.app/menu-digital?nif=${nifValue}`;
+    const newUrl = customUrl.trim() || 'https://rest-ia.vercel.app/#/menu-public';
     setDigitalMenuUrl(newUrl);
-  }, [customNif, settings.nif]);
+  }, [customUrl, settings.digitalMenuUrl]);
+
+  // Função para gravar configurações no Supabase
+  const saveDigitalMenuSettings = async () => {
+    try {
+      console.log('[Inventory] Gravando configurações do Menu Digital...');
+      
+      const { error } = await supabase
+        .from('settings')
+        .upsert({
+          key: 'digitalMenuUrl',
+          value: digitalMenuUrl
+        });
+
+      if (error) {
+        console.error('[Inventory] Erro ao gravar URL:', error);
+        addNotification('error', 'Erro ao gravar configurações do Menu Digital');
+        return;
+      }
+
+      addNotification('success', 'Configurações do Menu Digital gravadas com sucesso!');
+      console.log('[Inventory] URL gravada:', digitalMenuUrl);
+      
+    } catch (error: any) {
+      console.error('[Inventory] Erro ao gravar configurações:', error);
+      addNotification('error', `Erro: ${error.message}`);
+    }
+  };
 
   // QR Code URL
   const qrCodeUrl = useMemo(() => {
@@ -1113,16 +1138,23 @@ const Inventory = () => {
                 
                 <div className="space-y-4">
                   <div className="p-4 bg-white/5 rounded-lg">
-                    <label className="block text-slate-400 text-sm mb-2">URL do Menu Digital:</label>
+                    <label className="block text-slate-400 text-sm mb-2">Configurar URL do Menu Digital:</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
-                        value={customNif}
-                        onChange={(e) => setCustomNif(e.target.value)}
-                        placeholder={settings.nif || 'Digite o NIF ou subdomínio'}
+                        value={customUrl}
+                        onChange={(e) => setCustomUrl(e.target.value)}
+                        placeholder="https://rest-ia.vercel.app/#/menu-public"
                         className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
-                        title="Digite o NIF ou subdomínio personalizado"
+                        title="Digite a URL personalizada do menu digital"
                       />
+                      <button
+                        onClick={saveDigitalMenuSettings}
+                        className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-all text-sm font-medium"
+                        title="Gravar configurações do menu digital"
+                      >
+                        Gravar
+                      </button>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(digitalMenuUrl);
@@ -1135,7 +1167,7 @@ const Inventory = () => {
                       </button>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
-                      URL gerada: {digitalMenuUrl}
+                      URL atual: {digitalMenuUrl}
                     </p>
                   </div>
                   
