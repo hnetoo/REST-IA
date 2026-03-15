@@ -248,21 +248,24 @@ const OwnerDashboard = () => {
     }
   };
 
-  // Buscar faturação histórica do SystemHub
+  // Buscar faturação histórica calculada em tempo real
   const fetchHistoricoRevenue = async () => {
     try {
-      const { data: historicoData, error: historicoError } = await supabase
-        .from('financial_history')
-        .select('revenue')
-        .neq('status', 'INACTIVE');
+      // Calcular histórico a partir das orders existentes
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('total_amount, created_at')
+        .eq('status', 'closed')
+        .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString()) // Desde início do ano
+        .lte('created_at', new Date().toISOString());
 
-      if (historicoError) {
-        console.error('[DASHBOARD] Erro ao buscar faturação histórica:', historicoError);
+      if (ordersError) {
+        console.error('[DASHBOARD] Erro ao buscar orders para histórico:', ordersError);
         return 0;
       }
 
-      const totalHistorico = historicoData?.reduce((sum, record) => sum + Number(record.revenue || 0), 0) || 0;
-      console.log('[DASHBOARD] Faturação histórica total:', totalHistorico);
+      const totalHistorico = ordersData?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
+      console.log('[DASHBOARD] Faturação histórica calculada (orders):', totalHistorico);
       return totalHistorico;
     } catch (error) {
       console.error('[DASHBOARD] Erro na busca de faturação histórica:', error);
@@ -333,10 +336,10 @@ const OwnerDashboard = () => {
     try {
       console.log('[DASHBOARD] Buscando produtos mais vendidos...');
       
-      // Buscar pedidos com itens para contar produtos vendidos
+      // Buscar pedidos com itens da tabela orders
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, created_at, total_amount')
+        .select('id, created_at, total_amount, items')
         .eq('status', 'closed')
         .order('created_at', { ascending: false })
         .limit(50);
@@ -347,17 +350,40 @@ const OwnerDashboard = () => {
         return;
       }
 
-      // Simular produtos mais vendidos (baseado em dados reais)
-      const simulatedTopProducts = [
-        { name: 'Muamba de Frango', quantity: 45, revenue: 225000 },
-        { name: 'Cerveja Eka', quantity: 38, revenue: 152000 },
-        { name: 'Cassule de Carne', quantity: 32, revenue: 192000 },
-        { name: 'Sumos Naturais', quantity: 28, revenue: 112000 },
-        { name: 'Batata Frita', quantity: 25, revenue: 87500 }
-      ];
+      if (!ordersData || ordersData.length === 0) {
+        console.log('[DASHBOARD] Nenhum pedido encontrado para produtos');
+        setTopProducts([]);
+        return;
+      }
 
-      setTopProducts(simulatedTopProducts);
-      console.log('[DASHBOARD] Produtos mais vendidos:', simulatedTopProducts);
+      // Contar produtos vendidos a partir dos itens dos pedidos
+      const productCount: { [key: string]: { quantity: number; revenue: number } } = {};
+      
+      ordersData.forEach(order => {
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item: any) => {
+            const productName = item.name || item.title || 'Produto Sem Nome';
+            const quantity = item.quantity || 1;
+            const price = item.price || item.amount || 0;
+            
+            if (!productCount[productName]) {
+              productCount[productName] = { quantity: 0, revenue: 0 };
+            }
+            
+            productCount[productName].quantity += quantity;
+            productCount[productName].revenue += price * quantity;
+          });
+        }
+      });
+
+      // Converter para array e ordenar por revenue
+      const topProductsArray = Object.entries(productCount)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+      setTopProducts(topProductsArray);
+      console.log('[DASHBOARD] Produtos mais vendidos reais:', topProductsArray);
       
     } catch (error) {
       console.error('[DASHBOARD] Erro ao buscar produtos mais vendidos:', error);
