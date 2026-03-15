@@ -92,6 +92,51 @@ const Inventory = () => {
     forceRealSync();
   }, [addNotification]);
 
+  // Estados para reload de imagens
+  const [isRefreshingImages, setIsRefreshingImages] = useState(false);
+  const [imageRefreshKey, setImageRefreshKey] = useState(0);
+
+  // Função para recarregar todas as imagens dos produtos
+  const handleRefreshImages = async () => {
+    console.log('[Inventory] 🔄 Iniciando recarga de todas as imagens...');
+    setIsRefreshingImages(true);
+    
+    try {
+      // Forçar atualização de URLs de imagens para todos os produtos
+      const updatedProducts = menu.map(product => {
+        if (product.image_url) {
+          // Gerar nova URL pública para forçar refresh
+          const { data } = supabase.storage
+            .from('products')
+            .getPublicUrl(product.image_url);
+          
+          return {
+            ...product,
+            image_url: data.publicUrl
+          };
+        }
+        return product;
+      });
+      
+      // Atualizar store com novos URLs
+      updatedProducts.forEach(product => {
+        updateDish(product);
+      });
+      
+      // Forçar re-render do componente incrementando a key
+      setImageRefreshKey(prev => prev + 1);
+      
+      addNotification('success', 'Imagens actualizadas com sucesso!');
+      console.log('[Inventory] ✅ Todas as imagens foram recarregadas');
+      
+    } catch (error) {
+      console.error('[Inventory] ❌ Erro ao recarregar imagens:', error);
+      addNotification('error', 'Erro ao recarregar imagens');
+    } finally {
+      setIsRefreshingImages(false);
+    }
+  };
+
   // Função para obter URL pública estável
   const getStableImageUrl = (imagePath: string) => {
     if (!imagePath) return null;
@@ -430,7 +475,7 @@ const Inventory = () => {
     setIsProductModalOpen(true);
   };
 
-  const handleEdit = (product: any) => {
+  const handleEditProduct = (product: any) => {
     console.log('[Inventory] Editando produto:', product);
     
     // ✅ USA ID EXATO DO BANCO (UUID REAL DA IMAGEM 1151)
@@ -457,7 +502,8 @@ const Inventory = () => {
     addNotification('success', 'Produto removido com sucesso!');
   };
 
-  const handleUpdateProduct = async () => {
+  // Função para atualizar produto existente
+  const handleUpdateExistingProduct = async () => {
     console.log('[Inventory] Atualizando produto:', editingProduct);
     
     if (!editingProduct) return;
@@ -482,6 +528,47 @@ const Inventory = () => {
       name: newProduct.name,
       price: priceNumber,
       image_url: newProduct.image_url || null,
+      is_active: newProduct.is_active,
+      category_id: newProduct.category_id,
+      description: newProduct.description || ''
+    };
+    
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .update(productToUpdate)
+        .eq('id', editingProduct.id)
+        .select();
+
+      if (error) {
+        console.error('[Inventory] Erro ao atualizar produto:', error);
+        addNotification('error', `Erro ao atualizar produto: ${error.message}`);
+        return;
+      }
+
+      console.log('[Inventory] ✅ Produto atualizado com sucesso:', data);
+      addNotification('success', 'Produto atualizado com sucesso!');
+      
+      // Atualizar store local
+      updateDish({ ...editingProduct, ...productToUpdate });
+      
+      // Fechar modal e limpar estado
+      setIsProductModalOpen(false);
+      setEditingProduct(null);
+      setNewProduct({
+        name: '',
+        price: '',
+        image_url: '',
+        category_id: '',
+        is_active: true,
+        description: ''
+      });
+      
+    } catch (error) {
+      console.error('[Inventory] Erro crítico ao atualizar produto:', error);
+      addNotification('error', 'Erro ao atualizar produto');
+    }
+  };
       category_id: newProduct.category_id,
       is_active: newProduct.is_active
     };
@@ -845,15 +932,32 @@ const Inventory = () => {
             onClick={handleSyncMenu}
             disabled={isSyncing}
             className={`${getSyncColor()} text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest disabled:opacity-50`}
+            title="Sincronizar menu com Supabase"
           >
             {getSyncIcon()}
             {syncStatus === 'syncing' ? 'Sincronizando...' : 'Sincronizar'}
+          </button>
+          
+          {/* Botão de Recarregar Imagens */}
+          <button
+            onClick={handleRefreshImages}
+            disabled={isRefreshingImages}
+            className="bg-orange-500 text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest disabled:opacity-50"
+            title="Recarregar todas as imagens dos produtos"
+          >
+            {isRefreshingImages ? (
+              <RefreshCw size={20} className="animate-spin" />
+            ) : (
+              <RefreshCw size={20} />
+            )}
+            {isRefreshingImages ? 'Actualizando...' : 'Actualizar Imagens'}
           </button>
           
           <button
             onClick={handleExportMenu}
             disabled={isSyncing}
             className="bg-white/10 border border-white/20 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-white/20 transition-all font-black uppercase text-xs tracking-widest disabled:opacity-50"
+            title="Exportar menu para arquivo JSON"
           >
             <Download size={20} />
             Exportar
@@ -863,6 +967,7 @@ const Inventory = () => {
             onClick={handleImportMenu}
             disabled={isSyncing}
             className="bg-white/10 border border-white/20 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-white/20 transition-all font-black uppercase text-xs tracking-widest disabled:opacity-50"
+            title="Importar menu de arquivo JSON"
           >
             <Upload size={20} />
             Importar
@@ -948,10 +1053,10 @@ const Inventory = () => {
               {menu.map(dish => {
                 const cat = categories.find(c => c.id === dish.categoryId);
                 return (
-                  <div key={dish.id} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
+                  <div key={`${dish.id}-${imageRefreshKey}`} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
                     <div className="aspect-square w-full overflow-hidden relative h-32">
                       {(() => {
-                        const stableImageUrl = getStableImageUrl(dish.image);
+                        const stableImageUrl = getStableImageUrl(dish.image_url);
                         return stableImageUrl ? (
                           <>
                             <img 
