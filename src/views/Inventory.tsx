@@ -38,12 +38,16 @@ const Inventory = () => {
     image_url: '',
     category_id: '',
     is_active: true,
-    description: '' // ✅ CAMPO DO SUPABASE ADICIONADO
+    description: ''
   });
 
   // Estados para upload de imagem
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+
+  // Estados para reload de imagens
+  const [isRefreshingImages, setIsRefreshingImages] = useState(false);
+  const [imageRefreshKey, setImageRefreshKey] = useState(0);
 
   const [newCategory, setNewCategory] = useState({
     name: ''
@@ -92,9 +96,22 @@ const Inventory = () => {
     forceRealSync();
   }, [addNotification]);
 
-  // Estados para reload de imagens
-  const [isRefreshingImages, setIsRefreshingImages] = useState(false);
-  const [imageRefreshKey, setImageRefreshKey] = useState(0);
+  // Função para obter URL pública estável
+  const getStableImageUrl = (imagePath: string) => {
+    if (!imagePath) return null;
+    
+    // Se já for URL completa, retornar como está
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Se for apenas nome do arquivo, construir URL pública
+    const { data } = supabase.storage
+      .from('products')
+      .getPublicUrl(imagePath);
+    
+    return data.publicUrl;
+  };
 
   // Função para recarregar todas as imagens dos produtos
   const handleRefreshImages = async () => {
@@ -137,23 +154,6 @@ const Inventory = () => {
     }
   };
 
-  // Função para obter URL pública estável
-  const getStableImageUrl = (imagePath: string) => {
-    if (!imagePath) return null;
-    
-    // Se já for URL completa, retornar como está
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    
-    // Se for apenas nome do arquivo, construir URL pública
-    const { data } = supabase.storage
-      .from('products')
-      .getPublicUrl(imagePath);
-    
-    return data.publicUrl;
-  };
-
   // Função de upload de imagem com URL permanente
   const handleImageUpload = async (file: File) => {
     if (!file) return;
@@ -185,7 +185,6 @@ const Inventory = () => {
         console.error('[Inventory] Erro no upload Supabase Storage:', error);
         console.error('[Inventory] Detalhes do erro:', {
           message: error.message,
-          // Removido campos que não existem em StorageError
         });
         
         // Verificar se é erro de permissão (RLS)
@@ -247,259 +246,6 @@ const Inventory = () => {
   const handleCreateCategory = () => {
     console.log('[Inventory] Botão Nova Categoria clicado!');
     setIsCategoryModalOpen(true);
-  };
-
-  const handleUpdateProduct = async () => {
-    console.log('[Inventory] Atualizando produto:', editingProduct);
-    
-    if (!editingProduct) return;
-    
-    // Validar preço
-    const priceValue = newProduct.price.replace(',', '.');
-    const priceNumber = parseFloat(priceValue) || 0;
-    
-    if (isNaN(priceNumber)) {
-      addNotification('error', 'Preço inválido! Use apenas números.');
-      return;
-    }
-
-    if (!newProduct.category_id) {
-      addNotification('error', 'Selecione uma categoria válida.');
-      return;
-    }
-    
-    // Criar objeto atualizado
-    const productToUpdate = {
-      id: editingProduct.id,
-      name: newProduct.name,
-      description: newProduct.description || '',
-      price: priceNumber,
-      image_url: newProduct.image_url || editingProduct.image_url, // ✅ Manter URL existente
-      is_active: newProduct.is_active,
-      category_id: newProduct.category_id
-    };
-    
-    try {
-      const { data, error } = await supabase
-        .from('menu_items')
-        .update(productToUpdate)
-        .eq('id', editingProduct.id)
-        .select();
-
-      if (error) {
-        console.error('[Inventory] Erro ao atualizar produto:', error);
-        addNotification('error', `Erro ao atualizar produto: ${error.message}`);
-        return;
-      }
-
-      console.log('[Inventory] ✅ Produto atualizado com sucesso:', data);
-      addNotification('success', 'Produto atualizado com sucesso!');
-      
-      // Atualizar store local
-      updateDish({ ...editingProduct, ...productToUpdate });
-      
-      // Fechar modal e limpar estado
-      setIsProductModalOpen(false);
-      setEditingProduct(null);
-      setNewProduct({
-        name: '',
-        price: '',
-        image_url: '',
-        category_id: '',
-        is_active: true,
-        description: ''
-      });
-      
-    } catch (error) {
-      console.error('[Inventory] Erro crítico ao atualizar produto:', error);
-      addNotification('error', 'Erro ao atualizar produto');
-    }
-  };
-
-  const handleSaveProduct = async () => {
-    console.log('[Inventory] Salvando produto:', newProduct);
-    
-    // ✅ VALIDAÇÃO DE COMPRIMENTO - BLOQUEAR IDS CURTOS
-    if (newProduct.id && newProduct.id.toString().length < 10) {
-      addNotification('error', 'ID INVÁLIDO DETECTADO: IDs curtos não são permitidos');
-      return;
-    }
-    
-    // Validar preço - evitar NaN, definir como 0 se vazio
-    const priceValue = newProduct.price.replace(',', '.');
-    const priceNumber = parseFloat(priceValue) || 0; // ✅ Define como 0 se vazio/inválido
-    
-    if (isNaN(priceNumber)) {
-      addNotification('error', 'Preço inválido! Use apenas números.');
-      return;
-    }
-
-    // VALIDAÇÃO CRÍTICA: categoria deve existir
-    if (!newProduct.category_id) {
-      addNotification('error', 'Selecione uma categoria válida.');
-      return;
-    }
-    
-    // ✅ CRIAÇÃO OBRIGATÓRIA NO BANCO PRIMEIRO - SEM MODO OPTIMISTA
-    try {
-      console.log('[Inventory] Criando produto no Supabase primeiro...');
-      
-      // ✅ CRIAR PRODUTO REAL NO BANCO PRIMEIRO
-      const realProduct = await forceRealSyncService.createRealProduct({
-        name: newProduct.name,
-        description: newProduct.description || '',
-        price: priceNumber,
-        cost_price: priceNumber * 0.6,
-        image_url: newProduct.image_url || null,
-        is_active: newProduct.is_active,
-        category_id: newProduct.category_id
-      });
-      
-      if (!realProduct || !realProduct.id) {
-        throw new Error('Produto criado mas sem ID retornado');
-      }
-      
-      // ✅ VALIDAR SE O ID TEM 36 CARACTERES
-      if (realProduct.id.length !== 36) {
-        throw new Error(`ID inválido retornado: ${realProduct.id} (comprimento: ${realProduct.id.length})`);
-      }
-      
-      console.log('[Inventory] ✅ Produto criado no Supabase com UUID VÁLIDO:', {
-        id: realProduct.id,
-        name: realProduct.name,
-        length: realProduct.id.length,
-        isValid: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(realProduct.id)
-      });
-      
-      // ✅ SÓ DEPOIS DE CRIAR NO BANCO, ADICIONAR AO STORE LOCAL
-      addDish(realProduct);
-      
-      // Limpar formulário
-      setNewProduct({
-        name: '',
-        price: '',
-        image_url: '',
-        category_id: '',
-        is_active: true,
-        description: ''
-      });
-      
-      setIsProductModalOpen(false);
-      addNotification('success', 'Produto criado com sucesso no Supabase!');
-      
-    } catch (error) {
-      console.error('[Inventory] ❌ ERRO AO CRIAR PRODUTO:', error);
-      addNotification('error', `Erro ao criar produto: ${error.message}`);
-    }
-  };
-
-  const handleSaveCategory = async () => {
-    console.log('[Inventory] Salvando categoria:', newCategory);
-    
-    try {
-      // ✅ CRIAR CATEGORIA REAL NO BANCO PRIMEIRO
-      const { data, error } = await supabase
-        .from('categories')
-        .insert({
-          name: newCategory.name
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('[Inventory] Erro ao criar categoria:', error);
-        addNotification('error', `Erro ao criar categoria: ${error.message}`);
-        return;
-      }
-
-      if (!data || !data.id) {
-        console.error('[Inventory] Categoria criada mas sem ID:', data);
-        addNotification('error', 'Categoria criada mas sem ID');
-        return;
-      }
-
-      // ✅ VALIDAR SE O ID TEM 36 CARACTERES
-      if (data.id.length !== 36) {
-        console.error('[Inventory] ❌ ID INVÁLIDO RETORNADO:', data.id);
-        addNotification('error', `ID inválido retornado: ${data.id}`);
-        return;
-      }
-
-      console.log('[Inventory] ✅ Categoria criada com UUID VÁLIDO:', {
-        id: data.id,
-        name: data.name,
-        length: data.id.length
-      });
-
-      // ✅ ADICIONAR AO STORE LOCAL
-      addCategory(data);
-      
-      // Limpar formulário
-      setNewCategory({ name: '' });
-      setIsCategoryModalOpen(false);
-      addNotification('success', 'Categoria criada com sucesso!');
-      
-    } catch (error) {
-      console.error('[Inventory] ❌ ERRO AO CRIAR CATEGORIA:', error);
-      addNotification('error', `Erro ao criar categoria: ${error.message}`);
-    }
-  };
-
-  // Handlers para Editar/Apagar
-  const handleEdit = (product: any) => {
-    console.log('[Inventory] Editando produto:', product);
-    console.log('[Inventory] ID do produto (UUID REAL DO SUPABASE):', product.id);
-    console.log('[Inventory] Tipo do ID:', typeof product.id);
-    console.log('[Inventory] Comprimento do ID:', product.id?.length);
-    
-    // ✅ VERIFICAÇÃO BÁSICA - APENAS ID EXISTE (SEM VALIDAÇÃO DE COMPRIMENTO)
-    if (!product.id) {
-      console.error('[Inventory] Produto sem ID - não é possível editar');
-      addNotification('error', 'Produto não tem ID válido. Recarregue a página.');
-      return;
-    }
-    
-    // ✅ USA ID EXATO DO BANCO (UUID REAL DA IMAGEM 1151)
-    const productId = product.id; // ✅ USA ID EXATO DO BANCO SEM ALTERAR
-    console.log('[Inventory] ✅ UUID real do Supabase será usado no update:', productId);
-    
-    setEditingProduct(product);
-    setNewProduct({
-      name: product.name,
-      price: product.price.toString(),
-      image_url: product.image_url || '',
-      category_id: product.category_id,
-      is_active: product.is_active,
-      description: product.description || '' // ✅ CAMPO DO SUPABASE ADICIONADO
-    });
-    setIsProductModalOpen(true);
-  };
-
-  const handleEditProduct = (product: any) => {
-    console.log('[Inventory] Editando produto:', product);
-    
-    // ✅ USA ID EXATO DO BANCO (UUID REAL DA IMAGEM 1151)
-    const productId = product.id; // ✅ USA ID EXATO DO BANCO SEM ALTERAR
-    console.log('[Inventory] ✅ UUID real do Supabase será usado no update:', productId);
-    
-    setEditingProduct(product);
-    setNewProduct({
-      name: product.name,
-      price: product.price.toString(),
-      image_url: product.image_url || '',
-      category_id: product.category_id,
-      is_active: product.is_active,
-      description: product.description || '' // ✅ CAMPO DO SUPABASE ADICIONADO
-    });
-    setIsProductModalOpen(true);
-  };
-
-  const handleDelete = (productId: string) => {
-    console.log('[Inventory] Apagando produto:', productId);
-    
-    // REMOÇÃO LOCAL IMEDIATA
-    removeDish(productId);
-    addNotification('success', 'Produto removido com sucesso!');
   };
 
   // Função para atualizar produto existente
@@ -569,117 +315,179 @@ const Inventory = () => {
       addNotification('error', 'Erro ao atualizar produto');
     }
   };
-      category_id: newProduct.category_id,
-      is_active: newProduct.is_active
-    };
 
-    console.log('[Inventory] Produto atualizado:', productToUpdate);
+  const handleSaveProduct = async () => {
+    console.log('[Inventory] Salvando produto:', newProduct);
     
-    // ✅ ATUALIZAR NO SUPABASE
+    // Verificar se está editando ou criando
+    if (editingProduct) {
+      // Modo de edição - usar handleUpdateExistingProduct
+      return handleUpdateExistingProduct();
+    }
+    
+    // Modo de criação
+    console.log('[Inventory] Criando novo produto...');
+    
+    // Validar preço - evitar NaN, definir como 0 se vazio
+    const priceValue = newProduct.price.replace(',', '.');
+    const priceNumber = parseFloat(priceValue) || 0; // ✅ Define como 0 se vazio/inválido
+    
+    if (isNaN(priceNumber)) {
+      addNotification('error', 'Preço inválido! Use apenas números.');
+      return;
+    }
+
+    // VALIDAÇÃO CRÍTICA: categoria deve existir
+    if (!newProduct.category_id) {
+      addNotification('error', 'Selecione uma categoria válida.');
+      return;
+    }
+    
+    // ✅ CRIAÇÃO OBRIGATÓRIA NO BANCO PRIMEIRO - SEM MODO OPTIMISTA
     try {
-      console.log('[Inventory] Atualizando produto:', editingProduct);
-      // ✅ LIMPEZA ABSOLUTA DO SCHEMA - APENAS COLUNAS EXATAS DO SUPABASE
-      const cleanUpdateData = {
-        name: newProduct.name?.trim(), // ✅ text
-        price: Number(priceNumber), // ✅ numeric - garanta que é Number
-        cost_price: Number(priceNumber) * 0.6, // ✅ numeric - 60% do preço de venda
-        description: newProduct.description?.trim() || '', // ✅ text - agora existe
-        image_url: newProduct.image_url?.trim() || null, // ✅ text - apenas URL string
-        is_active: newProduct.is_active, // ✅ boolean
-        category_id: newProduct.category_id?.trim() || null // ✅ uuid
-        // ✅ REMOVIDOS: categoryId, isFeatured, isVisibleDigital (não existem na tabela)
-      };
+      console.log('[Inventory] Criando produto no Supabase primeiro...');
       
-      // ✅ VALIDAÇÃO DE CAMPOS
-      if (!cleanUpdateData.name) {
-        addNotification('error', 'Nome do produto é obrigatório');
-        return;
+      // ✅ CRIAR PRODUTO REAL NO BANCO PRIMEIRO
+      const realProduct = await forceRealSyncService.createRealProduct({
+        name: newProduct.name,
+        description: newProduct.description || '',
+        price: priceNumber,
+        cost_price: priceNumber * 0.6,
+        image_url: newProduct.image_url || null,
+        is_active: newProduct.is_active,
+        category_id: newProduct.category_id
+      });
+      
+      if (!realProduct || !realProduct.id) {
+        throw new Error('Produto criado mas sem ID retornado');
       }
       
-      if (!cleanUpdateData.price || cleanUpdateData.price <= 0) {
-        addNotification('error', 'Preço do produto deve ser maior que zero');
-        return;
+      // ✅ VALIDAR SE O ID TEM 36 CARACTERES
+      if (realProduct.id.length !== 36) {
+        throw new Error(`ID inválido retornado: ${realProduct.id} (comprimento: ${realProduct.id.length})`);
       }
       
-      console.log('[Inventory] Schema limpo:', cleanUpdateData);
-      console.log('[Inventory] Produto completo para DEBUG:', editingProduct);
-      console.log('[Inventory] Produto ID (BANCO):', editingProduct.id);
-      console.log('[Inventory] Tipo do ID:', typeof editingProduct.id);
-      console.log('[Inventory] Formato do ID:', editingProduct.id?.length, 'caracteres');
+      console.log('[Inventory] ✅ Produto criado no Supabase com UUID VÁLIDO:', {
+        id: realProduct.id,
+        name: realProduct.name,
+        length: realProduct.id.length,
+        isValid: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(realProduct.id)
+      });
       
-      // ✅ VALIDAÇÃO OBRIGATÓRIA - SÓ PERMITE UPDATE SE FOR UUID REAL
-      const productId = editingProduct.id;
-      if (!productId) {
-        console.error('[Inventory] ID nulo para update:', productId);
-        addNotification('error', 'ID do produto não encontrado. Recarregue a página.');
-        return;
-      }
+      // ✅ SÓ DEPOIS DE CRIAR NO BANCO, ADICIONAR AO STORE LOCAL
+      addDish(realProduct);
       
-      // ✅ VERIFICAÇÃO SEQUENCIAL DO UUID - BLOQUEIA IDS CURTOS
-      if (typeof productId !== 'string') {
-        console.error('[Inventory] ID não é string:', typeof productId, productId);
-        addNotification('error', `ERRO FATAL: ID é ${typeof productId}, mas deve ser string UUID. Recarregue a página.`);
-        return;
-      }
+      // Limpar formulário
+      setNewProduct({
+        name: '',
+        price: '',
+        image_url: '',
+        category_id: '',
+        is_active: true,
+        description: ''
+      });
       
-      if (productId.length < 36) {
-        console.error('[Inventory] ID muito curto (não é UUID):', productId, 'comprimento:', productId.length);
-        addNotification('error', `ERRO FATAL: ID "${productId}" tem ${productId.length} caracteres, mas UUID tem 36. Use o painel do Supabase para converter este produto.`);
-        return;
-      }
+      setIsProductModalOpen(false);
+      addNotification('success', 'Produto criado com sucesso no Supabase!');
       
-      // ✅ VERIFICAÇÃO DE FORMATO UUID
-      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidPattern.test(productId)) {
-        console.error('[Inventory] ID não tem formato UUID:', productId);
-        addNotification('error', `ERRO FATAL: ID "${productId}" não tem formato UUID válido. Use o painel do Supabase para converter.`);
-      return;
+    } catch (error: any) {
+      console.error('[Inventory] ❌ ERRO AO CRIAR PRODUTO:', error);
+      addNotification('error', `Erro ao criar produto: ${error.message}`);
     }
-    
-    const { data, error } = await supabase
-      .from('products')
-      .update(cleanUpdateData)
-      .eq('id', productId)
-      .select();
+  };
 
-    if (error) {
-      console.error('[Inventory] Erro ao atualizar no Supabase:', error);
-      addNotification('error', 'Erro ao atualizar produto no Supabase');
+  const handleSaveCategory = async () => {
+    console.log('[Inventory] Salvando categoria:', newCategory);
+    
+    try {
+      // ✅ CRIAR CATEGORIA REAL NO BANCO PRIMEIRO
+      const { data, error } = await supabase
+        .from('categories')
+        .insert({
+          name: newCategory.name
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[Inventory] Erro ao criar categoria:', error);
+        addNotification('error', `Erro ao criar categoria: ${error.message}`);
+        return;
+      }
+
+      if (!data || !data.id) {
+        console.error('[Inventory] Categoria criada mas sem ID:', data);
+        addNotification('error', 'Categoria criada mas sem ID');
+        return;
+      }
+
+      // ✅ VALIDAR SE O ID TEM 36 CARACTERES
+      if (data.id.length !== 36) {
+        console.error('[Inventory] ❌ ID INVÁLIDO RETORNADO:', data.id);
+        addNotification('error', `ID inválido retornado: ${data.id}`);
+        return;
+      }
+
+      console.log('[Inventory] ✅ Categoria criada com UUID VÁLIDO:', {
+        id: data.id,
+        name: data.name,
+        length: data.id.length
+      });
+
+      // ✅ ADICIONAR AO STORE LOCAL
+      addCategory(data);
+      
+      // Limpar formulário
+      setNewCategory({ name: '' });
+      setIsCategoryModalOpen(false);
+      addNotification('success', 'Categoria criada com sucesso!');
+      
+    } catch (error: any) {
+      console.error('[Inventory] ❌ ERRO AO CRIAR CATEGORIA:', error);
+      addNotification('error', `Erro ao criar categoria: ${error.message}`);
+    }
+  };
+
+  const handleEdit = (product: any) => {
+    console.log('[Inventory] Editando produto:', product);
+    console.log('[Inventory] ID do produto (UUID REAL DO SUPABASE):', product.id);
+    console.log('[Inventory] Tipo do ID:', typeof product.id);
+    console.log('[Inventory] Comprimento do ID:', product.id?.length);
+    
+    // ✅ VERIFICAÇÃO BÁSICA - APENAS ID EXISTE (SEM VALIDAÇÃO DE COMPRIMENTO)
+    if (!product.id) {
+      console.error('[Inventory] Produto sem ID - não é possível editar');
+      addNotification('error', 'Produto não tem ID válido. Recarregue a página.');
       return;
     }
-    console.log('[Inventory] Produto atualizado no Supabase:', data);
-    addNotification('success', 'Produto atualizado com sucesso!');
     
-    const dishToUpdate = {
-      ...productToUpdate,
-      costPrice: priceNumber * 0.6,
-      categoryId: productToUpdate.category_id,
-      description: '',
-      image: productToUpdate.image_url || '',
-      image_url: productToUpdate.image_url || ''
-    };
-    updateDish(dishToUpdate);
+    // ✅ USA ID EXATO DO BANCO (UUID REAL DA IMAGEM 1151)
+    const productId = product.id; // ✅ USA ID EXATO DO BANCO SEM ALTERAR
+    console.log('[Inventory] ✅ UUID real do Supabase será usado no update:', productId);
     
+    setEditingProduct(product);
     setNewProduct({
-      name: '',
-      price: '',
-      image_url: '',
-      category_id: '',
-      is_active: true,
-      description: ''
+      name: product.name,
+      price: product.price.toString(),
+      image_url: product.image_url || '',
+      category_id: product.category_id,
+      is_active: product.is_active,
+      description: product.description || '' // ✅ CAMPO DO SUPABASE ADICIONADO
     });
-    setEditingProduct(null);
-    setIsProductModalOpen(false);
+    setIsProductModalOpen(true);
+  };
+
+  const handleDelete = (productId: string) => {
+    console.log('[Inventory] Apagando produto:', productId);
     
-  } catch (err) {
-    console.error('[Inventory] Erro crítico:', err);
-    addNotification('error', 'Erro ao atualizar produto');
-  }
+    // REMOÇÃO LOCAL IMEDIATA
+    removeDish(productId);
+    addNotification('success', 'Produto removido com sucesso!');
   };
 
   const handleEditCategory = async (category: any) => {
     console.log('[Inventory] Editando categoria:', category);
-    
+  
     // Abrir modal para edição
     setEditingCategory(category);
     setNewCategory({ name: category.name });
@@ -749,7 +557,7 @@ const Inventory = () => {
       removeCategory(categoryId);
       addNotification('success', 'Categoria apagada com sucesso!');
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Inventory] ❌ ERRO AO APAGAR CATEGORIA:', error);
       addNotification('error', `Erro ao apagar categoria: ${error.message}`);
     }
@@ -892,11 +700,42 @@ const Inventory = () => {
   };
 
   const handlePrintQR = () => {
-    switch (syncStatus) {
-      case 'syncing': return <RefreshCw size={20} className="animate-spin" />;
-      case 'success': return <CheckCircle size={20} />;
-      case 'error': return <AlertCircle size={20} />;
-      default: return <RefreshCw size={20} />;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>QR Code - Menu Digital</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 20px; 
+              }
+              img { 
+                max-width: 300px; 
+                width: 100%; 
+              }
+              h1 { 
+                margin-bottom: 20px; 
+                color: #333; 
+              }
+              p { 
+                margin-bottom: 10px; 
+                color: #666; 
+              }
+            </style>
+          </head>
+          <body>
+            <h1>Menu Digital - QR Code</h1>
+            <img src="${qrCodeUrl}" alt="QR Code" />
+            <p>${digitalMenuUrl}</p>
+            <p>Escaneie este QR code para acessar o menu digital</p>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
     }
   };
 
@@ -982,21 +821,13 @@ const Inventory = () => {
               Novo Produto
             </button>
           )}
-          {activeTab === 'categories' && (
-            <button 
-              onClick={handleCreateCategory}
-              className="bg-primary text-black px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-glow hover:brightness-110 transition-all font-black uppercase text-xs tracking-widest"
-            >
-              <Plus size={20} />
-              Nova Categoria
-            </button>
-          )}
         </div>
       </header>
 
-      {(isSyncing || syncStatus !== 'idle') && (
-        <div className="mb-6 glass-panel p-4 rounded-xl border border-white/5">
-          <div className="flex items-center justify-between mb-2">
+      {/* Status da Sincronização */}
+      {syncStatus !== 'idle' && (
+        <div className="mb-8 p-6 bg-white/5 rounded-xl border border-white/10">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               {getSyncIcon()}
               <span className="text-sm font-bold text-white">
@@ -1104,265 +935,223 @@ const Inventory = () => {
                         <span className="text-primary font-mono font-bold text-xs whitespace-nowrap">{formatKz(dish.price)}</span>
                       </div>
                       <p className="text-slate-400 text-[8px] line-clamp-1 italic mb-2 min-h-[12px]">{dish.description}</p>
-                      <div className="flex gap-2">
-                    <button 
-                      onClick={() => handleEdit(dish)}
-                      className="flex-1 py-1 rounded border border-white/10 text-slate-300 hover:bg-white/5 text-[8px] font-black uppercase tracking-widest transition-all"
-                    title="Editar produto"
-                  >
-                    Editar
-                  </button>
-                  <button 
-                    onClick={() => handleDuplicateProduct(dish)}
-                    className="flex-1 py-1 rounded border border-primary/10 text-primary hover:bg-primary/20 text-[8px] font-black uppercase tracking-widest transition-all"
-                    title="Duplicar produto"
-                  >
-                    Duplicar
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(dish.id)}
-                    className="w-8 py-1 rounded border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all"
-                    title="Remover produto"
-                  >
-                    <Trash2 size={10} className="mx-auto" />
-                  </button>
-                </div>
+                      <div className="flex justify-between items-center gap-2">
+                        <span className={`text-[8px] font-medium px-2 py-1 rounded-full ${
+                          dish.is_active 
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        }`}>
+                          {dish.is_active ? 'Ativo' : 'Inativo'}
+                        </span>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleEdit(dish)}
+                            className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                            title="Editar produto"
+                          >
+                            <Edit2 size={12} className="text-slate-400" />
+                          </button>
+                          <button
+                            onClick={() => handleDuplicateProduct(dish)}
+                            className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                            title="Duplicar produto"
+                          >
+                            <Plus size={12} className="text-slate-400" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(dish.id)}
+                            className="p-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
+                            title="Apagar produto"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
           </div>
         )}
 
         {activeTab === 'categories' && (
           <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
-            {categories.map(cat => (
-              <div key={cat.id} className="glass-panel p-6 rounded-[2rem] border border-white/5 flex items-center justify-between hover:border-primary/40 transition-all group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                    <Tag size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-lg">{cat.name}</h3>
-                    <p className="text-slate-400 text-sm">Sem descrição</p>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4">
+              {categories.map(category => (
+                <div key={category.id} className="glass-panel rounded-xl border border-white/5 p-6 hover:border-primary/50 transition-all duration-300">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-bold text-white mb-1">{category.name}</h3>
+                      <p className="text-slate-400 text-sm">
+                        {menu.filter(product => product.categoryId === category.id).length} produtos
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditCategory(category)}
+                        className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                        title="Editar categoria"
+                      >
+                        <Edit2 size={16} className="text-slate-400" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(category.id)}
+                        className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
+                        title="Apagar categoria"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => handleEditCategory(cat)}
-                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all"
-                    title="Editar categoria"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteCategory(cat.id)}
-                    className="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-500/50 hover:text-red-400 transition-all"
-                    title="Apagar categoria"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'stock' && (
+          <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
+            <div className="glass-panel rounded-xl border border-white/5 p-6">
+              <h3 className="text-xl font-bold text-white mb-6">Gestão de Stock</h3>
+              
+              <div className="space-y-4">
+                {menu.map(item => (
+                  <div key={item.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                    <div className="flex items-center gap-4">
+                      {item.image_url && (
+                        <img 
+                          src={getStableImageUrl(item.image_url) || ''}
+                          alt={item.name}
+                          className="w-12 h-12 rounded-lg object-cover"
+                        />
+                      )}
+                      <div>
+                        <h4 className="font-bold text-white">{item.name}</h4>
+                        <p className="text-slate-400 text-sm">{item.description}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-slate-400 text-sm">Stock: <span className="text-white font-bold">100</span></p>
+                      <p className="text-primary font-bold">{formatKz(item.price)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'qr' && (
+          <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="glass-panel rounded-xl border border-white/5 p-6">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                  <QrCode size={24} className="text-primary" />
+                  Configurações do QR Menu
+                </h3>
+                
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <label className="text-white font-medium">Mostrar Preços</label>
+                    <button
+                      onClick={() => toggleQrSetting('showPrices')}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        qrSettings.showPrices ? 'bg-primary' : 'bg-slate-600'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full transition-transform ${
+                        qrSettings.showPrices ? 'translate-x-6 bg-white' : 'translate-x-1 bg-white'
+                      }`} />
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <label className="text-white font-medium">Permitir Pedidos</label>
+                    <button
+                      onClick={() => toggleQrSetting('allowOrders')}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        qrSettings.allowOrders ? 'bg-primary' : 'bg-slate-600'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full transition-transform ${
+                        qrSettings.allowOrders ? 'translate-x-6 bg-white' : 'translate-x-1 bg-white'
+                      }`} />
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <label className="text-white font-medium">Menu Visível</label>
+                    <button
+                      onClick={() => toggleQrSetting('menuVisible')}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        qrSettings.menuVisible ? 'bg-primary' : 'bg-slate-600'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full transition-transform ${
+                        qrSettings.menuVisible ? 'translate-x-6 bg-white' : 'translate-x-1 bg-white'
+                      }`} />
+                    </button>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'stock' && (
-        <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
-          <div className="glass-panel rounded-[2rem] border border-white/5 overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-white/5 border-b border-white/5">
-                <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  <th className="px-8 py-6">Item de Inventário</th>
-                  <th className="px-8 py-6">Quantidade Actual</th>
-                  <th className="px-8 py-6">Nível Crítico</th>
-                  <th className="px-8 py-6 text-right">Ajuste</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                <tr className="hover:bg-white/5 transition-colors">
-                  <td className="px-8 py-6 font-bold text-white">Exemplo Produto</td>
-                  <td className="px-8 py-6 font-mono text-xs">
-                    <span className="text-green-500">50 unidades</span>
-                  </td>
-                  <td className="px-8 py-6 font-mono text-xs">
-                    <span className="text-orange-500">10 unidades</span>
-                  </td>
-                  <td className="px-8 py-6 text-right">
-                    <button className="w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-black flex items-center justify-center">+</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'qr' && (
-        <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 space-y-8">
-          {/* QR Code Generator */}
-          <div className="glass-panel p-8 rounded-[3rem] border border-white/5 bg-white/5">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center text-white shadow-lg">
-                <QrCode size={32} />
-                  <p className="text-slate-400 text-sm">Gerador de código QR para o seu menu</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-8">
-                {/* QR Code Display */}
-                <div className="flex flex-col items-center">
-                  <div className="w-64 h-64 bg-white rounded-3xl p-6 shadow-glow mb-6 flex items-center justify-center">
-                    <img 
-                      src={qrCodeUrl} 
-                      alt="QR Code" 
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-slate-400 mb-4">URL do Menu Digital</p>
-                    <div className="flex items-center gap-2 mb-4">
+              
+              <div className="glass-panel rounded-xl border border-white/5 p-6">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Globe size={24} className="text-primary" />
+                  Menu Digital
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <p className="text-slate-400 text-sm mb-2">URL do Menu Digital:</p>
+                    <div className="flex items-center gap-2">
                       <input
                         type="text"
                         value={digitalMenuUrl}
-                        onChange={(e) => setDigitalMenuUrl(e.target.value)}
-                        className="flex-1 px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500 text-sm"
-                        placeholder="https://rest-ia.vercel.app/#/menu-public"
+                        readOnly
+                        className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
                       />
-                      <button 
-                        onClick={() => setDigitalMenuUrl('https://rest-ia.vercel.app/#/menu-public')}
-                        className="px-4 py-2 bg-cyan-500 text-black rounded-xl text-xs font-bold hover:bg-cyan-400 transition-all"
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(digitalMenuUrl);
+                          addNotification('success', 'URL copiada para a área de transferência!');
+                        }}
+                        className="px-3 py-2 bg-primary text-black rounded-lg hover:brightness-110 transition-all text-sm font-medium"
                       >
-                        Restaurar
+                        Copiar
                       </button>
                     </div>
-                    <p className="text-sm font-mono text-primary mb-4 truncate max-w-[200px]">{digitalMenuUrl}</p>
-                    <div className="flex gap-2 justify-center">
-                      <button 
-                        onClick={handleCopyUrl}
-                        className="px-4 py-2 bg-primary/10 text-primary rounded-xl text-xs font-black uppercase hover:bg-primary/20 transition-all"
-                      >
-                        Copiar URL
-                      </button>
-                      <button 
+                  </div>
+                  
+                  <div className="p-4 bg-white/5 rounded-lg">
+                    <p className="text-slate-400 text-sm mb-4">QR Code para acesso rápido:</p>
+                    <div className="flex justify-center">
+                      <img 
+                        src={qrCodeUrl}
+                        alt="QR Code"
+                        className="w-48 h-48 rounded-lg"
+                      />
+                    </div>
+                    <div className="flex justify-center gap-4 mt-4">
+                      <button
                         onClick={handlePrintQR}
-                        className="px-4 py-2 bg-white/5 text-white rounded-xl text-xs font-black uppercase hover:bg-white/10 transition-all"
+                        className="px-4 py-2 bg-primary text-black rounded-lg hover:brightness-110 transition-all text-sm font-medium"
                       >
                         Imprimir QR
                       </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Settings */}
-                <div className="space-y-6">
-                  <h4 className="text-lg font-bold text-white">Configurações Rápidas</h4>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
-                      <div className="flex items-center gap-3">
-                        <Eye size={20} className="text-primary" />
-                        <div>
-                          <p className="text-sm font-bold text-white">Mostrar Preços</p>
-                          <p className="text-xs text-slate-400">Exibe preços no menu digital</p>
-                        </div>
-                      </div>
                       <button
-                        onClick={() => toggleQrSetting('showPrices')}
-                        className={`w-12 h-6 rounded-full transition-all ${qrSettings.showPrices ? 'bg-primary' : 'bg-white/20'}`}
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = qrCodeUrl;
+                          link.download = 'qr-menu.png';
+                          link.click();
+                        }}
+                        className="px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition-all text-sm font-medium"
                       >
-                        <div className={`w-5 h-5 rounded-full bg-white transition-all ${qrSettings.showPrices ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                        Baixar QR
                       </button>
                     </div>
-
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
-                      <div className="flex items-center gap-3">
-                        <Smartphone size={20} className="text-primary" />
-                        <div>
-                          <p className="text-sm font-bold text-white">Permitir Pedidos via App</p>
-                          <p className="text-xs text-slate-400">Ativa sistema de encomendas</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => toggleQrSetting('allowOrders')}
-                        className={`w-12 h-6 rounded-full transition-all ${qrSettings.allowOrders ? 'bg-primary' : 'bg-white/20'}`}
-                      >
-                        <div className={`w-5 h-5 rounded-full bg-white transition-all ${qrSettings.allowOrders ? 'translate-x-6' : 'translate-x-0.5'}`} />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
-                      <div className="flex items-center gap-3">
-                        <Globe size={20} className="text-primary" />
-                        <div>
-                          <p className="text-sm font-bold text-white">Menu Visível</p>
-                          <p className="text-xs text-slate-400">Menu público acessível</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => toggleQrSetting('menuVisible')}
-                        className={`w-12 h-6 rounded-full transition-all ${qrSettings.menuVisible ? 'bg-primary' : 'bg-white/20'}`}
-                      >
-                        <div className={`w-5 h-5 rounded-full bg-white transition-all ${qrSettings.menuVisible ? 'translate-x-6' : 'translate-x-0.5'}`} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
-                    <div className="flex items-start gap-3">
-                      <Settings size={18} className="text-blue-500 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-bold text-blue-500">Status do Sistema</p>
-                        <p className="text-xs text-slate-300 mt-1">
-                          Menu: {qrSettings.menuVisible ? '✅ Online' : '❌ Offline'} | 
-                          Preços: {qrSettings.showPrices ? '✅ Visíveis' : '❌ Ocultos'} | 
-                          Pedidos: {qrSettings.allowOrders ? '✅ Ativos' : '❌ Inativos'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Statistics */}
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
-              <div className="glass-panel p-6 rounded-2xl border border-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                    <Utensils size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-black uppercase tracking-widest">Produtos</p>
-                    <p className="text-2xl font-bold text-white">{menu.length}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="glass-panel p-6 rounded-2xl border border-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500">
-                    <Tag size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-black uppercase tracking-widest">Categorias</p>
-                    <p className="text-2xl font-bold text-white">{categories.length}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="glass-panel p-6 rounded-2xl border border-white/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-green-500">
-                    <QrCode size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-black uppercase tracking-widest">QR Status</p>
-                    <p className="text-lg font-bold text-green-500">Ativo</p>
                   </div>
                 </div>
               </div>
@@ -1371,183 +1160,230 @@ const Inventory = () => {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Modal de Produto */}
       {isProductModalOpen && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-cyan-400">
-                {editingProduct ? 'Editar Produto' : 'Novo Produto'}
-              </h2>
-              <button
-                onClick={() => {
-                  setIsProductModalOpen(false);
-                  setEditingProduct(null);
-                }}
-                className="text-slate-400 hover:text-white"
-              >
-                <X size={24} />
-              </button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-2xl border border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-white/10">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-white">
+                  {editingProduct ? 'Editar Produto' : 'Novo Produto'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsProductModalOpen(false);
+                    setEditingProduct(null);
+                    setNewProduct({
+                      name: '',
+                      price: '',
+                      image_url: '',
+                      category_id: '',
+                      is_active: true,
+                      description: ''
+                    });
+                  }}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-slate-400" />
+                </button>
+              </div>
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Nome do Produto</label>
-                <input
-                  type="text"
-                  value={newProduct.name}
-                  onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
-                  placeholder="Ex: Muamba de Galinha"
+            
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-slate-300 text-sm font-medium mb-2">Nome do Produto</label>
+                  <input
+                    type="text"
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    placeholder="Ex: Cuca 330ml"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-slate-300 text-sm font-medium mb-2">Preço (AOA)</label>
+                  <input
+                    type="text"
+                    value={newProduct.price}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    placeholder="Ex: 1500"
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <label className="block text-slate-300 text-sm font-medium mb-2">Descrição</label>
+                <textarea
+                  value={newProduct.description}
+                  onChange={(e) => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white h-24 resize-none"
+                  placeholder="Descrição detalhada do produto..."
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Preço (Kz)</label>
-                <input
-                  type="text"
-                  value={newProduct.price}
-                  onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
-                  placeholder="Ex: 3500 ou 3.500"
-                />
-                <p className="text-xs text-slate-400 mt-1">Use vírgula ou ponto para decimais</p>
+              
+              <div className="mt-6">
+                <label className="block text-slate-300 text-sm font-medium mb-2">Categoria</label>
+                <select
+                  value={newProduct.category_id}
+                  onChange={(e) => setNewProduct(prev => ({ ...prev, category_id: e.target.value }))}
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  title="Selecione uma categoria"
+                >
+                  <option value="">Selecione uma categoria</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Foto do Produto</label>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
+              
+              <div className="mt-6">
+                <label className="block text-slate-300 text-sm font-medium mb-2">Imagem do Produto</label>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
                     <input
                       type="file"
-                      accept="image/*"
                       onChange={handleFileSelect}
+                      accept="image/*"
                       className="hidden"
-                      id="image-upload"
-                      placeholder="Escolher ficheiro de imagem"
+                      id="product-image-upload"
                     />
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById('image-upload')?.click()}
-                      disabled={uploadingImage}
-                      className="flex-1 px-4 py-2 bg-slate-800 border border-white/10 rounded-xl text-white hover:bg-white/5 transition-all disabled:opacity-50"
+                    <label
+                      htmlFor="product-image-upload"
+                      className="px-4 py-3 bg-primary text-black rounded-lg hover:brightness-110 transition-all cursor-pointer flex items-center gap-2"
                     >
                       {uploadingImage ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent animate-spin"></div>
-                          <span className="text-sm">A carregar...</span>
-                        </div>
+                        <>
+                          <RefreshCw size={16} className="animate-spin" />
+                          <span>Fazendo upload...</span>
+                        </>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <UploadIcon size={16} />
-                          <span className="text-sm">Escolher Ficheiro</span>
-                        </div>
+                        <>
+                          <Upload size={16} />
+                          <span>Carregar Imagem</span>
+                        </>
                       )}
-                    </button>
+                    </label>
                   </div>
+                  
                   {newProduct.image_url && (
-                    <div className="mt-2">
-                      <img 
-                        src={newProduct.image_url} 
-                        alt="Preview" 
-                        className="w-full h-32 object-cover rounded-xl"
+                    <div className="relative">
+                      <img
+                        src={getStableImageUrl(newProduct.image_url) || ''}
+                        alt="Preview"
+                        className="w-24 h-24 rounded-lg object-cover border-2 border-slate-600"
                       />
+                      <button
+                        onClick={() => setNewProduct(prev => ({ ...prev, image_url: '' }))}
+                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      >
+                        <X size={16} />
+                      </button>
                     </div>
                   )}
                 </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">Categoria</label>
-                <select
-                  value={newProduct.category_id}
-                  onChange={(e) => setNewProduct({...newProduct, category_id: e.target.value})}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
-                >
-                  <option value="">Selecione uma categoria</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={newProduct.is_active}
-                  onChange={(e) => setNewProduct({...newProduct, is_active: e.target.checked})}
-                  className="w-4 h-4 rounded border-white/10 bg-slate-800 text-cyan-500"
-                />
-                <label htmlFor="is_active" className="text-sm text-white">Produto Ativo</label>
+              
+              <div className="mt-6 flex items-center gap-4">
+                <label className="flex items-center gap-2 text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={newProduct.is_active}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, is_active: e.target.checked }))}
+                    className="w-4 h-4 text-primary rounded border-slate-600 focus:ring-primary focus:ring-2"
+                  />
+                  <span className="text-sm font-medium">Produto Ativo</span>
+                </label>
               </div>
             </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setIsProductModalOpen(false)}
-                className="flex-1 px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={editingProduct ? handleUpdateProduct : handleSaveProduct}
-                disabled={uploadingImage}
-                className="flex-1 px-4 py-2 bg-cyan-500 text-black rounded-xl hover:bg-cyan-400 transition-all font-bold disabled:opacity-50"
-              >
-                {uploadingImage ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent animate-spin"></div>
-                    <span className="text-sm">A gravar...</span>
-                  </div>
-                ) : (
-                  <span>{editingProduct ? 'Atualizar Produto' : 'Salvar Produto'}</span>
-                )}
-              </button>
+            
+            <div className="p-6 border-t border-white/10">
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => {
+                    setIsProductModalOpen(false);
+                    setEditingProduct(null);
+                    setNewProduct({
+                      name: '',
+                      price: '',
+                      image_url: '',
+                      category_id: '',
+                      is_active: true,
+                      description: ''
+                    });
+                  }}
+                  className="px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveProduct}
+                  className="px-6 py-3 bg-primary text-black rounded-lg hover:brightness-110 transition-all font-medium"
+                >
+                  {editingProduct ? 'Atualizar' : 'Criar'} Produto
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Modal de Categoria */}
       {isCategoryModalOpen && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-md w-full">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-cyan-400">Nova Categoria</h2>
-              <button
-                onClick={() => setIsCategoryModalOpen(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X size={24} />
-              </button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-2xl border border-white/10 w-full max-w-md">
+            <div className="p-6 border-b border-white/10">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-white">
+                  {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsCategoryModalOpen(false);
+                    setEditingCategory(null);
+                    setNewCategory({ name: '' });
+                  }}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-slate-400" />
+                </button>
+              </div>
             </div>
-
-            <div className="space-y-4">
+            
+            <div className="p-6">
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Nome da Categoria</label>
+                <label className="block text-slate-300 text-sm font-medium mb-2">Nome da Categoria</label>
                 <input
                   type="text"
                   value={newCategory.name}
-                  onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
-                  className="w-full px-3 py-2 bg-slate-800 border border-white/10 rounded-xl text-white outline-none focus:border-cyan-500"
-                  placeholder="Ex: Petiscos"
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  placeholder="Ex: Bebidas, Pratos..."
                 />
               </div>
             </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setIsCategoryModalOpen(false)}
-                className="flex-1 px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={editingCategory ? handleUpdateCategory : handleSaveCategory}
-                className="flex-1 px-4 py-2 bg-cyan-500 text-black rounded-xl hover:bg-cyan-400 transition-all font-bold"
-              >
-                {editingCategory ? 'Atualizar Categoria' : 'Salvar Categoria'}
-              </button>
+            
+            <div className="p-6 border-t border-white/10">
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => {
+                    setIsCategoryModalOpen(false);
+                    setEditingCategory(null);
+                    setNewCategory({ name: '' });
+                  }}
+                  className="px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveCategory}
+                  className="px-6 py-3 bg-primary text-black rounded-lg hover:brightness-110 transition-all font-medium"
+                >
+                  {editingCategory ? 'Atualizar' : 'Criar'} Categoria
+                </button>
+              </div>
             </div>
           </div>
         </div>
