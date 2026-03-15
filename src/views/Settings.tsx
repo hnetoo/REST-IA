@@ -329,102 +329,101 @@ return (
     <div className="glass-panel rounded-[3rem] p-10 min-h-[500px] max-h-[75vh] overflow-y-auto pr-2 border border-white/5 relative animate-in fade-in duration-500 scrollbar-thin scrollbar-thumb-orange-500">
         
       {activeTab === 'GENERAL' && (
-        <div>
-          <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 max-h-[75vh] overflow-y-auto pr-2 pb-8 scrollbar-thin scrollbar-thumb-orange-500 flex flex-col">
-           <div className="grid grid-cols-1 gap-8">
-              <div>
-                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome do Restaurante</label>
-                 <input 
-                   type="text" 
-                   className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
-                   value={localSettings.restaurantName} 
-                   onChange={e => setLocalSettings({...localSettings, restaurantName: e.target.value})} 
-                 />
-              </div>
-              <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-                 <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                    {localSettings.appLogoUrl ? <img src={localSettings.appLogoUrl} className="w-full h-full object-contain p-2" /> : <ChefHat size={48} className="text-slate-800"/>}
-                 </div>
-                 <div className="flex-1 space-y-4 w-full">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Identidade Visual (Logo)</p>
-                    <button 
-                      type="button" 
-                      onClick={() => logoInputRef.current?.click()} 
-                      className="px-6 py-3 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[10px] font-black uppercase hover:bg-primary/20 transition-all flex items-center gap-2"
-                    >
-                      <Upload size={14}/> Carregar Novo Logo
-                    </button>
+          <div className="max-h-[75vh] overflow-y-auto pr-2 pb-8 scrollbar-thin scrollbar-thumb-orange-500">
+            <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 flex flex-col">
+             <div className="grid grid-cols-1 gap-8">
+                <div>
+                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome do Restaurante</label>
+                   <input 
+                     type="text" 
+                     className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                     value={localSettings.restaurantName} 
+                     onChange={e => setLocalSettings({...localSettings, restaurantName: e.target.value})} 
+                   />
+                </div>
+                <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+                   <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                      {localSettings.appLogoUrl ? <img src={localSettings.appLogoUrl} className="w-full h-full object-contain p-2" /> : <ChefHat size={48} className="text-slate-800"/>}
+                   </div>
+                   <div className="flex-1 space-y-4 w-full">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Identidade Visual (Logo)</p>
+                      <button 
+                        type="button" 
+                        onClick={() => logoInputRef.current?.click()} 
+                        className="px-6 py-3 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[10px] font-black uppercase hover:bg-primary/20 transition-all flex items-center gap-2"
+                      >
+                        <Upload size={14}/> Carregar Novo Logo
+                      </button>
+                      <input 
+                        ref={logoInputRef} 
+                        type="file" 
+                        hidden 
+                        accept="image/*" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => setLocalSettings(prev => ({...prev, appLogoUrl: reader.result as string}));
+                            reader.readAsDataURL(file);
+                          }
+                        }} 
+                      />
+                   </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Telefone do Restaurante</label>
                     <input 
-                      ref={logoInputRef} 
-                      type="file" 
-                      hidden 
-                      accept="image/*" 
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => setLocalSettings(prev => ({...prev, appLogoUrl: reader.result as string}));
-                          reader.readAsDataURL(file);
-                        }
-                      }} 
+                      type="text" 
+                      className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                      value={localSettings.phone} 
+                      onChange={e => setLocalSettings({...localSettings, phone: e.target.value})} 
+                      placeholder="+244 923 000 000" 
                     />
-                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">NIF</label>
+                    <input 
+                      type="text" 
+                      className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                      value={localSettings.nif} 
+                      onChange={e => setLocalSettings({...localSettings, nif: e.target.value})} 
+                      placeholder="000000000" 
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Telefone do Restaurante</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Morada</label>
                   <input 
                     type="text" 
                     className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
-                    value={localSettings.phone} 
-                    onChange={e => setLocalSettings({...localSettings, phone: e.target.value})} 
-                    placeholder="+244 923 000 000" 
+                    value={localSettings.address} 
+                    onChange={e => setLocalSettings({...localSettings, address: e.target.value})} 
+                    placeholder="Via AL 15, Talatona, Luanda" 
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">NIF</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
-                    value={localSettings.nif} 
-                    onChange={e => setLocalSettings({...localSettings, nif: e.target.value})} 
-                    placeholder="000000000" 
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Morada</label>
-                <input 
-                  type="text" 
-                  className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
-                  value={localSettings.address} 
-                  onChange={e => setLocalSettings({...localSettings, address: e.target.value})} 
-                  placeholder="Via AL 15, Talatona, Luanda" 
-                />
              </div>
-           </div>
-           <div className="flex gap-4">
-             <button 
-               type="submit" 
-               disabled={isSaving}
-               className="px-8 py-4 bg-primary text-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow hover:bg-primary/80 disabled:opacity-50 flex items-center gap-3"
-             >
-               {isSaving ? (
-                 <>
-                   <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                   Guardando...
-                 </>
-               ) : (
-                 <>
-                   <Save size={16}/> Guardar Definições
-                 </>
-               )}
-             </button>
-           </div>
-          </form>
-        )}
-
-        {activeTab === 'SUPABASE' && (
+             <div className="flex gap-4 mt-8">
+               <button 
+                 type="submit" 
+                 disabled={isSaving}
+                 className="px-8 py-4 bg-primary text-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow hover:bg-primary/80 disabled:opacity-50 flex items-center gap-3"
+               >
+                 {isSaving ? (
+                   <>
+                     <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                     Guardando...
+                   </>
+                 ) : (
+                   <>
+                     <Save size={16}/> Guardar Definições
+                   </>
+                 )}
+               </button>
+             </div>
+            </form>
+          </div>
+        )}  {activeTab === 'SUPABASE' && (
           <div className="space-y-12 max-h-[75vh] overflow-y-auto pr-2 pb-8 scrollbar-thin scrollbar-thumb-orange-500 flex flex-col">
             {/* Header de Conexão */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] relative overflow-hidden">
