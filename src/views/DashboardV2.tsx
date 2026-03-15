@@ -60,6 +60,8 @@ const DashboardV2 = () => {
     totalOrders: 0,
     averageTicket: 0,
     taxProvision: 0,
+    totalLiquidez: 0,
+    liquidezStatus: 'seguro' as 'seguro' | 'risco',
     paymentMethods: [] as PaymentMethodData[],
     hourlySales: [] as HourlySales[],
     weeklyComparison: { today: 0, lastWeek: 0 },
@@ -191,6 +193,10 @@ const DashboardV2 = () => {
       const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
       const taxProvision = totalRevenue * 0.065; // 6.5% de provisão
 
+      // Cálculo de liquidez fiscal
+      const totalLiquidez = totalProfit; // Faturamento líquido (Vendas - Despesas)
+      const liquidezStatus = totalLiquidez >= taxProvision ? 'seguro' : 'risco';
+
       // Processar métodos de pagamento
       const paymentMethods: PaymentMethodData[] = Array.from(paymentMethodsMap.entries())
         .map(([method, amount]) => ({
@@ -220,6 +226,8 @@ const DashboardV2 = () => {
         totalOrders,
         averageTicket,
         taxProvision,
+        totalLiquidez,
+        liquidezStatus,
         paymentMethods,
         hourlySales,
         weeklyComparison: {
@@ -387,10 +395,22 @@ const DashboardV2 = () => {
         </div>
 
         {/* Card Impostos */}
-        <div className="glass-panel rounded-xl p-6 border-l-4 border-l-orange-500">
+        <div className={`glass-panel rounded-xl p-6 border-l-4 ${
+          metrics.liquidezStatus === 'seguro' ? 'border-l-green-500' : 'border-l-red-500'
+        }`}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Impostos AGT</h3>
-            <AlertTriangle className="text-orange-500" size={24} />
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-semibold text-white">Impostos AGT</h3>
+              {/* Indicador Visual de Liquidez */}
+              <div className={`w-3 h-3 rounded-full ${
+                metrics.liquidezStatus === 'seguro' 
+                  ? 'bg-green-500 animate-pulse' 
+                  : 'bg-red-500 animate-pulse'
+              }`} />
+            </div>
+            <AlertTriangle className={`${
+              metrics.liquidezStatus === 'seguro' ? 'text-green-500' : 'text-red-500'
+            }`} size={24} />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -403,7 +423,33 @@ const DashboardV2 = () => {
                 {formatKz(Math.max(0, metrics.totalProfit) * 0.25)}
               </span>
             </div>
-            <div className="text-xs text-orange-400 mt-2">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-400 text-sm">Liquidez Disponível</span>
+              <span className={`font-bold ${
+                metrics.liquidezStatus === 'seguro' ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {formatKz(metrics.totalLiquidez)}
+              </span>
+            </div>
+            {/* Alerta de Liquidez Fiscal */}
+            <div 
+              className={`mt-3 p-2 rounded-lg border ${
+                metrics.liquidezStatus === 'seguro' 
+                  ? 'bg-green-500/10 border-green-500/20' 
+                  : 'bg-red-500/10 border-red-500/20'
+              }`}
+              title="Este valor representa o montante que deves manter em reserva para as obrigações com a AGT no final do período."
+            >
+              <p className={`text-sm font-medium ${
+                metrics.liquidezStatus === 'seguro' ? 'text-green-400' : 'text-red-400'
+              }`}>
+                {metrics.liquidezStatus === 'seguro' 
+                  ? 'Reserva Fiscal Coberta ✅' 
+                  : 'Atenção: Risco de Liquidez Fiscal ⚠️'
+                }
+              </p>
+            </div>
+            <div className="text-xs text-slate-500 mt-2">
               *Estimativa anual a ser ajustada no fecho
             </div>
           </div>
