@@ -61,10 +61,19 @@ const Inventory = () => {
     maximumFractionDigits: 0 
   }).format(val);
 
-  // URL do Menu Digital
+  // URL do Menu Digital - Campo editável com fallback para NIF
+  const [customNif, setCustomNif] = useState(() => settings.nif || '');
   const [digitalMenuUrl, setDigitalMenuUrl] = useState(() => {
-    return `${window.location.origin}/menu-digital?nif=${settings.nif}`;
+    const nifValue = settings.nif || '';
+    return `https://rest-ia.vercel.app/menu-digital?nif=${nifValue}`;
   });
+
+  // Atualizar URL quando o NIF customizado mudar
+  useEffect(() => {
+    const nifValue = customNif.trim() || settings.nif || '';
+    const newUrl = `https://rest-ia.vercel.app/menu-digital?nif=${nifValue}`;
+    setDigitalMenuUrl(newUrl);
+  }, [customNif, settings.nif]);
 
   // QR Code URL
   const qrCodeUrl = useMemo(() => {
@@ -1104,13 +1113,15 @@ const Inventory = () => {
                 
                 <div className="space-y-4">
                   <div className="p-4 bg-white/5 rounded-lg">
-                    <p className="text-slate-400 text-sm mb-2">URL do Menu Digital:</p>
+                    <label className="block text-slate-400 text-sm mb-2">URL do Menu Digital:</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
-                        value={digitalMenuUrl}
-                        readOnly
+                        value={customNif}
+                        onChange={(e) => setCustomNif(e.target.value)}
+                        placeholder={settings.nif || 'Digite o NIF ou subdomínio'}
                         className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                        title="Digite o NIF ou subdomínio personalizado"
                       />
                       <button
                         onClick={() => {
@@ -1118,10 +1129,14 @@ const Inventory = () => {
                           addNotification('success', 'URL copiada para a área de transferência!');
                         }}
                         className="px-3 py-2 bg-primary text-black rounded-lg hover:brightness-110 transition-all text-sm font-medium"
+                        title="Copiar URL do menu digital"
                       >
                         Copiar
                       </button>
                     </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      URL gerada: {digitalMenuUrl}
+                    </p>
                   </div>
                   
                   <div className="p-4 bg-white/5 rounded-lg">
