@@ -248,15 +248,44 @@ const OwnerDashboard = () => {
     }
   };
 
-  // Buscar faturação histórica calculada em tempo real
+  // Buscar faturação histórica da tabela financial_history
   const fetchHistoricoRevenue = async () => {
     try {
-      // Calcular histórico a partir das orders existentes
+      const { data: historicoData, error: historicoError } = await supabase
+        .from('financial_history')
+        .select('revenue, expenses, profit, created_at, system, period')
+        .eq('status', 'ACTIVE')
+        .order('created_at', { ascending: false });
+
+      if (historicoError) {
+        console.error('[DASHBOARD] Erro ao buscar faturação histórica:', historicoError);
+        // Fallback para cálculo em tempo real se tabela não existir
+        return await calculateHistoricoFromOrders();
+      }
+
+      if (!historicoData || historicoData.length === 0) {
+        console.log('[DASHBOARD] Nenhum dado encontrado em financial_history');
+        return 0;
+      }
+
+      const totalHistorico = historicoData.reduce((sum, record) => sum + Number(record.revenue || 0), 0);
+      console.log('[DASHBOARD] Faturação histórica total (financial_history):', totalHistorico);
+      return totalHistorico;
+    } catch (error) {
+      console.error('[DASHBOARD] Erro na busca de faturação histórica:', error);
+      // Fallback para cálculo em tempo real
+      return await calculateHistoricoFromOrders();
+    }
+  };
+
+  // Fallback: calcular histórico a partir das orders
+  const calculateHistoricoFromOrders = async () => {
+    try {
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
         .eq('status', 'closed')
-        .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString()) // Desde início do ano
+        .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString())
         .lte('created_at', new Date().toISOString());
 
       if (ordersError) {
@@ -265,10 +294,10 @@ const OwnerDashboard = () => {
       }
 
       const totalHistorico = ordersData?.reduce((sum, order) => sum + Number(order.total_amount || 0), 0) || 0;
-      console.log('[DASHBOARD] Faturação histórica calculada (orders):', totalHistorico);
+      console.log('[DASHBOARD] Faturação histórica calculada (orders fallback):', totalHistorico);
       return totalHistorico;
     } catch (error) {
-      console.error('[DASHBOARD] Erro na busca de faturação histórica:', error);
+      console.error('[DASHBOARD] Erro no cálculo de histórico fallback:', error);
       return 0;
     }
   };
@@ -528,16 +557,16 @@ const OwnerDashboard = () => {
       const lucroLiquido = (totalVendas || 0) - (totalDespesas || 0) - folhaSalarialPeriodo;
 
       const metricsResult = {
-        vendasHoje: vendasHoje || 0,
+        vendasHoje: Number(vendasHoje) || 0,
         mesasAtivas: 0, // Calcular depois se necessário
-        totalVendas: totalVendas || 0,
-        receitaTotal: totalVendas || 0,
-        despesas: totalDespesas || 0,
-        folhaSalarial: folhaSalarial || 0,
-        impostos: (totalVendas || 0) * 0.065, // REGRA DOS 6,5% - COM 102.100 Kz = 6.636,50 Kz
+        totalVendas: Number(totalVendas) || 0,
+        receitaTotal: Number(totalVendas) || 0,
+        despesas: Number(totalDespesas) || 0,
+        folhaSalarial: Number(folhaSalarial) || 0,
+        impostos: Number(totalVendas || 0) * 0.065, // REGRA DOS 6,5%
         historicoRevenue: await fetchHistoricoRevenue(),
-        lucroLiquido: lucroLiquido,
-        margem: totalVendas > 0 ? (lucroLiquido / totalVendas) * 100 : 0
+        lucroLiquido: Number(lucroLiquido) || 0,
+        margem: Number(totalVendas) > 0 ? (Number(lucroLiquido) / Number(totalVendas)) * 100 : 0
       };
 
       console.log('[DASHBOARD] Métricas finais com período:', {
