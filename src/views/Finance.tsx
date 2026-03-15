@@ -559,7 +559,7 @@ const Finance = () => {
         {activeTab === 'LEGAL' && (
           <div className="glass-panel p-12 rounded-[4rem] border-white/5 bg-white text-slate-900 shadow-2xl">
              <div className="text-center mb-12">
-                <h1 className="text-3xl font-black uppercase mb-2">Certificação Vereda OS</h1>
+                <h1 className="text-3xl font-black uppercase mb-2">CERTIFICAÇÃO REST IA OS</h1>
                 <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Dossier Técnico de Conformidade Legal</p>
                 <div className="w-24 h-1 bg-primary mx-auto mt-6"></div>
              </div>
