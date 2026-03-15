@@ -251,22 +251,12 @@ const OwnerDashboard = () => {
   // Buscar despesas do dia atual (HOJE)
   const fetchTodayExpenses = async () => {
     try {
-      const nowAngola = new Date(new Date().getTime() + (60 * 60 * 1000)); // GMT+1
-      const today = new Date(nowAngola.getFullYear(), nowAngola.getMonth(), nowAngola.getDate());
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-      
-      console.log('[DASHBOARD] Buscando despesas de HOJE (GMT+1):', {
-        start: startOfDay.toISOString(),
-        end: endOfDay.toISOString()
-      });
-
+      // Usar date_trunc para garantir que apenas despesas do dia atual sejam incluídas
       const { data: todayExpenses, error: expensesError } = await supabase
         .from('expenses')
         .select('amount_kz, created_at, category, status')
-        .gte('created_at', startOfDay.toISOString())
-        .lte('created_at', endOfDay.toISOString())
-        .neq('status', 'PENDENTE');
+        .neq('status', 'PENDENTE')
+        .filter('created_at', 'gte', new Date().toISOString().split('T')[0]);
 
       if (expensesError) {
         console.error('[DASHBOARD] Erro ao buscar despesas de hoje:', expensesError);
@@ -274,7 +264,7 @@ const OwnerDashboard = () => {
       }
 
       const todayExpensesTotal = todayExpenses?.reduce((sum, exp) => sum + Number(exp.amount_kz || 0), 0) || 0;
-      console.log('[DASHBOARD] Despesas de hoje:', todayExpensesTotal);
+      console.log('[DASHBOARD] Despesas de hoje (apenas dia atual):', todayExpensesTotal);
       setTodayExpenses(todayExpensesTotal);
       return todayExpensesTotal;
     } catch (error) {
@@ -478,6 +468,15 @@ const OwnerDashboard = () => {
         }
       ];
 
+      // Calcular lucro líquido ajustado para o período
+      let folhaSalarialPeriodo = folhaSalarial || 0;
+      if (period === 'HOJE') {
+        // Para o período HOJE, dividir a folha salarial por 30 (diário)
+        folhaSalarialPeriodo = (folhaSalarial || 0) / 30;
+      }
+
+      const lucroLiquido = (totalVendas || 0) - (totalDespesas || 0) - folhaSalarialPeriodo;
+
       const metricsResult = {
         vendasHoje: vendasHoje || 0,
         mesasAtivas: 0, // Calcular depois se necessário
@@ -487,11 +486,9 @@ const OwnerDashboard = () => {
         folhaSalarial: folhaSalarial || 0,
         impostos: (totalVendas || 0) * 0.065, // REGRA DOS 6,5% - COM 102.100 Kz = 6.636,50 Kz
         historicoRevenue: 0,
-        lucroLiquido: (totalVendas || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((totalVendas || 0) * 0.065),
-        margem: totalVendas > 0 ? (((totalVendas || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((totalVendas || 0) * 0.065)) / totalVendas) * 100 : 0
+        lucroLiquido: lucroLiquido,
+        margem: totalVendas > 0 ? (lucroLiquido / totalVendas) * 100 : 0
       };
-
-      const lucroLiquido = metricsResult.totalVendas - metricsResult.despesas - metricsResult.folhaSalarial;
 
       console.log('[DASHBOARD] Métricas finais com período:', {
         periodo: period,
