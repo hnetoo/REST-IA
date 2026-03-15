@@ -274,35 +274,35 @@ const Settings = () => {
         ))}
       </div>
 
-const handleTogglePermission = (perm: PermissionKey) => {
-  const current = userForm.permissions || [];
-  if (current.includes(perm)) {
-    setUserForm({ ...userForm, permissions: current.filter(p => p !== perm) });
-  } else {
-    setUserForm({ ...userForm, permissions: [...current, perm] });
-  }
-};
+    const handleTogglePermission = (perm: PermissionKey) => {
+      const current = userForm.permissions || [];
+      if (current.includes(perm)) {
+        setUserForm({ ...userForm, permissions: current.filter(p => p !== perm) });
+      } else {
+        setUserForm({ ...userForm, permissions: [...current, perm] });
+      }
+    };
 
-const handleSaveUser = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (editingUserId) {
-    updateUser({ ...userForm, id: editingUserId } as User);
-    addNotification('success', 'Utilizador atualizado.');
-  } else {
-    addUser({ ...userForm, id: `u-${Date.now()}` } as User);
-    addNotification('success', 'Utilizador criado.');
-  }
-  setIsUserModalOpen(false);
-};
+    const handleSaveUser = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (editingUserId) {
+        updateUser({ ...userForm, id: editingUserId } as User);
+        addNotification('success', 'Utilizador atualizado.');
+      } else {
+        addUser({ ...userForm, id: `u-${Date.now()}` } as User);
+        addNotification('success', 'Utilizador criado.');
+      }
+      setIsUserModalOpen(false);
+    };
 
-const tabs = [
-  { id: 'GENERAL', label: 'Geral & Identidade', icon: SettingsIcon },
-  { id: 'STAFF', label: 'Funcionários', icon: Users },
-  { id: 'OPERATORS', label: 'Controlo de Acesso', icon: Users },
-  { id: 'FISCAL', label: 'Compliance AGT', icon: ShieldCheck },
-  { id: 'SUPABASE', label: 'Ecossistema Cloud', icon: CloudLightning },
-  { id: 'CORE', label: 'Kernel Técnico', icon: Cpu }
-];
+    const tabs = [
+      { id: 'GENERAL', label: 'Geral & Identidade', icon: SettingsIcon },
+      { id: 'STAFF', label: 'Funcionários', icon: Users },
+      { id: 'OPERATORS', label: 'Controlo de Acesso', icon: Users },
+      { id: 'FISCAL', label: 'Compliance AGT', icon: ShieldCheck },
+      { id: 'SUPABASE', label: 'Ecossistema Cloud', icon: CloudLightning },
+      { id: 'CORE', label: 'Kernel Técnico', icon: Cpu }
+    ];
 
 return (
   <div className="p-8 h-full overflow-y-auto no-scrollbar bg-background text-slate-200">
@@ -329,7 +329,7 @@ return (
     <div className="glass-panel rounded-[3rem] p-10 border border-white/5 relative animate-in fade-in duration-500">
         
       {activeTab === 'GENERAL' && (
-          <div className="h-[40vh] overflow-y-scroll pr-2" style={{scrollbarWidth: 'thin', scrollbarColor: '#f97316 transparent'}}>
+          <div className="h-[50vh] overflow-y-auto pr-2">
             <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 flex flex-col">
              <div className="grid grid-cols-1 gap-8">
                 <div>
