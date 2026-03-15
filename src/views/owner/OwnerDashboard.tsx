@@ -365,13 +365,52 @@ const OwnerDashboard = () => {
     try {
       console.log('[DASHBOARD] Buscando produtos mais vendidos...');
       
-      // Buscar pedidos com itens da tabela orders
-      const { data: ordersData, error: ordersError } = await supabase
+      // Tentar buscar com diferentes estruturas de coluna
+      let ordersData, ordersError;
+      
+      // Tentativa 1: com coluna 'items'
+      const result1 = await supabase
         .from('orders')
         .select('id, created_at, total_amount, items')
         .eq('status', 'closed')
         .order('created_at', { ascending: false })
         .limit(50);
+      
+      if (!result1.error) {
+        ordersData = result1.data;
+        ordersError = null;
+        console.log('[DASHBOARD] Busca com coluna "items" bem-sucedida');
+      } else {
+        console.log('[DASHBOARD] Erro com coluna "items", tentando "items_json"...');
+        
+        // Tentativa 2: com coluna 'items_json'
+        const result2 = await supabase
+          .from('orders')
+          .select('id, created_at, total_amount, items_json')
+          .eq('status', 'closed')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        
+        if (!result2.error) {
+          ordersData = result2.data;
+          ordersError = null;
+          console.log('[DASHBOARD] Busca com coluna "items_json" bem-sucedida');
+        } else {
+          console.log('[DASHBOARD] Erro com coluna "items_json", tentando sem itens...');
+          
+          // Tentativa 3: sem coluna de itens (apenas dados básicos)
+          const result3 = await supabase
+            .from('orders')
+            .select('id, created_at, total_amount')
+            .eq('status', 'closed')
+            .order('created_at', { ascending: false })
+            .limit(50);
+          
+          ordersData = result3.data;
+          ordersError = result3.error;
+          console.log('[DASHBOARD] Busca sem itens - apenas dados básicos');
+        }
+      }
 
       if (ordersError) {
         console.error('[DASHBOARD] Erro ao buscar pedidos para produtos:', ordersError);
@@ -385,15 +424,20 @@ const OwnerDashboard = () => {
         return;
       }
 
+      console.log('[DASHBOARD] Dados brutos das vendas:', ordersData.length);
+
       // Contar produtos vendidos a partir dos itens dos pedidos
       const productCount: { [key: string]: { quantity: number; revenue: number } } = {};
       
       ordersData.forEach(order => {
-        if (order.items && Array.isArray(order.items)) {
-          order.items.forEach((item: any) => {
-            const productName = item.name || item.title || 'Produto Sem Nome';
-            const quantity = item.quantity || 1;
-            const price = item.price || item.amount || 0;
+        // Tentar diferentes nomes de coluna para itens
+        const itemsData = (order as any).items || (order as any).items_json;
+        
+        if (itemsData && Array.isArray(itemsData)) {
+          itemsData.forEach((item: any) => {
+            const productName = item.name || item.title || item.product_name || 'Produto Sem Nome';
+            const quantity = item.quantity || item.qty || 1;
+            const price = item.price || item.amount || item.unit_price || 0;
             
             if (!productCount[productName]) {
               productCount[productName] = { quantity: 0, revenue: 0 };
@@ -402,6 +446,16 @@ const OwnerDashboard = () => {
             productCount[productName].quantity += quantity;
             productCount[productName].revenue += price * quantity;
           });
+        } else {
+          // Se não houver itens, criar um produto genérico baseado no total do pedido
+          const productName = `Pedido #${order.id}`;
+          const revenue = Number(order.total_amount) || 0;
+          
+          if (!productCount[productName]) {
+            productCount[productName] = { quantity: 1, revenue: 0 };
+          }
+          
+          productCount[productName].revenue += revenue;
         }
       });
 
@@ -569,29 +623,53 @@ const OwnerDashboard = () => {
         margem: Number(totalVendas) > 0 ? (Number(lucroLiquido) / Number(totalVendas)) * 100 : 0
       };
 
-      console.log('[DASHBOARD] Métricas finais com período:', {
+      console.log('[DASHBOARD] Métricas finais ANTES de setMetrics:', {
         periodo: period,
-        totalVendas: metricsResult.totalVendas,
-        totalDespesas: metricsResult.despesas,
-        folhaSalarial: metricsResult.folhaSalarial,
-        impostos: metricsResult.impostos,
-        lucroLiquido: lucroLiquido
+        totalVendas: Number(totalVendas) || 0,
+        totalDespesas: Number(totalDespesas) || 0,
+        folhaSalarial: Number(folhaSalarial) || 0,
+        impostos: Number(totalVendas || 0) * 0.065,
+        lucroLiquido: Number(lucroLiquido) || 0,
+        vendasHoje: Number(vendasHoje) || 0
       });
 
-      // Calcular margem de lucro com tratamento de zeros
-      const margem = totalVendas > 0 ? (lucroLiquido / totalVendas) * 100 : 0;
+      const finalMetrics = {
+        vendasHoje: Number(vendasHoje) || 0,
+        mesasAtivas: 0, // Calcular depois se necessário
+        totalVendas: Number(totalVendas) || 0,
+        receitaTotal: Number(totalVendas) || 0,
+        despesas: Number(totalDespesas) || 0,
+        folhaSalarial: Number(folhaSalarial) || 0,
+        impostos: Number(totalVendas || 0) * 0.065, // REGRA DOS 6,5%
+        historicoRevenue: await fetchHistoricoRevenue(),
+        lucroLiquido: Number(lucroLiquido) || 0,
+        margem: Number(totalVendas) > 0 ? (Number(lucroLiquido) / Number(totalVendas)) * 100 : 0
+      };
 
-      console.log('[DASHBOARD] Métricas finais:', {
+      console.log('[DASHBOARD] Métricas finais DEPOIS de setMetrics:', {
         periodo: period,
-        totalVendas: metricsResult.totalVendas,
-        totalDespesas: metricsResult.despesas,
-        folhaSalarial: metricsResult.folhaSalarial,
-        impostos: metricsResult.impostos,
-        lucroLiquido: lucroLiquido
+        totalVendas: finalMetrics.totalVendas,
+        totalDespesas: finalMetrics.despesas,
+        folhaSalarial: finalMetrics.folhaSalarial,
+        impostos: finalMetrics.impostos,
+        lucroLiquido: finalMetrics.lucroLiquido,
+        vendasHoje: finalMetrics.vendasHoje
       });
 
-      setMetrics(metricsResult);
+      // FORÇAR ATUALIZAÇÃO DO ESTADO
+      setMetrics(finalMetrics);
       setChartData(chartDataGenerated);
+      
+      // VERIFICAÇÃO IMEDIATA DO ESTADO
+      setTimeout(() => {
+        console.log('[DASHBOARD] Estado ATUALIZADO (verificação):', {
+          metricsState: metrics,
+          totalVendasNoState: metrics.totalVendas,
+          despesasNoState: metrics.despesas,
+          folhaSalarialNoState: metrics.folhaSalarial
+        });
+      }, 100);
+
       setIsLoading(false);
       
     } catch (error) {
