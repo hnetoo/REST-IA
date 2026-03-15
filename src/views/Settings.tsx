@@ -156,7 +156,8 @@ const Settings = () => {
       <div className="glass-panel rounded-[3rem] p-10 min-h-[500px] border border-white/5 relative animate-in fade-in duration-500">
         
         {activeTab === 'GENERAL' && (
-          <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10">
+          <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+            <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10">
              <div className="grid grid-cols-1 gap-8">
                 <div>
                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome do Restaurante</label>
@@ -348,7 +349,8 @@ const Settings = () => {
         )}
 
         {activeTab === 'FISCAL' && (
-           <div className="space-y-12">
+           <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+             <div className="space-y-12">
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
                    <h3 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-3">
@@ -416,7 +418,8 @@ const Settings = () => {
         )}
 
         {activeTab === 'OPERATORS' && (
-          <div className="space-y-8">
+          <div className="max-h-[calc(100vh-200px)] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+             <div className="space-y-8">
              <div className="flex justify-between items-center">
                 <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">Gestão de Operadores & Permissões</h3>
                 <button onClick={() => handleOpenUserModal()} className="px-6 py-3 bg-primary text-black rounded-2xl font-black text-[10px] uppercase shadow-glow flex items-center gap-2"><Plus size={16}/> Adicionar Novo</button>
@@ -470,7 +473,7 @@ const Settings = () => {
       {/* MODAL UTILIZADOR COM PERMISSÕES */}
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-8 backdrop-blur-xl animate-in zoom-in">
-           <div className="glass-panel p-12 rounded-[4rem] w-full max-w-4xl border border-white/10 overflow-y-auto max-h-[90vh] no-scrollbar">
+           <div className="glass-panel p-12 rounded-[4rem] w-full max-w-4xl border border-white/10 overflow-y-auto max-h-[calc(100vh-200px)] pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
               <div className="flex justify-between items-center mb-10">
                  <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">
                    {editingUserId ? 'Editar Operador' : 'Novo Operador'}
