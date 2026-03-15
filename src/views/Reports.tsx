@@ -3,7 +3,7 @@ import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, Shop
 import { generateSalesReport, generatePurchaseReport } from '../services/pdfService';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 const Reports = () => {
   const { settings } = useStore();
@@ -11,6 +11,7 @@ const Reports = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [showDetailedReport, setShowDetailedReport] = useState(false);
   const [showPaymentReport, setShowPaymentReport] = useState(false);
+  const [showMenuAnalysis, setShowMenuAnalysis] = useState(false);
   const [detailedData, setDetailedData] = useState<{
     totalItems: number;
     bebidas: { name: string; quantity: number }[];
@@ -37,6 +38,22 @@ const Reports = () => {
     error: null
   });
 
+  const [menuAnalysisData, setMenuAnalysisData] = useState<{
+    products: {
+      name: string;
+      margin: number;
+      volume: number;
+      price: number;
+      cost: number;
+    }[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    products: [],
+    loading: false,
+    error: null
+  });
+
   // Função para obter ícone do método de pagamento
   const getPaymentIcon = (methodName: string) => {
     const normalized = methodName.toLowerCase();
@@ -54,6 +71,124 @@ const Reports = () => {
 
   // Cores para o gráfico de pizza
   const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+  // Buscar dados de análise de menu (engenharia de menu)
+  const fetchMenuAnalysis = async (date: string) => {
+    if (!date) return;
+    
+    setMenuAnalysisData(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      console.log('[REPORTS] Buscando análise de menu para:', date);
+      
+      // Converter data para formato ISO
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      // Buscar produtos com preços e custos
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('id, name, price, cost_price, is_active')
+        .eq('is_active', true);
+
+      if (productsError) {
+        console.error('[REPORTS] Erro ao buscar produtos:', productsError);
+        setMenuAnalysisData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: 'Erro ao buscar dados dos produtos' 
+        }));
+        return;
+      }
+
+      if (!productsData || productsData.length === 0) {
+        console.log('[REPORTS] Nenhum produto encontrado');
+        setMenuAnalysisData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          products: []
+        }));
+        return;
+      }
+
+      // Buscar vendas no período
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('id, created_at, items, status')
+        .eq('status', 'closed')
+        .gte('created_at', startOfDay.toISOString())
+        .lte('created_at', endOfDay.toISOString());
+
+      if (ordersError) {
+        console.error('[REPORTS] Erro ao buscar vendas:', ordersError);
+        setMenuAnalysisData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: 'Erro ao buscar dados das vendas' 
+        }));
+        return;
+      }
+
+      // Calcular volume de vendas por produto
+      const salesVolume = new Map<string, number>();
+      
+      ordersData?.forEach(order => {
+        const itemsData = (order as any).items || (order as any).items_json;
+        
+        if (itemsData && Array.isArray(itemsData)) {
+          itemsData.forEach((item: any) => {
+            const productName = item.name || item.title || item.product_name || 'Produto Sem Nome';
+            const quantity = item.quantity || item.qty || 1;
+            
+            if (!salesVolume.has(productName)) {
+              salesVolume.set(productName, 0);
+            }
+            salesVolume.set(productName, salesVolume.get(productName)! + quantity);
+          });
+        }
+      });
+
+      // Combinar dados de produtos com volume de vendas
+      const productsAnalysis = productsData.map(product => {
+        const volume = salesVolume.get(product.name) || 0;
+        const price = product.price || 0;
+        const cost = product.cost_price || 0;
+        const margin = price - cost;
+        
+        return {
+          name: product.name,
+          margin,
+          volume,
+          price,
+          cost
+        };
+      }).filter(p => p.volume > 0) // Apenas produtos com vendas
+        .sort((a, b) => b.margin * b.volume - a.margin * a.volume); // Ordenar por contribuição total
+
+      console.log('[REPORTS] Análise de menu processada:', {
+        totalProducts: productsAnalysis.length,
+        topProduct: productsAnalysis[0],
+        avgMargin: productsAnalysis.reduce((sum, p) => sum + p.margin, 0) / productsAnalysis.length
+      });
+
+      setMenuAnalysisData({
+        products: productsAnalysis,
+        loading: false,
+        error: null
+      });
+
+    } catch (error) {
+      console.error('[REPORTS] Erro ao processar análise de menu:', error);
+      setMenuAnalysisData(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: 'Erro ao processar análise de menu' 
+      }));
+    }
+  };
 
   // Buscar dados de meios de pagamento
   const fetchPaymentReport = async (date: string) => {
@@ -300,6 +435,16 @@ const Reports = () => {
     fetchDetailedReport(selectedDate);
   };
 
+  // Gerar relatório de análise de menu
+  const generateMenuAnalysis = () => {
+    if (!selectedDate) {
+      alert('Por favor, selecione uma data primeiro');
+      return;
+    }
+    setShowMenuAnalysis(true);
+    fetchMenuAnalysis(selectedDate);
+  };
+
   // Gerar relatório de pagamentos
   const generatePaymentReport = () => {
     if (!selectedDate) {
@@ -323,8 +468,8 @@ const Reports = () => {
       case 'Relatório de Lucros':
         generateSalesReport(); // Por enquanto usa o mesmo de vendas
         break;
-      case 'Meios de Pagamento':
-        generatePaymentReport();
+      case 'Análise de Performance de Menu':
+        generateMenuAnalysis();
         break;
       case 'Inventário Atual':
         generatePurchaseReport(); // Por enquanto usa o mesmo de compras
@@ -358,7 +503,8 @@ const Reports = () => {
         { name: 'Relatório de Vendas', description: 'Vendas diárias e totais do período' },
         { name: 'Relatório de Lucros', description: 'Análise de margens e rentabilidade' },
         { name: 'Fluxo de Caixa', description: 'Entradas e saídas detalhadas' },
-        { name: 'Meios de Pagamento', description: 'Análise por método de pagamento (Fecho de Caixa)' }
+        { name: 'Meios de Pagamento', description: 'Análise por método de pagamento (Fecho de Caixa)' },
+        { name: 'Análise de Performance de Menu', description: 'Engenharia de menu - margens vs volume' }
       ]
     },
     {
@@ -465,6 +611,178 @@ const Reports = () => {
           </div>
         ))}
       </div>
+
+      {/* Análise de Performance de Menu (Engenharia de Menu) */}
+      {showMenuAnalysis && (
+        <div className="mt-8 glass-panel p-8 rounded-2xl border border-white/5">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+              <BarChart3 size={20} className="text-primary" />
+              Análise de Performance de Menu - {selectedDate || 'Data não selecionada'}
+            </h3>
+            <button
+              onClick={() => setShowMenuAnalysis(false)}
+              className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm"
+              title="Fechar análise de menu"
+            >
+              Fechar
+            </button>
+          </div>
+
+          {menuAnalysisData.loading && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-slate-400 mt-4">Analisando performance do menu...</p>
+            </div>
+          )}
+
+          {menuAnalysisData.error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={20} className="text-red-500" />
+                <p className="text-red-500">{menuAnalysisData.error}</p>
+              </div>
+            </div>
+          )}
+
+          {!menuAnalysisData.loading && !menuAnalysisData.error && (
+            <div className="space-y-6">
+              {/* Resumo de Análise */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-primary/10 border border-primary/20 rounded-xl p-4">
+                  <h4 className="text-sm font-bold text-primary mb-2">Produtos Analisados</h4>
+                  <p className="text-2xl font-black text-white">{menuAnalysisData.products.length}</p>
+                </div>
+                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+                  <h4 className="text-sm font-bold text-green-400 mb-2">Margem Média</h4>
+                  <p className="text-2xl font-black text-white">
+                    {menuAnalysisData.products.length > 0 
+                      ? new Intl.NumberFormat('pt-AO', { 
+                          style: 'currency', 
+                          currency: 'AOA', 
+                          maximumFractionDigits: 0 
+                        }).format(
+                          menuAnalysisData.products.reduce((sum, p) => sum + p.margin, 0) / menuAnalysisData.products.length
+                        )
+                      : '0 Kz'
+                    }
+                  </p>
+                </div>
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4">
+                  <h4 className="text-sm font-bold text-orange-400 mb-2">Volume Total</h4>
+                  <p className="text-2xl font-black text-white">
+                    {menuAnalysisData.products.reduce((sum, p) => sum + p.volume, 0)} unidades
+                  </p>
+                </div>
+              </div>
+
+              {/* Gráfico de Dispersão */}
+              {menuAnalysisData.products.length > 0 && (
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <h4 className="text-lg font-bold text-white mb-4">Margem vs Volume (Scatter Chart)</h4>
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ScatterChart
+                        margin={{
+                          top: 20,
+                          right: 20,
+                          bottom: 60,
+                          left: 60,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis 
+                          dataKey="volume" 
+                          type="number" 
+                          name="Volume"
+                          stroke="#9CA3AF"
+                          label={{ value: 'Volume (Unidades Vendidas)', position: 'insideBottom', offset: -10, fill: '#9CA3AF' }}
+                        />
+                        <YAxis 
+                          dataKey="margin" 
+                          type="number" 
+                          name="Margem"
+                          stroke="#9CA3AF"
+                          label={{ value: 'Margem Bruta (Kz)', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+                        />
+                        <Tooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload as any;
+                              return (
+                                <div className="bg-slate-800 border border-slate-600 rounded-lg p-3">
+                                  <p className="text-white font-medium">{data.name}</p>
+                                  <p className="text-cyan-400 text-sm">
+                                    Margem: {new Intl.NumberFormat('pt-AO', { 
+                                      style: 'currency', 
+                                      currency: 'AOA', 
+                                      maximumFractionDigits: 0 
+                                    }).format(data.margin)}
+                                  </p>
+                                  <p className="text-green-400 text-sm">
+                                    Vendas: {data.volume} unidades
+                                  </p>
+                                  <p className="text-orange-400 text-sm">
+                                    Preço: {new Intl.NumberFormat('pt-AO', { 
+                                      style: 'currency', 
+                                      currency: 'AOA', 
+                                      maximumFractionDigits: 0 
+                                    }).format(data.price)}
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Scatter 
+                          name="Produtos" 
+                          data={menuAnalysisData.products} 
+                          fill="#06b6d4"
+                        >
+                          {menuAnalysisData.products.map((entry, index) => (
+                            <Cell 
+                              key={`cell-${index}`} 
+                              fill={
+                                entry.margin > entry.price * 0.5 ? '#10b981' : // Alta margem (>50%)
+                                entry.margin > entry.price * 0.3 ? '#f59e0b' : // Média margem (30-50%)
+                                '#ef4444' // Baixa margem (<30%)
+                              } 
+                            />
+                          ))}
+                        </Scatter>
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </div>
+                  
+                  {/* Legenda de Cores */}
+                  <div className="flex justify-center gap-6 mt-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span className="text-slate-400 text-sm">Alta Performance (&gt;50% margem)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                      <span className="text-slate-400 text-sm">Performance Média (30-50% margem)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <span className="text-slate-400 text-sm">Baixa Performance (&lt;30% margem)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {menuAnalysisData.products.length === 0 && (
+                <div className="text-center py-8">
+                  <BarChart3 size={48} className="text-slate-500 mx-auto mb-4" />
+                  <p className="text-slate-400">Nenhum produto com vendas encontrado para esta data</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Relatório de Meios de Pagamento */}
       {showPaymentReport && (
