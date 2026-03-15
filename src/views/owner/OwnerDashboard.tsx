@@ -401,14 +401,14 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
         if (!staffError && staffData && staffData.length > 0) {
-          // Calcular total líquido para cada funcionário: (base + subsidios + bonus + horas_extras) - descontos
+          // Calcular total líquido para cada funcionário: (salario_base + subsidios + bonus + horas_extras) - descontos
           const monthlyTotal = staffData.reduce((acc, item) => {
-            const base = Number(item.base_salary_kz) || 0;
+            const salario_base = Number(item.salario_base) || Number(item.base_salary_kz) || 0;
             const subsidios = Number(item.subsidios) || 0;
             const bonus = Number(item.bonus) || 0;
             const horas_extras = Number(item.horas_extras) || 0;
             const descontos = Number(item.descontos) || 0;
-            const totalLiquido = (base + subsidios + bonus + horas_extras) - descontos;
+            const totalLiquido = (salario_base + subsidios + bonus + horas_extras) - descontos;
             return acc + totalLiquido;
           }, 0);
           folhaSalarial = monthlyTotal;

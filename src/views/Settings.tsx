@@ -70,7 +70,7 @@ const Settings = () => {
   const [staffForm, setStaffForm] = useState({
     name: '',
     position: '',
-    base_salary_kz: 0,
+    salario_base: 0,
     subsidios: 0,
     bonus: 0,
     horas_extras: 0,
@@ -107,7 +107,7 @@ const Settings = () => {
       setStaffForm({
         name: staffMember.name || '',
         position: staffMember.position || '',
-        base_salary_kz: staffMember.base_salary_kz || 0,
+        salario_base: staffMember.salario_base || staffMember.base_salary_kz || 0,
         subsidios: staffMember.subsidios || 0,
         bonus: staffMember.bonus || 0,
         horas_extras: staffMember.horas_extras || 0,
@@ -119,7 +119,7 @@ const Settings = () => {
       setStaffForm({
         name: '',
         position: '',
-        base_salary_kz: 0,
+        salario_base: 0,
         subsidios: 0,
         bonus: 0,
         horas_extras: 0,
@@ -567,7 +567,7 @@ const Settings = () => {
                   <div className="mt-4 space-y-2">
                     <div className="flex justify-between text-[10px]">
                       <span className="text-slate-500">Salário Base:</span>
-                      <span className="text-white font-bold">{formatKz(s.base_salary_kz)}</span>
+                      <span className="text-white font-bold">{formatKz(s.salario_base || s.base_salary_kz || 0)}</span>
                     </div>
                     <div className="flex justify-between text-[10px]">
                       <span className="text-slate-500">Subsídios:</span>
@@ -587,7 +587,7 @@ const Settings = () => {
                     </div>
                     <div className="flex justify-between text-[10px] font-bold text-primary">
                       <span>Total Líquido:</span>
-                      <span>{formatKz((s.base_salary_kz || 0) + (s.subsidios || 0) + (s.bonus || 0) + (s.horas_extras || 0) - (s.descontos || 0))}</span>
+                      <span>{formatKz((s.salario_base || s.base_salary_kz || 0) + (s.subsidios || 0) + (s.bonus || 0) + (s.horas_extras || 0) - (s.descontos || 0))}</span>
                     </div>
                   </div>
                 </div>
@@ -693,8 +693,8 @@ const Settings = () => {
                     type="number" 
                     className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" 
                     placeholder="0" 
-                    value={staffForm.base_salary_kz} 
-                    onChange={e => setStaffForm({...staffForm, base_salary_kz: Number(e.target.value)})} 
+                    value={staffForm.salario_base} 
+                    onChange={e => setStaffForm({...staffForm, salario_base: Number(e.target.value)})} 
                   />
                 </div>
               </div>
