@@ -1,11 +1,161 @@
-import React, { useState } from 'react';
-import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, ShoppingCart, Users, Filter } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, ShoppingCart, Users, Filter, Calendar, BarChart3, Utensils, Beer } from 'lucide-react';
 import { generateSalesReport, generatePurchaseReport } from '../services/pdfService';
 import { useStore } from '../store/useStore';
+import { supabase } from '../lib/supabase';
 
 const Reports = () => {
   const { settings } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [showDetailedReport, setShowDetailedReport] = useState(false);
+  const [detailedData, setDetailedData] = useState<{
+    totalItems: number;
+    bebidas: { name: string; quantity: number }[];
+    pratos: { name: string; quantity: number }[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    totalItems: 0,
+    bebidas: [],
+    pratos: [],
+    loading: false,
+    error: null
+  });
+
+  // Buscar dados detalhados por data
+  const fetchDetailedReport = async (date: string) => {
+    if (!date) return;
+    
+    setDetailedData(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      console.log('[REPORTS] Buscando dados detalhados para:', date);
+      
+      // Converter data para formato ISO
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      // Buscar pedidos fechados na data selecionada
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('id, created_at, total_amount, items, status')
+        .eq('status', 'closed')
+        .gte('created_at', startOfDay.toISOString())
+        .lte('created_at', endOfDay.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (ordersError) {
+        console.error('[REPORTS] Erro ao buscar pedidos:', ordersError);
+        setDetailedData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: 'Erro ao buscar dados dos pedidos' 
+        }));
+        return;
+      }
+
+      if (!ordersData || ordersData.length === 0) {
+        console.log('[REPORTS] Nenhum pedido encontrado para a data:', date);
+        setDetailedData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          totalItems: 0,
+          bebidas: [],
+          pratos: []
+        }));
+        return;
+      }
+
+      // Processar itens dos pedidos
+      const bebidasMap = new Map<string, number>();
+      const pratosMap = new Map<string, number>();
+      let totalItems = 0;
+
+      ordersData.forEach(order => {
+        const itemsData = (order as any).items || (order as any).items_json;
+        
+        if (itemsData && Array.isArray(itemsData)) {
+          itemsData.forEach((item: any) => {
+            const productName = item.name || item.title || item.product_name || 'Produto Sem Nome';
+            const quantity = item.quantity || item.qty || 1;
+            const category = item.category || 'Sem Categoria';
+            
+            totalItems += quantity;
+            
+            // Classificar por categoria
+            if (category.toLowerCase().includes('bebida') || 
+                category.toLowerCase().includes('drink') ||
+                productName.toLowerCase().includes('cuca') ||
+                productName.toLowerCase().includes('cerveja') ||
+                productName.toLowerCase().includes('vinho') ||
+                productName.toLowerCase().includes('refrigerante')) {
+              
+              if (!bebidasMap.has(productName)) {
+                bebidasMap.set(productName, 0);
+              }
+              bebidasMap.set(productName, bebidasMap.get(productName)! + quantity);
+              
+            } else {
+              // Considerar como prato/comida
+              if (!pratosMap.has(productName)) {
+                pratosMap.set(productName, 0);
+              }
+              pratosMap.set(productName, pratosMap.get(productName)! + quantity);
+            }
+          });
+        }
+      });
+
+      // Converter Maps para arrays e ordenar
+      const bebidas = Array.from(bebidasMap.entries())
+        .map(([name, quantity]) => ({ name, quantity }))
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 10); // Top 10
+
+      const pratos = Array.from(pratosMap.entries())
+        .map(([name, quantity]) => ({ name, quantity }))
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 10); // Top 10
+
+      console.log('[REPORTS] Dados processados:', {
+        totalItems,
+        totalBebidas: bebidas.length,
+        totalPratos: pratos.length,
+        bebidas: bebidas.slice(0, 3),
+        pratos: pratos.slice(0, 3)
+      });
+
+      setDetailedData({
+        totalItems,
+        bebidas,
+        pratos,
+        loading: false,
+        error: null
+      });
+
+    } catch (error) {
+      console.error('[REPORTS] Erro ao processar relatório:', error);
+      setDetailedData(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: 'Erro ao processar relatório detalhado' 
+      }));
+    }
+  };
+
+  // Gerar relatório detalhado
+  const generateDetailedReport = () => {
+    if (!selectedDate) {
+      alert('Por favor, selecione uma data primeiro');
+      return;
+    }
+    setShowDetailedReport(true);
+    fetchDetailedReport(selectedDate);
+  };
 
   const generatePDF = (reportName: string) => {
     console.log('[REPORTS] Gerando PDF:', reportName);
@@ -92,6 +242,7 @@ const Reports = () => {
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
             className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm"
+            title="Selecionar período"
           >
             <option>Hoje</option>
             <option>Últimos 7 dias</option>
@@ -100,7 +251,24 @@ const Reports = () => {
             <option>Personalizado</option>
           </select>
           
-          <button className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm">
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm"
+            title="Selecionar data específica"
+          />
+          
+          <button 
+            onClick={generateDetailedReport}
+            className="px-4 py-2 bg-primary text-black rounded-xl text-sm font-black uppercase hover:brightness-110 transition-all flex items-center gap-2"
+            title="Gerar relatório detalhado"
+          >
+            <BarChart3 size={16} />
+            Relatório Detalhado
+          </button>
+          
+          <button className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm" title="Filtros avançados">
             <Filter size={16} />
           </button>
         </div>
@@ -128,10 +296,11 @@ const Reports = () => {
                       <p className="text-xs text-slate-500">{report.description}</p>
                     </div>
                   </div>
-                  
+                   
                   <button
                     onClick={() => generatePDF(report.name)}
                     className="w-full mt-3 px-4 py-2 bg-[#06b6d4] text-black rounded-xl text-sm font-black uppercase hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                    title={`Gerar PDF de ${report.name}`}
                   >
                     <Download size={16} />
                     Gerar PDF
@@ -142,6 +311,106 @@ const Reports = () => {
           </div>
         ))}
       </div>
+
+      {/* Relatório Detalhado por Data */}
+      {showDetailedReport && (
+        <div className="mt-8 glass-panel p-8 rounded-2xl border border-white/5">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+              <Calendar size={20} className="text-primary" />
+              Relatório Detalhado - {selectedDate || 'Data não selecionada'}
+            </h3>
+            <button
+              onClick={() => setShowDetailedReport(false)}
+              className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm"
+              title="Fechar relatório detalhado"
+            >
+              Fechar
+            </button>
+          </div>
+
+          {detailedData.loading && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-slate-400 mt-4">Carregando dados detalhados...</p>
+            </div>
+          )}
+
+          {detailedData.error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={20} className="text-red-500" />
+                <p className="text-red-500">{detailedData.error}</p>
+              </div>
+            </div>
+          )}
+
+          {!detailedData.loading && !detailedData.error && (
+            <div className="space-y-6">
+              {/* Resumo Geral */}
+              <div className="bg-primary/10 border border-primary/20 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-lg font-bold text-primary mb-2">Total de Itens Vendidos</h4>
+                    <p className="text-3xl font-black text-white">{detailedData.totalItems}</p>
+                  </div>
+                  <BarChart3 size={32} className="text-primary" />
+                </div>
+              </div>
+
+              {/* Bebidas */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="glass-panel p-6 rounded-xl border border-white/5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Beer size={20} className="text-blue-500" />
+                    <h4 className="text-lg font-bold text-white">Top Bebidas</h4>
+                  </div>
+                  {detailedData.bebidas.length > 0 ? (
+                    <div className="space-y-3">
+                      {detailedData.bebidas.map((bebida, index) => (
+                        <div key={index} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                          <span className="text-white font-medium">{bebida.name}</span>
+                          <span className="text-blue-500 font-bold">{bebida.quantity} unidades</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-400">Nenhuma bebida encontrada</p>
+                  )}
+                </div>
+
+                {/* Pratos */}
+                <div className="glass-panel p-6 rounded-xl border border-white/5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Utensils size={20} className="text-green-500" />
+                    <h4 className="text-lg font-bold text-white">Top Pratos</h4>
+                  </div>
+                  {detailedData.pratos.length > 0 ? (
+                    <div className="space-y-3">
+                      {detailedData.pratos.map((prato, index) => (
+                        <div key={index} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                          <span className="text-white font-medium">{prato.name}</span>
+                          <span className="text-green-500 font-bold">{prato.quantity} unidades</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-400">Nenhum prato encontrado</p>
+                  )}
+                </div>
+              </div>
+
+              {detailedData.totalItems === 0 && (
+                <div className="text-center py-8">
+                  <AlertCircle size={48} className="text-slate-500 mx-auto mb-4" />
+                  <p className="text-slate-400 text-lg">Sem registos para este dia</p>
+                  <p className="text-slate-500 text-sm mt-2">Não foram encontradas vendas na data selecionada</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Relatórios Recentes */}
       <div className="mt-8 glass-panel p-8 rounded-2xl border border-white/5">
