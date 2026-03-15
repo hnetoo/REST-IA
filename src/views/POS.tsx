@@ -218,7 +218,7 @@ const POS = () => {
   }).format(val);
 
   return (
-    <div className="flex h-full overflow-hidden bg-background font-sans select-none">
+    <div className="flex h-screen overflow-hidden bg-background font-sans select-none min-w-[1024px]">
       
       {/* Sidebar Categorias */}
       <div className="w-24 bg-slate-950 border-r border-white/5 flex flex-col items-center py-10 gap-8 z-40 relative">
@@ -412,7 +412,7 @@ const POS = () => {
              </div>
            </div>
            {!activeTableId ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-10 animate-in fade-in zoom-in duration-700">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-6 animate-in fade-in zoom-in duration-700">
                  {tables.map((table) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (
@@ -446,7 +446,7 @@ const POS = () => {
                  })}
               </div>
            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10 animate-in fade-in slide-in-from-bottom-8 duration-500">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 lg:gap-6 animate-in fade-in zoom-in duration-700">
                  {menu.filter(d => selectedCategoryId === 'TODOS' || d.categoryId === selectedCategoryId).filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase())).map((dish) => (
                     <button 
                       key={dish.id} 
@@ -647,7 +647,7 @@ const POS = () => {
             <h3 className="text-2xl font-black text-white italic uppercase mb-2">Transferir Mesa {activeTableId}</h3>
             <p className="text-slate-400 text-sm mb-8">Selecione a mesa de destino. Todos os itens e subcontas serão movidos.</p>
             
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-4 mb-10 max-h-[40vh] overflow-y-auto p-2 no-scrollbar">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3 mb-10 max-h-[40vh] overflow-y-auto p-2 no-scrollbar">
               {tables.filter(t => t.id !== activeTableId).map(table => {
                 const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                 return (
