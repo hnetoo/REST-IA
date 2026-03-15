@@ -281,7 +281,7 @@ const Inventory = () => {
     
     try {
       const { data, error } = await supabase
-        .from('menu_items')
+        .from('products')
         .update(productToUpdate)
         .eq('id', editingProduct.id)
         .select();
