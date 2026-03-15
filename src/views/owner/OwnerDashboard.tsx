@@ -486,18 +486,24 @@ const OwnerDashboard = () => {
         despesas: totalDespesas || 0,
         folhaSalarial: folhaSalarial || 0,
         impostos: (totalVendas || 0) * 0.065, // REGRA DOS 6,5% - COM 102.100 Kz = 6.636,50 Kz
-        historicoRevenue: 0
+        historicoRevenue: 0,
+        lucroLiquido: (totalVendas || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((totalVendas || 0) * 0.065),
+        margem: totalVendas > 0 ? (((totalVendas || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((totalVendas || 0) * 0.065)) / totalVendas) * 100 : 0
       };
 
-      // CÁLCULO DO LUCRO LÍQUIDO (FÓRMULA: Faturação - Despesas - Staff - Impostos)
-      const lucroLiquido = (totalVendas || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((totalVendas || 0) * 0.065);
-      console.log('[DASHBOARD] Cálculo do Lucro Líquido:', {
-        faturacao: totalVendas || 0,
-        despesas: totalDespesas || 0,
-        staff: folhaSalarial || 0,
-        impostos: (totalVendas || 0) * 0.065,
+      const lucroLiquido = metricsResult.totalVendas - metricsResult.despesas - metricsResult.folhaSalarial;
+
+      console.log('[DASHBOARD] Métricas finais com período:', {
+        periodo: period,
+        totalVendas: metricsResult.totalVendas,
+        totalDespesas: metricsResult.despesas,
+        folhaSalarial: metricsResult.folhaSalarial,
+        impostos: metricsResult.impostos,
         lucroLiquido: lucroLiquido
       });
+
+      // Calcular margem de lucro com tratamento de zeros
+      const margem = totalVendas > 0 ? (lucroLiquido / totalVendas) * 100 : 0;
 
       console.log('[DASHBOARD] Métricas finais com período:', {
         periodo: period,
