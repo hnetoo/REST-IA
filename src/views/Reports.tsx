@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, ShoppingCart, Users, Filter, Calendar, BarChart3, Utensils, Beer } from 'lucide-react';
+import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, ShoppingCart, Users, Filter, Calendar, BarChart3, Utensils, Beer, CreditCard, Wallet, Smartphone } from 'lucide-react';
 import { generateSalesReport, generatePurchaseReport } from '../services/pdfService';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const Reports = () => {
   const { settings } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
   const [selectedDate, setSelectedDate] = useState('');
   const [showDetailedReport, setShowDetailedReport] = useState(false);
+  const [showPaymentReport, setShowPaymentReport] = useState(false);
   const [detailedData, setDetailedData] = useState<{
     totalItems: number;
     bebidas: { name: string; quantity: number }[];
@@ -22,6 +24,147 @@ const Reports = () => {
     loading: false,
     error: null
   });
+
+  const [paymentData, setPaymentData] = useState<{
+    totalAmount: number;
+    methods: { name: string; amount: number; percentage: number }[];
+    loading: boolean;
+    error: string | null;
+  }>({
+    totalAmount: 0,
+    methods: [],
+    loading: false,
+    error: null
+  });
+
+  // Função para obter ícone do método de pagamento
+  const getPaymentIcon = (methodName: string) => {
+    const normalized = methodName.toLowerCase();
+    
+    if (normalized.includes('multicaixa') || normalized.includes('tpa')) {
+      return <CreditCard size={16} className="text-cyan-400" />;
+    } else if (normalized.includes('dinheiro') || normalized.includes('cash')) {
+      return <Wallet size={16} className="text-green-400" />;
+    } else if (normalized.includes('transfer') || normalized.includes('aki') || normalized.includes('mcx')) {
+      return <Smartphone size={16} className="text-purple-400" />;
+    }
+    
+    return <CreditCard size={16} className="text-slate-400" />;
+  };
+
+  // Cores para o gráfico de pizza
+  const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+  // Buscar dados de meios de pagamento
+  const fetchPaymentReport = async (date: string) => {
+    if (!date) return;
+    
+    setPaymentData(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      console.log('[REPORTS] Buscando dados de pagamento para:', date);
+      
+      // Converter data para formato ISO
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      // Buscar pedidos fechados na data selecionada
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('id, created_at, total_amount, payment_method, status')
+        .eq('status', 'closed')
+        .gte('created_at', startOfDay.toISOString())
+        .lte('created_at', endOfDay.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (ordersError) {
+        console.error('[REPORTS] Erro ao buscar pedidos:', ordersError);
+        setPaymentData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: 'Erro ao buscar dados dos pagamentos' 
+        }));
+        return;
+      }
+
+      if (!ordersData || ordersData.length === 0) {
+        console.log('[REPORTS] Nenhum pedido encontrado para a data:', date);
+        setPaymentData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          totalAmount: 0,
+          methods: []
+        }));
+        return;
+      }
+
+      // Agrupar por método de pagamento
+      const paymentMethods = new Map<string, number>();
+      let totalAmount = 0;
+
+      ordersData.forEach(order => {
+        const method = order.payment_method || 'Não Especificado';
+        const amount = order.total_amount || 0;
+        
+        totalAmount += amount;
+        
+        if (!paymentMethods.has(method)) {
+          paymentMethods.set(method, 0);
+        }
+        paymentMethods.set(method, paymentMethods.get(method)! + amount);
+      });
+
+      // Converter para array e calcular percentagens
+      const methods = Array.from(paymentMethods.entries())
+        .map(([name, amount]) => ({
+          name: getPaymentMethodLabel(name),
+          amount,
+          percentage: totalAmount > 0 ? (amount / totalAmount) * 100 : 0
+        }))
+        .sort((a, b) => b.amount - a.amount);
+
+      console.log('[REPORTS] Dados de pagamento processados:', {
+        totalAmount,
+        totalMethods: methods.length,
+        methods: methods.slice(0, 3)
+      });
+
+      setPaymentData({
+        totalAmount,
+        methods,
+        loading: false,
+        error: null
+      });
+
+    } catch (error) {
+      console.error('[REPORTS] Erro ao processar relatório de pagamentos:', error);
+      setPaymentData(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: 'Erro ao processar relatório de pagamentos' 
+      }));
+    }
+  };
+
+  // Função para normalizar labels de métodos de pagamento
+  const getPaymentMethodLabel = (method: string): string => {
+    const normalized = method.toLowerCase();
+    
+    if (normalized.includes('multicaixa') || normalized.includes('tpa')) {
+      return 'Multicaixa (TPA)';
+    } else if (normalized.includes('dinheiro') || normalized.includes('cash')) {
+      return 'Dinheiro';
+    } else if (normalized.includes('transfer') || normalized.includes('aki') || normalized.includes('mcx')) {
+      return 'Transferência / AKI / MCX';
+    } else if (normalized.includes('nao') || normalized.includes('não') || normalized.includes('undefined')) {
+      return 'Não Especificado';
+    }
+    
+    return method.charAt(0).toUpperCase() + method.slice(1);
+  };
 
   // Buscar dados detalhados por data
   const fetchDetailedReport = async (date: string) => {
@@ -157,6 +300,16 @@ const Reports = () => {
     fetchDetailedReport(selectedDate);
   };
 
+  // Gerar relatório de pagamentos
+  const generatePaymentReport = () => {
+    if (!selectedDate) {
+      alert('Por favor, selecione uma data primeiro');
+      return;
+    }
+    setShowPaymentReport(true);
+    fetchPaymentReport(selectedDate);
+  };
+
   const generatePDF = (reportName: string) => {
     console.log('[REPORTS] Gerando PDF:', reportName);
     
@@ -170,8 +323,8 @@ const Reports = () => {
       case 'Relatório de Lucros':
         generateSalesReport(); // Por enquanto usa o mesmo de vendas
         break;
-      case 'Fluxo de Caixa':
-        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+      case 'Meios de Pagamento':
+        generatePaymentReport();
         break;
       case 'Inventário Atual':
         generatePurchaseReport(); // Por enquanto usa o mesmo de compras
@@ -204,7 +357,8 @@ const Reports = () => {
       reports: [
         { name: 'Relatório de Vendas', description: 'Vendas diárias e totais do período' },
         { name: 'Relatório de Lucros', description: 'Análise de margens e rentabilidade' },
-        { name: 'Fluxo de Caixa', description: 'Entradas e saídas detalhadas' }
+        { name: 'Fluxo de Caixa', description: 'Entradas e saídas detalhadas' },
+        { name: 'Meios de Pagamento', description: 'Análise por método de pagamento (Fecho de Caixa)' }
       ]
     },
     {
@@ -311,6 +465,131 @@ const Reports = () => {
           </div>
         ))}
       </div>
+
+      {/* Relatório de Meios de Pagamento */}
+      {showPaymentReport && (
+        <div className="mt-8 glass-panel p-8 rounded-2xl border border-white/5">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+              <CreditCard size={20} className="text-primary" />
+              Relatório de Meios de Pagamento - {selectedDate || 'Data não selecionada'}
+            </h3>
+            <button
+              onClick={() => setShowPaymentReport(false)}
+              className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm"
+              title="Fechar relatório de pagamentos"
+            >
+              Fechar
+            </button>
+          </div>
+
+          {paymentData.loading && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-slate-400 mt-4">Carregando dados de pagamento...</p>
+            </div>
+          )}
+
+          {paymentData.error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={20} className="text-red-500" />
+                <p className="text-red-500">{paymentData.error}</p>
+              </div>
+            </div>
+          )}
+
+          {!paymentData.loading && !paymentData.error && (
+            <div className="space-y-6">
+              {/* Resumo de Conciliação */}
+              <div className="bg-primary/10 border border-primary/20 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-lg font-bold text-primary mb-2">Total Bruto (Fecho de Caixa)</h4>
+                    <p className="text-3xl font-black text-white">
+                      {new Intl.NumberFormat('pt-AO', { 
+                        style: 'currency', 
+                        currency: 'AOA', 
+                        maximumFractionDigits: 0 
+                      }).format(paymentData.totalAmount)}
+                    </p>
+                  </div>
+                  <Wallet size={32} className="text-primary" />
+                </div>
+              </div>
+
+              {/* Lista de Métodos de Pagamento */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paymentData.methods.map((method, index) => (
+                  <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {getPaymentIcon(method.name)}
+                        <span className="text-white font-medium">{method.name}</span>
+                      </div>
+                      <span className="text-primary font-bold">
+                        {method.percentage.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="text-xl font-bold text-white">
+                      {new Intl.NumberFormat('pt-AO', { 
+                        style: 'currency', 
+                        currency: 'AOA', 
+                        maximumFractionDigits: 0 
+                      }).format(method.amount)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Gráfico de Pizza */}
+              {paymentData.methods.length > 0 && (
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                  <h4 className="text-lg font-bold text-white mb-4">Distribuição por Método de Pagamento</h4>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={paymentData.methods}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="amount"
+                        >
+                          {paymentData.methods.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: number) => [
+                            new Intl.NumberFormat('pt-AO', { 
+                              style: 'currency', 
+                              currency: 'AOA', 
+                              maximumFractionDigits: 0 
+                            }).format(value),
+                            'Valor'
+                          ]}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {paymentData.methods.length === 0 && (
+                <div className="text-center py-8">
+                  <CreditCard size={48} className="text-slate-500 mx-auto mb-4" />
+                  <p className="text-slate-400">Nenhum pagamento encontrado para esta data</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Relatório Detalhado por Data */}
       {showDetailedReport && (
