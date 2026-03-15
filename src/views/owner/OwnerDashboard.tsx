@@ -171,126 +171,40 @@ const OwnerDashboard = () => {
     }).format(value || 0);
   };
 
-  // Estado para produtos mais vendidos
-  const [topProducts, setTopProducts] = useState<any[]>([]);
+  // Estado para vendas recentes
+  const [recentSales, setRecentSales] = useState<any[]>([]);
 
-  // Buscar produtos mais vendidos no Supabase (CORREÇÃO PERMISSÃO 401/42501)
-  const fetchTopProducts = async () => {
+  // Buscar vendas recentes no Supabase
+  const fetchRecentSales = async () => {
     try {
-      console.log('[DASHBOARD] Buscando produtos mais vendidos...');
+      console.log('[DASHBOARD] Buscando vendas recentes...');
       
-      // Buscar itens de pedidos SEM JOIN COMPLEXO - Apenas dados básicos
-      const { data: orderItemsData, error: orderItemsError } = await supabase
-        .from('order_items')
-        .select('quantity, total_price, product_id');
+      const { data: salesData, error: salesError } = await supabase
+        .from('orders')
+        .select('id, invoice_number, table_id, total_amount, created_at')
+        .eq('status', 'closed')
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-      if (orderItemsError) {
-        console.error('[DASHBOARD] Erro ao buscar itens dos pedidos:', orderItemsError);
-        
-        // FALLBACK: Tentar com product_name se product_id falhar
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('order_items')
-          .select('quantity, total_price, product_name');
-
-        if (!fallbackError && fallbackData && fallbackData.length > 0) {
-          // Agrupar por product_name no fallback
-          const productSales = fallbackData?.reduce((acc: any, item) => {
-            const productName = item.product_name || 'Produto Sem Nome';
-            const quantity = item.quantity || 0;
-            const totalPrice = item.total_price || 0;
-            
-            if (!acc[productName]) {
-              acc[productName] = {
-                name: productName,
-                totalQuantity: 0,
-                totalRevenue: 0,
-                count: 0
-              };
-            }
-            
-            acc[productName].totalQuantity += quantity;
-            acc[productName].totalRevenue += totalPrice;
-            acc[productName].count += 1;
-            
-            return acc;
-          }, {});
-
-          // Converter para array e ordenar
-          const sortedProducts = Object.values(productSales)
-            .sort((a: any, b: any) => b.totalQuantity - a.totalQuantity)
-            .slice(0, 5)
-            .map((product: any, index: number) => ({
-              id: index + 1,
-              name: product.name,
-              quantity: product.totalQuantity,
-              revenue: product.totalRevenue,
-              image: '/api/placeholder/40/40'
-            }));
-
-          setTopProducts(sortedProducts);
-          console.log('[DASHBOARD] Produtos mais vendidos (fallback product_name):', sortedProducts);
-          return;
-        } else {
-          console.error('[DASHBOARD] Erro no fallback product_name:', fallbackError);
-          return;
-        }
+      if (salesError) {
+        console.error('[DASHBOARD] Erro ao buscar vendas recentes:', salesError);
+        return;
       }
 
-      // Agrupar por product_id primeiro
-      const productGroups = orderItemsData?.reduce((acc: any, item) => {
-        const productId = item.product_id;
-        const quantity = item.quantity || 0;
-        const totalPrice = item.total_price || 0;
+      if (salesData && salesData.length > 0) {
+        const formattedSales = salesData.map(sale => ({
+          id: sale.id,
+          invoiceNumber: sale.invoice_number || `INV-${sale.id.slice(-8)}`,
+          table: sale.table_id || 'Takeaway',
+          amount: sale.total_amount || 0,
+          time: new Date(sale.created_at || '').toLocaleTimeString('pt-AO', { hour: '2-digit', minute: '2-digit' })
+        }));
         
-        if (!acc[productId]) {
-          acc[productId] = {
-            productId: productId,
-            totalQuantity: 0,
-            totalRevenue: 0,
-            count: 0
-          };
-        }
-        
-        acc[productId].totalQuantity += quantity;
-        acc[productId].totalRevenue += totalPrice;
-        acc[productId].count += 1;
-        
-        return acc;
-      }, {});
-
-      // Buscar nomes dos produtos separadamente
-      const productIds = Object.keys(productGroups || {});
-      if (productIds.length > 0) {
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('id, name')
-          .in('id', productIds);
-
-        if (!productsError && productsData) {
-          // Mapear nomes para os grupos
-          const sortedProducts = Object.values(productGroups || {})
-            .map((group: any) => {
-              const product = productsData.find((p: any) => p.id === group.productId);
-              return {
-                id: group.productId,
-                name: product?.name || `Produto ${group.productId}`,
-                quantity: group.totalQuantity,
-                revenue: group.totalRevenue,
-                image: '/api/placeholder/40/40'
-              };
-            })
-            .sort((a: any, b: any) => b.quantity - a.quantity)
-            .slice(0, 5);
-
-          setTopProducts(sortedProducts);
-          console.log('[DASHBOARD] Produtos mais vendidos:', sortedProducts);
-        } else {
-          console.error('[DASHBOARD] Erro ao buscar nomes dos produtos:', productsError);
-        }
+        setRecentSales(formattedSales);
+        console.log('[DASHBOARD] Vendas recentes:', formattedSales);
       }
-      
     } catch (error) {
-      console.error('[DASHBOARD] Erro ao buscar produtos mais vendidos:', error);
+      console.error('[DASHBOARD] Erro ao buscar vendas recentes:', error);
     }
   };
 
@@ -598,6 +512,7 @@ const OwnerDashboard = () => {
 
     // Forçar atualização dos dados ao entrar no Owner Hub
     fetchMetrics();
+    fetchRecentSales();
     const unsubscribe = subscribeToChanges();
 
     // Verificar status online/offline
@@ -722,12 +637,12 @@ const OwnerDashboard = () => {
           {/* Card 3: Lucro Líquido */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-emerald-400" />
+              <div className={`w-12 h-12 ${lucroLiquido >= 0 ? 'bg-emerald-500/20' : 'bg-red-500/20'} rounded-xl flex items-center justify-center`}>
+                <TrendingUp className={`w-6 h-6 ${lucroLiquido >= 0 ? 'text-emerald-400' : 'text-red-400'}`} />
               </div>
               <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Líquido</span>
             </div>
-            <div className="text-2xl font-black text-emerald-400 mb-2">
+            <div className={`text-2xl font-black ${lucroLiquido >= 0 ? 'text-emerald-400' : 'text-red-400'} mb-2`}>
               {formatAKZ(lucroLiquido)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
@@ -887,6 +802,7 @@ const OwnerDashboard = () => {
                       fill="#f59e0b" 
                       name="Receitas"
                       radius={[8, 8, 0, 0]}
+                      fillOpacity={0.8}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -994,26 +910,26 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
-        {/* RANKING - TOP 5 PRODUTOS */}
+        {/* FLUXO DE VENDAS RECENTES (POS) */}
         <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
-          <h3 className="text-lg font-black text-white mb-4">Top 5 Produtos</h3>
+          <h3 className="text-lg font-black text-white mb-4">Fluxo de Vendas Recentes (POS)</h3>
           <div className="space-y-3">
-            {topProducts.length > 0 ? (
-              topProducts.map((product, index) => (
-                <div key={product.id || index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all">
+            {recentSales.length > 0 ? (
+              recentSales.map((sale, index) => (
+                <div key={sale.id || index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all">
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-black text-cyan-400 w-6">#{index + 1}</span>
                     <div className="w-10 h-10 bg-white/10 rounded-full overflow-hidden flex items-center justify-center">
-                      <Package className="w-5 h-5 text-white/60" />
+                      <Receipt className="w-5 h-5 text-white/60" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-white">{product.name}</h4>
-                      <p className="text-xs text-white/60">{product.sales} vendas</p>
+                      <h4 className="text-sm font-semibold text-white">{sale.invoiceNumber}</h4>
+                      <p className="text-xs text-white/60">Mesa {sale.table}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-emerald-400">{product.sales}</div>
-                    <div className="text-xs text-white/40">unidades</div>
+                    <div className="text-sm font-bold text-emerald-400">{formatAKZ(sale.amount)}</div>
+                    <div className="text-xs text-white/40">{sale.time}</div>
                   </div>
                 </div>
               ))
@@ -1021,7 +937,7 @@ const OwnerDashboard = () => {
               <div className="h-64 flex items-center justify-center">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-emerald-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                    <TrendingUp className="w-8 h-8 text-emerald-400" />
+                    <Receipt className="w-8 h-8 text-emerald-400" />
                   </div>
                   <p className="text-white/60 text-sm">Sem vendas registadas</p>
                   <p className="text-white/40 text-xs mt-1">Selecione um período para visualizar</p>
