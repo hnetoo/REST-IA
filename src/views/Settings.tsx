@@ -157,7 +157,7 @@ const Settings = () => {
         
         {activeTab === 'GENERAL' && (
           <div>
-            <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 max-h-[75vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+            <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
              <div className="grid grid-cols-1 gap-8">
                 <div>
                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome do Restaurante</label>
@@ -241,7 +241,7 @@ const Settings = () => {
         )}
 
         {activeTab === 'SUPABASE' && (
-          <div className="space-y-12 max-h-[75vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+          <div className="space-y-12 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
             {/* Header de Conexão */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] relative overflow-hidden">
                <div className="absolute top-0 right-0 p-8 opacity-5 text-primary"><Database size={120}/></div>
@@ -349,7 +349,7 @@ const Settings = () => {
         )}
 
         {activeTab === 'FISCAL' && (
-           <div className="space-y-12 max-h-[75vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+           <div className="space-y-12 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
              <div className="space-y-12">
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
@@ -418,7 +418,7 @@ const Settings = () => {
         )}
 
         {activeTab === 'OPERATORS' && (
-          <div className="space-y-8 max-h-[75vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+          <div className="space-y-8 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
              <div className="space-y-8">
              <div className="flex justify-between items-center">
                 <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">Gestão de Operadores & Permissões</h3>
