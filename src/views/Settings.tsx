@@ -539,7 +539,7 @@ const Settings = () => {
         )}
 
         {activeTab === 'STAFF' && (
-          <div className="space-y-8 max-h-[70vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
+          <div className="space-y-8 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500 flex flex-col">
             <div className="flex justify-between items-center">
               <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">Gestão de Funcionários</h3>
               <button onClick={() => handleOpenStaffModal()} className="px-6 py-3 bg-primary text-black rounded-2xl font-black text-[10px] uppercase shadow-glow flex items-center gap-2">
@@ -652,7 +652,7 @@ const Settings = () => {
       {/* MODAL FUNCIONÁRIO */}
       {isStaffModalOpen && (
         <div className="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-8 backdrop-blur-xl animate-in zoom-in">
-          <div className="glass-panel p-12 rounded-[4rem] w-full max-w-4xl border border-white/10 overflow-y-auto max-h-[calc(100vh-200px)] pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+          <div className="glass-panel p-12 rounded-[4rem] w-full max-w-4xl border border-white/10 overflow-y-auto max-h-[calc(100vh-200px)] pr-2 scrollbar-thin scrollbar-thumb-orange-500">
             <div className="flex justify-between items-center mb-10">
               <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">
                 {editingStaffId ? 'Editar Funcionário' : 'Novo Funcionário'}

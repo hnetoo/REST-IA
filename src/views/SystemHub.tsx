@@ -1495,39 +1495,41 @@ const SystemHub = () => {
             </button>
           </div>
           
-          <div className="space-y-3">
-            {records.map(record => (
-              <div key={record.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all group">
-                <div className="flex-1">
-                  <div className="flex items-center gap-4">
-                    <div className="text-white font-bold">{record.system}</div>
-                    <div className="text-slate-400 text-sm">{record.period}</div>
-                    <div className="text-xs text-slate-500">{record.date}</div>
-                  </div>
-                  <div className="flex items-center gap-6 mt-2">
-                    <div className="text-green-400 font-bold">{formatKz(record.revenue)}</div>
-                    <div className="text-blue-400 font-bold">{formatKz(record.profit)}</div>
-                    <div className="text-purple-400 text-sm">
-                      {record.revenue > 0 ? ((record.profit / record.revenue) * 100).toFixed(1) : 0}% margem
+          <div className="max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
+            <div className="space-y-3">
+              {records.map(record => (
+                <div key={record.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all group">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4">
+                      <div className="text-white font-bold">{record.system}</div>
+                      <div className="text-slate-400 text-sm">{record.period}</div>
+                      <div className="text-xs text-slate-500">{record.date}</div>
+                    </div>
+                    <div className="flex items-center gap-6 mt-2">
+                      <div className="text-green-400 font-bold">{formatKz(record.revenue)}</div>
+                      <div className="text-blue-400 font-bold">{formatKz(record.profit)}</div>
+                      <div className="text-purple-400 text-sm">
+                        {record.revenue > 0 ? ((record.profit / record.revenue) * 100).toFixed(1) : 0}% margem
+                      </div>
                     </div>
                   </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                      <Edit2 size={16}/>
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setRecords(records.filter(r => r.id !== record.id));
+                        addNotification('success', 'Registro removido com sucesso!');
+                      }}
+                      className="p-2 text-red-500/30 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                    >
+                      <Trash2 size={16}/>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-all">
-                    <Edit2 size={16}/>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setRecords(records.filter(r => r.id !== record.id));
-                      addNotification('success', 'Registro removido com sucesso!');
-                    }}
-                    className="p-2 text-red-500/30 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                  >
-                    <Trash2 size={16}/>
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 

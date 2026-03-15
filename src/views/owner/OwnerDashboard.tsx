@@ -1047,7 +1047,7 @@ const OwnerDashboard = () => {
         </div>
 
         {/* FLUXO DE VENDAS RECENTES (POS) */}
-        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
           <h3 className="text-lg font-black text-white mb-4">Fluxo de Vendas Recentes (POS)</h3>
           <div className="space-y-3">
             {recentSales.length > 0 ? (
@@ -1076,6 +1076,43 @@ const OwnerDashboard = () => {
                     <Receipt className="w-8 h-8 text-emerald-400" />
                   </div>
                   <p className="text-white/60 text-sm">Sem vendas registadas</p>
+                  <p className="text-white/40 text-xs mt-1">Selecione um período para visualizar</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* PRODUTOS MAIS VENDIDOS */}
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
+          <h3 className="text-lg font-black text-white mb-4">Produtos Mais Vendidos</h3>
+          <div className="space-y-3">
+            {topProducts.length > 0 ? (
+              topProducts.map((product, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-black text-purple-400 w-6">#{index + 1}</span>
+                    <div className="w-10 h-10 bg-white/10 rounded-full overflow-hidden flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-purple-400" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-white">{product.name}</h4>
+                      <p className="text-xs text-white/60">{product.quantity} unidades</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-purple-400">{formatAKZ(product.revenue)}</div>
+                    <div className="text-xs text-white/40">{formatAKZ(product.revenue / product.quantity)} c/u</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="h-64 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <TrendingUp className="w-8 h-8 text-purple-400" />
+                  </div>
+                  <p className="text-white/60 text-sm">Sem produtos vendidos</p>
                   <p className="text-white/40 text-xs mt-1">Selecione um período para visualizar</p>
                 </div>
               </div>
