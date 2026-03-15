@@ -356,21 +356,23 @@ const OwnerDashboard = () => {
       // Buscar despesas reais do Supabase
       let totalDespesas = 0;
       try {
-        // QUERY SEM FILTRO DE DATA - BUSCAR TODAS AS DESPESAS ACUMULADAS
-        const { data: allExpensesData, error: allExpensesError } = await supabase
+        // QUERY COM FILTRO DE DATA BASEADO NO PERÍODO
+        const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
           .select('amount_kz, created_at, category, status')
-          .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
+          .neq('status', 'PENDENTE') // APENAS DESPESAS APROVADAS
+          .gte('created_at', startDate)
+          .lte('created_at', endDate);
 
-        console.log('[DASHBOARD] Despesas encontradas:', allExpensesData?.length || 0);
-        console.error('[DASHBOARD] Erro detalhado despesas:', allExpensesError);
+        console.log('[DASHBOARD] Despesas encontradas para o período:', expensesData?.length || 0);
+        console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
 
-        if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
-          // SEM FILTRO DE DATA - MOSTRAR SOMA TOTAL ACUMULADA
-          totalDespesas = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-          console.log('[DASHBOARD] Total despesas acumuladas:', totalDespesas);
+        if (!expensesError && expensesData && expensesData.length > 0) {
+          // SOMAR APENAS DESPESAS DO PERÍODO SELECIONADO
+          totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+          console.log('[DASHBOARD] Total despesas do período:', totalDespesas);
         } else {
-          console.log('[DASHBOARD] Nenhuma despesa encontrada');
+          console.log('[DASHBOARD] Nenhuma despesa encontrada para o período');
           totalDespesas = 0;
         }
       } catch (expError) {
