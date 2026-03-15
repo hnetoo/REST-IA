@@ -92,7 +92,24 @@ const Inventory = () => {
     forceRealSync();
   }, [addNotification]);
 
-  // Função para upload de imagem
+  // Função para obter URL pública estável
+  const getStableImageUrl = (imagePath: string) => {
+    if (!imagePath) return null;
+    
+    // Se já for URL completa, retornar como está
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Se for apenas nome do arquivo, construir URL pública
+    const { data } = supabase.storage
+      .from('products')
+      .getPublicUrl(imagePath);
+    
+    return data.publicUrl;
+  };
+
+  // Função de upload de imagem com URL permanente
   const handleImageUpload = async (file: File) => {
     if (!file) return;
     
@@ -176,6 +193,7 @@ const Inventory = () => {
       handleImageUpload(file);
     }
   };
+
   const handleCreateProduct = () => {
     console.log('[Inventory] Botão Novo Produto clicado!');
     setIsProductModalOpen(true);
@@ -184,6 +202,73 @@ const Inventory = () => {
   const handleCreateCategory = () => {
     console.log('[Inventory] Botão Nova Categoria clicado!');
     setIsCategoryModalOpen(true);
+  };
+
+  const handleUpdateProduct = async () => {
+    console.log('[Inventory] Atualizando produto:', editingProduct);
+    
+    if (!editingProduct) return;
+    
+    // Validar preço
+    const priceValue = newProduct.price.replace(',', '.');
+    const priceNumber = parseFloat(priceValue) || 0;
+    
+    if (isNaN(priceNumber)) {
+      addNotification('error', 'Preço inválido! Use apenas números.');
+      return;
+    }
+
+    if (!newProduct.category_id) {
+      addNotification('error', 'Selecione uma categoria válida.');
+      return;
+    }
+    
+    // Criar objeto atualizado
+    const productToUpdate = {
+      id: editingProduct.id,
+      name: newProduct.name,
+      description: newProduct.description || '',
+      price: priceNumber,
+      image_url: newProduct.image_url || editingProduct.image_url, // ✅ Manter URL existente
+      is_active: newProduct.is_active,
+      category_id: newProduct.category_id
+    };
+    
+    try {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .update(productToUpdate)
+        .eq('id', editingProduct.id)
+        .select();
+
+      if (error) {
+        console.error('[Inventory] Erro ao atualizar produto:', error);
+        addNotification('error', `Erro ao atualizar produto: ${error.message}`);
+        return;
+      }
+
+      console.log('[Inventory] ✅ Produto atualizado com sucesso:', data);
+      addNotification('success', 'Produto atualizado com sucesso!');
+      
+      // Atualizar store local
+      updateDish({ ...editingProduct, ...productToUpdate });
+      
+      // Fechar modal e limpar estado
+      setIsProductModalOpen(false);
+      setEditingProduct(null);
+      setNewProduct({
+        name: '',
+        price: '',
+        image_url: '',
+        category_id: '',
+        is_active: true,
+        description: ''
+      });
+      
+    } catch (error) {
+      console.error('[Inventory] Erro crítico ao atualizar produto:', error);
+      addNotification('error', 'Erro ao atualizar produto');
+    }
   };
 
   const handleSaveProduct = async () => {
@@ -328,6 +413,25 @@ const Inventory = () => {
       addNotification('error', 'Produto não tem ID válido. Recarregue a página.');
       return;
     }
+    
+    // ✅ USA ID EXATO DO BANCO (UUID REAL DA IMAGEM 1151)
+    const productId = product.id; // ✅ USA ID EXATO DO BANCO SEM ALTERAR
+    console.log('[Inventory] ✅ UUID real do Supabase será usado no update:', productId);
+    
+    setEditingProduct(product);
+    setNewProduct({
+      name: product.name,
+      price: product.price.toString(),
+      image_url: product.image_url || '',
+      category_id: product.category_id,
+      is_active: product.is_active,
+      description: product.description || '' // ✅ CAMPO DO SUPABASE ADICIONADO
+    });
+    setIsProductModalOpen(true);
+  };
+
+  const handleEdit = (product: any) => {
+    console.log('[Inventory] Editando produto:', product);
     
     // ✅ USA ID EXATO DO BANCO (UUID REAL DA IMAGEM 1151)
     const productId = product.id; // ✅ USA ID EXATO DO BANCO SEM ALTERAR
@@ -846,34 +950,45 @@ const Inventory = () => {
                 return (
                   <div key={dish.id} className="glass-panel rounded-xl border border-white/5 overflow-hidden group hover:border-primary/50 transition-all duration-300">
                     <div className="aspect-square w-full overflow-hidden relative h-32">
-                      {dish.image ? (
-                        <>
-                          <img 
-                            src={dish.image} 
-                            alt={dish.name} 
-                            className="w-full h-full object-cover aspect-video"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const fallback = target.nextElementSibling as HTMLElement;
-                              if (fallback) fallback.style.display = 'flex';
-                              console.log('[Inventory] Erro ao carregar imagem do produto:', dish.name);
-                              console.log('[Inventory] Link da imagem do produto:', dish.image);
-                            }}
-                            onLoad={() => {
-                              console.log('[Inventory] Imagem carregada com sucesso:', dish.name);
-                              console.log('[Inventory] URL do Produto:', dish.image);
-                            }}
-                          />
-                          <div className="w-full h-full bg-slate-700 flex items-center justify-center" style={{display: 'none'}}>
+                      {(() => {
+                        const stableImageUrl = getStableImageUrl(dish.image);
+                        return stableImageUrl ? (
+                          <>
+                            <img 
+                              src={stableImageUrl} 
+                              alt={dish.name} 
+                              className="w-full h-full object-cover aspect-video"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                if (fallback) fallback.style.display = 'flex';
+                                console.log('[Inventory] Erro ao carregar imagem do produto:', dish.name);
+                                console.log('[Inventory] Link da imagem do produto:', stableImageUrl);
+                                
+                                // Tentar recarregar URL após erro
+                                setTimeout(() => {
+                                  const retryUrl = getStableImageUrl(dish.image_url);
+                                  if (retryUrl && retryUrl !== stableImageUrl) {
+                                    target.src = retryUrl;
+                                  }
+                                }, 2000);
+                              }}
+                              onLoad={() => {
+                                console.log('[Inventory] Imagem carregada com sucesso:', dish.name);
+                                console.log('[Inventory] URL do Produto:', stableImageUrl);
+                              }}
+                            />
+                            <div className="w-full h-full bg-slate-700 flex items-center justify-center" style={{display: 'none'}}>
+                              <UploadIcon size={24} className="text-slate-500" />
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-full bg-slate-700 flex items-center justify-center">
                             <UploadIcon size={24} className="text-slate-500" />
                           </div>
-                        </>
-                      ) : (
-                        <div className="w-full h-full bg-slate-700 flex items-center justify-center">
-                          <UploadIcon size={24} className="text-slate-500" />
-                        </div>
-                      )}
+                        );
+                      })()}
                       <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border border-white/10 z-20">
                         {cat?.name || 'Sem Categoria'}
                       </div>
