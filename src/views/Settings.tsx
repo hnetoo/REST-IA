@@ -274,95 +274,158 @@ const Settings = () => {
         ))}
       </div>
 
-      <div className="glass-panel rounded-[3rem] p-10 min-h-[500px] border border-white/5 relative animate-in fade-in duration-500">
+const handleTogglePermission = (perm: PermissionKey) => {
+  const current = userForm.permissions || [];
+  if (current.includes(perm)) {
+    setUserForm({ ...userForm, permissions: current.filter(p => p !== perm) });
+  } else {
+    setUserForm({ ...userForm, permissions: [...current, perm] });
+  }
+};
+
+const handleSaveUser = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (editingUserId) {
+    updateUser({ ...userForm, id: editingUserId } as User);
+    addNotification('success', 'Utilizador atualizado.');
+  } else {
+    addUser({ ...userForm, id: `u-${Date.now()}` } as User);
+    addNotification('success', 'Utilizador criado.');
+  }
+  setIsUserModalOpen(false);
+};
+
+const tabs = [
+  { id: 'GENERAL', label: 'Geral & Identidade', icon: SettingsIcon },
+  { id: 'STAFF', label: 'Funcionários', icon: Users },
+  { id: 'OPERATORS', label: 'Controlo de Acesso', icon: Users },
+  { id: 'FISCAL', label: 'Compliance AGT', icon: ShieldCheck },
+  { id: 'SUPABASE', label: 'Ecossistema Cloud', icon: CloudLightning },
+  { id: 'CORE', label: 'Kernel Técnico', icon: Cpu }
+];
+
+return (
+  <div className="p-8 h-full overflow-y-auto no-scrollbar bg-background text-slate-200">
+    <header className="mb-8">
+      <h2 className="text-3xl font-black text-white flex items-center gap-3 italic uppercase leading-none">
+          <SettingsIcon className="text-primary" /> Sistema & Ecossistema
+      </h2>
+      <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] mt-2">Configurações do Kernel e Integrações Nuvem</p>
+    </header>
+
+    <div className="flex gap-4 mb-8 border-b border-white/5 overflow-x-auto no-scrollbar">
+      {tabs.map(tab => (
+        <button 
+          key={tab.id}
+          onClick={() => setActiveTab(tab.id as any)}
+          className={`pb-4 px-6 font-black uppercase text-[10px] tracking-[0.2em] transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id ? 'text-primary' : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          <tab.icon size={16} /> {tab.label}
+          {activeTab === tab.id && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-full shadow-glow"></div>}
+        </button>
+      ))}
+    </div>
+
+    <div className="glass-panel rounded-[3rem] p-10 min-h-[500px] border border-white/5 relative animate-in fade-in duration-500">
         
-        {activeTab === 'GENERAL' && (
-          <div>
-            <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 max-h-[70vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
-             <div className="grid grid-cols-1 gap-8">
-                <div>
-                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome do Restaurante</label>
-                   <input 
-                     type="text" 
-                     className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
-                     value={localSettings.restaurantName} 
-                     onChange={e => setLocalSettings({...localSettings, restaurantName: e.target.value})} 
-                   />
-                </div>
-                <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-                   <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                      {localSettings.appLogoUrl ? <img src={localSettings.appLogoUrl} className="w-full h-full object-contain p-2" /> : <ChefHat size={48} className="text-slate-800"/>}
-                   </div>
-                   <div className="flex-1 space-y-4 w-full">
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Identidade Visual (Logo)</p>
-                      <button 
-                        type="button" 
-                        onClick={() => logoInputRef.current?.click()} 
-                        className="px-6 py-3 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[10px] font-black uppercase hover:bg-primary/20 transition-all flex items-center gap-2"
-                      >
-                        <Upload size={14}/> Carregar Novo Logo
-                      </button>
-                      <input 
-                        ref={logoInputRef} 
-                        type="file" 
-                        hidden 
-                        accept="image/*" 
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => setLocalSettings(prev => ({...prev, appLogoUrl: reader.result as string}));
-                            reader.readAsDataURL(file);
-                          }
-                        }} 
-                      />
-                   </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Telefone do Restaurante</label>
+      {activeTab === 'GENERAL' && (
+        <div>
+          <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 max-h-[75vh] overflow-y-auto pr-2 pb-8 scrollbar-thin scrollbar-thumb-orange-500 flex flex-col">
+           <div className="grid grid-cols-1 gap-8">
+              <div>
+                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome do Restaurante</label>
+                 <input 
+                   type="text" 
+                   className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                   value={localSettings.restaurantName} 
+                   onChange={e => setLocalSettings({...localSettings, restaurantName: e.target.value})} 
+                 />
+              </div>
+              <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
+                 <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                    {localSettings.appLogoUrl ? <img src={localSettings.appLogoUrl} className="w-full h-full object-contain p-2" /> : <ChefHat size={48} className="text-slate-800"/>}
+                 </div>
+                 <div className="flex-1 space-y-4 w-full">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Identidade Visual (Logo)</p>
+                    <button 
+                      type="button" 
+                      onClick={() => logoInputRef.current?.click()} 
+                      className="px-6 py-3 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[10px] font-black uppercase hover:bg-primary/20 transition-all flex items-center gap-2"
+                    >
+                      <Upload size={14}/> Carregar Novo Logo
+                    </button>
                     <input 
-                      type="text" 
-                      className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
-                      value={localSettings.phone} 
-                      onChange={e => setLocalSettings({...localSettings, phone: e.target.value})} 
-                      placeholder="+244 923 000 000" 
+                      ref={logoInputRef} 
+                      type="file" 
+                      hidden 
+                      accept="image/*" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => setLocalSettings(prev => ({...prev, appLogoUrl: reader.result as string}));
+                          reader.readAsDataURL(file);
+                        }
+                      }} 
                     />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">NIF</label>
-                    <input 
-                      type="text" 
-                      className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
-                      value={localSettings.nif} 
-                      onChange={e => setLocalSettings({...localSettings, nif: e.target.value})} 
-                      placeholder="5000000000" 
-                    />
-                  </div>
-                </div>
+                 </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Morada</label>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Telefone do Restaurante</label>
                   <input 
                     type="text" 
                     className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
-                    value={localSettings.address} 
-                    onChange={e => setLocalSettings({...localSettings, address: e.target.value})} 
-                    placeholder="Via AL 15, Talatona, Luanda" 
+                    value={localSettings.phone} 
+                    onChange={e => setLocalSettings({...localSettings, phone: e.target.value})} 
+                    placeholder="+244 923 000 000" 
                   />
                 </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">NIF</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                    value={localSettings.nif} 
+                    onChange={e => setLocalSettings({...localSettings, nif: e.target.value})} 
+                    placeholder="000000000" 
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Morada</label>
+                <input 
+                  type="text" 
+                  className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                  value={localSettings.address} 
+                  onChange={e => setLocalSettings({...localSettings, address: e.target.value})} 
+                  placeholder="Via AL 15, Talatona, Luanda" 
+                />
              </div>
+           </div>
+           <div className="flex gap-4">
              <button 
                type="submit" 
-               disabled={isSaving} 
-               className="w-full py-6 bg-primary text-black rounded-3xl font-black uppercase tracking-[0.2em] shadow-glow flex items-center justify-center gap-3"
+               disabled={isSaving}
+               className="px-8 py-4 bg-primary text-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow hover:bg-primary/80 disabled:opacity-50 flex items-center gap-3"
              >
-               {isSaving ? <RefreshCw className="animate-spin" size={20}/> : <Save size={20}/>} {isSaving ? 'A GUARDAR...' : 'GUARDAR ALTERAÇÕES'}
+               {isSaving ? (
+                 <>
+                   <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                   Guardando...
+                 </>
+               ) : (
+                 <>
+                   <Save size={16}/> Guardar Definições
+                 </>
+               )}
              </button>
+           </div>
           </form>
         )}
 
         {activeTab === 'SUPABASE' && (
-          <div className="space-y-12 max-h-[70vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
+          <div className="space-y-12 max-h-[75vh] overflow-y-auto pr-2 pb-8 scrollbar-thin scrollbar-thumb-orange-500 flex flex-col">
             {/* Header de Conexão */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] relative overflow-hidden">
                <div className="absolute top-0 right-0 p-8 opacity-5 text-primary"><Database size={120}/></div>
@@ -470,7 +533,7 @@ const Settings = () => {
         )}
 
         {activeTab === 'FISCAL' && (
-          <div className="space-y-12 max-h-[70vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
+          <div className="space-y-12 max-h-[75vh] overflow-y-auto pr-2 pb-8 scrollbar-thin scrollbar-thumb-orange-500 flex flex-col">
              <div className="space-y-12">
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
