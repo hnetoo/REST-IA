@@ -720,7 +720,7 @@ const Inventory = () => {
   };
 
   return (
-    <div className="p-8 min-h-screen bg-background text-slate-200">
+    <div className="p-8 min-h-screen bg-background text-slate-200 overflow-x-hidden">
       <header className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight italic uppercase">Catálogo & Inventário</h2>
@@ -831,7 +831,7 @@ const Inventory = () => {
 
       <div className="animate-in fade-in duration-500">
         {activeTab === 'menu' && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
             {menu.map(dish => {
               const cat = categories.find(c => c.id === dish.categoryId);
               return (
@@ -899,7 +899,7 @@ const Inventory = () => {
         )}
 
         {activeTab === 'categories' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
             {categories.map(cat => (
               <div key={cat.id} className="glass-panel p-6 rounded-[2rem] border border-white/5 flex items-center justify-between hover:border-primary/40 transition-all group">
                 <div className="flex items-center gap-4">
@@ -976,7 +976,7 @@ const Inventory = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-8">
                 {/* QR Code Display */}
                 <div className="flex flex-col items-center">
                   <div className="w-64 h-64 bg-white rounded-3xl p-6 shadow-glow mb-6 flex items-center justify-center">
@@ -1093,7 +1093,7 @@ const Inventory = () => {
             </div>
 
             {/* Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
               <div className="glass-panel p-6 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">

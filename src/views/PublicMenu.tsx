@@ -207,7 +207,7 @@ const PublicMenu = () => {
   }
 
   return (
-    <div className="h-screen bg-[#0a0f1a] text-white flex flex-col overflow-x-hidden w-full">
+    <div className="h-screen bg-[#0a0f1a] text-white flex flex-col overflow-x-hidden w-full max-w-7xl mx-auto">
       {/* LOGO (FIX DEFINITIVO) */}
       <div className="bg-[#0a0f1a] p-5 flex items-center gap-4 border-b border-gray-800">
         <div className="w-14 h-14 rounded-full border-2 border-cyan-500 overflow-hidden flex-shrink-0 bg-gray-900 flex items-center justify-center">
@@ -250,8 +250,8 @@ const PublicMenu = () => {
         </div>
       </div>
 
-      {/* CARDS COMPACTOS (LARGURA FIXA NO ECRÃ) */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-32">
+      {/* CARDS COMPACTOS (LARGURA ELÁSTICA) */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-32 max-h-[calc(100vh-100px)]">
         {filteredItems.map((item) => (
           <div key={item.id} className="w-full bg-[#111827] rounded-xl border border-gray-800 flex flex-col overflow-hidden" onClick={() => setSelectedProduct(item)}>
             <div className="h-60 w-full flex-shrink-0">
@@ -295,7 +295,7 @@ const PublicMenu = () => {
       {/* Modal de Detalhe do Produto */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-2xl w-full max-h-[calc(100vh-100px)] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-cyan-400">{selectedProduct.name}</h2>
               <button
@@ -358,7 +358,7 @@ const PublicMenu = () => {
       {/* Modal de Resumo */}
       {showSummary && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+          <div className="bg-[#111827] rounded-[2rem] p-6 max-w-md w-full max-h-[calc(100vh-100px)] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-cyan-400">Resumo do Pedido</h2>
               <button
