@@ -326,10 +326,10 @@ return (
       ))}
     </div>
 
-    <div className="glass-panel rounded-[3rem] p-10 min-h-[500px] max-h-[75vh] overflow-y-auto pr-2 border border-white/5 relative animate-in fade-in duration-500 scrollbar-thin scrollbar-thumb-orange-500">
+    <div className="glass-panel rounded-[3rem] p-10 h-[70vh] overflow-y-auto pr-2 border border-white/5 relative animate-in fade-in duration-500 scrollbar-thin scrollbar-thumb-orange-500">
         
       {activeTab === 'GENERAL' && (
-          <div className="max-h-[75vh] overflow-y-auto pr-2 pb-8 scrollbar-thin scrollbar-thumb-orange-500">
+          <div>
             <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 flex flex-col">
              <div className="grid grid-cols-1 gap-8">
                 <div>
