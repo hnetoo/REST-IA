@@ -69,6 +69,8 @@ const OwnerDashboard = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [todayExpenses, setTodayExpenses] = useState<number>(0);
+  const [yearExpenses, setYearExpenses] = useState<number>(0);
 
   // Função para obter range de datas baseado no período
   const getDateRange = (periodo: 'HOJE' | 'SEMANA' | 'MÊS' | 'ANO') => {
@@ -243,6 +245,74 @@ const OwnerDashboard = () => {
       
     } catch (error) {
       console.error('[DASHBOARD] Erro ao inserir dados de teste:', error);
+    }
+  };
+
+  // Buscar despesas do dia atual (HOJE)
+  const fetchTodayExpenses = async () => {
+    try {
+      const nowAngola = new Date(new Date().getTime() + (60 * 60 * 1000)); // GMT+1
+      const today = new Date(nowAngola.getFullYear(), nowAngola.getMonth(), nowAngola.getDate());
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      console.log('[DASHBOARD] Buscando despesas de HOJE (GMT+1):', {
+        start: startOfDay.toISOString(),
+        end: endOfDay.toISOString()
+      });
+
+      const { data: todayExpenses, error: expensesError } = await supabase
+        .from('expenses')
+        .select('amount_kz, created_at, category, status')
+        .gte('created_at', startOfDay.toISOString())
+        .lte('created_at', endOfDay.toISOString())
+        .neq('status', 'PENDENTE');
+
+      if (expensesError) {
+        console.error('[DASHBOARD] Erro ao buscar despesas de hoje:', expensesError);
+        return 0;
+      }
+
+      const todayExpensesTotal = todayExpenses?.reduce((sum, exp) => sum + Number(exp.amount_kz || 0), 0) || 0;
+      console.log('[DASHBOARD] Despesas de hoje:', todayExpensesTotal);
+      setTodayExpenses(todayExpensesTotal);
+      return todayExpensesTotal;
+    } catch (error) {
+      console.error('[DASHBOARD] Erro ao buscar despesas de hoje:', error);
+      return 0;
+    }
+  };
+
+  // Buscar despesas acumuladas do ano
+  const fetchYearExpenses = async () => {
+    try {
+      const yearStart = new Date(new Date().getFullYear(), 0, 1, 0, 0, 0, 0);
+      const yearEnd = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
+      
+      console.log('[DASHBOARD] Buscando despesas do ANO:', {
+        start: yearStart.toISOString(),
+        end: yearEnd.toISOString()
+      });
+
+      const { data: yearExpenses, error: expensesError } = await supabase
+        .from('expenses')
+        .select('amount_kz, created_at, category, status')
+        .gte('created_at', yearStart.toISOString())
+        .lte('created_at', yearEnd.toISOString())
+        .neq('status', 'PENDENTE');
+
+      if (expensesError) {
+        console.error('[DASHBOARD] Erro ao buscar despesas do ano:', expensesError);
+        return 0;
+      }
+
+      const yearExpensesTotal = yearExpenses?.reduce((sum, exp) => sum + Number(exp.amount_kz || 0), 0) || 0;
+      console.log('[DASHBOARD] Despesas acumuladas do ano:', yearExpensesTotal);
+      setYearExpenses(yearExpensesTotal);
+      return yearExpensesTotal;
+    } catch (error) {
+      console.error('[DASHBOARD] Erro ao buscar despesas do ano:', error);
+      return 0;
     }
   };
 
@@ -552,7 +622,9 @@ const OwnerDashboard = () => {
 
     // Forçar atualização dos dados ao entrar no Owner Hub
     fetchMetrics();
-    fetchRecentSales();
+    fetchTopProducts();
+    fetchTodayExpenses();
+    fetchYearExpenses();
     const unsubscribe = subscribeToChanges();
 
     // Verificar status online/offline
@@ -711,7 +783,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Hoje</span>
             </div>
             <div className="text-2xl font-black text-orange-400 mb-2">
-              {formatAKZ(metrics.despesas)}
+              {formatAKZ(todayExpenses)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
@@ -725,7 +797,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Acumuladas (Ano)</span>
             </div>
             <div className="text-2xl font-black text-red-400 mb-2">
-              {formatAKZ(metrics.despesas * 12)}
+              {formatAKZ(yearExpenses)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
