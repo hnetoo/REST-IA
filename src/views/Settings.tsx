@@ -329,7 +329,7 @@ return (
     <div className="glass-panel rounded-[3rem] p-10 h-[40vh] overflow-y-scroll border border-white/5 relative animate-in fade-in duration-500" style={{scrollbarWidth: 'thin', scrollbarColor: '#f97316 transparent'}}>
         
       {activeTab === 'GENERAL' && (
-          <div>
+          <div className="h-[40vh] overflow-y-scroll pr-2" style={{scrollbarWidth: 'thin', scrollbarColor: '#f97316 transparent'}}>
             <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10 flex flex-col">
              <div className="grid grid-cols-1 gap-8">
                 <div>
