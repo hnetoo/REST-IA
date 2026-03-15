@@ -394,15 +394,25 @@ const OwnerDashboard = () => {
         const { data: staffData, error: staffError } = await supabase
           .from('staff')
           .select('*')
+          .eq('status', 'ATIVO')
           .order('created_at', { ascending: false });
 
         console.log('[DASHBOARD] Funcionários encontrados:', staffData?.length || 0);
         console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
         if (!staffError && staffData && staffData.length > 0) {
-          const monthlyTotal = staffData.reduce((acc, item) => acc + (Number(item.base_salary_kz) || 0), 0);
+          // Calcular total líquido para cada funcionário: (base + subsidios + bonus + horas_extras) - descontos
+          const monthlyTotal = staffData.reduce((acc, item) => {
+            const base = Number(item.base_salary_kz) || 0;
+            const subsidios = Number(item.subsidios) || 0;
+            const bonus = Number(item.bonus) || 0;
+            const horas_extras = Number(item.horas_extras) || 0;
+            const descontos = Number(item.descontos) || 0;
+            const totalLiquido = (base + subsidios + bonus + horas_extras) - descontos;
+            return acc + totalLiquido;
+          }, 0);
           folhaSalarial = monthlyTotal;
-          console.log('[DASHBOARD] Custo real da folha salarial:', folhaSalarial);
+          console.log('[DASHBOARD] Custo real da folha salarial (líquido):', folhaSalarial);
         } else {
           folhaSalarial = 0;
           console.log('[DASHBOARD] Tabela staff vazia - folha salarial = 0');

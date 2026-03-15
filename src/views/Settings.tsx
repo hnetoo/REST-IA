@@ -15,6 +15,20 @@ import {
 import { User, UserRole, PermissionKey, TaxRegime } from '../../types';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
 import { sqlMigrationService } from '../lib/sqlMigrationService';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
+
+const formatKz = (amount: number) => {
+  return new Intl.NumberFormat('pt-AO', {
+    style: 'currency',
+    currency: 'AOA',
+    minimumFractionDigits: 2
+  }).format(amount);
+};
 
 const ALL_PERMISSIONS: { key: PermissionKey; label: string }[] = [
   { key: 'POS_SALES', label: 'Realizar Vendas' },
@@ -36,7 +50,7 @@ const Settings = () => {
     activeOrders, customers, menu, categories
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'OPERATORS' | 'FISCAL' | 'CORE' | 'SUPABASE'>('GENERAL');
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'STAFF' | 'OPERATORS' | 'FISCAL' | 'CORE' | 'SUPABASE'>('GENERAL');
   const [localSettings, setLocalSettings] = useState(settings);
   const [confirmText, setConfirmText] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -49,11 +63,117 @@ const Settings = () => {
     name: '', role: 'GARCOM', pin: '', permissions: [], status: 'ATIVO' 
   });
   
+  // Staff States
+  const [staff, setStaff] = useState<any[]>([]);
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [staffForm, setStaffForm] = useState({
+    name: '',
+    position: '',
+    base_salary_kz: 0,
+    subsidios: 0,
+    bonus: 0,
+    horas_extras: 0,
+    descontos: 0,
+    status: 'ATIVO'
+  });
+  
   const logoInputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch staff data
   useEffect(() => { 
-    setLocalSettings(settings); 
+    setLocalSettings(settings);
+    fetchStaff();
   }, [settings]);
+
+  const fetchStaff = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('staff')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setStaff(data || []);
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+      setStaff([]);
+    }
+  };
+
+  const handleOpenStaffModal = (staffMember?: any) => {
+    if (staffMember) {
+      setEditingStaffId(staffMember.id);
+      setStaffForm({
+        name: staffMember.name || '',
+        position: staffMember.position || '',
+        base_salary_kz: staffMember.base_salary_kz || 0,
+        subsidios: staffMember.subsidios || 0,
+        bonus: staffMember.bonus || 0,
+        horas_extras: staffMember.horas_extras || 0,
+        descontos: staffMember.descontos || 0,
+        status: staffMember.status || 'ATIVO'
+      });
+    } else {
+      setEditingStaffId(null);
+      setStaffForm({
+        name: '',
+        position: '',
+        base_salary_kz: 0,
+        subsidios: 0,
+        bonus: 0,
+        horas_extras: 0,
+        descontos: 0,
+        status: 'ATIVO'
+      });
+    }
+    setIsStaffModalOpen(true);
+  };
+
+  const handleSaveStaff = async () => {
+    try {
+      if (editingStaffId) {
+        const { error } = await supabase
+          .from('staff')
+          .update(staffForm)
+          .eq('id', editingStaffId);
+        
+        if (error) throw error;
+        addNotification('success', 'Funcionário atualizado com sucesso!');
+      } else {
+        const { error } = await supabase
+          .from('staff')
+          .insert([{ ...staffForm, id: `staff-${Date.now()}` }]);
+        
+        if (error) throw error;
+        addNotification('success', 'Funcionário criado com sucesso!');
+      }
+      
+      setIsStaffModalOpen(false);
+      fetchStaff();
+    } catch (error) {
+      console.error('Error saving staff:', error);
+      addNotification('error', 'Erro ao salvar funcionário');
+    }
+  };
+
+  const removeStaff = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja remover este funcionário?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('staff')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      addNotification('success', 'Funcionário removido com sucesso!');
+      fetchStaff();
+    } catch (error) {
+      console.error('Error removing staff:', error);
+      addNotification('error', 'Erro ao remover funcionário');
+    }
+  };
 
   const handleSaveSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -125,6 +245,7 @@ const Settings = () => {
 
   const tabs = [
     { id: 'GENERAL', label: 'Geral & Identidade', icon: SettingsIcon },
+    { id: 'STAFF', label: 'Funcionários', icon: Users },
     { id: 'OPERATORS', label: 'Controlo de Acesso', icon: Users },
     { id: 'FISCAL', label: 'Compliance AGT', icon: ShieldCheck },
     { id: 'SUPABASE', label: 'Ecossistema Cloud', icon: CloudLightning },
@@ -417,6 +538,64 @@ const Settings = () => {
            </div>
         )}
 
+        {activeTab === 'STAFF' && (
+          <div className="space-y-8 max-h-[70vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">Gestão de Funcionários</h3>
+              <button onClick={() => handleOpenStaffModal()} className="px-6 py-3 bg-primary text-black rounded-2xl font-black text-[10px] uppercase shadow-glow flex items-center gap-2">
+                <Plus size={16}/> Adicionar Funcionário
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {staff.map(s => (
+                <div key={s.id} className="glass-panel p-6 rounded-[2.5rem] border border-white/5 group hover:border-primary/40 transition-all flex flex-col">
+                  <div className="flex justify-between mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-purple-600 flex items-center justify-center text-white">
+                      <Users size={24}/>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => handleOpenStaffModal(s)} className="p-3 text-slate-500 hover:text-white">
+                        <Edit2 size={16}/>
+                      </button>
+                      <button onClick={() => removeStaff(s.id)} className="p-3 text-red-500/30 hover:text-red-500">
+                        <Trash2 size={16}/>
+                      </button>
+                    </div>
+                  </div>
+                  <h4 className="text-white font-bold uppercase truncate">{s.name}</h4>
+                  <p className="text-[10px] font-black text-primary uppercase mt-1">{s.position}</p>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Salário Base:</span>
+                      <span className="text-white font-bold">{formatKz(s.base_salary_kz)}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Subsídios:</span>
+                      <span className="text-white font-bold">{formatKz(s.subsidios || 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Bónus:</span>
+                      <span className="text-white font-bold">{formatKz(s.bonus || 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Horas Extras:</span>
+                      <span className="text-white font-bold">{formatKz(s.horas_extras || 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-slate-500">Descontos:</span>
+                      <span className="text-white font-bold">{formatKz(s.descontos || 0)}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] font-bold text-primary">
+                      <span>Total Líquido:</span>
+                      <span>{formatKz((s.base_salary_kz || 0) + (s.subsidios || 0) + (s.bonus || 0) + (s.horas_extras || 0) - (s.descontos || 0))}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'OPERATORS' && (
           <div className="space-y-8 max-h-[70vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent flex flex-col">
              <div className="space-y-8">
@@ -469,6 +648,131 @@ const Settings = () => {
           </div>
         )}
       </div>
+
+      {/* MODAL FUNCIONÁRIO */}
+      {isStaffModalOpen && (
+        <div className="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-8 backdrop-blur-xl animate-in zoom-in">
+          <div className="glass-panel p-12 rounded-[4rem] w-full max-w-4xl border border-white/10 overflow-y-auto max-h-[calc(100vh-200px)] pr-4 scrollbar-thin scrollbar-thumb-orange-500 scrollbar-track-transparent">
+            <div className="flex justify-between items-center mb-10">
+              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">
+                {editingStaffId ? 'Editar Funcionário' : 'Novo Funcionário'}
+              </h3>
+              <button onClick={() => setIsStaffModalOpen(false)} className="text-slate-500 hover:text-white">
+                <X size={32}/>
+              </button>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); handleSaveStaff(); }} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome Completo</label>
+                  <input 
+                    required 
+                    type="text" 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" 
+                    placeholder="Nome do funcionário" 
+                    value={staffForm.name} 
+                    onChange={e => setStaffForm({...staffForm, name: e.target.value})} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Cargo/Função</label>
+                  <input 
+                    required 
+                    type="text" 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" 
+                    placeholder="Cargo" 
+                    value={staffForm.position} 
+                    onChange={e => setStaffForm({...staffForm, position: e.target.value})} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Salário Base (Kz)</label>
+                  <input 
+                    required 
+                    type="number" 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" 
+                    placeholder="0" 
+                    value={staffForm.base_salary_kz} 
+                    onChange={e => setStaffForm({...staffForm, base_salary_kz: Number(e.target.value)})} 
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Subsídios (Kz)</label>
+                  <input 
+                    type="number" 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" 
+                    placeholder="0" 
+                    value={staffForm.subsidios} 
+                    onChange={e => setStaffForm({...staffForm, subsidios: Number(e.target.value)})} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Bónus (Kz)</label>
+                  <input 
+                    type="number" 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" 
+                    placeholder="0" 
+                    value={staffForm.bonus} 
+                    onChange={e => setStaffForm({...staffForm, bonus: Number(e.target.value)})} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Horas Extras (Kz)</label>
+                  <input 
+                    type="number" 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" 
+                    placeholder="0" 
+                    value={staffForm.horas_extras} 
+                    onChange={e => setStaffForm({...staffForm, horas_extras: Number(e.target.value)})} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Descontos (Kz)</label>
+                  <input 
+                    type="number" 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" 
+                    placeholder="0" 
+                    value={staffForm.descontos} 
+                    onChange={e => setStaffForm({...staffForm, descontos: Number(e.target.value)})} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Status</label>
+                  <select 
+                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none appearance-none" 
+                    value={staffForm.status} 
+                    onChange={e => setStaffForm({...staffForm, status: e.target.value})}
+                  >
+                    <option value="ATIVO">Ativo</option>
+                    <option value="INATIVO">Inativo</option>
+                  </select>
+                </div>
+              </div>
+            </form>
+
+            <div className="mt-8 flex gap-4">
+              <button 
+                type="button"
+                onClick={() => setIsStaffModalOpen(false)} 
+                className="flex-1 py-5 bg-white/5 border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button"
+                onClick={handleSaveStaff}
+                className="flex-1 py-5 bg-primary text-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow hover:bg-primary/80 transition-all"
+              >
+                {editingStaffId ? 'Atualizar' : 'Salvar'} Funcionário
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL UTILIZADOR COM PERMISSÕES */}
       {isUserModalOpen && (
