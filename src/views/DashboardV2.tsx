@@ -68,7 +68,8 @@ const DashboardV2 = () => {
     weeklyComparison: { today: 0, lastWeek: 0 },
     auditLogs: [] as AuditLog[],
     topExpenses: [] as ExpenseData[],
-    totalFaturacaoHistorico: 0
+    historicoExterno: 0,
+    faturacaoTotal: 0
   });
 
   // Formatar data para input
@@ -153,10 +154,16 @@ const DashboardV2 = () => {
       const { data: financialHistory, error: historyError } = await supabase
         .from('financial_history')
         .select('amount, created_at')
-        .lt('created_at', `${startDate}T00:00:00Z`); // Apenas períodos anteriores
+        .eq('source', 'external_software') // Apenas lucro importado
+        .single(); // Pega o valor mais recente
 
+      let historicoExterno = 0;
       if (historyError) {
-        console.error('[DashboardV2] Erro ao buscar histórico:', historyError);
+        console.error('[DashboardV2] Erro ao buscar histórico externo:', historyError);
+        // Se falhar, mostra erro em vez de inventar valor
+        historicoExterno = 0;
+      } else if (financialHistory) {
+        historicoExterno = financialHistory.amount || 0;
       }
 
       // 4. Buscar logs de auditoria
@@ -234,9 +241,8 @@ const DashboardV2 = () => {
         .sort((a: ExpenseData, b: ExpenseData) => (b.amount || 0) - (a.amount || 0))
         .slice(0, 3);
 
-      // Calcular faturação histórica (períodos anteriores)
-      const totalFaturacaoHistorico = (financialHistory || [])
-        .reduce((sum, item) => sum + (item.amount || 0), 0);
+      // Calcular faturação total
+      const faturacaoTotal = historicoExterno + totalRevenue;
 
       // Comparação semanal (simplificada)
       const todayRevenue = totalRevenue;
@@ -260,7 +266,8 @@ const DashboardV2 = () => {
         },
         auditLogs: auditData || [],
         topExpenses,
-        totalFaturacaoHistorico
+        historicoExterno,
+        faturacaoTotal
       });
 
       console.log('[TASCA] Dashboard V2: Dados sincronizados com sucesso.');
@@ -273,7 +280,8 @@ const DashboardV2 = () => {
         reservaFiscal,
         caixaDisponivel,
         liquidezStatus,
-        totalFaturacaoHistorico,
+        historicoExterno,
+        faturacaoTotal,
         paymentMethods: paymentMethods.length
       });
 
