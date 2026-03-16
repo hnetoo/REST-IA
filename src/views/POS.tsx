@@ -53,7 +53,7 @@ const POS = () => {
   // VALIDAÇÃO DOS LOGS - DEBUG DO FILTRO
   const filteredByCategory = menu.filter(d => {
     const match = selectedCategoryId === 'TODOS' || 
-      (d.categoryId?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase());
+      (d.category?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase());
     return match;
   });
   const filteredBySearch = filteredByCategory.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -70,11 +70,16 @@ const POS = () => {
         id: prod.id,
         name: prod.name,
         categoryId: prod.categoryId,
+        category: prod.category, // NOVO: Campo do Supabase
         categoryIdTrimmed: prod.categoryId?.trim(),
+        categoryTrimmed: prod.category?.trim(), // NOVO
         categoryIdLower: prod.categoryId?.trim().toLowerCase(),
-        comparando: prod.categoryId?.trim().toLowerCase(),
+        categoryLower: prod.category?.trim().toLowerCase(), // NOVO
+        comparandoCategoryId: prod.categoryId?.trim().toLowerCase(),
+        comparandoCategory: prod.category?.trim().toLowerCase(), // NOVO
         com: selectedCategoryId?.trim().toLowerCase(),
-        resultado: prod.categoryId?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase()
+        resultadoCategoryId: prod.categoryId?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase(),
+        resultadoCategory: prod.category?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase() // NOVO
       });
     });
     
@@ -512,7 +517,7 @@ const POS = () => {
                       className={`group bg-white/[0.03] rounded-[2.5rem] border-2 overflow-hidden flex flex-col transition-all active:scale-95 relative hover:shadow-2xl ${lastAddedItemId === dish.id ? 'border-primary shadow-glow scale-105' : 'border-white/5 hover:border-primary/30 hover:bg-white/[0.06]'}`}
                     >
                        <div className="aspect-[4/4] w-full overflow-hidden relative">
-                          <LazyImage src={dish.image} alt={dish.name} containerClassName="w-full h-full" className="group-hover:scale-110 transition-all duration-1000 ease-out" />
+                          <LazyImage src={dish.image_url} alt={dish.name} containerClassName="w-full h-full" className="group-hover:scale-110 transition-all duration-1000 ease-out" />
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
                           
                           {lastAddedItemId === dish.id && (
