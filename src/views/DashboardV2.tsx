@@ -450,7 +450,7 @@ const DashboardV2 = () => {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-slate-400 text-sm">Histórico Externo</span>
-              <span className="text-white font-bold">{formatKz(metrics.historicoExternoProfit)}</span>
+              <span className="text-white font-bold">{formatKz(metrics.historicoExternoRevenue)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400 text-sm">Vendas Hoje</span>
