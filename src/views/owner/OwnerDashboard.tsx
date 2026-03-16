@@ -752,11 +752,11 @@ const OwnerDashboard = () => {
       // VERIFICAÇÃO IMEDIATA DO ESTADO
       setTimeout(() => {
         console.log('[DASHBOARD] Estado ATUALIZADO (verificação):', {
-          metricsState: metrics,
-          totalVendasNoState: totalVendas,
-          despesasNoState: totalDespesas,
-          despesasAcumuladasNoState: totalExpensesAllTime,
-          folhaSalarialNoState: folhaSalarial
+          metricsState: finalMetrics, // USAR finalMetrics em vez de metrics
+          totalVendasNoState: totalVendasNoState,
+          despesasNoState: despesasNoState,
+          despesasAcumuladasNoState: despesasAcumuladasNoState,
+          folhaSalarialNoState: folhaSalarialNoState
         });
       }, 100);
 
