@@ -67,7 +67,8 @@ const DashboardV2 = () => {
     hourlySales: [] as HourlySales[],
     weeklyComparison: { today: 0, lastWeek: 0 },
     auditLogs: [] as AuditLog[],
-    topExpenses: [] as ExpenseData[]
+    topExpenses: [] as ExpenseData[],
+    totalFaturacaoHistorico: 0
   });
 
   // Formatar data para input
@@ -148,7 +149,17 @@ const DashboardV2 = () => {
         console.error('[DashboardV2] Erro ao buscar despesas:', expensesError);
       }
 
-      // 3. Buscar logs de auditoria
+      // 3. Buscar histórico financeiro (períodos anteriores)
+      const { data: financialHistory, error: historyError } = await supabase
+        .from('financial_history')
+        .select('amount, created_at')
+        .lt('created_at', `${startDate}T00:00:00Z`); // Apenas períodos anteriores
+
+      if (historyError) {
+        console.error('[DashboardV2] Erro ao buscar histórico:', historyError);
+      }
+
+      // 4. Buscar logs de auditoria
       const { data: auditData, error: auditError } = await supabase
         .from('audit_logs')
         .select('id, created_at, action, details, user_name')
@@ -223,6 +234,10 @@ const DashboardV2 = () => {
         .sort((a: ExpenseData, b: ExpenseData) => (b.amount || 0) - (a.amount || 0))
         .slice(0, 3);
 
+      // Calcular faturação histórica (períodos anteriores)
+      const totalFaturacaoHistorico = (financialHistory || [])
+        .reduce((sum, item) => sum + (item.amount || 0), 0);
+
       // Comparação semanal (simplificada)
       const todayRevenue = totalRevenue;
       const lastWeekRevenue = todayRevenue * 0.85; // Simulação de -15%
@@ -244,7 +259,8 @@ const DashboardV2 = () => {
           lastWeek: lastWeekRevenue
         },
         auditLogs: auditData || [],
-        topExpenses
+        topExpenses,
+        totalFaturacaoHistorico
       });
 
       console.log('[TASCA] Dashboard V2: Dados sincronizados com sucesso.');
@@ -257,6 +273,7 @@ const DashboardV2 = () => {
         reservaFiscal,
         caixaDisponivel,
         liquidezStatus,
+        totalFaturacaoHistorico,
         paymentMethods: paymentMethods.length
       });
 
@@ -357,7 +374,7 @@ const DashboardV2 = () => {
       </div>
 
       {/* Cards Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div key={JSON.stringify(metrics)} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Card Financeiro */}
         <div className="glass-panel rounded-xl p-6 border-l-4 border-l-green-500">
           <div className="flex items-center justify-between mb-4">
