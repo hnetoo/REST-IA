@@ -10,6 +10,7 @@ interface Metrics {
   totalVendas: number;
   receitaTotal: number;
   despesas: number;
+  despesasAcumuladas: number; // NOVO: Para despesas totais acumuladas
   folhaSalarial: number;
   impostos: number;
   historicoRevenue: number; // Adicionar histórico de owner_finances
@@ -58,6 +59,7 @@ const OwnerDashboard = () => {
     totalVendas: 0,
     receitaTotal: 0,
     despesas: 0,
+    despesasAcumuladas: 0, // NOVO: Inicializar com 0
     folhaSalarial: 0,
     impostos: 0,
     historicoRevenue: 0
@@ -441,6 +443,7 @@ const OwnerDashboard = () => {
       
       // Buscar despesas reais do Supabase
       let totalDespesas = 0;
+      let totalExpensesAllTime = 0; // NOVO: Para despesas acumuladas totais
       try {
         // QUERY COM FILTRO DE DATA BASEADO NO PERÍODO
         const { data: expensesData, error: expensesError } = await supabase
@@ -450,9 +453,6 @@ const OwnerDashboard = () => {
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
-        console.log('[DASHBOARD] Despesas encontradas para o período:', expensesData?.length || 0);
-        console.error('[DASHBOARD] Erro detalhado despesas:', expensesError);
-
         if (!expensesError && expensesData && expensesData.length > 0) {
           // SOMAR APENAS DESPESAS DO PERÍODO SELECIONADO
           totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
@@ -461,9 +461,26 @@ const OwnerDashboard = () => {
           console.log('[DASHBOARD] Nenhuma despesa encontrada para o período');
           totalDespesas = 0;
         }
+
+        // NOVA QUERY PARA DESPESAS TOTAIS (SEM FILTRO DE DATA)
+        const { data: allExpensesData, error: allExpensesError } = await supabase
+          .from('expenses')
+          .select('amount_kz, created_at, category, status')
+          .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
+
+        if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
+          // SOMAR TODAS AS DESPESAS REGISTADAS
+          totalExpensesAllTime = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+          console.log('[DASHBOARD] Total despesas acumuladas (todas):', totalExpensesAllTime);
+        } else {
+          console.log('[DASHBOARD] Nenhuma despesa acumulada encontrada');
+          totalExpensesAllTime = 0;
+        }
+
       } catch (expError) {
         console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
         totalDespesas = 0;
+        totalExpensesAllTime = 0;
       }
 
       // Buscar folha salarial da tabela staff
@@ -594,6 +611,7 @@ const OwnerDashboard = () => {
         totalVendas: Number(totalVendas) || 0,
         receitaTotal: Number(totalVendas) || 0,
         despesas: Number(totalDespesas) || 0,
+        despesasAcumuladas: Number(totalExpensesAllTime) || 0, // NOVO: Total acumulado
         folhaSalarial: Number(folhaSalarial) || 0,
         impostos: Number(totalVendas || 0) * 0.065, // REGRA DOS 6,5%
         historicoRevenue: await fetchHistoricoRevenue(),
@@ -641,6 +659,7 @@ const OwnerDashboard = () => {
         totalVendas: 0,
         receitaTotal: 0,
         despesas: 0,
+        despesasAcumuladas: 0, // NOVO: Inicializar com 0
         folhaSalarial: 0,
         impostos: 0,
         historicoRevenue: 0
@@ -899,7 +918,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Acumuladas (Ano)</span>
             </div>
             <div className="text-2xl font-black text-red-400 mb-2">
-              {formatAKZ(metrics.despesas)}
+              {formatAKZ(metrics.despesasAcumuladas)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
