@@ -744,10 +744,10 @@ const OwnerDashboard = () => {
       setChartData(chartDataGenerated);
       
       // SINCRONIZAR ESTADOS INDIVIDUAIS IMEDIATAMENTE
-      setTotalVendasNoState(Number(totalVendas) || 0);
-      setDespesasNoState(Number(totalDespesas) || 0);
-      setDespesasAcumuladasNoState(Number(totalExpensesAllTime) || 0);
-      setFolhaSalarialNoState(Number(folhaSalarial) || 0);
+      setTotalVendasNoState(finalMetrics.totalVendas);
+      setDespesasNoState(finalMetrics.despesas);
+      setDespesasAcumuladasNoState(finalMetrics.despesasAcumuladas);
+      setFolhaSalarialNoState(finalMetrics.folhaSalarial);
       
       // VERIFICAÇÃO IMEDIATA DO ESTADO
       setTimeout(() => {
