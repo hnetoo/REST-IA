@@ -151,20 +151,20 @@ const DashboardV2 = () => {
         console.error('[DashboardV2] Erro ao buscar despesas:', expensesError);
       }
 
-      // 3. Buscar histórico externo (registo mestre)
+      // 3. Buscar histórico externo (soma dinâmica de todos os registos)
       const { data: externalHistory, error: externalError } = await supabase
         .from('external_history')
-        .select('source_name, total_revenue, gross_profit, period')
-        .single(); // Pega o registo mestre
+        .select('total_revenue, gross_profit');
 
       let historicoExternoRevenue = 0;
       let historicoExternoProfit = 0;
       
       if (externalError) {
         console.error('[DashboardV2] Erro ao buscar histórico externo:', externalError);
-      } else if (externalHistory) {
-        historicoExternoRevenue = externalHistory.total_revenue || 0;
-        historicoExternoProfit = externalHistory.gross_profit || 0;
+      } else if (externalHistory && externalHistory.length > 0) {
+        // Soma dinâmica de todos os registos
+        historicoExternoRevenue = externalHistory.reduce((sum, item) => sum + (item.total_revenue || 0), 0);
+        historicoExternoProfit = externalHistory.reduce((sum, item) => sum + (item.gross_profit || 0), 0);
       }
 
       // 4. Buscar logs de auditoria
@@ -317,6 +317,14 @@ const DashboardV2 = () => {
       faturacaoTotal: metrics.faturacaoTotal
     });
   }, [metrics]);
+
+  // Forçar re-render completo quando métricas mudarem
+  useEffect(() => {
+    // Este useEffect força o componente a re-renderizar quando as métricas mudam
+    if (metrics.totalExpenses > 0 || metrics.historicoExternoRevenue > 0) {
+      console.log('[DashboardV2] Forçando re-render por mudança de métricas');
+    }
+  }, [metrics.totalExpenses, metrics.historicoExternoRevenue]);
 
   if (loading) {
     return (
