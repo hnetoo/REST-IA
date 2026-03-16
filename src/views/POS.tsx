@@ -195,20 +195,21 @@ const POS = () => {
         console.log('[POS] Iniciando persistência dos itens na tabela order_items...');
         
         try {
-          const orderItems = currentOrder.items.map(item => ({
+          // BLOCO OBRIGATÓRIO: Inserir itens na tabela order_items
+          const itemsToInsert = currentOrder.items.map(item => ({
             order_id: currentOrder.id,
             product_id: item.dish.id,
             quantity: item.quantity,
             unit_price: item.dish.price,
-            total_price: item.dish.price * item.quantity
+            total_price: item.quantity * item.dish.price
           }));
 
-          console.log('[POS] Itens formatados para inserção:', orderItems);
+          console.log('[POS] Itens formatados para inserção:', itemsToInsert);
 
           // Inserir itens na tabela order_items
           const { data: insertedItems, error: itemsError } = await supabase
             .from('order_items')
-            .insert(orderItems)
+            .insert(itemsToInsert)
             .select();
 
           if (itemsError) {
