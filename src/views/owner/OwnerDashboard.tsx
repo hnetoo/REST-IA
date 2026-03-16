@@ -508,7 +508,7 @@ const OwnerDashboard = () => {
       const productIds = Array.from(productMap.keys());
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, name, price')
+        .select('id, name, price, image_url')
         .in('id', productIds);
 
       if (productsError) {
@@ -523,7 +523,8 @@ const OwnerDashboard = () => {
         return {
           name: product?.name || `Produto ${productId}`,
           quantity: data.quantity,
-          revenue: data.revenue
+          revenue: data.revenue,
+          image: product?.image_url || null
         };
       }).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
