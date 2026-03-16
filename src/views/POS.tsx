@@ -235,13 +235,14 @@ const POS = () => {
             .select();
 
           if (itemsError) {
-            console.error('[POS] Erro ao persistir itens no Supabase:', itemsError);
+            console.error('[POS] ERRO AO SALVAR ITENS:', itemsError);
             console.error('[POS] Detalhes do erro:', {
               code: itemsError.code,
               message: itemsError.message,
               details: itemsError.details,
               hint: itemsError.hint
             });
+            console.error('[POS] Verificar RLS na tabela order_items - possível erro de permissão');
             addNotification('error', 'Erro ao salvar itens da venda');
           } else {
             console.log('[POS] Itens do pedido persistidos com sucesso:', {

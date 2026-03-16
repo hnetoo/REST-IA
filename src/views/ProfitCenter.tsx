@@ -209,7 +209,7 @@ const ProfitCenter = () => {
                        </div>
                     </div>
                     <div className="text-right">
-                       <p className="text-emerald-500 font-mono font-bold">{formatKz(p.profit)}</p>
+                       <p className="text-emerald-500 font-mono font-bold">{(p.profit || 0).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
                        <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">LUCRO PURO</p>
                     </div>
                  </div>
