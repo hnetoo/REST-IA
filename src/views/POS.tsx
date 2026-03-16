@@ -51,6 +51,16 @@ const POS = () => {
   console.log("[POS] Categorias disponíveis:", categories.length);
   console.log("[POS] Produtos filtrados:", menu.filter(d => selectedCategoryId === 'TODOS' || d.categoryId === selectedCategoryId).filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase())).length);
   
+  // LOG DE DEPURAÇÃO PARA IMAGENS
+  if (menu.length > 0) {
+    console.log("[POS] URL da imagem do primeiro produto:", menu[0]?.image);
+    console.log("[POS] Estrutura da imagem:", {
+      hasImage: !!menu[0]?.image,
+      imageType: typeof menu[0]?.image,
+      imageLength: menu[0]?.image?.length
+    });
+  }
+  
   // Função de impressão direta - SEM CONFIGURAÇÃO
   const handleDirectPrint = (order: any, customer?: any) => {
     console.log(`[POS] Imprimindo diretamente: ${order.invoiceNumber}`);

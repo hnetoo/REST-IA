@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ImageIcon } from 'lucide-react';
+import { Utensils } from 'lucide-react';
 
 interface LazyImageProps {
   src?: string;
@@ -13,6 +13,23 @@ const LazyImage: React.FC<LazyImageProps> = ({ src, alt, className, containerCla
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
 
+  // VERIFICAÇÃO DO CAMINHO (URL) E CONSTRUÇÃO DE URL COMPLETA
+  const getImageUrl = (imageSrc?: string): string | undefined => {
+    if (!imageSrc) return undefined;
+    
+    // Se for URL absoluta (começa com http), retorna como está
+    if (imageSrc.startsWith('http')) {
+      return imageSrc;
+    }
+    
+    // Se for caminho relativo, concatena com URL base do Supabase Storage
+    const supabaseUrl = 'https://tboiuiwlqfzcvakxrsmj.supabase.co';
+    const bucketName = 'products'; // Ajustar conforme necessário
+    return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${imageSrc}`;
+  };
+
+  const finalImageUrl = getImageUrl(src);
+
   return (
     <div className={`relative overflow-hidden bg-slate-900 ${containerClassName}`}>
       {/* Skeleton / Shimmer Effect */}
@@ -22,15 +39,16 @@ const LazyImage: React.FC<LazyImageProps> = ({ src, alt, className, containerCla
         </div>
       )}
 
-      {/* Error Fallback */}
+      {/* Error Fallback - MELHORADO */}
       {hasError ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-700">
-          <ImageIcon size={24} />
-          <span className="text-[8px] font-black uppercase mt-2">Erro de Link</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-700 bg-slate-800/50">
+          <Utensils size={32} className="mb-2" />
+          <span className="text-[10px] font-black uppercase">Sem Imagem</span>
+          <span className="text-[8px] text-slate-600 mt-1 px-2 text-center">Produto indisponível</span>
         </div>
       ) : (
         <img
-          src={src}
+          src={finalImageUrl}
           alt={alt}
           loading="lazy"
           onLoad={() => setIsLoaded(true)}
