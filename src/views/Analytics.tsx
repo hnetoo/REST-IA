@@ -5,7 +5,7 @@ import {
   Users, Calendar, Download, Filter, BarChart3,
   PieChart, Activity
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 
 const Analytics = () => {
   const { settings, activeOrders, menu, expenses } = useStore();
@@ -146,12 +146,55 @@ const Analytics = () => {
   //   ...
   // ];
 
-  const categoryData = [
-    { name: 'Pratos Principais', value: 45, color: '#06b6d4' },
-    { name: 'Bebidas', value: 25, color: '#10b981' },
-    { name: 'Sobremesas', value: 20, color: '#f59e0b' },
-    { name: 'Petiscos', value: 10, color: '#8b5cf6' }
-  ];
+  // Dados para gráfico de pizza das despesas
+  const expensePieData = useMemo(() => {
+    const grouped: Record<string, number> = {};
+    
+    expenses.forEach(expense => {
+      if (!grouped[expense.category]) {
+        grouped[expense.category] = 0;
+      }
+      grouped[expense.category] += expense.amount;
+    });
+
+    const total = Object.values(grouped).reduce((acc, val) => acc + val, 0);
+    
+    return Object.entries(grouped).map(([category, amount]) => ({
+      name: category,
+      value: amount,
+      percentage: total > 0 ? (amount / total) * 100 : 0
+    }));
+  }, [expenses]);
+
+  // Dados para gráfico de área das despesas (últimos 30 dias)
+  const expenseAreaData = useMemo(() => {
+    const data: Record<string, number> = {};
+    const today = new Date();
+    
+    // Inicializar últimos 30 dias com 0
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      data[dateStr] = 0;
+    }
+    
+    // Somar despesas por dia
+    expenses.forEach(expense => {
+      const expenseDate = expense.date?.toString().split('T')[0];
+      if (data.hasOwnProperty(expenseDate)) {
+        data[expenseDate] += expense.amount;
+      }
+    });
+    
+    return Object.entries(data).map(([date, total]) => ({
+      date: new Date(date).toLocaleDateString('pt-AO', { day: '2-digit', month: '2-digit' }),
+      total
+    }));
+  }, [expenses]);
+
+  // Cores para gráficos
+  const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
   // REMOVER ARRAY DE DADOS FICTÍCIOS - APENAS USAR DADOS REAIS
   // const topProducts = [
@@ -215,21 +258,66 @@ const Analytics = () => {
         ))}
       </div>
 
-      {/* Gráfico de Vendas vs Compras */}
+      {/* Gráficos Avançados de Despesas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Gráfico de Pizza - Distribuição por Categoria */}
         <div className="glass-panel p-8 rounded-2xl border border-white/5">
           <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-3">
-            <BarChart3 size={20} className="text-[#06b6d4]" />
-            Vendas vs Compras (Últimos 7 dias)
+            <PieChart size={20} className="text-[#10b981]" />
+            Distribuição de Despesas por Categoria
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
+              <RePieChart>
+                <Pie
+                  data={expensePieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {expensePieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value: number) => [
+                    value.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
+                    ''
+                  ]}
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Legend 
+                  wrapperStyle={{ color: '#9ca3af' }}
+                  formatter={(value: number, entry: any) => 
+                    `${entry.name}: ${entry.payload.percentage.toFixed(1)}%`
+                  }
+                />
+              </RePieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Gráfico de Área - Evolução das Despesas */}
+        <div className="glass-panel p-8 rounded-2xl border border-white/5">
+          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-3">
+            <TrendingUp size={20} className="text-[#ef4444]" />
+            Evolução das Despesas (30 dias)
+          </h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={expenseAreaData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
-                  dataKey="day" 
+                  dataKey="date" 
                   stroke="#9ca3af"
-                  tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  tick={{ fill: '#9ca3af', fontSize: 10 }}
                 />
                 <YAxis 
                   stroke="#9ca3af"
@@ -237,55 +325,25 @@ const Analytics = () => {
                   tickFormatter={(value) => `${value / 1000}k`}
                 />
                 <Tooltip 
+                  formatter={(value: number) => [
+                    value.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
+                    ''
+                  ]}
                   contentStyle={{ 
                     backgroundColor: '#1f2937', 
                     border: '1px solid #374151',
                     borderRadius: '8px'
                   }}
-                  formatter={(value: number) => [
-                    value.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
-                    ''
-                  ]}
                 />
-                <Legend 
-                  wrapperStyle={{ color: '#9ca3af' }}
-                />
-                <Bar 
-                  dataKey="sales" 
-                  fill="#06b6d4" 
-                  name="Vendas"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="purchases" 
+                <Area 
+                  type="monotone" 
+                  dataKey="total" 
+                  stroke="#ef4444" 
                   fill="#ef4444" 
-                  name="Compras"
-                  radius={[4, 4, 0, 0]}
+                  fillOpacity={0.3}
                 />
-              </BarChart>
+              </AreaChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Categorias */}
-        <div className="glass-panel p-8 rounded-2xl border border-white/5">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-3">
-            <PieChart size={20} className="text-[#10b981]" />
-            Categorias mais Vendidas
-          </h3>
-          <div className="space-y-4">
-            {categoryData.map((cat, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded-xl" style={{ backgroundColor: cat.color }}></div>
-                  <span className="text-white text-sm">{cat.name}</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-white">{cat.value}%</p>
-                  <p className="text-xs text-slate-500">{cat.value === 45 ? '+5%' : cat.value === 25 ? '-2%' : '0%'}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
