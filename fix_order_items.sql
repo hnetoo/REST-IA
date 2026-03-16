@@ -1,10 +1,7 @@
 -- Verificar e corrigir estrutura da tabela order_items
 -- Este script SQL deve ser executado diretamente no Supabase SQL Editor
 
--- 1. Verificar se existe tabela order_item (singular) e eliminar se existir
-DROP TABLE IF EXISTS public.order_item CASCADE;
-
--- 2. Garantir estrutura correta da tabela order_items (plural)
+-- 1. Garantir estrutura correta da tabela order_items (plural)
 CREATE TABLE IF NOT EXISTS public.order_items (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   order_id TEXT NOT NULL,
@@ -16,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. Adicionar foreign keys (apenas se não existirem)
+-- 2. Adicionar foreign keys (apenas se não existirem)
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -43,12 +40,12 @@ BEGIN
     END IF;
 END $$;
 
--- 4. Garantir índices
+-- 3. Garantir índices
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON public.order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON public.order_items(product_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_created_at ON public.order_items(created_at);
 
--- 5. Habilitar RLS e criar políticas
+-- 4. Habilitar RLS e criar políticas
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
 -- Remover políticas existentes para evitar conflitos
@@ -70,11 +67,10 @@ CREATE POLICY "Authenticated users can update order items" ON public.order_items
 CREATE POLICY "Authenticated users can delete order items" ON public.order_items
   FOR DELETE USING (auth.role() = 'authenticated');
 
--- 6. Garantir trigger para updated_at
+-- 5. Criar trigger específico para order_items (sem afetar outras tabelas)
 DROP TRIGGER IF EXISTS update_order_items_updated_at ON public.order_items;
-DROP FUNCTION IF EXISTS update_updated_at_column();
 
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+CREATE OR REPLACE FUNCTION update_order_items_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
@@ -84,9 +80,9 @@ $$ language 'plpgsql';
 
 CREATE TRIGGER update_order_items_updated_at 
   BEFORE UPDATE ON public.order_items 
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  FOR EACH ROW EXECUTE FUNCTION update_order_items_updated_at();
 
--- 7. Verificar estrutura final
+-- 6. Verificar estrutura final
 SELECT 
     column_name, 
     data_type, 
