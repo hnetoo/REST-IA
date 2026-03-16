@@ -66,7 +66,8 @@ const DashboardV2 = () => {
     paymentMethods: [] as PaymentMethodData[],
     hourlySales: [] as HourlySales[],
     weeklyComparison: { today: 0, lastWeek: 0 },
-    auditLogs: [] as AuditLog[]
+    auditLogs: [] as AuditLog[],
+    topExpenses: [] as ExpenseData[]
   });
 
   // Formatar data para input
@@ -217,6 +218,11 @@ const DashboardV2 = () => {
         }))
         .sort((a, b) => a.hour.localeCompare(b.hour));
 
+      // Processar top 3 despesas
+      const topExpenses: ExpenseData[] = (expensesData || [])
+        .sort((a: ExpenseData, b: ExpenseData) => (b.amount || 0) - (a.amount || 0))
+        .slice(0, 3);
+
       // Comparação semanal (simplificada)
       const todayRevenue = totalRevenue;
       const lastWeekRevenue = todayRevenue * 0.85; // Simulação de -15%
@@ -237,7 +243,8 @@ const DashboardV2 = () => {
           today: todayRevenue,
           lastWeek: lastWeekRevenue
         },
-        auditLogs: auditData || []
+        auditLogs: auditData || [],
+        topExpenses
       });
 
       console.log('[TASCA] Dashboard V2: Dados sincronizados com sucesso.');
@@ -246,6 +253,10 @@ const DashboardV2 = () => {
         totalRevenue,
         totalProfit,
         totalOrders,
+        totalExpenses,
+        reservaFiscal,
+        caixaDisponivel,
+        liquidezStatus,
         paymentMethods: paymentMethods.length
       });
 
@@ -263,6 +274,18 @@ const DashboardV2 = () => {
   useEffect(() => {
     loadDashboardData();
   }, [startDate, endDate]);
+
+  // Monitorizar mudanças nas métricas para debugging
+  useEffect(() => {
+    console.log('[DashboardV2] Estado atualizado:', {
+      totalRevenue: metrics.totalRevenue,
+      totalExpenses: metrics.totalExpenses,
+      totalProfit: metrics.totalProfit,
+      reservaFiscal: metrics.reservaFiscal,
+      caixaDisponivel: metrics.caixaDisponivel,
+      liquidezStatus: metrics.liquidezStatus
+    });
+  }, [metrics]);
 
   if (loading) {
     return (
@@ -448,15 +471,31 @@ const DashboardV2 = () => {
               <p className={`text-sm font-medium ${
                 metrics.liquidezStatus === 'seguro' ? 'text-green-400' : 'text-red-400'
               }`}>
-                {metrics.liquidezStatus === 'seguro' 
-                  ? '✅ RESERVA COBERTA' 
-                  : '⚠️ RISCO DE LIQUIDEZ'
+                {metrics.totalProfit < 0 
+                  ? '🚨 DÉFICE OPERACIONAL: Vendas não cobrem custos fixos'
+                  : metrics.liquidezStatus === 'seguro' 
+                    ? '✅ RESERVA COBERTA' 
+                    : '⚠️ SALDO INSUFICIENTE PARA IMPOSTOS'
                 }
               </p>
             </div>
             <div className="text-xs text-slate-500 mt-2">
               *Estimativa anual a ser ajustada no fecho
             </div>
+            {/* Top 3 Despesas */}
+            {metrics.topExpenses.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-700">
+                <p className="text-slate-400 text-sm mb-2">Maiores Despesas</p>
+                <div className="space-y-1">
+                  {metrics.topExpenses.map((expense, index) => (
+                    <div key={expense.id} className="flex justify-between text-xs">
+                      <span className="text-slate-400">{expense.category}</span>
+                      <span className="text-white font-medium">{formatKz(expense.amount || 0)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
