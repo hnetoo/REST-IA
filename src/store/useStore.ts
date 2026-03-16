@@ -560,28 +560,69 @@ export const useStore = create<StoreState>()(
               } else {
                 console.log('[POS] Venda persistida com sucesso no Supabase');
                 
-                // PERSISTIR ITENS DO PEDIDO NA TABELA order_items
+                // PERSISTIR ITENS DO PEDIDO NA TABELA order_items - GARANTIR EXECUÇÃO
                 console.log('[POS] Persistindo itens do pedido:', finalOrder.items);
                 
-                const orderItems = finalOrder.items.map(item => ({
-                  order_id: finalOrder.id,
-                  product_id: item.dish.id,
-                  quantity: item.quantity,
-                  unit_price: item.dish.price,
-                  total_price: item.dish.price * item.quantity
-                }));
+                if (finalOrder.items && finalOrder.items.length > 0) {
+                  const orderItems = finalOrder.items.map(item => ({
+                    order_id: finalOrder.id,
+                    product_id: item.dish.id,
+                    quantity: item.quantity,
+                    unit_price: item.dish.price,
+                    total_price: item.dish.price * item.quantity
+                  }));
 
-                // Inserir todos os itens do pedido
-                supabase
-                  .from('order_items')
-                  .upsert(orderItems)
-                  .then(({ error: itemsError }) => {
-                    if (itemsError) {
-                      console.error('[POS] Erro ao persistir itens no Supabase:', itemsError);
-                    } else {
-                      console.log('[POS] Itens do pedido persistidos com sucesso:', orderItems.length, 'itens');
+                  console.log('[POS] Itens formatados para inserção:', orderItems);
+
+                  // Inserir todos os itens do pedido com retry
+                  const insertOrderItems = async () => {
+                    try {
+                      const { data: insertedItems, error: itemsError } = await supabase
+                        .from('order_items')
+                        .insert(orderItems)
+                        .select();
+
+                      if (itemsError) {
+                        console.error('[POS] Erro ao persistir itens no Supabase:', itemsError);
+                        console.error('[POS] Detalhes do erro:', {
+                          code: itemsError.code,
+                          message: itemsError.message,
+                          details: itemsError.details,
+                          hint: itemsError.hint
+                        });
+                        
+                        // Tentar inserir um por um se falhar em lote
+                        for (const orderItem of orderItems) {
+                          try {
+                            const { error: singleError } = await supabase
+                              .from('order_items')
+                              .insert(orderItem);
+                            
+                            if (singleError) {
+                              console.error('[POS] Erro ao inserir item individual:', singleError, orderItem);
+                            } else {
+                              console.log('[POS] Item individual inserido com sucesso:', orderItem);
+                            }
+                          } catch (singleCatchError) {
+                            console.error('[POS] Exceção ao inserir item individual:', singleCatchError, orderItem);
+                          }
+                        }
+                      } else {
+                        console.log('[POS] Itens do pedido persistidos com sucesso:', {
+                          count: insertedItems?.length || 0,
+                          items: insertedItems
+                        });
+                      }
+                    } catch (catchError) {
+                      console.error('[POS] Exceção ao persistir itens:', catchError);
                     }
-                  });
+                  };
+
+                  // Executar inserção assíncrona
+                  insertOrderItems();
+                } else {
+                  console.warn('[POS] Pedido sem itens para persistir:', finalOrder);
+                }
               }
             });
         }
