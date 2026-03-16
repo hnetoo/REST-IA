@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { 
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, 
@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 const Analytics = () => {
-  const { settings } = useStore();
+  const { settings, activeOrders, menu } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
   const [loading, setLoading] = useState(false);
 
@@ -16,6 +16,30 @@ const Analytics = () => {
     currency: 'AOA', 
     maximumFractionDigits: 2 
   }).format(val);
+
+  // Calcular top produtos reais baseado nos activeOrders (pedidos fechados)
+  const realTopProducts = useMemo(() => {
+    const productSales: Record<string, { name: string, category: string, sales: number }> = {};
+    
+    // Filtrar apenas pedidos fechados
+    const closedOrders = activeOrders.filter(order => order.status === 'FECHADO');
+    
+    closedOrders.flatMap((order: any) => order.items).forEach((item: any) => {
+      const dish = menu.find(d => d.id === item.dishId);
+      if (!productSales[item.dishId]) {
+        productSales[item.dishId] = {
+          name: dish?.name || 'Desconhecido',
+          category: dish?.category || 'Outros',
+          sales: 0
+        };
+      }
+      productSales[item.dishId].sales += item.quantity;
+    });
+
+    return Object.values(productSales)
+      .sort((a, b) => b.sales - a.sales)
+      .slice(0, 5);
+  }, [activeOrders, menu]);
 
   const kpis = [
     {
@@ -70,13 +94,14 @@ const Analytics = () => {
     { name: 'Petiscos', value: 10, color: '#8b5cf6' }
   ];
 
-  const topProducts = [
-    { name: 'Muamba de Galinha', sales: 450, category: 'Pratos Principais' },
-    { name: 'Caldo de Mancarra', sales: 380, category: 'Pratos Principais' },
-    { name: 'Fufu com Carne', sales: 320, category: 'Pratos Principais' },
-    { name: 'Ginga com Coca-Cola', sales: 280, category: 'Bebidas' },
-    { name: 'Cuscuza', sales: 180, category: 'Petiscos' }
-  ];
+  // REMOVER ARRAY DE DADOS FICTÍCIOS - APENAS USAR DADOS REAIS
+  // const topProducts = [
+  //   { name: 'Muamba de Galinha', sales: 450, category: 'Pratos Principais' },
+  //   { name: 'Caldo de Mancarra', sales: 380, category: 'Pratos Principais' },
+  //   { name: 'Fufu com Carne', sales: 320, category: 'Pratos Principais' },
+  //   { name: 'Ginga com Coca-Cola', sales: 280, category: 'Bebidas' },
+  //   { name: 'Cuscuza', sales: 180, category: 'Petiscos' }
+  // ];
 
   return (
     <div className="p-8 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar">
@@ -179,18 +204,24 @@ const Analytics = () => {
             Top Produtos
           </h3>
           <div className="space-y-3">
-            {topProducts.map((product, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                <div>
-                  <p className="text-white font-bold">{product.name}</p>
-                  <p className="text-xs text-slate-500">{product.category}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xl font-bold text-[#06b6d4]">{formatKz(product.sales)}</p>
-                  <p className="text-xs text-slate-500">{product.sales} vendas</p>
-                </div>
+            {realTopProducts.length === 0 ? (
+              <div className="text-center text-slate-500 py-10 italic">
+                Aguardando vendas reais...
               </div>
-            ))}
+            ) : (
+              realTopProducts.map((product: any, index: number) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                  <div>
+                    <p className="text-white font-bold">{product.name}</p>
+                    <p className="text-xs text-slate-500">{product.category}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-[#06b6d4]">{product.sales} unidades</p>
+                    <p className="text-xs text-slate-500">{product.sales} vendas</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
