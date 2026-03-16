@@ -51,7 +51,11 @@ const POS = () => {
   console.log("[POS] Categorias disponíveis:", categories.length);
   
   // VALIDAÇÃO DOS LOGS - DEBUG DO FILTRO
-  const filteredByCategory = menu.filter(d => selectedCategoryId === 'TODOS' || d.categoryId === selectedCategoryId);
+  const filteredByCategory = menu.filter(d => {
+    const match = selectedCategoryId === 'TODOS' || 
+      (d.categoryId?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase());
+    return match;
+  });
   const filteredBySearch = filteredByCategory.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
   
   console.log("[POS] Categoria selecionada:", selectedCategoryId);
@@ -66,15 +70,23 @@ const POS = () => {
         id: prod.id,
         name: prod.name,
         categoryId: prod.categoryId,
-        comparando: prod.categoryId,
-        com: selectedCategoryId,
-        resultado: prod.categoryId === selectedCategoryId
+        categoryIdTrimmed: prod.categoryId?.trim(),
+        categoryIdLower: prod.categoryId?.trim().toLowerCase(),
+        comparando: prod.categoryId?.trim().toLowerCase(),
+        com: selectedCategoryId?.trim().toLowerCase(),
+        resultado: prod.categoryId?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase()
       });
     });
     
     console.log("[DEBUG COMPARAÇÃO] Categorias disponíveis:");
     categories.forEach(cat => {
-      console.log(`  Categoria: ${cat.id} - ${cat.name}`);
+      console.log(`  Categoria: ${cat.id?.trim()} - ${cat.name} (trimmed: ${cat.id?.trim().toLowerCase()})`);
+    });
+    
+    console.log("[DEBUG COMPARAÇÃO] Categoria selecionada:", {
+      original: selectedCategoryId,
+      trimmed: selectedCategoryId?.trim(),
+      lowered: selectedCategoryId?.trim().toLowerCase()
     });
   }
   
@@ -82,11 +94,13 @@ const POS = () => {
   
   // LOG DE DEPURAÇÃO PARA IMAGENS
   if (menu.length > 0) {
+    console.log("[DEBUG] Dados do Produto 1:", menu[0]);
     console.log("[POS] URL da imagem do primeiro produto:", menu[0]?.image);
     console.log("[POS] Estrutura da imagem:", {
       hasImage: !!menu[0]?.image,
       imageType: typeof menu[0]?.image,
-      imageLength: menu[0]?.image?.length
+      imageLength: menu[0]?.image?.length,
+      allKeys: Object.keys(menu[0] || {})
     });
   }
   
