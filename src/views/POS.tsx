@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
+import { supabase } from '../lib/supabaseService';
 import { 
   Search, Minus, Plus, CreditCard, LayoutGrid, Printer, 
   Banknote, X, Utensils, MoveHorizontal, Sparkles, Loader2,
@@ -164,7 +165,7 @@ const POS = () => {
     return activeOrders.filter(o => o.tableId === activeTableId && o.status === 'ABERTO');
   }, [activeOrders, activeTableId]);
 
-  const handleCheckoutFinal = (method: PaymentMethod, customerId?: string) => {
+  const handleCheckoutFinal = async (method: PaymentMethod, customerId?: string) => {
     if (!currentOrder) return;
     
     // Se for Pagar Depois e não tiver cliente selecionado, abrir modal de clientes
@@ -180,10 +181,59 @@ const POS = () => {
     
     console.log(`[POS] Finalizando pedido ${orderToPrintId} com método ${method}`);
     
-    // Tentar finalização no banco (pode falhar com 401)
+    // TENTAR FINALIZAÇÃO NO BANCO (pode falhar com 401)
     try {
-      checkoutTable(currentOrder.id, method, customerId);
-      addNotification('success', 'Venda registada com sucesso!');
+      console.log('[POS] Iniciando persistência da ordem...');
+      const result = await checkoutTable(currentOrder.id, method, customerId);
+      
+      if (result) {
+        console.log('[POS] Ordem persistida com sucesso:', result);
+        addNotification('success', 'Venda registada com sucesso!');
+        
+        // VERIFICAÇÃO CRÍTICA: Persistir itens do carrinho
+        console.log('[POS] Verificando itens do carrinho:', currentOrder.items);
+        
+        if (currentOrder.items && currentOrder.items.length > 0) {
+          console.log('[POS] Iniciando persistência dos itens na tabela order_items...');
+          
+          try {
+            const orderItems = currentOrder.items.map(item => ({
+              order_id: currentOrder.id,
+              product_id: item.dish.id,
+              quantity: item.quantity,
+              unit_price: item.dish.price,
+              total_price: item.dish.price * item.quantity
+            }));
+
+            console.log('[POS] Itens formatados para inserção:', orderItems);
+
+            // Inserir itens na tabela order_items
+            const { data: insertedItems, error: itemsError } = await supabase
+              .from('order_items')
+              .insert(orderItems)
+              .select();
+
+            if (itemsError) {
+              console.error('[POS] Erro ao persistir itens no Supabase:', itemsError);
+              addNotification('error', 'Erro ao salvar itens da venda');
+            } else {
+              console.log('[POS] Itens do pedido persistidos com sucesso:', {
+                count: insertedItems?.length || 0,
+                items: insertedItems
+              });
+              addNotification('success', `${insertedItems?.length || 0} itens salvos com sucesso!`);
+            }
+          } catch (itemsError) {
+            console.error('[POS] Exceção ao persistir itens:', itemsError);
+            addNotification('error', 'Erro crítico ao salvar itens da venda');
+          }
+        } else {
+          console.warn('[POS] Pedido sem itens para persistir:', currentOrder);
+        }
+      } else {
+        console.error('[POS] Falha ao persistir ordem:', result);
+        addNotification('error', 'Erro ao salvar pedido');
+      }
     } catch (dbError) {
       console.error('[POS] Erro na gravação do pedido:', dbError);
       addNotification('error', 'Erro ao salvar pedido. Tentando imprimir mesmo assim...');

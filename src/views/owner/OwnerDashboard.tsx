@@ -742,19 +742,20 @@ const OwnerDashboard = () => {
       setMetrics(finalMetrics);
       setChartData(chartDataGenerated);
       
-      // SINCRONIZAR ESTADOS INDIVIDUAIS
+      // SINCRONIZAR ESTADOS INDIVIDUAIS IMEDIATAMENTE
       setTotalVendasNoState(Number(totalVendas) || 0);
       setDespesasNoState(Number(totalDespesas) || 0);
       setDespesasAcumuladasNoState(Number(totalExpensesAllTime) || 0);
+      setFolhaSalarialNoState(Number(folhaSalarial) || 0);
       
       // VERIFICAÇÃO IMEDIATA DO ESTADO
       setTimeout(() => {
         console.log('[DASHBOARD] Estado ATUALIZADO (verificação):', {
           metricsState: metrics,
-          totalVendasNoState: metrics.totalVendas,
-          despesasNoState: metrics.despesas,
-          despesasAcumuladasNoState: metrics.despesasAcumuladas,
-          folhaSalarialNoState: metrics.folhaSalarial
+          totalVendasNoState: totalVendas,
+          despesasNoState: totalDespesas,
+          despesasAcumuladasNoState: totalExpensesAllTime,
+          folhaSalarialNoState: folhaSalarial
         });
       }, 100);
 
