@@ -68,7 +68,8 @@ const DashboardV2 = () => {
     weeklyComparison: { today: 0, lastWeek: 0 },
     auditLogs: [] as AuditLog[],
     topExpenses: [] as ExpenseData[],
-    historicoExterno: 0,
+    historicoExternoRevenue: 0,
+    historicoExternoProfit: 0,
     faturacaoTotal: 0
   });
 
@@ -150,20 +151,19 @@ const DashboardV2 = () => {
         console.error('[DashboardV2] Erro ao buscar despesas:', expensesError);
       }
 
-      // 3. Buscar histórico financeiro (períodos anteriores)
-      const { data: financialHistory, error: historyError } = await supabase
-        .from('financial_history')
-        .select('amount, created_at')
-        .eq('source', 'external_software') // Apenas lucro importado
-        .single(); // Pega o valor mais recente
+      // 3. Buscar histórico externo (sistemas legados)
+      const { data: externalHistory, error: externalError } = await supabase
+        .from('external_history')
+        .select('source_name, total_revenue, gross_profit, period');
 
-      let historicoExterno = 0;
-      if (historyError) {
-        console.error('[DashboardV2] Erro ao buscar histórico externo:', historyError);
-        // Se falhar, mostra erro em vez de inventar valor
-        historicoExterno = 0;
-      } else if (financialHistory) {
-        historicoExterno = financialHistory.amount || 0;
+      let historicoExternoRevenue = 0;
+      let historicoExternoProfit = 0;
+      
+      if (externalError) {
+        console.error('[DashboardV2] Erro ao buscar histórico externo:', externalError);
+      } else if (externalHistory) {
+        historicoExternoRevenue = externalHistory.reduce((sum, item) => sum + (item.total_revenue || 0), 0);
+        historicoExternoProfit = externalHistory.reduce((sum, item) => sum + (item.gross_profit || 0), 0);
       }
 
       // 4. Buscar logs de auditoria
@@ -242,7 +242,7 @@ const DashboardV2 = () => {
         .slice(0, 3);
 
       // Calcular faturação total
-      const faturacaoTotal = historicoExterno + totalRevenue;
+      const faturacaoTotal = historicoExternoRevenue + totalRevenue;
 
       // Comparação semanal (simplificada)
       const todayRevenue = totalRevenue;
@@ -266,7 +266,8 @@ const DashboardV2 = () => {
         },
         auditLogs: auditData || [],
         topExpenses,
-        historicoExterno,
+        historicoExternoRevenue,
+        historicoExternoProfit,
         faturacaoTotal
       });
 
@@ -280,7 +281,8 @@ const DashboardV2 = () => {
         reservaFiscal,
         caixaDisponivel,
         liquidezStatus,
-        historicoExterno,
+        historicoExternoRevenue,
+        historicoExternoProfit,
         faturacaoTotal,
         paymentMethods: paymentMethods.length
       });
