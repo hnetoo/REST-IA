@@ -73,6 +73,11 @@ const OwnerDashboard = () => {
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [todayExpenses, setTodayExpenses] = useState<number>(0);
   const [yearExpenses, setYearExpenses] = useState<number>(0);
+  
+  // ESTADOS INDIVIDUAIS PARA SINCRONIZAÇÃO
+  const [totalVendasNoState, setTotalVendasNoState] = useState<number>(0);
+  const [despesasNoState, setDespesasNoState] = useState<number>(0);
+  const [despesasAcumuladasNoState, setDespesasAcumuladasNoState] = useState<number>(0);
 
   // Função para obter range de datas baseado no período
   const getDateRange = (periodo: 'HOJE' | 'SEMANA' | 'MÊS' | 'ANO') => {
@@ -458,16 +463,72 @@ const OwnerDashboard = () => {
 
       console.log('[DASHBOARD] Dados brutos das vendas:', ordersData.length);
 
-      // Criar dados de exemplo para visualização enquanto não temos order_items
-      const mockProducts = [
-        { name: 'Mufete de Peixe', quantity: 15, revenue: 142500 },
-        { name: 'Moamba de Galinha', quantity: 12, revenue: 98400 },
-        { name: 'Cuca (Lata)', quantity: 25, revenue: 22500 },
-        { name: 'Doce de Ginguba', quantity: 8, revenue: 6400 }
-      ];
+      // QUERY PARA PRODUTOS REAIS USANDO ORDER_ITEMS
+      const { data: orderItemsData, error: orderItemsError } = await supabase
+        .from('order_items')
+        .select('product_id, quantity, unit_price')
+        .order('quantity', { ascending: false })
+        .limit(20);
+      
+      if (orderItemsError) {
+        console.error('[DASHBOARD] Erro ao buscar order_items:', orderItemsError);
+        setTopProducts([]);
+        return;
+      }
 
-      setTopProducts(mockProducts);
-      console.log('[DASHBOARD] Produtos mais vendidos (mock):', mockProducts);
+      if (!orderItemsData || orderItemsData.length === 0) {
+        console.log('[DASHBOARD] Nenhum order_item encontrado');
+        setTopProducts([]);
+        return;
+      }
+
+      // AGRUPAR POR PRODUTO E CALCULAR TOTAIS
+      const productMap = new Map();
+      
+      orderItemsData.forEach(item => {
+        const productId = item.product_id;
+        const quantity = Number(item.quantity) || 0;
+        const revenue = Number(item.unit_price) * quantity || 0;
+        
+        if (productMap.has(productId)) {
+          const existing = productMap.get(productId);
+          productMap.set(productId, {
+            quantity: existing.quantity + quantity,
+            revenue: existing.revenue + revenue
+          });
+        } else {
+          productMap.set(productId, {
+            quantity: quantity,
+            revenue: revenue
+          });
+        }
+      });
+
+      // BUSCAR NOMES E PREÇOS REAIS DOS PRODUTOS
+      const productIds = Array.from(productMap.keys());
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('id, name, price')
+        .in('id', productIds);
+
+      if (productsError) {
+        console.error('[DASHBOARD] Erro ao buscar produtos:', productsError);
+        setTopProducts([]);
+        return;
+      }
+
+      // CRIAR ARRAY FINAL COM DADOS REAIS
+      const realProducts = Array.from(productMap.entries()).map(([productId, data]) => {
+        const product = productsData?.find(p => p.id === productId);
+        return {
+          name: product?.name || `Produto ${productId}`,
+          quantity: data.quantity,
+          revenue: data.revenue
+        };
+      }).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+
+      setTopProducts(realProducts);
+      console.log('[DASHBOARD] Produtos mais vendidos (reais):', realProducts);
       
     } catch (error) {
       console.error('[DASHBOARD] Erro detalhado vendas:', error);
@@ -537,7 +598,6 @@ const OwnerDashboard = () => {
           .order('created_at', { ascending: false });
 
         console.log('[DASHBOARD] Funcionários encontrados:', staffData?.length || 0);
-        console.error('[DASHBOARD] Erro detalhado folha salarial:', staffError);
 
         if (!staffError && staffData && staffData.length > 0) {
           // Calcular total líquido para cada funcionário: (salario_base + subsidios + bonus + horas_extras) - descontos
@@ -680,6 +740,11 @@ const OwnerDashboard = () => {
       // FORÇAR ATUALIZAÇÃO DO ESTADO
       setMetrics(finalMetrics);
       setChartData(chartDataGenerated);
+      
+      // SINCRONIZAR ESTADOS INDIVIDUAIS
+      setTotalVendasNoState(Number(totalVendas) || 0);
+      setDespesasNoState(Number(totalDespesas) || 0);
+      setDespesasAcumuladasNoState(Number(totalExpensesAllTime) || 0);
       
       // VERIFICAÇÃO IMEDIATA DO ESTADO
       setTimeout(() => {
