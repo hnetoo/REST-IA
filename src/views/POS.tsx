@@ -190,19 +190,41 @@ const POS = () => {
       
       // VERIFICAÇÃO CRÍTICA: Persistir itens do carrinho (independente do resultado)
       console.log('[POS] Verificando itens do carrinho:', currentOrder.items);
+      console.log('[POS] ID do pedido atual:', currentOrder.id);
       
       if (currentOrder.items && currentOrder.items.length > 0) {
         console.log('[POS] Iniciando persistência dos itens na tabela order_items...');
         
         try {
           // BLOCO OBRIGATÓRIO: Inserir itens na tabela order_items
-          const itemsToInsert = currentOrder.items.map(item => ({
-            order_id: currentOrder.id,
-            product_id: item.dish.id,
-            quantity: item.quantity,
-            unit_price: item.dish.price,
-            total_price: item.quantity * item.dish.price
-          }));
+          // VERIFICAÇÃO: currentOrder.id é válido?
+          if (!currentOrder.id) {
+            console.error('[POS] ERRO FATAL: currentOrder.id é inválido:', currentOrder.id);
+            addNotification('error', 'ID do pedido inválido. Não é possível salvar itens.');
+            return;
+          }
+          
+          const itemsToInsert = currentOrder.items.map(item => {
+            // VERIFICAÇÃO: item.dish.id é válido?
+            if (!item.dish.id) {
+              console.error('[POS] ERRO: item.dish.id é inválido:', item);
+              return null;
+            }
+            
+            return {
+              order_id: currentOrder.id,
+              product_id: item.dish.id,
+              quantity: item.quantity,
+              unit_price: item.dish.price,
+              total_price: item.quantity * item.dish.price
+            };
+          }).filter(item => item !== null); // Remover itens inválidos
+
+          if (itemsToInsert.length === 0) {
+            console.error('[POS] ERRO: Nenhum item válido para inserir após verificação');
+            addNotification('error', 'Nenhum item válido para salvar.');
+            return;
+          }
 
           console.log('[POS] Itens formatados para inserção:', itemsToInsert);
 
