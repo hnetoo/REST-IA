@@ -5,9 +5,10 @@ import {
   Users, Calendar, Download, Filter, BarChart3,
   PieChart, Activity
 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Analytics = () => {
-  const { settings, activeOrders, menu } = useStore();
+  const { settings, activeOrders, menu, expenses } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
   const [loading, setLoading] = useState(false);
 
@@ -16,6 +17,104 @@ const Analytics = () => {
     currency: 'AOA', 
     maximumFractionDigits: 2 
   }).format(val);
+
+  // Calcular métricas reais
+  const realMetrics = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Vendas Hoje: filtrar pedidos fechados de hoje
+    const todayOrders = activeOrders.filter(order => 
+      order.status === 'FECHADO' && 
+      order.timestamp?.split('T')[0] === today
+    );
+    
+    const totalSalesToday = todayOrders.reduce((acc, order) => acc + order.total, 0);
+    const totalOrdersToday = todayOrders.length;
+    const ticketMedio = totalOrdersToday > 0 ? totalSalesToday / totalOrdersToday : 0;
+    
+    // Custo de Compras: expenses de hoje
+    const todayExpenses = expenses.filter(expense => 
+      expense.date?.split('T')[0] === today
+    );
+    const totalExpensesToday = todayExpenses.reduce((acc, expense) => acc + expense.amount, 0);
+    
+    // Lucro Bruto
+    const lucroBruto = totalSalesToday - totalExpensesToday;
+    
+    return {
+      totalSalesToday,
+      totalOrdersToday,
+      ticketMedio,
+      totalExpensesToday,
+      lucroBruto
+    };
+  }, [activeOrders, expenses]);
+
+  // Dados para gráfico dos últimos 7 dias
+  const chartData = useMemo(() => {
+    const today = new Date();
+    const data = [];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const dayName = date.toLocaleDateString('pt-AO', { weekday: 'short', day: 'numeric' });
+      
+      // Vendas do dia
+      const dayOrders = activeOrders.filter(order => 
+        order.status === 'FECHADO' && 
+        order.timestamp?.split('T')[0] === dateStr
+      );
+      const sales = dayOrders.reduce((acc, order) => acc + order.total, 0);
+      
+      // Compras do dia
+      const dayExpenses = expenses.filter(expense => 
+        expense.date?.split('T')[0] === dateStr
+      );
+      const purchases = dayExpenses.reduce((acc, expense) => acc + expense.amount, 0);
+      
+      data.push({
+        day: dayName,
+        sales,
+        purchases
+      });
+    }
+    
+    return data;
+  }, [activeOrders, expenses]);
+
+  // KPIs com dados reais
+  const kpis = [
+    {
+      title: 'Vendas Hoje',
+      value: realMetrics.totalSalesToday.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
+      change: '+0%',
+      trend: 'up' as const,
+      icon: <TrendingUp className="w-5 h-5" />
+    },
+    {
+      title: 'Ticket Médio',
+      value: realMetrics.ticketMedio.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
+      change: '+0%',
+      trend: 'up' as const,
+      icon: <DollarSign className="w-5 h-5" />
+    },
+    {
+      title: 'Custo de Compras',
+      value: realMetrics.totalExpensesToday.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
+      change: '-0%',
+      trend: 'down' as const,
+      icon: <ShoppingCart className="w-5 h-5" />
+    },
+    {
+      title: 'Lucro Bruto',
+      value: realMetrics.lucroBruto.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
+      change: '+0%',
+      trend: 'up' as const,
+      icon: <TrendingUp className="w-5 h-5" />
+    }
+  ];
 
   // Calcular top produtos reais baseado nos activeOrders (pedidos fechados)
   const realTopProducts = useMemo(() => {
@@ -41,51 +140,11 @@ const Analytics = () => {
       .slice(0, 5);
   }, [activeOrders, menu]);
 
-  const kpis = [
-    {
-      title: 'Vendas Hoje',
-      value: formatKz(1250000),
-      change: '+12.5%',
-      trend: 'up',
-      icon: <TrendingUp className="w-5 h-5" />
-    },
-    {
-      title: 'Ticket Médio',
-      value: formatKz(8500),
-      change: '+3.2%',
-      trend: 'up',
-      icon: <DollarSign className="w-5 h-5" />
-    },
-    {
-      title: 'Custo de Compras',
-      value: formatKz(450000),
-      change: '-5.8%',
-      trend: 'down',
-      icon: <ShoppingCart className="w-5 h-5" />
-    },
-    {
-      title: 'Lucro Bruto',
-      value: formatKz(800000),
-      change: '+18.3%',
-      trend: 'up',
-      icon: <TrendingUp className="w-5 h-5" />
-    }
-  ];
-
-  const salesData = [
-    { month: 'Jan', sales: 980000, purchases: 120000 },
-    { month: 'Fev', sales: 1200000, purchases: 150000 },
-    { month: 'Mar', sales: 1100000, purchases: 110000 },
-    { month: 'Abr', sales: 1350000, purchases: 180000 },
-    { month: 'Mai', sales: 1500000, purchases: 200000 },
-    { month: 'Jun', sales: 1400000, purchases: 160000 },
-    { month: 'Jul', sales: 1600000, purchases: 140000 },
-    { month: 'Ago', sales: 1800000, purchases: 170000 },
-    { month: 'Set', sales: 1750000, purchases: 190000 },
-    { month: 'Out', sales: 1650000, purchases: 180000 },
-    { month: 'Nov', sales: 1900000, purchases: 200000 },
-    { month: 'Dez', sales: 2100000, purchases: 220000 }
-  ];
+  // REMOVER ARRAY DE DADOS FICTÍCIOS - APENAS USAR DADOS REAIS
+  // const salesData = [
+  //   { month: 'Jan', sales: 980000, purchases: 120000 },
+  //   ...
+  // ];
 
   const categoryData = [
     { name: 'Pratos Principais', value: 45, color: '#06b6d4' },
@@ -156,23 +215,59 @@ const Analytics = () => {
         ))}
       </div>
 
-      {/* Gráficos */}
+      {/* Gráfico de Vendas vs Compras */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Vendas vs Compras */}
         <div className="glass-panel p-8 rounded-2xl border border-white/5">
           <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-3">
             <BarChart3 size={20} className="text-[#06b6d4]" />
-            Vendas vs Compras
+            Vendas vs Compras (Últimos 7 dias)
           </h3>
-          <div className="h-64 flex items-center justify-center text-slate-400">
-            <div className="text-center">
-              <BarChart3 size={48} className="mx-auto mb-4 opacity-50" />
-              <p>Gráfico de barras será implementado com Recharts</p>
-            </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="day" 
+                  stroke="#9ca3af"
+                  tick={{ fill: '#9ca3af', fontSize: 12 }}
+                />
+                <YAxis 
+                  stroke="#9ca3af"
+                  tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  tickFormatter={(value) => `${value / 1000}k`}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value: number) => [
+                    value.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
+                    ''
+                  ]}
+                />
+                <Legend 
+                  wrapperStyle={{ color: '#9ca3af' }}
+                />
+                <Bar 
+                  dataKey="sales" 
+                  fill="#06b6d4" 
+                  name="Vendas"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="purchases" 
+                  fill="#ef4444" 
+                  name="Compras"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Categorias mais vendidas */}
+        {/* Categorias */}
         <div className="glass-panel p-8 rounded-2xl border border-white/5">
           <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-3">
             <PieChart size={20} className="text-[#10b981]" />
