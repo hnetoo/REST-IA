@@ -387,8 +387,10 @@ const Employees = () => {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {employees.map(emp => {
-                    const subsidies = Math.round(emp.salary * 0.2); // 20% de subsídios
-                    const deductions = Math.round(emp.salary * 0.08); // 8% de descontos
+                    // MATAR A LÓGICA DE PERCENTAGEM AUTOMÁTICA
+                    // Usar valores reais dos campos de subsídios
+                    const subsidies = (emp.foodAllowance || 0) + (emp.transportAllowance || 0) + (emp.bonus || 0);
+                    const deductions = 0; // TODO: Definir regra de descontos (3% Segurança Social?)
                     const netSalary = emp.salary + subsidies - deductions;
                     
                     return (
@@ -402,13 +404,26 @@ const Employees = () => {
                       </tr>
                     );
                   })}
-                  <tr className="border-t-2 border-primary/20">
-                    <td colSpan={2} className="p-3 text-primary font-black">TOTAL</td>
-                    <td className="p-3 text-white font-mono font-bold">{formatKz(totalPayroll)}</td>
-                    <td className="p-3 text-emerald-500 font-mono font-bold">{formatKz(employees.reduce((acc, emp) => acc + Math.round(emp.salary * 0.2), 0))}</td>
-                    <td className="p-3 text-red-500 font-mono font-bold">{formatKz(employees.reduce((acc, emp) => acc + Math.round(emp.salary * 0.08), 0))}</td>
-                    <td className="p-3 text-primary font-mono font-bold text-lg">{formatKz(employees.reduce((acc, emp) => acc + emp.salary + Math.round(emp.salary * 0.2) - Math.round(emp.salary * 0.08), 0))}</td>
-                  </tr>
+                  {/* MATAR A LÓGICA DE PERCENTAGEM AUTOMÁTICA NOS TOTAIS */}
+                  {(() => {
+                    const totalSubsidies = employees.reduce((acc, emp) => 
+                      acc + (emp.foodAllowance || 0) + (emp.transportAllowance || 0) + (emp.bonus || 0), 0
+                    );
+                    const totalDeductions = 0; // TODO: Definir regra de descontos
+                    const totalNet = employees.reduce((acc, emp) => 
+                      acc + emp.salary + (emp.foodAllowance || 0) + (emp.transportAllowance || 0) + (emp.bonus || 0) - totalDeductions, 0
+                    );
+                    
+                    return (
+                      <tr className="border-t-2 border-primary/20">
+                        <td colSpan={2} className="p-3 text-primary font-black">TOTAL</td>
+                        <td className="p-3 text-white font-mono font-bold">{formatKz(totalPayroll)}</td>
+                        <td className="p-3 text-emerald-500 font-mono font-bold">{formatKz(totalSubsidies)}</td>
+                        <td className="p-3 text-red-500 font-mono font-bold">{formatKz(totalDeductions)}</td>
+                        <td className="p-3 text-primary font-mono font-bold text-lg">{formatKz(totalNet)}</td>
+                      </tr>
+                    );
+                  })()}
                 </tbody>
               </table>
             </div>
