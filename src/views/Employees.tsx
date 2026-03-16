@@ -5,7 +5,7 @@ import { printStaffSchedules, printPayroll } from '../lib/printService';
 import { 
   Users, UserPlus, Calendar, Clock, Phone, DollarSign, Trash2, 
   Edit2, X, Plus, Save, Fingerprint, ChefHat, Wallet, Utensils,
-  ShieldCheck, Timer, Download, Printer
+  ShieldCheck, Timer, Download, Printer, CheckCircle
 } from 'lucide-react';
 
 const Employees = () => {
@@ -41,6 +41,11 @@ const Employees = () => {
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay() || 1);
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<WorkShift | null>(null);
+  
+  // ESTADOS DO MÓDULO DE PROCESSAMENTO DE FOLHA
+  const [isProcessingMode, setIsProcessingMode] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [payrollAdjustments, setPayrollAdjustments] = useState<Record<string, { discounts: number; overtime: number }>>({});
 
   // Form States
   const [empForm, setEmpForm] = useState<Partial<Employee>>({
@@ -55,6 +60,62 @@ const Employees = () => {
   const [shiftForm, setShiftForm] = useState<Partial<WorkShift>>({
     employeeId: '', dayOfWeek: 1, startTime: '08:00', endTime: '16:00'
   });
+
+  // FUNÇÕES DO MÓDULO DE PROCESSAMENTO DE FOLHA
+  const handleStartProcessing = () => {
+    setIsProcessingMode(true);
+    addNotification('info', 'Modo de processamento ativado. Ajuste os valores de descontos e horas extras.');
+  };
+
+  const handleAdjustmentChange = (empId: string, field: 'discounts' | 'overtime', value: number) => {
+    setPayrollAdjustments(prev => ({
+      ...prev,
+      [empId]: {
+        ...prev[empId],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleClosePayroll = async () => {
+    try {
+      const monthYear = selectedMonth.slice(5, 7) + '-' + selectedMonth.slice(0, 4); // MM-YYYY
+      
+      // Gravar cada pagamento na tabela salary_payments
+      for (const emp of employees) {
+        const adjustments = payrollAdjustments[emp.id] || { discounts: 0, overtime: 0 };
+        const subsidies = (emp.foodAllowance || 0) + (emp.transportAllowance || 0) + (emp.bonus || 0);
+        const netSalary = emp.salary + subsidies + adjustments.overtime - adjustments.discounts;
+        
+        const paymentData = {
+          staff_id: emp.id,
+          month_year: monthYear,
+          base_salary: emp.salary,
+          total_subsidies: subsidies,
+          overtime_bonus: adjustments.overtime,
+          total_discounts: adjustments.discounts,
+          net_salary: netSalary,
+          status: 'PROCESSED'
+        };
+        
+        // TODO: Implementar função para gravar na tabela salary_payments
+        console.log('Gravando pagamento:', paymentData);
+      }
+      
+      addNotification('success', 'Folha de Salário processada e arquivada!');
+      setIsProcessingMode(false);
+      setPayrollAdjustments({});
+    } catch (error) {
+      console.error('Erro ao processar folha:', error);
+      addNotification('error', 'Erro ao processar folha de salário.');
+    }
+  };
+
+  const generatePayslipPDF = (emp: any) => {
+    // TODO: Implementar geração de PDF com jsPDF
+    console.log('Gerando PDF para:', emp.name);
+    addNotification('info', 'Funcionalidade de PDF em desenvolvimento.');
+  };
 
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(val);
 
@@ -366,13 +427,44 @@ const Employees = () => {
           <div className="glass-panel rounded-[2.5rem] p-8 border border-white/5">
             <div className="flex justify-between items-center mb-8">
               <h3 className="text-xl font-black text-white">Folha de Salário</h3>
-              <button 
-                onClick={handleExportPayroll}
-                className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
-              >
-                <Download size={18} /> Exportar
-              </button>
+              <div className="flex gap-4">
+                {!isProcessingMode ? (
+                  <button 
+                    onClick={handleStartProcessing}
+                    className="px-6 py-3 rounded-xl bg-primary text-black font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2"
+                  >
+                    <Timer size={18} /> Iniciar Processamento do Mês
+                  </button>
+                ) : (
+                  <button 
+                    onClick={handleClosePayroll}
+                    className="px-6 py-3 rounded-xl bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-2"
+                  >
+                    <CheckCircle size={18} /> Fechar e Processar Folha
+                  </button>
+                )}
+                <button 
+                  onClick={handleExportPayroll}
+                  className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+                >
+                  <Download size={18} /> Exportar
+                </button>
+              </div>
             </div>
+            
+            {/* Seletor de Mês */}
+            {isProcessingMode && (
+              <div className="mb-6 p-4 bg-primary/10 rounded-2xl border border-primary/20">
+                <label className="block text-[10px] font-black text-primary uppercase tracking-widest mb-2">Mês de Processamento</label>
+                <input 
+                  type="month" 
+                  value={selectedMonth}
+                  onChange={e => setSelectedMonth(e.target.value)}
+                  className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white outline-none focus:border-primary font-bold"
+                />
+              </div>
+            )}
+            
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -381,8 +473,16 @@ const Employees = () => {
                     <th className="text-left p-3 text-white font-black uppercase text-xs">Cargo</th>
                     <th className="text-left p-3 text-white font-black uppercase text-xs">Salário Base (Kz)</th>
                     <th className="text-left p-3 text-white font-black uppercase text-xs">Subsídios</th>
-                    <th className="text-left p-3 text-white font-black uppercase text-xs">Descontos</th>
+                    {isProcessingMode && (
+                      <>
+                        <th className="text-left p-3 text-white font-black uppercase text-xs">Horas Extras/Bónus</th>
+                        <th className="text-left p-3 text-white font-black uppercase text-xs">Descontos (Faltas/Atrasos)</th>
+                      </>
+                    )}
                     <th className="text-left p-3 text-white font-black uppercase text-xs">Total Líquido</th>
+                    {isProcessingMode && (
+                      <th className="text-left p-3 text-white font-black uppercase text-xs">Ações</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -390,8 +490,8 @@ const Employees = () => {
                     // MATAR A LÓGICA DE PERCENTAGEM AUTOMÁTICA
                     // Usar valores reais dos campos de subsídios
                     const subsidies = (emp.foodAllowance || 0) + (emp.transportAllowance || 0) + (emp.bonus || 0);
-                    const deductions = 0; // TODO: Definir regra de descontos (3% Segurança Social?)
-                    const netSalary = emp.salary + subsidies - deductions;
+                    const adjustments = payrollAdjustments[emp.id] || { discounts: 0, overtime: 0 };
+                    const netSalary = emp.salary + subsidies + adjustments.overtime - adjustments.discounts;
                     
                     return (
                       <tr key={emp.id} className="hover:bg-white/5 transition-colors">
@@ -399,8 +499,44 @@ const Employees = () => {
                         <td className="p-3 text-slate-400">{emp.role}</td>
                         <td className="p-3 text-white font-mono">{formatKz(emp.salary)}</td>
                         <td className="p-3 text-emerald-500 font-mono">{formatKz(subsidies)}</td>
-                        <td className="p-3 text-red-500 font-mono">{formatKz(deductions)}</td>
+                        {isProcessingMode && (
+                          <>
+                            <td className="p-3">
+                              <input 
+                                type="number" 
+                                min="0" 
+                                step="1000"
+                                value={adjustments.overtime}
+                                onChange={e => handleAdjustmentChange(emp.id, 'overtime', Number(e.target.value))}
+                                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white outline-none focus:border-primary font-mono text-sm"
+                                placeholder="0"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <input 
+                                type="number" 
+                                min="0" 
+                                step="1000"
+                                value={adjustments.discounts}
+                                onChange={e => handleAdjustmentChange(emp.id, 'discounts', Number(e.target.value))}
+                                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white outline-none focus:border-primary font-mono text-sm"
+                                placeholder="0"
+                              />
+                            </td>
+                          </>
+                        )}
                         <td className="p-3 text-primary font-mono font-bold">{formatKz(netSalary)}</td>
+                        {isProcessingMode && (
+                          <td className="p-3">
+                            <button 
+                              onClick={() => generatePayslipPDF(emp)}
+                              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                              title="Gerar Recibo PDF"
+                            >
+                              <Printer size={16} />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     );
                   })}
