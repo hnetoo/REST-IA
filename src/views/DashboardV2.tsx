@@ -165,6 +165,13 @@ const DashboardV2 = () => {
         // Soma dinâmica de todos os registos
         historicoExternoRevenue = externalHistory.reduce((sum, item) => sum + (item.total_revenue || 0), 0);
         historicoExternoProfit = externalHistory.reduce((sum, item) => sum + (item.gross_profit || 0), 0);
+        console.log('[DashboardV2] Histórico externo carregado:', { 
+          registros: externalHistory.length, 
+          revenue: historicoExternoRevenue, 
+          profit: historicoExternoProfit 
+        });
+      } else {
+        console.log('[DashboardV2] Nenhum registro encontrado em external_history');
       }
 
       // 4. Buscar logs de auditoria

@@ -1349,11 +1349,7 @@ const SystemHub = () => {
   };
 
   const FinancialHistory = () => {
-    const [records, setRecords] = useState([
-      { id: '1', system: 'Sistema POS Antigo', period: 'Jan-Dez 2024', revenue: 45000000, profit: 8500000, date: '2024-12-31' },
-      { id: '2', system: 'Excel Manual', period: 'Jan-Jun 2024', revenue: 22000000, profit: 4200000, date: '2024-06-30' },
-      { id: '3', system: 'Papel e Caneta', period: 'Jan-Mai 2024', revenue: 18000000, profit: 3500000, date: '2024-05-31' }
-    ]);
+    const [records, setRecords] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
       system: '',
