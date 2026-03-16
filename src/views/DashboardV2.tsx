@@ -114,7 +114,7 @@ const DashboardV2 = () => {
     try {
       console.log('[DashboardV2] Carregando dados financeiros...');
 
-      // 1. Buscar pedidos com JOIN para order_items e products
+      // 1. Buscar pedidos com JOIN para order_items e products (CORRIGIDO)
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -131,7 +131,7 @@ const DashboardV2 = () => {
             )
           )
         `)
-        .in('status', ['closed', 'finalized'])
+        .eq('status', 'closed') // Apenas pedidos fechados
         .gte('created_at', `${startDate}T00:00:00Z`)
         .lte('created_at', `${endDate}T23:59:59Z`)
         .order('created_at', { ascending: false });
@@ -282,6 +282,14 @@ const DashboardV2 = () => {
       const todayRevenue = totalRevenue;
       const lastWeekRevenue = todayRevenue * 0.85; // Simulação de -15%
 
+      // LOG DE SINCRONIZAÇÃO DO ESTADO
+      console.log("[DEBUG STATE] Valores antes do setMetrics:", {
+        totalRevenue,
+        totalExpenses,
+        totalProfit,
+        totalOrders
+      });
+
       setMetrics({
         totalRevenue,
         totalProfit,
@@ -305,6 +313,14 @@ const DashboardV2 = () => {
         historicoExternoRevenue,
         historicoExternoProfit,
         faturacaoTotal
+      });
+
+      // LOG DE VERIFICAÇÃO PÓS-SETMETRICS
+      console.log("[DEBUG STATE] Valores após setMetrics:", {
+        totalRevenue: metrics.totalRevenue,
+        totalExpenses: metrics.totalExpenses,
+        totalProfit: metrics.totalProfit,
+        totalOrders: metrics.totalOrders
       });
 
       console.log('[TASCA] Dashboard V2: Dados sincronizados com sucesso.');
