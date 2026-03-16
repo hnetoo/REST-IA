@@ -787,7 +787,7 @@ const OwnerDashboard = () => {
   const ticketMedio = metrics.totalVendas > 0 ? metrics.totalVendas / (metrics.vendasHoje > 0 ? metrics.vendasHoje : 1) : 0;
 
   // Calcular lucro líquido
-  const lucroLiquido = metrics.totalVendas - metrics.despesas - metrics.folhaSalarial;
+  const lucroLiquido = metrics.totalVendas - metrics.despesas - metrics.folhaSalarial - metrics.impostos;
 
   // Calcular Break-even
   const custoOperacionalTotal = metrics.despesas + metrics.folhaSalarial;
@@ -925,7 +925,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Hoje</span>
             </div>
             <div className="text-2xl font-black text-orange-400 mb-2">
-              {formatAKZ(todayExpenses)}
+              {formatAKZ(metrics.despesas)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
@@ -939,7 +939,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Acumuladas (Ano)</span>
             </div>
             <div className="text-2xl font-black text-red-400 mb-2">
-              {formatAKZ(yearExpenses)}
+              {formatAKZ(metrics.despesas)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
