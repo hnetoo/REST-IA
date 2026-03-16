@@ -44,7 +44,12 @@ const Employees = () => {
 
   // Form States
   const [empForm, setEmpForm] = useState<Partial<Employee>>({
-    name: '', role: 'GARCOM', phone: '', salary: 0, status: 'ATIVO', color: '#06b6d4', workDaysPerMonth: 22, dailyWorkHours: 8, externalBioId: ''
+    name: '', role: 'GARCOM', phone: '', salary: 0, status: 'ATIVO', color: '#06b6d4', workDaysPerMonth: 22, dailyWorkHours: 8, externalBioId: '',
+    // NOVOS CAMPOS DE SUBSÍDIOS
+    foodAllowance: 0,
+    transportAllowance: 0,
+    bonus: 0,
+    overtimeHourlyRate: 0
   });
 
   const [shiftForm, setShiftForm] = useState<Partial<WorkShift>>({
@@ -80,7 +85,12 @@ const Employees = () => {
         color: empForm.color || '#06b6d4',
         workDaysPerMonth: Number(empForm.workDaysPerMonth) || 22,
         dailyWorkHours: Number(empForm.dailyWorkHours) || 8,
-        externalBioId: empForm.externalBioId || `${Math.floor(Math.random() * 9999)}`
+        externalBioId: empForm.externalBioId || `${Math.floor(Math.random() * 9999)}`,
+        // NOVOS CAMPOS DE SUBSÍDIOS
+        foodAllowance: Number(empForm.foodAllowance) || 0,
+        transportAllowance: Number(empForm.transportAllowance) || 0,
+        bonus: Number(empForm.bonus) || 0,
+        overtimeHourlyRate: Number(empForm.overtimeHourlyRate) || 0
       };
       
       // NÃO ADICIONAR MANUALMENTE AO ESTADO LOCAL - DEIXAR O SNAPSHOT/REVALIDATE TRABALHAR
@@ -102,7 +112,12 @@ const Employees = () => {
               workDaysPerMonth: 22,
               dailyWorkHours: 8,
               color: '#06b6d4',
-              externalBioId: ''
+              externalBioId: '',
+              // RESETAR NOVOS CAMPOS DE SUBSÍDIOS
+              foodAllowance: 0,
+              transportAllowance: 0,
+              bonus: 0,
+              overtimeHourlyRate: 0
             });
             setIsEmpModalOpen(false);
             setEditingEmp(null);
@@ -451,6 +466,24 @@ const Employees = () => {
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">ID Bio (Externo)</label>
                   <input type="text" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.externalBioId} onChange={e => setEmpForm({...empForm, externalBioId: e.target.value})} />
+                </div>
+                
+                {/* NOVOS CAMPOS DE SUBSÍDIOS */}
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Subsídio de Alimentação (Kz)</label>
+                  <input type="number" min="0" step="1000" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.foodAllowance || 0} onChange={e => setEmpForm({...empForm, foodAllowance: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Subsídio de Transporte (Kz)</label>
+                  <input type="number" min="0" step="1000" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.transportAllowance || 0} onChange={e => setEmpForm({...empForm, transportAllowance: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Bónus/Prémios (Kz)</label>
+                  <input type="number" min="0" step="1000" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.bonus || 0} onChange={e => setEmpForm({...empForm, bonus: Number(e.target.value)})} />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Valor por Hora Extra (Kz)</label>
+                  <input type="number" min="0" step="100" className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-primary font-bold" value={empForm.overtimeHourlyRate || 0} onChange={e => setEmpForm({...empForm, overtimeHourlyRate: Number(e.target.value)})} />
                 </div>
                 <div className="col-span-2 flex justify-between items-center gap-6 mt-8">
                   <button 
