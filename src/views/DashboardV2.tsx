@@ -225,6 +225,11 @@ const DashboardV2 = () => {
       // REGRA DE NEGÓCIO: IMPOSTOS APENAS SOBRE VENDAS DE HOJE
       const taxProvision = totalRevenue * 0.065; // 6.5% de provisão APENAS sobre vendas do dia
       
+      // CÁLCULO DA PROVISÃO DE IMPOSTO ANUAL (SEM DUPLA TRIBUTAÇÃO)
+      // Incide APENAS sobre lucro gerado na operação atual da app
+      const currentExerciseProfit = totalRevenue - totalExpenses; // Lucro deste exercício
+      const annualTaxProvision = Math.max(0, currentExerciseProfit) * 0.065; // 6.5% apenas sobre operação atual
+      
       // Cálculo de liquidez fiscal (TOQUE DE MESTRE) - APENAS OPERAÇÃO ATUAL
       const reservaFiscal = taxProvision + (Math.max(0, totalProfit) * 0.25); // Retenção + Industrial
       const caixaDisponivel = totalRevenue - totalExpenses; // Faturamento do dia - Despesas do dia
@@ -269,6 +274,8 @@ const DashboardV2 = () => {
         totalOrders,
         averageTicket,
         taxProvision,
+        annualTaxProvision, // NOVO: Provisão de imposto anual (sem dupla tributação)
+        currentExerciseProfit, // NOVO: Lucro deste exercício
         reservaFiscal,
         caixaDisponivel,
         liquidezStatus,
@@ -512,6 +519,14 @@ const DashboardV2 = () => {
               <span className="text-yellow-400 font-bold">
                 {formatKz(Math.max(0, metrics.totalProfit) * 0.25)}
               </span>
+            </div>
+            {/* NOVO: Previsão de Imposto (Este Exercício) */}
+            <div className="flex justify-between items-center pt-2 border-t border-white/10">
+              <div>
+                <span className="text-slate-400 text-sm">Previsão de Imposto (Este Exercício)</span>
+                <div className="text-xs text-slate-500 mt-1">Exclui histórico tributado anteriormente</div>
+              </div>
+              <span className="text-green-400 font-bold">{formatKz(metrics.annualTaxProvision)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-slate-400 text-sm">Liquidez Disponível</span>
