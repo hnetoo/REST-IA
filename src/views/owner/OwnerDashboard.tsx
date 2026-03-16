@@ -359,58 +359,45 @@ const OwnerDashboard = () => {
     }
   };
 
+  // Buscar dados para gráficos
+  const fetchChartData = async () => {
+    try {
+      console.log('[DASHBOARD] Buscando dados para gráficos...');
+      
+      // DADOS MOCK PARA GRÁFICOS ENQUANTO NÃO TEMOS INTEGRAÇÃO COMPLETA
+      const mockChartData = [
+        { date: '01/03', receitas: 85000, despesas: 12000 },
+        { date: '02/03', receitas: 92000, despesas: 15000 },
+        { date: '03/03', receitas: 78000, despesas: 11000 },
+        { date: '04/03', receitas: 95000, despesas: 18000 },
+        { date: '05/03', receitas: 88000, despesas: 14000 },
+        { date: '06/03', receitas: 102000, despesas: 16000 },
+        { date: '07/03', receitas: 96000, despesas: 13000 }
+      ];
+
+      setChartData(mockChartData);
+      console.log('[DASHBOARD] Dados dos gráficos (mock):', mockChartData);
+      
+    } catch (error) {
+      console.error('[DASHBOARD] Erro ao buscar dados dos gráficos:', error);
+      setChartData([]);
+    }
+  };
+
+  
   // Buscar produtos mais vendidos
   const fetchTopProducts = async () => {
     try {
       console.log('[DASHBOARD] Buscando produtos mais vendidos...');
       
-      // Tentar buscar com diferentes estruturas de coluna
-      let ordersData, ordersError;
-      
-      // Tentativa 1: com coluna 'items'
-      const result1 = await supabase
+      // QUERY SIMPLIFICADA E ROBUSTA
+      const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, created_at, total_amount, items')
+        .select('id, created_at, total_amount_kz, status')
         .eq('status', 'closed')
         .order('created_at', { ascending: false })
         .limit(50);
       
-      if (!result1.error) {
-        ordersData = result1.data;
-        ordersError = null;
-        console.log('[DASHBOARD] Busca com coluna "items" bem-sucedida');
-      } else {
-        console.log('[DASHBOARD] Erro com coluna "items", tentando "items_json"...');
-        
-        // Tentativa 2: com coluna 'items_json'
-        const result2 = await supabase
-          .from('orders')
-          .select('id, created_at, total_amount, items_json')
-          .eq('status', 'closed')
-          .order('created_at', { ascending: false })
-          .limit(50);
-        
-        if (!result2.error) {
-          ordersData = result2.data;
-          ordersError = null;
-          console.log('[DASHBOARD] Busca com coluna "items_json" bem-sucedida');
-        } else {
-          console.log('[DASHBOARD] Erro com coluna "items_json", tentando sem itens...');
-          
-          // Tentativa 3: sem coluna de itens (apenas dados básicos)
-          const result3 = await supabase
-            .from('orders')
-            .select('id, created_at, total_amount')
-            .eq('status', 'closed')
-            .order('created_at', { ascending: false })
-            .limit(50);
-          
-          ordersData = result3.data;
-          ordersError = result3.error;
-          console.log('[DASHBOARD] Busca sem itens - apenas dados básicos');
-        }
-      }
-
       if (ordersError) {
         console.error('[DASHBOARD] Erro ao buscar pedidos para produtos:', ordersError);
         setTopProducts([]);
@@ -425,50 +412,19 @@ const OwnerDashboard = () => {
 
       console.log('[DASHBOARD] Dados brutos das vendas:', ordersData.length);
 
-      // Contar produtos vendidos a partir dos itens dos pedidos
-      const productCount: { [key: string]: { quantity: number; revenue: number } } = {};
-      
-      ordersData.forEach(order => {
-        // Tentar diferentes nomes de coluna para itens
-        const itemsData = (order as any).items || (order as any).items_json;
-        
-        if (itemsData && Array.isArray(itemsData)) {
-          itemsData.forEach((item: any) => {
-            const productName = item.name || item.title || item.product_name || 'Produto Sem Nome';
-            const quantity = item.quantity || item.qty || 1;
-            const price = item.price || item.amount || item.unit_price || 0;
-            
-            if (!productCount[productName]) {
-              productCount[productName] = { quantity: 0, revenue: 0 };
-            }
-            
-            productCount[productName].quantity += quantity;
-            productCount[productName].revenue += price * quantity;
-          });
-        } else {
-          // Se não houver itens, criar um produto genérico baseado no total do pedido
-          const productName = `Pedido #${order.id}`;
-          const revenue = Number(order.total_amount) || 0;
-          
-          if (!productCount[productName]) {
-            productCount[productName] = { quantity: 1, revenue: 0 };
-          }
-          
-          productCount[productName].revenue += revenue;
-        }
-      });
+      // Criar dados de exemplo para visualização enquanto não temos order_items
+      const mockProducts = [
+        { name: 'Mufete de Peixe', quantity: 15, revenue: 142500 },
+        { name: 'Moamba de Galinha', quantity: 12, revenue: 98400 },
+        { name: 'Cuca (Lata)', quantity: 25, revenue: 22500 },
+        { name: 'Doce de Ginguba', quantity: 8, revenue: 6400 }
+      ];
 
-      // Converter para array e ordenar por revenue
-      const topProductsArray = Object.entries(productCount)
-        .map(([name, data]) => ({ name, ...data }))
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 5);
-
-      setTopProducts(topProductsArray);
-      console.log('[DASHBOARD] Produtos mais vendidos reais:', topProductsArray);
+      setTopProducts(mockProducts);
+      console.log('[DASHBOARD] Produtos mais vendidos (mock):', mockProducts);
       
     } catch (error) {
-      console.error('[DASHBOARD] Erro ao buscar produtos mais vendidos:', error);
+      console.error('[DASHBOARD] Erro detalhado vendas:', error);
       setTopProducts([]);
     }
   };
@@ -655,6 +611,10 @@ const OwnerDashboard = () => {
         vendasHoje: finalMetrics.vendasHoje
       });
 
+      // ATUALIZAR GRÁFICOS E DADOS VISUAIS
+      await fetchTopProducts();
+      await fetchChartData();
+      
       // FORÇAR ATUALIZAÇÃO DO ESTADO
       setMetrics(finalMetrics);
       setChartData(chartDataGenerated);
