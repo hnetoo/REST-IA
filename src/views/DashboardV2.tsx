@@ -60,6 +60,8 @@ const DashboardV2 = () => {
     totalOrders: 0,
     averageTicket: 0,
     taxProvision: 0,
+    annualTaxProvision: 0, // Adicionado para resolver o erro
+    currentExerciseProfit: 0, // Adicionado para resolver o erro
     reservaFiscal: 0,
     caixaDisponivel: 0,
     liquidezStatus: 'seguro' as 'seguro' | 'risco',
@@ -151,6 +153,11 @@ const DashboardV2 = () => {
         console.error('[DashboardV2] Erro ao buscar despesas:', expensesError);
       }
 
+      // LOGS DE DEPURURAÇÃO PURA - DEBUG DESPESAS
+      console.log("[DEBUG DESPESAS] Tabelas encontradas e dados brutos:", expensesData);
+      console.log("[DEBUG DESPESAS] Total de registos:", expensesData?.length || 0);
+      console.log("[DEBUG DESPESAS] Soma bruta:", expensesData?.reduce((sum, expense) => sum + Number(expense?.amount || 0), 0) || 0);
+
       // 3. Buscar histórico externo (soma dinâmica de todos os registos)
       const { data: externalHistory, error: externalError } = await supabase
         .from('external_history')
@@ -217,8 +224,16 @@ const DashboardV2 = () => {
       });
 
       const totalExpenses = (expensesData && expensesData.length > 0) 
-        ? expensesData.reduce((sum, expense: ExpenseData) => sum + (expense.amount || 0), 0) 
+        ? expensesData.reduce((sum, expense: ExpenseData) => sum + Number(expense?.amount || 0), 0) 
         : 0;
+
+      // LOG DE VALIDAÇÃO DO CÁLCULO
+      console.log("[DEBUG DESPESAS] Cálculo final totalExpenses:", totalExpenses);
+      console.log("[DEBUG DESPESAS] Detalhe do cálculo:", {
+        hasData: expensesData && expensesData.length > 0,
+        itemCount: expensesData?.length || 0,
+        calculation: expensesData?.map(e => ({ id: e.id, amount: e.amount, parsed: Number(e?.amount || 0) }))
+      });
       const totalProfit = totalRevenue - totalCost - totalExpenses;
       const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
       
