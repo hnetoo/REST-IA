@@ -1,18 +1,37 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { DollarSign, ShoppingBag, Users, TrendingUp, Sparkles, Loader2, Activity, Target, Clock, Zap, ChefHat, MonitorOff, Printer, History, PieChart } from 'lucide-react';
 import { AIAnalysisResult, Order } from '../../types';
 
 const Dashboard = () => {
-  const { activeOrders, customers, menu, settings, addNotification, metrics } = useStore();
+  const { activeOrders, customers, menu, settings, addNotification } = useStore();
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
+  const [metrics, setMetrics] = useState<any>(null);
 
   const closedOrders = useMemo(() => activeOrders.filter(o => o.status === 'FECHADO'), [activeOrders]);
   
   const today = new Date().toISOString().split('T')[0];
+  
+  // CARREGAR MÉTRICAS DO OWNER DASHBOARD
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        // Buscar métricas do Owner Dashboard (simular mesmo comportamento)
+        const response = await fetch('/api/owner/metrics'); // ou importar função do OwnerDashboard
+        if (response.ok) {
+          const data = await response.json();
+          setMetrics(data);
+        }
+      } catch (error) {
+        console.error('[DASHBOARD PRINCIPAL] Erro ao carregar métricas:', error);
+      }
+    };
+    
+    fetchMetrics();
+  }, []);
   
   // USAR DADOS DO STORE GLOBAL (Owner Dashboard) para consistência
   const todayMetrics = useMemo(() => {
@@ -20,7 +39,22 @@ const Dashboard = () => {
     if (metrics && metrics.totalVendas > 0) {
       const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
       const revenue = metrics.totalVendas; // Usar valor calculado do Owner Dashboard
-      const profit = metrics.lucroLiquido || 0; // Usar lucro líquido calculado
+      
+      // FÓRMULA OBRIGATÓRIA: Lucro = (Vendas de Hoje) - (Despesas do Dia) - (Custo Staff Pro-rata) - (Impostos 6.5%)
+      const despesasDoDia = metrics.despesas || 0;
+      const custoStaff = metrics.folhaSalarial || 0;
+      const impostos = (metrics.totalVendas || 0) * 0.065;
+      const profit = revenue - despesasDoDia - custoStaff - impostos;
+      
+      console.log('[DASHBOARD PRINCIPAL] Cálculo do Lucro Hoje:', {
+        revenue,
+        despesasDoDia,
+        custoStaff,
+        impostos,
+        profit,
+        metrics
+      });
+      
       return { revenue, profit, count: orders.length, orders };
     }
     
