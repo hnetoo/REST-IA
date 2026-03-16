@@ -221,11 +221,13 @@ const DashboardV2 = () => {
         : 0;
       const totalProfit = totalRevenue - totalCost - totalExpenses;
       const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-      const taxProvision = totalRevenue * 0.065; // 6.5% de provisão
-
-      // Cálculo de liquidez fiscal (TOQUE DE MESTRE)
+      
+      // REGRA DE NEGÓCIO: IMPOSTOS APENAS SOBRE VENDAS DE HOJE
+      const taxProvision = totalRevenue * 0.065; // 6.5% de provisão APENAS sobre vendas do dia
+      
+      // Cálculo de liquidez fiscal (TOQUE DE MESTRE) - APENAS OPERAÇÃO ATUAL
       const reservaFiscal = taxProvision + (Math.max(0, totalProfit) * 0.25); // Retenção + Industrial
-      const caixaDisponivel = totalRevenue - totalExpenses; // Faturamento - Despesas
+      const caixaDisponivel = totalRevenue - totalExpenses; // Faturamento do dia - Despesas do dia
       const liquidezStatus = caixaDisponivel >= reservaFiscal ? 'seguro' : 'risco';
 
       // Processar métodos de pagamento
@@ -253,7 +255,7 @@ const DashboardV2 = () => {
             .slice(0, 3)
         : [];
 
-      // Calcular faturação total
+      // Calcular faturação total (APENAS PARA EXIBIÇÃO - NÃO AFETA CÁLCULOS)
       const faturacaoTotal = historicoExternoRevenue + totalRevenue;
 
       // Comparação semanal (simplificada)
