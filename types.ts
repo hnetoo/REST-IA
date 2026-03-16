@@ -54,10 +54,11 @@ export interface Dish {
   price: number;
   costPrice: number;
   categoryId: string;
-  category?: string; // Adicionado para compatibilidade com Supabase
+  category?: string; // Para compatibilidade
+  category_id?: string; // Campo real do Supabase
   description: string;
   image: string;
-  image_url?: string; // Adicionado para compatibilidade com Supabase
+  image_url?: string; // Campo real do Supabase
   taxCode?: string;
   isVisibleDigital?: boolean;
   isFeatured?: boolean;

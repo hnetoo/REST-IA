@@ -52,59 +52,21 @@ const POS = () => {
   
   // VALIDAÇÃO DOS LOGS - DEBUG DO FILTRO
   const filteredByCategory = menu.filter(d => {
-    const match = selectedCategoryId === 'TODOS' || 
-      (d.category?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase());
-    return match;
+    const matchesCategory = selectedCategoryId === 'TODOS' || d.category_id === selectedCategoryId;
+    return matchesCategory;
   });
   const filteredBySearch = filteredByCategory.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
   
-  console.log("[POS] Categoria selecionada:", selectedCategoryId);
-  console.log("[POS] Produtos após filtro de categoria:", filteredByCategory.length);
-  console.log("[POS] Produtos após filtro de busca:", filteredBySearch.length);
-  
-  // Log temporário para debug das comparações
-  if (selectedCategoryId !== 'TODOS' && menu.length > 0) {
-    console.log("[DEBUG COMPARAÇÃO] Amostra de produtos:");
-    menu.slice(0, 3).forEach((prod, idx) => {
-      console.log(`  Produto ${idx + 1}:`, {
-        id: prod.id,
-        name: prod.name,
-        categoryId: prod.categoryId,
-        category: prod.category, // NOVO: Campo do Supabase
-        categoryIdTrimmed: prod.categoryId?.trim(),
-        categoryTrimmed: prod.category?.trim(), // NOVO
-        categoryIdLower: prod.categoryId?.trim().toLowerCase(),
-        categoryLower: prod.category?.trim().toLowerCase(), // NOVO
-        comparandoCategoryId: prod.categoryId?.trim().toLowerCase(),
-        comparandoCategory: prod.category?.trim().toLowerCase(), // NOVO
-        com: selectedCategoryId?.trim().toLowerCase(),
-        resultadoCategoryId: prod.categoryId?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase(),
-        resultadoCategory: prod.category?.trim().toLowerCase() === selectedCategoryId?.trim().toLowerCase() // NOVO
-      });
-    });
-    
-    console.log("[DEBUG COMPARAÇÃO] Categorias disponíveis:");
-    categories.forEach(cat => {
-      console.log(`  Categoria: ${cat.id?.trim()} - ${cat.name} (trimmed: ${cat.id?.trim().toLowerCase()})`);
-    });
-    
-    console.log("[DEBUG COMPARAÇÃO] Categoria selecionada:", {
-      original: selectedCategoryId,
-      trimmed: selectedCategoryId?.trim(),
-      lowered: selectedCategoryId?.trim().toLowerCase()
-    });
-  }
-  
-  console.log("[POS] Produtos filtrados (final):", filteredBySearch.length);
+  console.log("[FILTRO] Categoria:", selectedCategoryId, "Produtos encontrados:", filteredBySearch.length);
   
   // LOG DE DEPURAÇÃO PARA IMAGENS
   if (menu.length > 0) {
     console.log("[DEBUG] Dados do Produto 1:", menu[0]);
-    console.log("[POS] URL da imagem do primeiro produto:", menu[0]?.image);
+    console.log("[POS] URL da imagem do primeiro produto:", menu[0]?.image_url);
     console.log("[POS] Estrutura da imagem:", {
-      hasImage: !!menu[0]?.image,
-      imageType: typeof menu[0]?.image,
-      imageLength: menu[0]?.image?.length,
+      hasImage: !!menu[0]?.image_url,
+      imageType: typeof menu[0]?.image_url,
+      imageLength: menu[0]?.image_url?.length,
       allKeys: Object.keys(menu[0] || {})
     });
   }
