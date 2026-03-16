@@ -559,6 +559,29 @@ export const useStore = create<StoreState>()(
                 console.error('[POS] Erro ao persistir venda no Supabase:', error);
               } else {
                 console.log('[POS] Venda persistida com sucesso no Supabase');
+                
+                // PERSISTIR ITENS DO PEDIDO NA TABELA order_items
+                console.log('[POS] Persistindo itens do pedido:', finalOrder.items);
+                
+                const orderItems = finalOrder.items.map(item => ({
+                  order_id: finalOrder.id,
+                  product_id: item.dish.id,
+                  quantity: item.quantity,
+                  unit_price: item.dish.price,
+                  total_price: item.dish.price * item.quantity
+                }));
+
+                // Inserir todos os itens do pedido
+                supabase
+                  .from('order_items')
+                  .upsert(orderItems)
+                  .then(({ error: itemsError }) => {
+                    if (itemsError) {
+                      console.error('[POS] Erro ao persistir itens no Supabase:', itemsError);
+                    } else {
+                      console.log('[POS] Itens do pedido persistidos com sucesso:', orderItems.length, 'itens');
+                    }
+                  });
               }
             });
         }

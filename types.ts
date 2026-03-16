@@ -73,9 +73,11 @@ export interface MenuCategory {
 
 export interface OrderItem {
   dishId: string;
+  dish: Dish; // Adicionar propriedade dish para acesso ao produto completo
   quantity: number;
   status: 'PENDENTE' | 'PREPARANDO' | 'PRONTO' | 'ENTREGUE';
-  notes: string;
+  notes?: string;
+  timestamp?: Date | string;
   unitPrice: number;
   unitCost: number;
   taxAmount: number;
