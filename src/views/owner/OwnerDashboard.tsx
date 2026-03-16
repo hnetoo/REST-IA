@@ -395,7 +395,7 @@ const OwnerDashboard = () => {
       // QUERY SIMPLIFICADA E ROBUSTA
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, created_at, total_amount_kz, status')
+        .select('id, created_at, total_amount, status')
         .eq('status', 'closed')
         .order('created_at', { ascending: false })
         .limit(50);
@@ -528,7 +528,6 @@ const OwnerDashboard = () => {
           .lte('created_at', endDate);
 
         console.log('[DASHBOARD] Dados brutos das vendas:', ordersData);
-        console.error('[DASHBOARD] Erro detalhado vendas:', ordersError);
 
         if (!ordersError && ordersData && ordersData.length > 0) {
           totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
@@ -632,6 +631,7 @@ const OwnerDashboard = () => {
       // ATUALIZAR GRÁFICOS E DADOS VISUAIS
       await fetchTopProducts();
       await fetchChartData();
+      await fetchRecentSales();
       
       // FORÇAR ATUALIZAÇÃO DO ESTADO
       setMetrics(finalMetrics);
