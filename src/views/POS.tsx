@@ -46,6 +46,11 @@ const POS = () => {
   
   const currentOrder = activeOrders.find(o => o.id === activeOrderId);
   
+  // LOG DE DEBUG PARA PRODUTOS NO POS
+  console.log("[POS] Produtos carregados:", menu.length);
+  console.log("[POS] Categorias disponíveis:", categories.length);
+  console.log("[POS] Produtos filtrados:", menu.filter(d => selectedCategoryId === 'TODOS' || d.categoryId === selectedCategoryId).filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase())).length);
+  
   // Função de impressão direta - SEM CONFIGURAÇÃO
   const handleDirectPrint = (order: any, customer?: any) => {
     console.log(`[POS] Imprimindo diretamente: ${order.invoiceNumber}`);

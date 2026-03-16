@@ -974,6 +974,21 @@ restoreFromSupabase: async () => {
       syncProductsToCloud: async () => {
         get().addNotification('info', 'Sincronizando produtos com a nuvem...');
         try {
+          // VERIFICAÇÃO DA TABELA 'PRODUCTS' NO SUPABASE
+          console.log("[STORE] Verificando tabela products no Supabase...");
+          const { data: productsData, error: productsError } = await supabase
+            .from('products')
+            .select('*')
+            .eq('active', true);
+
+          if (productsError) {
+            console.error('[STORE] Erro ao buscar produtos:', productsError);
+            get().addNotification('error', 'Falha ao buscar produtos do Supabase');
+            return;
+          }
+
+          console.log("[STORE] Produtos encontrados no Supabase:", productsData?.length || 0);
+          
           const state = get();
           await supabase
             .from('restaurant_state')
