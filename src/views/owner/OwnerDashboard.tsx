@@ -248,14 +248,13 @@ const OwnerDashboard = () => {
     }
   };
 
-  // Buscar faturação histórica da tabela financial_history
+  // Buscar faturação histórica da tabela external_history (UNIFICADO)
   const fetchHistoricoRevenue = async () => {
     try {
       const { data: historicoData, error: historicoError } = await supabase
-        .from('financial_history')
-        .select('revenue, expenses, profit, created_at, system, period')
-        .eq('status', 'ACTIVE')
-        .order('created_at', { ascending: false });
+        .from('external_history')
+        .select('total_revenue, gross_profit, source_name, period')
+        .order('period', { ascending: false });
 
       if (historicoError) {
         console.error('[DASHBOARD] Erro ao buscar faturação histórica:', historicoError);
@@ -264,12 +263,12 @@ const OwnerDashboard = () => {
       }
 
       if (!historicoData || historicoData.length === 0) {
-        console.log('[DASHBOARD] Nenhum dado encontrado em financial_history');
+        console.log('[DASHBOARD] Nenhum dado encontrado em external_history');
         return 0;
       }
 
-      const totalHistorico = historicoData.reduce((sum, record) => sum + Number(record.revenue || 0), 0);
-      console.log('[DASHBOARD] Faturação histórica total (financial_history):', totalHistorico);
+      const totalHistorico = historicoData.reduce((sum, record) => sum + Number(record.total_revenue || 0), 0);
+      console.log('[DASHBOARD] Faturação histórica total (external_history):', totalHistorico);
       return totalHistorico;
     } catch (error) {
       console.error('[DASHBOARD] Erro na busca de faturação histórica:', error);
