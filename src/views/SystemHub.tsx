@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Settings, Users, Shield, FileText, Cloud, Terminal,
   ChevronRight, Building, UserCheck, Lock, Database, Code,
@@ -8,6 +8,7 @@ import {
 import { useStore } from '../store/useStore';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
 import { UserRole } from '../../types';
+import { supabase } from '../lib/supabase';
 
 // Importar componentes existentes
 import Employees from './Employees';
