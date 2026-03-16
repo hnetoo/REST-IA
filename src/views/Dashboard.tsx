@@ -6,7 +6,7 @@ import { DollarSign, ShoppingBag, Users, TrendingUp, Sparkles, Loader2, Activity
 import { AIAnalysisResult, Order } from '../../types';
 
 const Dashboard = () => {
-  const { activeOrders, customers, menu, settings, addNotification } = useStore();
+  const { activeOrders, customers, menu, settings, addNotification, metrics } = useStore();
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
 
@@ -14,12 +14,22 @@ const Dashboard = () => {
   
   const today = new Date().toISOString().split('T')[0];
   
+  // USAR DADOS DO STORE GLOBAL (Owner Dashboard) para consistência
   const todayMetrics = useMemo(() => {
+    // Se temos métricas globais, usar os dados reais calculados
+    if (metrics && metrics.totalVendas > 0) {
+      const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
+      const revenue = metrics.totalVendas; // Usar valor calculado do Owner Dashboard
+      const profit = metrics.lucroLiquido || 0; // Usar lucro líquido calculado
+      return { revenue, profit, count: orders.length, orders };
+    }
+    
+    // Fallback para cálculo local (se não tiver métricas globais)
     const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
     const revenue = orders.reduce((acc, o) => acc + o.total, 0);
     const profit = orders.reduce((acc, o) => acc + o.profit, 0);
     return { revenue, profit, count: orders.length, orders };
-  }, [closedOrders, today]);
+  }, [closedOrders, today, metrics]);
 
   const recentInvoices = useMemo(() => {
     return [...closedOrders]
