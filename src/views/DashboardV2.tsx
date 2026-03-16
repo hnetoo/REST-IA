@@ -161,8 +161,10 @@ const DashboardV2 = () => {
       
       if (externalError) {
         console.error('[DashboardV2] Erro ao buscar histórico externo:', externalError);
-      } else if (externalHistory && externalHistory.length > 0) {
-        // Soma dinâmica de todos os registos
+      } else if (!externalHistory || externalHistory.length === 0) {
+        console.log('[DASHBOARD] Histórico vazio. Exibindo valores zerados.');
+      } else {
+        // Soma dinâmica de todos os registos com tratamento seguro
         historicoExternoRevenue = externalHistory.reduce((sum, item) => sum + (item.total_revenue || 0), 0);
         historicoExternoProfit = externalHistory.reduce((sum, item) => sum + (item.gross_profit || 0), 0);
         console.log('[DashboardV2] Histórico externo carregado:', { 
@@ -170,8 +172,6 @@ const DashboardV2 = () => {
           revenue: historicoExternoRevenue, 
           profit: historicoExternoProfit 
         });
-      } else {
-        console.log('[DashboardV2] Nenhum registro encontrado em external_history');
       }
 
       // 4. Buscar logs de auditoria
@@ -216,7 +216,9 @@ const DashboardV2 = () => {
         });
       });
 
-      const totalExpenses = expensesData?.reduce((sum, expense: ExpenseData) => sum + (expense.amount || 0), 0) || 0;
+      const totalExpenses = (expensesData && expensesData.length > 0) 
+        ? expensesData.reduce((sum, expense: ExpenseData) => sum + (expense.amount || 0), 0) 
+        : 0;
       const totalProfit = totalRevenue - totalCost - totalExpenses;
       const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
       const taxProvision = totalRevenue * 0.065; // 6.5% de provisão
@@ -245,9 +247,11 @@ const DashboardV2 = () => {
         .sort((a, b) => a.hour.localeCompare(b.hour));
 
       // Processar top 3 despesas
-      const topExpenses: ExpenseData[] = (expensesData || [])
-        .sort((a: ExpenseData, b: ExpenseData) => (b.amount || 0) - (a.amount || 0))
-        .slice(0, 3);
+      const topExpenses: ExpenseData[] = (expensesData && expensesData.length > 0)
+        ? expensesData
+            .sort((a: ExpenseData, b: ExpenseData) => (b.amount || 0) - (a.amount || 0))
+            .slice(0, 3)
+        : [];
 
       // Calcular faturação total
       const faturacaoTotal = historicoExternoRevenue + totalRevenue;
