@@ -1351,6 +1351,7 @@ const SystemHub = () => {
   const FinancialHistory = () => {
     const [records, setRecords] = useState([]);
     const [showForm, setShowForm] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
       system: '',
       period: '',
@@ -1363,6 +1364,40 @@ const SystemHub = () => {
       currency: 'AOA', 
       maximumFractionDigits: 2 
     }).format(val);
+
+    // Carregar dados do Supabase
+    useEffect(() => {
+      const loadExternalHistory = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('external_history')
+            .select('source_name, total_revenue, gross_profit, period');
+
+          if (error) {
+            console.error('[SystemHub] Erro ao carregar histórico externo:', error);
+            setRecords([]);
+          } else {
+            // Transformar dados do Supabase para o formato do componente
+            const transformedRecords = (data || []).map((item, index) => ({
+              id: item.source_name || `record-${index}`,
+              system: item.source_name || 'Sistema Externo',
+              period: item.period || 'N/A',
+              revenue: item.total_revenue || 0,
+              profit: item.gross_profit || 0,
+              date: new Date().toISOString().split('T')[0]
+            }));
+            setRecords(transformedRecords);
+          }
+        } catch (error) {
+          console.error('[SystemHub] Erro ao buscar histórico:', error);
+          setRecords([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadExternalHistory();
+    }, []);
 
     const handleAddRecord = (e: React.FormEvent) => {
       e.preventDefault();
@@ -1379,34 +1414,47 @@ const SystemHub = () => {
       setShowForm(false);
     };
 
-    const totalRevenue = records.reduce((sum, record) => sum + record.revenue, 0);
-    const totalProfit = records.reduce((sum, record) => sum + record.profit, 0);
+    // Tratamento seguro para arrays vazios
+    const totalRevenue = records.reduce((sum, record) => sum + (record.revenue || 0), 0);
+    const totalProfit = records.reduce((sum, record) => sum + (record.profit || 0), 0);
     const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
     return (
       <div className="space-y-6">
-        {/* Resumo Financeiro */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-            Resumo Financeiro Histórico
-          </h4>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-green-500/10 rounded-2xl border border-green-500/20">
-              <div className="text-2xl font-black text-green-400">{formatKz(totalRevenue)}</div>
-              <div className="text-xs text-green-300 uppercase tracking-widest mt-1">Receita Total</div>
-            </div>
-            <div className="text-center p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-              <div className="text-2xl font-black text-blue-400">{formatKz(totalProfit)}</div>
-              <div className="text-xs text-blue-300 uppercase tracking-widest mt-1">Lucro Total</div>
-            </div>
-            <div className="text-center p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
-              <div className="text-2xl font-black text-purple-400">{avgProfitMargin.toFixed(1)}%</div>
-              <div className="text-xs text-purple-300 uppercase tracking-widest mt-1">Margem Média</div>
+        {/* Loading State */}
+        {loading && (
+          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-3 text-white">Carregando histórico financeiro...</span>
             </div>
           </div>
-        </div>
+        )}
+
+        {!loading && (
+          <>
+            {/* Resumo Financeiro */}
+            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+              <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+                <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                Resumo Financeiro Histórico
+              </h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-green-500/10 rounded-2xl border border-green-500/20">
+                  <div className="text-2xl font-black text-green-400">{formatKz(totalRevenue)}</div>
+                  <div className="text-xs text-green-300 uppercase tracking-widest mt-1">Receita Total</div>
+                </div>
+                <div className="text-center p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+                  <div className="text-2xl font-black text-blue-400">{formatKz(totalProfit)}</div>
+                  <div className="text-xs text-blue-300 uppercase tracking-widest mt-1">Lucro Total</div>
+                </div>
+                <div className="text-center p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
+                  <div className="text-2xl font-black text-purple-400">{avgProfitMargin.toFixed(1)}%</div>
+                  <div className="text-xs text-purple-300 uppercase tracking-widest mt-1">Margem Média</div>
+                </div>
+              </div>
+            </div>
 
         {/* Formulário de Adição */}
         {showForm && (
@@ -1476,93 +1524,106 @@ const SystemHub = () => {
           </div>
         )}
 
-        {/* Tabela de Registros com Botões de Ação */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
-              Registros Históricos
-            </h4>
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="px-4 py-2 bg-primary text-black rounded-xl font-black uppercase text-[10px] tracking-widest shadow-glow hover:bg-primary/80 transition-all flex items-center gap-2"
-            >
-              <Plus size={16}/> Novo Registro
-            </button>
-          </div>
-          
-          <div className="max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
-            <div className="space-y-3">
-              {records.map(record => (
-                <div key={record.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all group">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4">
-                      <div className="text-white font-bold">{record.system}</div>
-                      <div className="text-slate-400 text-sm">{record.period}</div>
-                      <div className="text-xs text-slate-500">{record.date}</div>
+        {/* Empty State */}
+            {records.length === 0 && (
+              <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Landmark className="w-8 h-8 text-slate-500" />
+                  </div>
+                  <h4 className="text-white font-bold mb-2">Nenhum registro histórico</h4>
+                  <p className="text-slate-400 text-sm mb-6">
+                    Adicione registros de sistemas anteriores para visualizar o histórico financeiro
+                  </p>
+                  <button
+                    onClick={() => setShowForm(true)}
+                    className="px-6 py-3 bg-primary text-black rounded-lg font-medium hover:brightness-110 transition-all"
+                  >
+                    Adicionar Primeiro Registro
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Lista de Registros */}
+            {records.length > 0 && (
+              <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
+                <h4 className="text-sm font-black text-white italic uppercase mb-6">Registros Históricos</h4>
+                <div className="space-y-4">
+                  {records.map((record) => (
+                    <div key={record.id} className="group p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h5 className="text-white font-bold">{record.system}</h5>
+                          <p className="text-slate-400 text-sm">{record.period}</p>
+                          <div className="text-xs text-slate-500">{record.date}</div>
+                        </div>
+                        <div className="flex items-center gap-6 mt-2">
+                          <div className="text-green-400 font-bold">{formatKz(record.revenue)}</div>
+                          <div className="text-blue-400 font-bold">{formatKz(record.profit)}</div>
+                          <div className="text-purple-400 text-sm">
+                            {record.revenue > 0 ? ((record.profit / record.revenue) * 100).toFixed(1) : 0}% margem
+                          </div>
+                        </div>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                            <Edit2 size={16}/>
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setRecords(records.filter(r => r.id !== record.id));
+                              addNotification('success', 'Registro removido com sucesso!');
+                            }}
+                            className="p-2 text-red-500/30 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                          >
+                            <Trash2 size={16}/>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-6 mt-2">
-                      <div className="text-green-400 font-bold">{formatKz(record.revenue)}</div>
-                      <div className="text-blue-400 font-bold">{formatKz(record.profit)}</div>
-                      <div className="text-purple-400 text-sm">
-                        {record.revenue > 0 ? ((record.profit / record.revenue) * 100).toFixed(1) : 0}% margem
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Análise Comparativa */}
+            {records.length > 0 && (
+              <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
+                <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
+                  <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
+                  Análise Comparativa
+                </h4>
+                
+                <div className="space-y-4">
+                  <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
+                    <h5 className="text-white font-bold mb-2">Insights Financeiros</h5>
+                    <ul className="space-y-2 text-xs text-slate-400">
+                      <li>• Total de {records.length} sistemas registrados</li>
+                      <li>• Melhor margem: {records.length > 0 ? Math.max(...records.map(r => (r.profit / r.revenue) * 100)).toFixed(1) : 0}%</li>
+                      <li>• Período médio de operação: 6 meses</li>
+                      <li>• Crescimento médio mensal: {avgProfitMargin.toFixed(1)}%</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                      <div className="text-slate-400 text-sm mb-1">Maior Receita</div>
+                      <div className="text-green-400 font-bold">
+                        {records.length > 0 ? formatKz(Math.max(...records.map(r => r.revenue))) : formatKz(0)}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+                      <div className="text-slate-400 text-sm mb-1">Maior Lucro</div>
+                      <div className="text-blue-400 font-bold">
+                        {records.length > 0 ? formatKz(Math.max(...records.map(r => r.profit))) : formatKz(0)}
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-all">
-                      <Edit2 size={16}/>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setRecords(records.filter(r => r.id !== record.id));
-                        addNotification('success', 'Registro removido com sucesso!');
-                      }}
-                      className="p-2 text-red-500/30 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                    >
-                      <Trash2 size={16}/>
-                    </button>
-                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Análise Comparativa */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-            Análise Comparativa
-          </h4>
-          
-          <div className="space-y-4">
-            <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
-              <h5 className="text-white font-bold mb-2">Insights Financeiros</h5>
-              <ul className="space-y-2 text-xs text-slate-400">
-                <li>• Total de {records.length} sistemas registrados</li>
-                <li>• Melhor margem: {Math.max(...records.map(r => (r.profit / r.revenue) * 100)).toFixed(1)}%</li>
-                <li>• Período médio de operação: 6 meses</li>
-                <li>• Crescimento médio mensal: {avgProfitMargin.toFixed(1)}%</li>
-              </ul>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="text-xs text-slate-400 mb-2">Sistema Mais Rentável</p>
-                <p className="text-lg font-bold text-green-400">
-                  {records.reduce((max, r) => r.profit > max.profit ? r : max).system}
-                </p>
               </div>
-              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="text-xs text-slate-400 mb-2">Maior Receita</p>
-                <p className="text-lg font-bold text-blue-400">
-                  {records.reduce((max, r) => r.revenue > max.revenue ? r : max).system}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+            )}
+          </>
+        )}
       </div>
     );
   };
