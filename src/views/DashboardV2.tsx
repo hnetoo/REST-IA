@@ -151,10 +151,11 @@ const DashboardV2 = () => {
         console.error('[DashboardV2] Erro ao buscar despesas:', expensesError);
       }
 
-      // 3. Buscar histórico externo (sistemas legados)
+      // 3. Buscar histórico externo (registo mestre)
       const { data: externalHistory, error: externalError } = await supabase
         .from('external_history')
-        .select('source_name, total_revenue, gross_profit, period');
+        .select('source_name, total_revenue, gross_profit, period')
+        .single(); // Pega o registo mestre
 
       let historicoExternoRevenue = 0;
       let historicoExternoProfit = 0;
@@ -162,8 +163,8 @@ const DashboardV2 = () => {
       if (externalError) {
         console.error('[DashboardV2] Erro ao buscar histórico externo:', externalError);
       } else if (externalHistory) {
-        historicoExternoRevenue = externalHistory.reduce((sum, item) => sum + (item.total_revenue || 0), 0);
-        historicoExternoProfit = externalHistory.reduce((sum, item) => sum + (item.gross_profit || 0), 0);
+        historicoExternoRevenue = externalHistory.total_revenue || 0;
+        historicoExternoProfit = externalHistory.gross_profit || 0;
       }
 
       // 4. Buscar logs de auditoria
@@ -310,7 +311,10 @@ const DashboardV2 = () => {
       totalProfit: metrics.totalProfit,
       reservaFiscal: metrics.reservaFiscal,
       caixaDisponivel: metrics.caixaDisponivel,
-      liquidezStatus: metrics.liquidezStatus
+      liquidezStatus: metrics.liquidezStatus,
+      historicoExternoRevenue: metrics.historicoExternoRevenue,
+      historicoExternoProfit: metrics.historicoExternoProfit,
+      faturacaoTotal: metrics.faturacaoTotal
     });
   }, [metrics]);
 
