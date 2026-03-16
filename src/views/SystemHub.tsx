@@ -1376,9 +1376,12 @@ const SystemHub = () => {
           if (error) {
             console.error('[SystemHub] Erro ao carregar histórico externo:', error);
             setRecords([]);
+          } else if (!data || data.length === 0) {
+            console.log('[SystemHub] Nenhum registro encontrado em external_history');
+            setRecords([]);
           } else {
             // Transformar dados do Supabase para o formato do componente
-            const transformedRecords = (data || []).map((item, index) => ({
+            const transformedRecords = data.map((item, index) => ({
               id: item.source_name || `record-${index}`,
               system: item.source_name || 'Sistema Externo',
               period: item.period || 'N/A',
@@ -1387,6 +1390,11 @@ const SystemHub = () => {
               date: new Date().toISOString().split('T')[0]
             }));
             setRecords(transformedRecords);
+            console.log('[SystemHub] Histórico carregado:', { 
+              registros: transformedRecords.length,
+              totalRevenue: transformedRecords.reduce((sum, r) => sum + (r.revenue || 0), 0),
+              totalProfit: transformedRecords.reduce((sum, r) => sum + (r.profit || 0), 0)
+            });
           }
         } catch (error) {
           console.error('[SystemHub] Erro ao buscar histórico:', error);
@@ -1414,10 +1422,21 @@ const SystemHub = () => {
       setShowForm(false);
     };
 
-    // Tratamento seguro para arrays vazios
+    // Tratamento seguro para arrays vazios - EVITA CRASH
     const totalRevenue = records.reduce((sum, record) => sum + (record.revenue || 0), 0);
     const totalProfit = records.reduce((sum, record) => sum + (record.profit || 0), 0);
     const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+    // Função segura para cálculos que não crasha com arrays vazios
+    const safeMax = (arr: number[], defaultValue = 0) => {
+      return arr.length > 0 ? Math.max(...arr) : defaultValue;
+    };
+
+    const maxRevenue = safeMax(records.map(r => r.revenue || 0));
+    const maxProfit = safeMax(records.map(r => r.profit || 0));
+    const bestMargin = records.length > 0 
+      ? safeMax(records.map(r => r.revenue > 0 ? (r.profit / r.revenue) * 100 : 0))
+      : 0;
 
     return (
       <div className="space-y-6">
@@ -1599,7 +1618,7 @@ const SystemHub = () => {
                     <h5 className="text-white font-bold mb-2">Insights Financeiros</h5>
                     <ul className="space-y-2 text-xs text-slate-400">
                       <li>• Total de {records.length} sistemas registrados</li>
-                      <li>• Melhor margem: {records.length > 0 ? Math.max(...records.map(r => (r.profit / r.revenue) * 100)).toFixed(1) : 0}%</li>
+                      <li>• Melhor margem: {bestMargin.toFixed(1)}%</li>
                       <li>• Período médio de operação: 6 meses</li>
                       <li>• Crescimento médio mensal: {avgProfitMargin.toFixed(1)}%</li>
                     </ul>
@@ -1609,13 +1628,13 @@ const SystemHub = () => {
                     <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
                       <div className="text-slate-400 text-sm mb-1">Maior Receita</div>
                       <div className="text-green-400 font-bold">
-                        {records.length > 0 ? formatKz(Math.max(...records.map(r => r.revenue))) : formatKz(0)}
+                        {formatKz(maxRevenue)}
                       </div>
                     </div>
                     <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
                       <div className="text-slate-400 text-sm mb-1">Maior Lucro</div>
                       <div className="text-blue-400 font-bold">
-                        {records.length > 0 ? formatKz(Math.max(...records.map(r => r.profit))) : formatKz(0)}
+                        {formatKz(maxProfit)}
                       </div>
                     </div>
                   </div>
