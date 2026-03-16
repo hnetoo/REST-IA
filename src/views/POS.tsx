@@ -49,7 +49,36 @@ const POS = () => {
   // LOG DE DEBUG PARA PRODUTOS NO POS
   console.log("[POS] Produtos carregados:", menu.length);
   console.log("[POS] Categorias disponíveis:", categories.length);
-  console.log("[POS] Produtos filtrados:", menu.filter(d => selectedCategoryId === 'TODOS' || d.categoryId === selectedCategoryId).filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase())).length);
+  
+  // VALIDAÇÃO DOS LOGS - DEBUG DO FILTRO
+  const filteredByCategory = menu.filter(d => selectedCategoryId === 'TODOS' || d.categoryId === selectedCategoryId);
+  const filteredBySearch = filteredByCategory.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  
+  console.log("[POS] Categoria selecionada:", selectedCategoryId);
+  console.log("[POS] Produtos após filtro de categoria:", filteredByCategory.length);
+  console.log("[POS] Produtos após filtro de busca:", filteredBySearch.length);
+  
+  // Log temporário para debug das comparações
+  if (selectedCategoryId !== 'TODOS' && menu.length > 0) {
+    console.log("[DEBUG COMPARAÇÃO] Amostra de produtos:");
+    menu.slice(0, 3).forEach((prod, idx) => {
+      console.log(`  Produto ${idx + 1}:`, {
+        id: prod.id,
+        name: prod.name,
+        categoryId: prod.categoryId,
+        comparando: prod.categoryId,
+        com: selectedCategoryId,
+        resultado: prod.categoryId === selectedCategoryId
+      });
+    });
+    
+    console.log("[DEBUG COMPARAÇÃO] Categorias disponíveis:");
+    categories.forEach(cat => {
+      console.log(`  Categoria: ${cat.id} - ${cat.name}`);
+    });
+  }
+  
+  console.log("[POS] Produtos filtrados (final):", filteredBySearch.length);
   
   // LOG DE DEPURAÇÃO PARA IMAGENS
   if (menu.length > 0) {
@@ -462,7 +491,7 @@ const POS = () => {
               </div>
            ) : (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 lg:gap-6 animate-in fade-in zoom-in duration-700">
-                 {menu.filter(d => selectedCategoryId === 'TODOS' || d.categoryId === selectedCategoryId).filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase())).map((dish) => (
+                 {filteredBySearch.map((dish) => (
                     <button 
                       key={dish.id} 
                       onClick={() => handleAddToOrder(dish)} 
