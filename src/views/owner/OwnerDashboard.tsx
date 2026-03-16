@@ -78,6 +78,7 @@ const OwnerDashboard = () => {
   const [totalVendasNoState, setTotalVendasNoState] = useState<number>(0);
   const [despesasNoState, setDespesasNoState] = useState<number>(0);
   const [despesasAcumuladasNoState, setDespesasAcumuladasNoState] = useState<number>(0);
+  const [folhaSalarialNoState, setFolhaSalarialNoState] = useState<number>(0);
 
   // Função para obter range de datas baseado no período
   const getDateRange = (periodo: 'HOJE' | 'SEMANA' | 'MÊS' | 'ANO') => {
