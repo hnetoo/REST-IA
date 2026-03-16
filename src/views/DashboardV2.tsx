@@ -428,12 +428,22 @@ const DashboardV2 = () => {
             <CreditCard className="text-blue-500" size={24} />
           </div>
           <div className="space-y-2">
-            {metrics.paymentMethods.slice(0, 3).map((payment, index) => (
-              <div key={index} className="flex justify-between">
-                <span className="text-slate-400 text-sm">{payment.method}</span>
-                <span className="text-white font-bold">{formatKz(payment.amount)}</span>
-              </div>
-            ))}
+            <div className="flex justify-between">
+              <span className="text-slate-400 text-sm">Histórico Externo</span>
+              <span className="text-white font-bold">{formatKz(metrics.historicoExternoProfit)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400 text-sm">Vendas Hoje</span>
+              <span className="text-white font-bold">{formatKz(metrics.totalRevenue)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400 text-sm">Faturação Total</span>
+              <span className="text-green-400 font-bold">{formatKz(metrics.faturacaoTotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400 text-sm">Despesas Hoje</span>
+              <span className="text-white font-bold">{formatKz(metrics.totalExpenses)}</span>
+            </div>
           </div>
         </div>
 
