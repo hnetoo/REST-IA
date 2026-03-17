@@ -39,7 +39,7 @@ const Finance = () => {
   });
 
   const closedOrders = useMemo(() => activeOrders.filter(o => o.status === 'FECHADO'), [activeOrders]);
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }).split(',')[0];
 
   const metrics = useMemo(() => {
     const gross = closedOrders.reduce((acc, o) => acc + o.total, 0);

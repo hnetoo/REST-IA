@@ -6,7 +6,7 @@ import { DollarSign, ShoppingBag, Users, TrendingUp, Sparkles, Loader2, Activity
 import { AIAnalysisResult, Order } from '../../types';
 
 const Dashboard = () => {
-  const { activeOrders, customers, menu, settings, addNotification } = useStore();
+  const { activeOrders, customers, menu, settings, addNotification, expenses, loadExpenses } = useStore();
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
@@ -19,20 +19,27 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
+        // Carregar despesas do Supabase primeiro
+        await loadExpenses();
+        
         // IMPORTAR DIRETAMENTE DO OWNER DASHBOARD - SEM API
         // Usar dados locais do store para evitar erro 500/404
         console.log('[DASHBOARD PRINCIPAL] Usando dados locais para evitar erro de API');
         
         // Simular métricas baseadas em pedidos fechados (fallback seguro)
-        const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
+        const orders = closedOrders.filter(o => String(new Date(o.timestamp).toISOString() || '').split('T')[0] === today);
         const revenue = orders.reduce((acc, o) => acc + o.total, 0);
         const profit = orders.reduce((acc, o) => acc + o.profit, 0);
         
+        // Calcular despesas do dia usando os dados carregados
+        const todayExpenses = expenses.filter(exp => String(exp.date || '').split('T')[0] === today);
+        const totalExpenses = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+        
         const mockMetrics = {
           totalVendas: revenue,
-          despesas: 0, // Calcular depois se necessário
-          folhaSalarial: 0, // Calcular depois se necessário
-          lucroLiquido: (revenue || 0) - (0) - (0) - (revenue * 0.065 || 0)
+          despesas: totalExpenses,
+          folhaSalarial: 0,
+          lucroLiquido: (revenue || 0) - (totalExpenses || 0) - (0) - ((revenue || 0) * 0.065 || 0)
         };
         
         setMetrics(mockMetrics);
@@ -45,7 +52,7 @@ const Dashboard = () => {
     };
     
     fetchMetrics();
-  }, [closedOrders, today]);
+  }, [closedOrders, today, expenses, loadExpenses]);
   
   // USAR DADOS DO STORE GLOBAL (Owner Dashboard) para consistência
   const todayMetrics = useMemo(() => {

@@ -100,6 +100,7 @@ interface StoreState {
   updateExpense: (id: string, expense: Partial<Expense>) => void;
   removeExpense: (id: string) => void;
   approveExpense: (id: string, approvedBy: string) => void;
+  loadExpenses: () => Promise<void>;
   syncProductsToCloud: () => Promise<void>;
   syncCategoriesToCloud: () => Promise<void>;
   
@@ -1024,6 +1025,48 @@ restoreFromSupabase: async () => {
       updateExpense: (id, expense) => set(state => ({
         expenses: state.expenses.map(e => e.id === id ? { ...e, ...expense, updatedAt: new Date() } : e)
       })),
+
+      // CARREGAR DESPESAS DO SUPABASE
+      loadExpenses: async () => {
+        try {
+          console.log('[EXPENSE] Carregando despesas do Supabase...');
+          
+          const { data: expensesData, error } = await supabase
+            .from('expenses')
+            .select('*')
+            .order('date', { ascending: false });
+
+          if (error) {
+            console.error('[EXPENSE] Erro ao carregar despesas:', error);
+            get().addNotification('error', 'Falha ao carregar despesas');
+            return;
+          }
+
+          console.log('[EXPENSE] Despesas carregadas:', expensesData?.length || 0);
+
+          // Converter para o formato local
+          const formattedExpenses = expensesData?.map(exp => ({
+            id: exp.id,
+            description: exp.description || '',
+            amount: Number(exp.amount_kz || exp.amount || 0),
+            category: exp.category || 'OUTROS',
+            status: exp.status || 'PENDENTE',
+            paymentMethod: exp.payment_method || 'NUMERARIO',
+            receipt: exp.receipt || '',
+            notes: exp.notes || '',
+            date: exp.date || new Date(),
+            createdAt: exp.created_at || new Date(),
+            updatedAt: exp.updated_at || new Date()
+          })) || [];
+
+          set({ expenses: formattedExpenses });
+          console.log('[EXPENSE] Estado atualizado com despesas:', formattedExpenses.length);
+          
+        } catch (error) {
+          console.error('[EXPENSE] Erro crítico ao carregar despesas:', error);
+          get().addNotification('error', 'Falha crítica ao carregar despesas');
+        }
+      },
 
       removeExpense: (id) => set(state => ({
         expenses: state.expenses.filter(e => e.id !== id)
