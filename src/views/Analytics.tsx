@@ -20,7 +20,7 @@ const Analytics = () => {
 
   // Calcular métricas reais
   const realMetrics = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = String(new Date().toISOString().split('T')[0] || '');
     
     // Vendas Hoje: filtrar pedidos fechados de hoje
     const todayOrders = activeOrders.filter(order => 

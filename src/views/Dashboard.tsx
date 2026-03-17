@@ -6,7 +6,7 @@ import { DollarSign, ShoppingBag, Users, TrendingUp, Sparkles, Loader2, Activity
 import { AIAnalysisResult, Order } from '../../types';
 
 const Dashboard = () => {
-  const { activeOrders, customers, menu, settings, addNotification, expenses, loadExpenses } = useStore();
+  const { activeOrders, customers, menu, settings, addNotification, expenses, loadExpenses, employees, loadEmployees } = useStore();
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
@@ -19,8 +19,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        // Carregar despesas do Supabase primeiro
+        // Carregar despesas e funcionários do Supabase primeiro
         await loadExpenses();
+        await loadEmployees();
         
         // IMPORTAR DIRETAMENTE DO OWNER DASHBOARD - SEM API
         // Usar dados locais do store para evitar erro 500/404
@@ -35,11 +36,14 @@ const Dashboard = () => {
         const todayExpenses = expenses.filter(exp => String(exp.date || '').split('T')[0] === today);
         const totalExpenses = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
         
+        // Calcular folha salarial usando os funcionários carregados
+        const totalPayroll = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
+        
         const mockMetrics = {
           totalVendas: revenue,
           despesas: totalExpenses,
-          folhaSalarial: 0,
-          lucroLiquido: (revenue || 0) - (totalExpenses || 0) - (0) - ((revenue || 0) * 0.065 || 0)
+          folhaSalarial: totalPayroll,
+          lucroLiquido: (revenue || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((revenue || 0) * 0.065 || 0)
         };
         
         setMetrics(mockMetrics);
@@ -52,7 +56,7 @@ const Dashboard = () => {
     };
     
     fetchMetrics();
-  }, [closedOrders, today, expenses, loadExpenses]);
+  }, [closedOrders, today, expenses, loadExpenses, employees, loadEmployees]);
   
   // USAR DADOS DO STORE GLOBAL (Owner Dashboard) para consistência
   const todayMetrics = useMemo(() => {

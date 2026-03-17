@@ -140,9 +140,11 @@ interface StoreState {
   removeCustomer: (id: string) => void;
   settleCustomerDebt: (id: string, amount: number) => void;
 
-  addEmployee: (employee: Employee) => void;
-  updateEmployee: (employee: Employee) => void;
+  employees: Employee[];
+  addEmployee: (e: Employee) => void;
+  updateEmployee: (e: Employee) => void;
   removeEmployee: (id: string) => void;
+  loadEmployees: () => Promise<void>;
   clockIn: (employeeId: string) => void;
   clockOut: (employeeId: string) => void;
   externalClockSync: (bioId: string) => void;
@@ -1025,6 +1027,46 @@ restoreFromSupabase: async () => {
       updateExpense: (id, expense) => set(state => ({
         expenses: state.expenses.map(e => e.id === id ? { ...e, ...expense, updatedAt: new Date() } : e)
       })),
+
+      // CARREGAR FUNCIONÁRIOS DO SUPABASE
+      loadEmployees: async () => {
+        try {
+          console.log('[STAFF] Carregando funcionários do Supabase...');
+          
+          const { data: staffData, error } = await supabase
+            .from('staff')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('[STAFF] Erro ao carregar funcionários:', error);
+            get().addNotification('error', 'Falha ao carregar funcionários');
+            return;
+          }
+
+          console.log('[STAFF] Funcionários carregados:', staffData?.length || 0);
+
+          // Converter para o formato local
+          const formattedEmployees = staffData?.map(staff => ({
+            id: staff.id,
+            name: staff.full_name || staff.name || '',
+            role: staff.role || 'EMPLOYEE',
+            salary: Number(staff.base_salary_kz || staff.salary || 0),
+            phone: staff.phone || '',
+            status: staff.status || 'ACTIVE',
+            email: staff.email || '',
+            createdAt: staff.created_at || new Date(),
+            updatedAt: staff.updated_at || new Date()
+          })) || [];
+
+          set({ employees: formattedEmployees });
+          console.log('[STAFF] Estado atualizado com funcionários:', formattedEmployees.length);
+          
+        } catch (error) {
+          console.error('[STAFF] Erro crítico ao carregar funcionários:', error);
+          get().addNotification('error', 'Falha crítica ao carregar funcionários');
+        }
+      },
 
       // CARREGAR DESPESAS DO SUPABASE
       loadExpenses: async () => {
