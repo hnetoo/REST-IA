@@ -14,6 +14,7 @@ import { Dish, PaymentMethod, Order, Table, Customer } from '../../types';
 import { printThermalInvoice, printTableReview, printCashClosing } from '../lib/printService';
 import ThermalPrinterManager from '../lib/thermalPrinterConfig';
 import LazyImage from '../components/LazyImage';
+import PaymentModal from '../components/PaymentModal';
 
 const POS = () => {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ const POS = () => {
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [lastAddedItemId, setLastAddedItemId] = useState<string | null>(null);
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   
   const [orderToChangeId, setOrderToChangeId] = useState<string | null>(null);
   
@@ -699,8 +701,8 @@ const POS = () => {
                   <button 
                     onClick={() => {
                       if (isFinalizing) return;
-                      setIsFinalizing(true);
-                      handleCheckoutFinal(selectedPaymentMethod!, selectedCustomerId);
+                      if (!currentOrder?.items.length) return;
+                      setIsPaymentModalOpen(true);
                     }} 
                     disabled={!currentOrder?.items.length || isFinalizing} 
                     className="flex-[2] py-5 bg-primary text-black rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-glow hover:brightness-110 active:scale-[0.98] disabled:opacity-10 transition-all"
@@ -931,8 +933,46 @@ const POS = () => {
         </div>
       )}
 
-    </div>
-  );
+    {/* Modal de Pagamento */}
+    <PaymentModal
+      isOpen={isPaymentModalOpen}
+      onClose={() => setIsPaymentModalOpen(false)}
+      onConfirm={async (paymentMethod: string) => {
+        try {
+          setIsFinalizing(true);
+          setIsPaymentModalOpen(false);
+          
+          // Gravar método de pagamento no Supabase
+          if (currentOrder) {
+            const { error } = await supabase
+              .from('orders')
+              .update({ 
+                payment_method: paymentMethod,
+                status: 'FECHADO'
+              })
+              .eq('id', currentOrder.id);
+              
+            if (error) {
+              console.error('Erro ao atualizar método de pagamento:', error);
+              throw error;
+            }
+          }
+          
+          // Chamar função de impressão existente
+          await handleCheckoutFinal(selectedPaymentMethod!, selectedCustomerId);
+          
+        } catch (error) {
+          console.error('Erro ao finalizar pedido:', error);
+          setIsFinalizing(false);
+          alert('Erro ao finalizar pedido. Tente novamente.');
+        }
+      }}
+      orderNumber={currentOrder?.id || 'N/A'}
+      totalAmount={currentOrder?.total || 0}
+    />
+
+  </div>
+);
 };
 
 export default POS;
