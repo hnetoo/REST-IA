@@ -114,11 +114,11 @@ const Reports = () => {
         return;
       }
 
-      // Buscar vendas no período
+      // Buscar vendas no período usando created_at
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('id, created_at, items, status')
-        .eq('status', 'closed')
+        .eq('status', 'FECHADO')
         .gte('created_at', startOfDay.toISOString())
         .lte('created_at', endOfDay.toISOString());
 
@@ -206,11 +206,11 @@ const Reports = () => {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
       
-      // Buscar pedidos fechados na data selecionada
+      // Buscar pedidos fechados na data selecionada usando created_at
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, created_at, total_amount, payment_method, status')
-        .eq('status', 'closed')
+        .select('id, created_at, total, payment_method, status')
+        .eq('status', 'FECHADO')
         .gte('created_at', startOfDay.toISOString())
         .lte('created_at', endOfDay.toISOString())
         .order('created_at', { ascending: false });
@@ -242,7 +242,7 @@ const Reports = () => {
 
       ordersData.forEach(order => {
         const method = order.payment_method || 'Não Especificado';
-        const amount = order.total_amount || 0;
+        const amount = order.total || 0;
         
         totalAmount += amount;
         
@@ -317,11 +317,11 @@ const Reports = () => {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
       
-      // Buscar pedidos fechados na data selecionada
+      // Buscar pedidos fechados na data selecionada usando created_at e total
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('id, created_at, total_amount, items, status')
-        .eq('status', 'closed')
+        .select('id, created_at, total, items, status')
+        .eq('status', 'FECHADO')
         .gte('created_at', startOfDay.toISOString())
         .lte('created_at', endOfDay.toISOString())
         .order('created_at', { ascending: false });

@@ -8,18 +8,18 @@ interface Order {
   created_at: string;
   table_id: string | null;
   status: string;
-  total_amount_kz: number;
+  total: number;
   closed_at: string | null;
 }
 
-// Interface para dados de purchase requests
-interface PurchaseRequest {
+// Interface para dados de despesas
+interface Expense {
   id: string;
   created_at: string;
   description: string;
   amount_kz: number;
-  provider: string;
-  status: 'pendente' | 'pago' | 'cancelado';
+  category: string;
+  status: string;
 }
 
 // Função para formatar moeda AKZ
@@ -88,8 +88,8 @@ export const generateSalesReport = async () => {
     doc.text(`Data: ${reportDate}`, 105, 40, { align: 'center' });
     
     // Estatísticas
-    const totalSales = orders.reduce((sum, order) => sum + (order.total_amount_kz || 0), 0);
-    const closedOrders = orders.filter(order => order.status === 'closed').length;
+    const totalSales = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const closedOrders = orders.filter(order => order.status === 'FECHADO').length;
     const averageTicket = closedOrders > 0 ? totalSales / closedOrders : 0;
     
     // Resumo
@@ -107,7 +107,7 @@ export const generateSalesReport = async () => {
       formatDate(order.created_at),
       order.table_id || 'N/A',
       order.status,
-      formatAKZ(order.total_amount_kz || 0)
+      formatAKZ(order.total || 0)
     ]);
     
     // Adicionar tabela
@@ -149,7 +149,7 @@ export const generateSalesReport = async () => {
     // Criar link de download
     const link = document.createElement('a');
     link.href = pdfUrl;
-    link.download = `relatorio-vendas-${reportDate.replace(/\//g, '-')}.pdf`;
+    link.download = `relatorio-despesas-${reportDate.replace(/\//g, '-')}.pdf`;
     
     // Adicionar ao DOM e clicar
     document.body.appendChild(link);
@@ -161,7 +161,7 @@ export const generateSalesReport = async () => {
       URL.revokeObjectURL(pdfUrl);
     }, 100);
     
-    console.log('[PDF] Relatório de vendas gerado com sucesso!');
+    console.log('[PDF] Relatório de despesas gerado com sucesso!');
     
   } catch (error) {
     console.error('[PDF] Erro ao gerar relatório:', error);
@@ -169,35 +169,35 @@ export const generateSalesReport = async () => {
   }
 };
 
-// Gerar Relatório de Compras
+// Gerar Relatório de Despesas
 export const generatePurchaseReport = async () => {
   try {
-    console.log('[PDF] Gerando relatório de compras...');
+    console.log('[PDF] Gerando relatório de despesas...');
     
-    // Buscar dados do Supabase
-    const { data: purchases, error } = await supabase
-      .from('purchase_requests')
+    // Buscar dados do Supabase da tabela expenses
+    const { data: expenses, error } = await supabase
+      .from('expenses')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[PDF] Erro ao buscar compras:', error);
-      throw new Error('Erro ao buscar dados de compras');
+      console.error('[PDF] Erro ao buscar despesas:', error);
+      throw new Error('Erro ao buscar dados de despesas');
     }
 
-    if (!purchases || purchases.length === 0) {
-      console.log('[PDF] Nenhuma compra encontrada');
-      throw new Error('Nenhuma compra encontrada para gerar relatório');
+    if (!expenses || expenses.length === 0) {
+      console.log('[PDF] Nenhuma despesa encontrada');
+      throw new Error('Nenhuma despesa encontrada para gerar relatório');
     }
 
-    console.log(`[PDF] ${purchases.length} compras encontradas`);
+    console.log(`[PDF] ${expenses.length} despesas encontradas`);
 
     // Criar documento PDF
     const doc = new jsPDF();
     
     // Cabeçalho
     doc.setFontSize(20);
-    doc.text('Relatório de Compras', 105, 20, { align: 'center' });
+    doc.text('Relatório de Despesas', 105, 20, { align: 'center' });
     
     doc.setFontSize(12);
     doc.text('Tasca Do Vereda - Sistema de Gestão', 105, 30, { align: 'center' });
@@ -211,33 +211,33 @@ export const generatePurchaseReport = async () => {
     doc.text(`Data: ${reportDate}`, 105, 40, { align: 'center' });
     
     // Estatísticas
-    const totalPurchases = purchases.reduce((sum, purchase) => sum + (purchase.amount_kz || 0), 0);
-    const pendingPurchases = purchases.filter(p => p.status === 'pendente').length;
-    const paidPurchases = purchases.filter(p => p.status === 'pago').length;
-    const cancelledPurchases = purchases.filter(p => p.status === 'cancelado').length;
+    const totalExpenses = expenses.reduce((sum, expense) => sum + (expense.amount_kz || 0), 0);
+    const pendingExpenses = expenses.filter(e => e.status === 'PENDENTE').length;
+    const paidExpenses = expenses.filter(e => e.status === 'PAGO').length;
+    const cancelledExpenses = expenses.filter(e => e.status === 'CANCELADO').length;
     
     // Resumo
     doc.setFontSize(14);
-    doc.text('Resumo de Compras', 20, 60);
+    doc.text('Resumo de Despesas', 20, 60);
     
     doc.setFontSize(10);
-    doc.text(`Total de Compras: ${formatAKZ(totalPurchases)}`, 20, 70);
-    doc.text(`Pedidos Pendentes: ${pendingPurchases}`, 20, 80);
-    doc.text(`Pedidos Pagos: ${paidPurchases}`, 20, 90);
-    doc.text(`Pedidos Cancelados: ${cancelledPurchases}`, 20, 100);
+    doc.text(`Total de Despesas: ${formatAKZ(totalExpenses)}`, 20, 70);
+    doc.text(`Despesas Pendentes: ${pendingExpenses}`, 20, 80);
+    doc.text(`Despesas Pagas: ${paidExpenses}`, 20, 90);
+    doc.text(`Despesas Canceladas: ${cancelledExpenses}`, 20, 100);
     
-    // Tabela de compras
-    const tableData = purchases.map(purchase => [
-      formatDate(purchase.created_at),
-      purchase.description,
-      purchase.provider,
-      purchase.status,
-      formatAKZ(purchase.amount_kz || 0)
+    // Tabela de despesas
+    const tableData = expenses.map(expense => [
+      formatDate(expense.created_at),
+      expense.description,
+      expense.category,
+      expense.status,
+      formatAKZ(expense.amount_kz || 0)
     ]);
     
     // Adicionar tabela
     autoTable(doc, {
-      head: [['Data', 'Descrição', 'Fornecedor', 'Status', 'Valor']],
+      head: [['Data', 'Descrição', 'Categoria', 'Status', 'Valor']],
       body: tableData,
       startY: 110,
       theme: 'grid',
