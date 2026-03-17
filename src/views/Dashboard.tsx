@@ -32,7 +32,7 @@ const Dashboard = () => {
           totalVendas: revenue,
           despesas: 0, // Calcular depois se necessário
           folhaSalarial: 0, // Calcular depois se necessário
-          lucroLiquido: profit
+          lucroLiquido: (revenue || 0) - (0) - (0) - (revenue * 0.065 || 0)
         };
         
         setMetrics(mockMetrics);
@@ -58,7 +58,7 @@ const Dashboard = () => {
       const despesasDoDia = Number(metrics.despesas) || 0; // ELIMINAR NaN
       const custoStaff = Number(metrics.folhaSalarial) || 0; // ELIMINAR NaN
       const impostos = revenue * 0.065;
-      const profit = revenue - despesasDoDia - custoStaff - impostos;
+      const profit = (revenue || 0) - (0) - (0) - ((revenue || 0) * 0.065 || 0);
       
       console.log('[DASHBOARD PRINCIPAL] Cálculo do Lucro Hoje:', {
         revenue,
@@ -75,7 +75,7 @@ const Dashboard = () => {
     // Fallback para cálculo local (se não tiver métricas globais)
     const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
     const revenue = orders.reduce((acc, o) => acc + Number(o.total || 0), 0); // ELIMINAR NaN
-    const profit = orders.reduce((acc, o) => acc + Number(o.profit || 0), 0); // ELIMINAR NaN
+    const profit = (revenue || 0) - (0) - (0) - ((revenue || 0) * 0.065 || 0);
     return { revenue, profit, count: orders.length, orders };
   }, [closedOrders, today, metrics]);
 

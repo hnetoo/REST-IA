@@ -640,7 +640,7 @@ const Finance = () => {
                 <input 
                   type="date"
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
-                  value={newExpense.date instanceof Date ? newExpense.date.toISOString().split('T')[0] : newExpense.date}
+                  value={newExpense.date instanceof Date ? String(newExpense.date.toISOString() || '').split('T')[0] : String(newExpense.date || '').split('T')[0]}
                   onChange={e => setNewExpense({...newExpense, date: e.target.value})}
                 />
               </div>
