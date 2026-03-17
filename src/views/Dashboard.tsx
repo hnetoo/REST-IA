@@ -36,6 +36,8 @@ const Dashboard = () => {
         const todayExpenses = expenses.filter(exp => String(exp.date || '').split('T')[0] === today);
         const totalExpenses = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
         
+        console.log('[EXPENSES] Dados carregados com amount_kz:', expenses);
+        
         // Calcular folha salarial usando os funcionários carregados
         const totalPayroll = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
         

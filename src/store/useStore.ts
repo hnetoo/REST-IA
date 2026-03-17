@@ -1096,13 +1096,13 @@ restoreFromSupabase: async () => {
           const formattedExpenses = expensesData?.map(exp => ({
             id: exp.id,
             description: exp.description || '',
-            amount: Number(exp.amount_kz || exp.amount || 0),
+            amount: Number(exp.amount_kz || 0),
             category: exp.category || 'OUTROS',
             status: exp.status || 'PENDENTE',
             paymentMethod: exp.payment_method || 'NUMERARIO',
             receipt: exp.receipt || '',
             notes: exp.notes || '',
-            date: exp.date || new Date(),
+            date: exp.created_at || new Date(),
             createdAt: exp.created_at || new Date(),
             updatedAt: exp.updated_at || new Date()
           })) || [];
