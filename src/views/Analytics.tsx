@@ -34,9 +34,9 @@ const Analytics = () => {
     
     // Custo de Compras: expenses de hoje
     const todayExpenses = expenses.filter(expense => 
-      String(expense.date || '').split('T')[0] === today
+      String(expense.createdAt || '').split('T')[0] === today
     );
-    const totalExpensesToday = todayExpenses.reduce((acc, expense) => acc + expense.amount, 0);
+    const totalExpensesToday = todayExpenses.reduce((acc, expense) => acc + Number(expense.amount || 0), 0);
     
     // Lucro Bruto
     const lucroBruto = (totalSalesToday || 0) - (totalExpensesToday || 0);
@@ -70,9 +70,9 @@ const Analytics = () => {
       
       // Compras do dia
       const dayExpenses = expenses.filter(expense => 
-        String(expense.date || '').split('T')[0] === dateStr
+        String(expense.createdAt || '').split('T')[0] === dateStr
       );
-      const purchases = dayExpenses.reduce((acc, expense) => acc + expense.amount, 0);
+      const purchases = dayExpenses.reduce((acc, expense) => acc + Number(expense.amount || 0), 0);
       
       data.push({
         day: dayName,
@@ -154,7 +154,7 @@ const Analytics = () => {
       if (!grouped[expense.category]) {
         grouped[expense.category] = 0;
       }
-      grouped[expense.category] += expense.amount;
+      grouped[expense.category] += Number(expense.amount || 0);
     });
 
     const total = Object.values(grouped).reduce((acc, val) => acc + val, 0);
@@ -181,9 +181,9 @@ const Analytics = () => {
     
     // Somar despesas por dia
     expenses.forEach(expense => {
-      const expenseDate = String(expense.date || '').split('T')[0];
+      const expenseDate = String(expense.createdAt || '').split('T')[0];
       if (data.hasOwnProperty(expenseDate)) {
-        data[expenseDate] += expense.amount;
+        data[expenseDate] += Number(expense.amount || 0);
       }
     });
     
