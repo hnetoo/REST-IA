@@ -155,6 +155,7 @@ const POS = () => {
 
     try {
       console.log('[POS] Apagando subconta:', subAccountId);
+      setIsFinalizing(true); // Prevenir múltiplos cliques
       
       // 🛡️ SEGURANÇA: Marcar itens como cancelados em vez de apagar
       const { error } = await supabase
@@ -168,13 +169,33 @@ const POS = () => {
         return;
       }
 
-      // Remover subconta da visualização
+      // 🛡️ SEGURANÇA: Marcar a ordem da subconta como cancelada
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({ status: 'canceled' })
+        .eq('id', subAccountId);
+
+      if (orderError) {
+        console.error('[POS] Erro ao cancelar ordem da subconta:', orderError);
+        addNotification('error', 'Erro ao cancelar ordem da subconta');
+        return;
+      }
+
+      // Remover subconta da visualização E atualizar estado
       removeSubAccount(subAccountId);
+      
+      // 🔄 FORÇAR ATUALIZAÇÃO DE ESTADO
+      if (activeOrderId === subAccountId) {
+        setActiveOrder(null); // Limpar seleção se era a subconta ativa
+      }
+      
       addNotification('success', 'Subconta apagada com sucesso');
       
     } catch (error) {
       console.error('[POS] Erro ao apagar subconta:', error);
       addNotification('error', 'Erro ao apagar subconta');
+    } finally {
+      setIsFinalizing(false); // Liberar cliques
     }
   };
 
@@ -1006,6 +1027,17 @@ const POS = () => {
             // 🛡️ FECHAMENTO DE SUBCONTA BLINDADO
             console.log('[POS] Fechando subconta:', selectedSubAccount);
             
+            // 🛡️ SEGURANÇA: Atualizar itens da subconta para status = 'closed'
+            const { error: itemsError } = await supabase
+              .from('order_items')
+              .update({ status: 'closed' })
+              .eq('order_id', selectedSubAccount.id);
+              
+            if (itemsError) {
+              console.error('Erro ao fechar itens da subconta:', itemsError);
+              throw itemsError;
+            }
+            
             // Gravar método de pagamento na subconta
             const { error } = await supabase
               .from('orders')
@@ -1020,8 +1052,14 @@ const POS = () => {
               throw error;
             }
             
-            // Remover subconta da visualização
+            // Remover subconta da visualização E atualizar estado
             removeSubAccount(selectedSubAccount.id);
+            
+            // 🔄 FORÇAR ATUALIZAÇÃO DE ESTADO
+            if (activeOrderId === selectedSubAccount.id) {
+              setActiveOrder(null); // Limpar seleção se era a subconta ativa
+            }
+            
             addNotification('success', 'Subconta fechada com sucesso');
             
           } else {
