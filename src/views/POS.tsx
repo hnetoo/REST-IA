@@ -157,27 +157,15 @@ const POS = () => {
       console.log('[POS] Apagando subconta:', subAccountId);
       setIsFinalizing(true); // Prevenir múltiplos cliques
       
-      // 🛡️ SEGURANÇA: Marcar itens como cancelados em vez de apagar
+      // 🛡️ SEGURANÇA: Apenas marcar a ordem como cancelada (preservar itens para Dashboard)
       const { error } = await supabase
-        .from('order_items')
-        .update({ status: 'canceled' })
-        .eq('order_id', subAccountId);
-
-      if (error) {
-        console.error('[POS] Erro ao cancelar itens da subconta:', error);
-        addNotification('error', 'Erro ao apagar subconta');
-        return;
-      }
-
-      // 🛡️ SEGURANÇA: Marcar a ordem da subconta como cancelada
-      const { error: orderError } = await supabase
         .from('orders')
         .update({ status: 'canceled' })
         .eq('id', subAccountId);
 
-      if (orderError) {
-        console.error('[POS] Erro ao cancelar ordem da subconta:', orderError);
-        addNotification('error', 'Erro ao cancelar ordem da subconta');
+      if (error) {
+        console.error('[POS] Erro ao cancelar ordem da subconta:', error);
+        addNotification('error', 'Erro ao apagar subconta');
         return;
       }
 
@@ -1024,21 +1012,10 @@ const POS = () => {
           setIsPaymentModalOpen(false);
           
           if (selectedSubAccount) {
-            // 🛡️ FECHAMENTO DE SUBCONTA BLINDADO
+            // 🛡️ FECHAMENTO DE SUBCONTA BLINDADO (PRESERVAR ITENS PARA DASHBOARD)
             console.log('[POS] Fechando subconta:', selectedSubAccount);
             
-            // 🛡️ SEGURANÇA: Atualizar itens da subconta para status = 'closed'
-            const { error: itemsError } = await supabase
-              .from('order_items')
-              .update({ status: 'closed' })
-              .eq('order_id', selectedSubAccount.id);
-              
-            if (itemsError) {
-              console.error('Erro ao fechar itens da subconta:', itemsError);
-              throw itemsError;
-            }
-            
-            // Gravar método de pagamento na subconta
+            // 🛡️ SEGURANÇA: Apenas atualizar ordem (preservar itens para relatório de vendas)
             const { error } = await supabase
               .from('orders')
               .update({ 
