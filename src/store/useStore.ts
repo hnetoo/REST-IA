@@ -555,7 +555,8 @@ export const useStore = create<StoreState>()(
               delivery_address: '',
               total_amount: finalOrder.total,
               status: 'FECHADO',
-              payment_method: finalOrder.paymentMethod || 'NUMERARIO'
+              payment_method: finalOrder.paymentMethod || 'NUMERARIO',
+              invoice_number: finalOrder.invoiceNumber || null
             });
 
           if (error) {

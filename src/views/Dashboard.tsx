@@ -11,9 +11,11 @@ const Dashboard = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
 
-  const closedOrders = useMemo(() => activeOrders.filter(o => o.status === 'FECHADO'), [activeOrders]);
+  const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
   
-  const today = new Date().toISOString().split('T')[0];
+  // FUSO HORÁRIO DE ANGOLA (GMT+1)
+  const nowAngola = new Date(new Date().getTime() + (60 * 60 * 1000)); // +1 hora
+  const today = new Date(nowAngola.getFullYear(), nowAngola.getMonth(), nowAngola.getDate()).toISOString().split('T')[0];
   
   // CARREGAR MÉTRICAS
   useEffect(() => {
