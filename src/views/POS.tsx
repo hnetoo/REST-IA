@@ -8,7 +8,7 @@ import {
   Banknote, X, Utensils, MoveHorizontal, Sparkles, Loader2,
   ChevronRight, Grid3X3, Tag, ShoppingBasket, FileText,
   UserPlus, History, LogOut, CheckCircle2, MoreVertical,
-  ChevronLeft, Layout, Clock, QrCode, ArrowRightLeft, User, Users, Monitor, Shield, Settings
+  ChevronLeft, Layout, Clock, QrCode, ArrowRightLeft, User, Users, Monitor, Shield, Settings, Trash2, Check
 } from 'lucide-react';
 import { Dish, PaymentMethod, Order, Table, Customer } from '../../types';
 import { printThermalInvoice, printTableReview, printCashClosing } from '../lib/printService';
@@ -44,6 +44,7 @@ const POS = () => {
   const [lastAddedItemId, setLastAddedItemId] = useState<string | null>(null);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedSubAccount, setSelectedSubAccount] = useState<any>(null);
   
   const [orderToChangeId, setOrderToChangeId] = useState<string | null>(null);
   
@@ -144,6 +145,43 @@ const POS = () => {
     addSubAccount(activeTableId, newSubAccountName.trim());
     setNewSubAccountName('');
     setIsSubaccountModalOpen(false);
+  };
+
+  // 🛡️ FUNÇÕES BLINDADAS DE GESTÃO DE SUBCONTAS
+  const handleDeleteSubAccount = async (subAccountId: string) => {
+    if (!confirm('Tem certeza que deseja apagar esta subconta? Esta ação não pode ser desfeita.')) {
+      return;
+    }
+
+    try {
+      console.log('[POS] Apagando subconta:', subAccountId);
+      
+      // 🛡️ SEGURANÇA: Marcar itens como cancelados em vez de apagar
+      const { error } = await supabase
+        .from('order_items')
+        .update({ status: 'canceled' })
+        .eq('order_id', subAccountId);
+
+      if (error) {
+        console.error('[POS] Erro ao cancelar itens da subconta:', error);
+        addNotification('error', 'Erro ao apagar subconta');
+        return;
+      }
+
+      // Remover subconta da visualização
+      removeSubAccount(subAccountId);
+      addNotification('success', 'Subconta apagada com sucesso');
+      
+    } catch (error) {
+      console.error('[POS] Erro ao apagar subconta:', error);
+      addNotification('error', 'Erro ao apagar subconta');
+    }
+  };
+
+  const handleCloseSubAccount = (subAccount: any) => {
+    console.log('[POS] Fechando subconta:', subAccount);
+    setSelectedSubAccount(subAccount);
+    setIsPaymentModalOpen(true);
   };
 
   const handleTransferTable = () => {
@@ -634,13 +672,32 @@ const POS = () => {
                 {tableSubAccounts.length > 1 && (
                   <div className="flex gap-2 mb-2 overflow-x-auto no-scrollbar pb-2">
                     {tableSubAccounts.map(sa => (
-                      <button
-                        key={sa.id}
-                        onClick={() => setActiveOrder(sa.id)}
-                        className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${sa.id === activeOrderId ? 'bg-primary text-black border-primary shadow-glow' : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/20'}`}
-                      >
-                        {sa.subAccountName}
-                      </button>
+                      <div key={sa.id} className="flex items-center gap-1">
+                        <button
+                          onClick={() => setActiveOrder(sa.id)}
+                          className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${sa.id === activeOrderId ? 'bg-primary text-black border-primary shadow-glow' : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/20'}`}
+                        >
+                          {sa.subAccountName}
+                        </button>
+                        {sa.subAccountName !== 'Principal' && (
+                          <>
+                            <button
+                              onClick={() => handleCloseSubAccount(sa)}
+                              className="p-1.5 text-green-400 hover:bg-green-400/10 rounded-lg transition-colors"
+                              title="Fechar Subconta"
+                            >
+                              <Check size={12} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSubAccount(sa.id)}
+                              className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                              title="Apagar Subconta"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}
@@ -936,39 +993,68 @@ const POS = () => {
     {/* Modal de Pagamento */}
     <PaymentModal
       isOpen={isPaymentModalOpen}
-      onClose={() => setIsPaymentModalOpen(false)}
+      onClose={() => {
+        setIsPaymentModalOpen(false);
+        setSelectedSubAccount(null);
+      }}
       onConfirm={async (paymentMethod: string) => {
         try {
           setIsFinalizing(true);
           setIsPaymentModalOpen(false);
           
-          // Gravar método de pagamento no Supabase
-          if (currentOrder) {
+          if (selectedSubAccount) {
+            // 🛡️ FECHAMENTO DE SUBCONTA BLINDADO
+            console.log('[POS] Fechando subconta:', selectedSubAccount);
+            
+            // Gravar método de pagamento na subconta
             const { error } = await supabase
               .from('orders')
               .update({ 
                 payment_method: paymentMethod,
-                status: 'FECHADO'
+                status: 'closed'
               })
-              .eq('id', currentOrder.id);
+              .eq('id', selectedSubAccount.id);
               
             if (error) {
-              console.error('Erro ao atualizar método de pagamento:', error);
+              console.error('Erro ao atualizar subconta:', error);
               throw error;
             }
+            
+            // Remover subconta da visualização
+            removeSubAccount(selectedSubAccount.id);
+            addNotification('success', 'Subconta fechada com sucesso');
+            
+          } else {
+            // 🛡️ FECHAMENTO DE PEDIDO NORMAL (EXISTENTE)
+            if (currentOrder) {
+              const { error } = await supabase
+                .from('orders')
+                .update({ 
+                  payment_method: paymentMethod,
+                  status: 'FECHADO'
+                })
+                .eq('id', currentOrder.id);
+                
+              if (error) {
+                console.error('Erro ao atualizar método de pagamento:', error);
+                throw error;
+              }
+            }
+            
+            // Chamar função de impressão existente
+            await handleCheckoutFinal(selectedPaymentMethod!, selectedCustomerId);
           }
-          
-          // Chamar função de impressão existente
-          await handleCheckoutFinal(selectedPaymentMethod!, selectedCustomerId);
           
         } catch (error) {
           console.error('Erro ao finalizar pedido:', error);
           setIsFinalizing(false);
           alert('Erro ao finalizar pedido. Tente novamente.');
+        } finally {
+          setSelectedSubAccount(null);
         }
       }}
-      orderNumber={currentOrder?.id || 'N/A'}
-      totalAmount={currentOrder?.total || 0}
+      orderNumber={selectedSubAccount?.id || currentOrder?.id || 'N/A'}
+      totalAmount={selectedSubAccount?.total || currentOrder?.total || 0}
     />
 
   </div>
