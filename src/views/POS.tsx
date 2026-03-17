@@ -1020,7 +1020,7 @@ const POS = () => {
               .from('orders')
               .update({ 
                 payment_method: paymentMethod,
-                status: 'closed'
+                status: 'FECHADO'
               })
               .eq('id', selectedSubAccount.id);
               

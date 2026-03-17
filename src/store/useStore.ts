@@ -541,7 +541,7 @@ export const useStore = create<StoreState>()(
             customer_phone: '',
             delivery_address: '',
             total_amount: finalOrder.total,
-            status: 'closed',
+            status: 'FECHADO',
             payment_method: finalOrder.paymentMethod || 'NUMERARIO'
           });
 
@@ -554,7 +554,7 @@ export const useStore = create<StoreState>()(
               customer_phone: '',
               delivery_address: '',
               total_amount: finalOrder.total,
-              status: 'closed',
+              status: 'FECHADO',
               payment_method: finalOrder.paymentMethod || 'NUMERARIO'
             });
 
