@@ -33,7 +33,7 @@ const Dashboard = () => {
         const profit = orders.reduce((acc, o) => acc + o.profit, 0);
         
         // Calcular despesas do dia usando os dados carregados
-        const todayExpenses = expenses.filter(exp => String(exp.date || '').split('T')[0] === today);
+        const todayExpenses = expenses.filter(exp => String(exp.createdAt || '').split('T')[0] === today);
         const totalExpenses = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
         
         console.log('[EXPENSES] Dados carregados com amount_kz:', expenses);

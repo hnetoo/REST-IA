@@ -1079,7 +1079,7 @@ restoreFromSupabase: async () => {
           const { data: expensesData, error } = await supabase
             .from('expenses')
             .select('*')
-            .order('date', { ascending: false });
+            .order('created_at', { ascending: false });
 
           if (error) {
             console.error('[EXPENSE] Erro ao carregar despesas:', error);

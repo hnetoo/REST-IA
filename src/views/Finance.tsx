@@ -32,7 +32,7 @@ const Finance = () => {
     amount: 0,
     category: '', // CATEGORIA VAZIA - USUÁRIO ESCREVE TEXTO EXATO
     status: 'PENDENTE',
-    date: new Date(),
+    createdAt: new Date(),
     paymentMethod: 'NUMERARIO',
     receipt: '',
     notes: ''
@@ -112,7 +112,7 @@ const Finance = () => {
         amount: 0,
         category: '', // CATEGORIA VAZIA - USUÁRIO ESCREVE TEXTO EXATO
         status: 'PENDENTE',
-        date: new Date(),
+        createdAt: new Date(),
         paymentMethod: 'NUMERARIO',
         receipt: '',
         notes: ''
@@ -122,13 +122,13 @@ const Finance = () => {
       // PERSISTÊNCIA NO SUPABASE (APENAS UMA VEZ)
       const { addExpenseWithPersistence } = useStore.getState();
       if (addExpenseWithPersistence) {
-        await addExpenseWithPersistence({
+        await addExpense({
           id: `exp-${Date.now()}`,
           description: newExpense.description,
           amount: newExpense.amount,
           category: newExpense.category,
           status: newExpense.status,
-          date: newExpense.date,
+          createdAt: newExpense.createdAt,
           paymentMethod: newExpense.paymentMethod,
           receipt: newExpense.receipt,
           notes: newExpense.notes
@@ -154,7 +154,7 @@ const Finance = () => {
       amount: expense.amount,
       category: expense.category,
       status: expense.status,
-      date: expense.date,
+      createdAt: expense.createdAt,
       paymentMethod: expense.paymentMethod,
       receipt: expense.receipt || '',
       notes: expense.notes || ''
@@ -167,14 +167,18 @@ const Finance = () => {
       return;
     }
     
-    updateExpense(editingExpense.id, newExpense);
+    updateExpense(editingExpense.id, {
+      ...newExpense,
+      createdAt: newExpense.createdAt,
+      updatedAt: new Date()
+    });
     setEditingExpense(null);
     setNewExpense({
       description: '',
       amount: 0,
       category: 'OUTROS',
       status: 'PENDENTE',
-      date: new Date(),
+      createdAt: new Date(),
       paymentMethod: 'NUMERARIO',
       receipt: '',
       notes: ''
@@ -503,7 +507,7 @@ const Finance = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs text-slate-500 font-mono">
-                        {new Date(expense.date || new Date()).toLocaleDateString('pt-AO')}
+                        {new Date(expense.createdAt || new Date()).toLocaleDateString('pt-AO')}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex gap-2 justify-end">
@@ -640,8 +644,8 @@ const Finance = () => {
                 <input 
                   type="date"
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
-                  value={newExpense.date instanceof Date ? String(newExpense.date.toISOString() || '').split('T')[0] : String(newExpense.date || '').split('T')[0]}
-                  onChange={e => setNewExpense({...newExpense, date: e.target.value})}
+                  value={newExpense.createdAt instanceof Date ? String(newExpense.createdAt.toISOString() || '').split('T')[0] : String(newExpense.createdAt || '').split('T')[0]}
+                  onChange={e => setNewExpense({...newExpense, createdAt: e.target.value})}
                 />
               </div>
               <div>
