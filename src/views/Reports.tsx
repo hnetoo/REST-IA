@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, ShoppingCart, Users, Filter, Calendar, BarChart3, Utensils, Beer, CreditCard, Wallet, Smartphone } from 'lucide-react';
 import { generateSalesReport, generatePurchaseReport } from '../services/pdfService';
-import { generateStaffReport, generateExpensesReport, generateInventoryReport, generateProductSalesReport } from '../services/pdfSpecificReports';
+import { 
+  generateStaffReport, 
+  generateExpensesReport, 
+  generateInventoryReport, 
+  generateProductSalesReport,
+  generateCashFlowReport,
+  generateProfitReport,
+  generateStockMovementReport,
+  generateWorkHoursReport,
+  generatePerformanceReport
+} from '../services/pdfSpecificReports';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -621,7 +631,10 @@ const Reports = () => {
         generatePurchaseReport();
         break;
       case 'Relatório de Lucros':
-        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        generateProfitReport();
+        break;
+      case 'Fluxo de Caixa':
+        generateCashFlowReport();
         break;
       case 'Análise de Performance de Menu':
         generateMenuAnalysis();
@@ -630,7 +643,7 @@ const Reports = () => {
         generateInventoryReport();
         break;
       case 'Movimentação':
-        generateInventoryReport();
+        generateStockMovementReport();
         break;
       case 'Produtos Mais Vendidos':
         generateProductSalesReport(startDate, endDate);
@@ -639,10 +652,10 @@ const Reports = () => {
         generateStaffReport();
         break;
       case 'Horas Trabalhadas':
-        generateStaffReport();
+        generateWorkHoursReport();
         break;
       case 'Desempenho':
-        generateStaffReport();
+        generatePerformanceReport();
         break;
       case 'Relatório de Despesas':
         generateExpensesReport();
@@ -665,8 +678,8 @@ const Reports = () => {
       color: '#06b6d4',
       reports: [
         { name: 'Relatório de Vendas', description: 'Vendas diárias e totais do período', function: 'generateSalesReport' },
-        { name: 'Relatório de Lucros', description: 'Análise de margens e rentabilidade', function: 'generateSalesReport' },
-        { name: 'Fluxo de Caixa', description: 'Entradas e saídas detalhadas', function: 'generateSalesReport' },
+        { name: 'Relatório de Lucros', description: 'Análise de margens e rentabilidade', function: 'generateProfitReport' },
+        { name: 'Fluxo de Caixa', description: 'Entradas e saídas detalhadas', function: 'generateCashFlowReport' },
         { name: 'Meios de Pagamento', description: 'Análise por método de pagamento (Fecho de Caixa)', function: 'generateSalesReport' },
         { name: 'Vendas por Artigo', description: 'Análise detalhada por produto', function: 'generateProductSalesReport' },
         { name: 'Análise de Performance de Menu', description: 'Engenharia de menu - margens vs volume', function: 'generateSalesReport' }
@@ -678,7 +691,7 @@ const Reports = () => {
       color: '#10b981',
       reports: [
         { name: 'Inventário Atual', description: 'Stock disponível por produto', function: 'generateInventoryReport' },
-        { name: 'Movimentação', description: 'Entradas e saídas de stock', function: 'generateInventoryReport' },
+        { name: 'Movimentação', description: 'Entradas e saídas de stock', function: 'generateStockMovementReport' },
         { name: 'Produtos Mais Vendidos', description: 'Ranking de vendas por período', function: 'generateProductSalesReport' }
       ]
     },
@@ -688,8 +701,8 @@ const Reports = () => {
       color: '#f59e0b',
       reports: [
         { name: 'Folha de Pagamento', description: 'Salários e comissões', function: 'generateStaffReport' },
-        { name: 'Horas Trabalhadas', description: 'Controlo de ponto e escalas', function: 'generateStaffReport' },
-        { name: 'Desempenho', description: 'Métricas por funcionário', function: 'generateStaffReport' }
+        { name: 'Horas Trabalhadas', description: 'Controlo de ponto e escalas', function: 'generateWorkHoursReport' },
+        { name: 'Desempenho', description: 'Métricas por funcionário', function: 'generatePerformanceReport' }
       ]
     },
     {
