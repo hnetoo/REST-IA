@@ -9,9 +9,12 @@ const Reports = () => {
   const { settings } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
   const [selectedDate, setSelectedDate] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [showDetailedReport, setShowDetailedReport] = useState(false);
   const [showPaymentReport, setShowPaymentReport] = useState(false);
   const [showMenuAnalysis, setShowMenuAnalysis] = useState(false);
+  const [showVendasPorArtigo, setShowVendasPorArtigo] = useState(false);
   const [detailedData, setDetailedData] = useState<{
     totalItems: number;
     bebidas: { name: string; quantity: number }[];
@@ -24,6 +27,24 @@ const Reports = () => {
     pratos: [],
     loading: false,
     error: null
+  });
+
+  const [vendasPorArtigoData, setVendasPorArtigoData] = useState<{
+    items: {
+      product_id: string;
+      product_name: string;
+      quantity: number;
+      unit_price: number;
+      subtotal: number;
+    }[];
+    loading: boolean;
+    error: string | null;
+    totalGeral: number;
+  }>({
+    items: [],
+    loading: false,
+    error: null,
+    totalGeral: 0
   });
 
   const [paymentData, setPaymentData] = useState<{
@@ -425,6 +446,139 @@ const Reports = () => {
     }
   };
 
+  // Buscar dados de vendas por artigo
+  const fetchVendasPorArtigo = async () => {
+    if (!startDate || !endDate) {
+      alert('Por favor, selecione Data Início e Data Fim');
+      return;
+    }
+    
+    setShowVendasPorArtigo(true);
+    setVendasPorArtigoData(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      console.log('[REPORTS] Buscando vendas por artigo:', { startDate, endDate });
+      
+      // Converter datas para formato ISO
+      const startOfDay = new Date(startDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      // Buscar order_items com products para cruzar dados
+      const { data: orderItemsData, error: orderItemsError } = await supabase
+        .from('order_items')
+        .select(`
+          product_id,
+          quantity,
+          unit_price,
+          created_at,
+          orders!inner(
+            created_at,
+            status
+          )
+        `)
+        .eq('orders.status', 'FECHADO')
+        .gte('created_at', startOfDay.toISOString())
+        .lte('created_at', endOfDay.toISOString());
+
+      if (orderItemsError) {
+        console.error('[REPORTS] Erro ao buscar order_items:', orderItemsError);
+        setVendasPorArtigoData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: 'Erro ao buscar dados das vendas' 
+        }));
+        return;
+      }
+
+      if (!orderItemsData || orderItemsData.length === 0) {
+        console.log('[REPORTS] Nenhuma venda encontrada no período');
+        setVendasPorArtigoData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          items: [],
+          totalGeral: 0
+        }));
+        return;
+      }
+
+      // Buscar produtos para obter nomes
+      const productIds = [...new Set(orderItemsData.map(item => item.product_id))];
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('id, name, price')
+        .in('id', productIds);
+
+      if (productsError) {
+        console.error('[REPORTS] Erro ao buscar produtos:', productsError);
+        setVendasPorArtigoData(prev => ({ 
+          ...prev, 
+          loading: false, 
+          error: 'Erro ao buscar dados dos produtos' 
+        }));
+        return;
+      }
+
+      // Agrupar vendas por product_id
+      const vendasMap = new Map<string, {
+        product_id: string;
+        product_name: string;
+        quantity: number;
+        unit_price: number;
+        subtotal: number;
+      }>();
+
+      orderItemsData.forEach(item => {
+        const product = productsData?.find(p => p.id === item.product_id);
+        const productName = product?.name || 'Produto Desconhecido';
+        const unitPrice = item.unit_price || 0;
+        const quantity = item.quantity || 0;
+        const subtotal = unitPrice * quantity;
+
+        if (!vendasMap.has(item.product_id)) {
+          vendasMap.set(item.product_id, {
+            product_id: item.product_id,
+            product_name: productName,
+            quantity: 0,
+            unit_price: unitPrice,
+            subtotal: 0
+          });
+        }
+
+        const existing = vendasMap.get(item.product_id)!;
+        existing.quantity += quantity;
+        existing.subtotal += subtotal;
+      });
+
+      // Converter para array e calcular total geral
+      const items = Array.from(vendasMap.values());
+      const totalGeral = items.reduce((sum, item) => sum + item.subtotal, 0);
+
+      console.log('[REPORTS] Vendas por artigo processadas:', {
+        totalItems: items.length,
+        totalGeral,
+        items: items.slice(0, 3)
+      });
+
+      setVendasPorArtigoData({
+        items,
+        loading: false,
+        error: null,
+        totalGeral
+      });
+
+    } catch (error) {
+      console.error('[REPORTS] Erro ao processar vendas por artigo:', error);
+      setVendasPorArtigoData(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: 'Erro ao processar vendas por artigo' 
+      }));
+    }
+  };
+
   // Gerar relatório detalhado
   const generateDetailedReport = () => {
     if (!selectedDate) {
@@ -504,6 +658,7 @@ const Reports = () => {
         { name: 'Relatório de Lucros', description: 'Análise de margens e rentabilidade' },
         { name: 'Fluxo de Caixa', description: 'Entradas e saídas detalhadas' },
         { name: 'Meios de Pagamento', description: 'Análise por método de pagamento (Fecho de Caixa)' },
+        { name: 'Vendas por Artigo', description: 'Análise detalhada por produto' },
         { name: 'Análise de Performance de Menu', description: 'Engenharia de menu - margens vs volume' }
       ]
     },
@@ -553,10 +708,20 @@ const Reports = () => {
           
           <input
             type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
             className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm"
-            title="Selecionar data específica"
+            title="Data Início"
+            placeholder="Data Início"
+          />
+          
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm"
+            title="Data Fim"
+            placeholder="Data Fim"
           />
           
           <button 
@@ -566,6 +731,15 @@ const Reports = () => {
           >
             <BarChart3 size={16} />
             Relatório Detalhado
+          </button>
+          
+          <button 
+            onClick={fetchVendasPorArtigo}
+            className="px-4 py-2 bg-[#10b981] text-white rounded-xl text-sm font-black uppercase hover:brightness-110 transition-all flex items-center gap-2"
+            title="Gerar relatório de vendas por artigo"
+          >
+            <Download size={16} />
+            Gerar Relatório
           </button>
           
           <button className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm" title="Filtros avançados">
@@ -1002,6 +1176,109 @@ const Reports = () => {
                   <AlertCircle size={48} className="text-slate-500 mx-auto mb-4" />
                   <p className="text-slate-400 text-lg">Sem registos para este dia</p>
                   <p className="text-slate-500 text-sm mt-2">Não foram encontradas vendas na data selecionada</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Relatório de Vendas por Artigo */}
+      {showVendasPorArtigo && (
+        <div className="mt-8 glass-panel p-8 rounded-2xl border border-white/5">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+              <BarChart3 size={20} className="text-primary" />
+              Vendas por Artigo - {startDate || 'Início'} a {endDate || 'Fim'}
+            </h3>
+            <button
+              onClick={() => setShowVendasPorArtigo(false)}
+              className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm"
+              title="Fechar relatório de vendas por artigo"
+            >
+              Fechar
+            </button>
+          </div>
+
+          {vendasPorArtigoData.loading && (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-slate-400 mt-4">Carregando dados de vendas por artigo...</p>
+            </div>
+          )}
+
+          {vendasPorArtigoData.error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle size={20} className="text-red-500" />
+                <p className="text-red-500">{vendasPorArtigoData.error}</p>
+              </div>
+            </div>
+          )}
+
+          {!vendasPorArtigoData.loading && !vendasPorArtigoData.error && (
+            <div className="space-y-6">
+              {/* Resumo Geral */}
+              <div className="bg-primary/10 border border-primary/20 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-lg font-bold text-primary mb-2">Valor Total Geral</h4>
+                    <p className="text-3xl font-black text-white">
+                      {new Intl.NumberFormat('pt-AO', { 
+                        style: 'currency', 
+                        currency: 'AOA', 
+                        maximumFractionDigits: 0 
+                      }).format(vendasPorArtigoData.totalGeral)}
+                    </p>
+                  </div>
+                  <BarChart3 size={32} className="text-primary" />
+                </div>
+              </div>
+
+              {/* Tabela de Vendas por Artigo */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h4 className="text-lg font-bold text-white mb-4">Detalhamento por Produto</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-white text-sm">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="text-left py-3 px-4">Nome do Produto</th>
+                        <th className="text-right py-3 px-4">Quantidade</th>
+                        <th className="text-right py-3 px-4">Valor Unitário (Kz)</th>
+                        <th className="text-right py-3 px-4">Subtotal (Kz)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vendasPorArtigoData.items.map((item, index) => (
+                        <tr key={index} className="border-b border-white/5 hover:bg-white/10">
+                          <td className="py-3 px-4 font-medium">{item.product_name}</td>
+                          <td className="py-3 px-4 text-right">{item.quantity}</td>
+                          <td className="py-3 px-4 text-right">
+                            {new Intl.NumberFormat('pt-AO', { 
+                              style: 'currency', 
+                              currency: 'AOA', 
+                              maximumFractionDigits: 0 
+                            }).format(item.unit_price)}
+                          </td>
+                          <td className="py-3 px-4 text-right font-bold text-primary">
+                            {new Intl.NumberFormat('pt-AO', { 
+                              style: 'currency', 
+                              currency: 'AOA', 
+                              maximumFractionDigits: 0 
+                            }).format(item.subtotal)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {vendasPorArtigoData.items.length === 0 && (
+                <div className="text-center py-8">
+                  <AlertCircle size={48} className="text-slate-500 mx-auto mb-4" />
+                  <p className="text-slate-400 text-lg">Sem vendas encontradas</p>
+                  <p className="text-slate-500 text-sm mt-2">Não foram encontradas vendas no período selecionado</p>
                 </div>
               )}
             </div>
