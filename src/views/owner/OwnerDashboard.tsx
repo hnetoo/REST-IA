@@ -975,7 +975,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Faturação Total</span>
             </div>
             <div className="text-2xl font-black text-white mb-2">
-              {formatAKZ(metrics.totalVendas)}
+              {formatAKZ(metrics.totalVendas + metrics.historicoRevenue)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
