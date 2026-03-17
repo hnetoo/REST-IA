@@ -1045,6 +1045,9 @@ restoreFromSupabase: async () => {
           }
 
           console.log('[STAFF] Funcionários carregados:', staffData?.length || 0);
+          if (staffData && staffData.length > 0) {
+            console.log('Colunas Staff:', staffData[0]);
+          }
 
           // Converter para o formato local
           const formattedEmployees = staffData?.map(staff => ({
@@ -1085,6 +1088,9 @@ restoreFromSupabase: async () => {
           }
 
           console.log('[EXPENSE] Despesas carregadas:', expensesData?.length || 0);
+          if (expensesData && expensesData.length > 0) {
+            console.log('Colunas Expenses:', expensesData[0]);
+          }
 
           // Converter para o formato local
           const formattedExpenses = expensesData?.map(exp => ({
