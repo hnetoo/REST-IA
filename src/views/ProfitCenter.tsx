@@ -57,7 +57,11 @@ const ProfitCenter = () => {
             const dish = menu.find(d => d.id === i.dishId);
             productProfit[i.dishId] = { name: dish?.name || 'Desconhecido', profit: 0, qty: 0 };
         }
-        productProfit[i.dishId].profit += (i.unitPrice - i.unitCost) * i.quantity;
+        // CÁLCULO DA MARGEM: (price - cost_price) * unidades_vendidas
+        const unitPrice = Number(i.unitPrice || 0);
+        const unitCost = Number(i.unitCost || 0);
+        const margin = (unitPrice - unitCost) * i.quantity;
+        productProfit[i.dishId].profit += margin;
         productProfit[i.dishId].qty += i.quantity;
     });
 
