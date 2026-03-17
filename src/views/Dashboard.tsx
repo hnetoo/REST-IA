@@ -15,17 +15,13 @@ const Dashboard = () => {
   
   const today = new Date().toISOString().split('T')[0];
   
-  // CARREGAR MÉTRICAS DO OWNER DASHBOARD
+  // CARREGAR MÉTRICAS
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
         // Carregar despesas e funcionários do Supabase primeiro
         await loadExpenses();
         await loadEmployees();
-        
-        // IMPORTAR DIRETAMENTE DO OWNER DASHBOARD - SEM API
-        // Usar dados locais do store para evitar erro 500/404
-        console.log('[DASHBOARD PRINCIPAL] Usando dados locais para evitar erro de API');
         
         // Simular métricas baseadas em pedidos fechados (fallback seguro)
         const orders = closedOrders.filter(o => String(new Date(o.timestamp).toISOString() || '').split('T')[0] === today);
