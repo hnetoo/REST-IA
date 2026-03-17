@@ -25,7 +25,7 @@ const Analytics = () => {
     // Vendas Hoje: filtrar pedidos fechados de hoje
     const todayOrders = activeOrders.filter(order => 
       order.status === 'FECHADO' && 
-      order.timestamp?.split('T')[0] === today
+      String(order.timestamp || '').split('T')[0] === today
     );
     
     const totalSalesToday = todayOrders.reduce((acc, order) => acc + order.total, 0);
@@ -34,12 +34,12 @@ const Analytics = () => {
     
     // Custo de Compras: expenses de hoje
     const todayExpenses = expenses.filter(expense => 
-      expense.date?.split('T')[0] === today
+      String(expense.date || '').split('T')[0] === today
     );
     const totalExpensesToday = todayExpenses.reduce((acc, expense) => acc + expense.amount, 0);
     
     // Lucro Bruto
-    const lucroBruto = totalSalesToday - totalExpensesToday;
+    const lucroBruto = (totalSalesToday || 0) - (totalExpensesToday || 0);
     
     return {
       totalSalesToday,
@@ -64,13 +64,13 @@ const Analytics = () => {
       // Vendas do dia
       const dayOrders = activeOrders.filter(order => 
         order.status === 'FECHADO' && 
-        order.timestamp?.split('T')[0] === dateStr
+        String(order.timestamp || '').split('T')[0] === dateStr
       );
       const sales = dayOrders.reduce((acc, order) => acc + order.total, 0);
       
       // Compras do dia
       const dayExpenses = expenses.filter(expense => 
-        expense.date?.split('T')[0] === dateStr
+        String(expense.date || '').split('T')[0] === dateStr
       );
       const purchases = dayExpenses.reduce((acc, expense) => acc + expense.amount, 0);
       
@@ -181,7 +181,7 @@ const Analytics = () => {
     
     // Somar despesas por dia
     expenses.forEach(expense => {
-      const expenseDate = expense.date?.toString().split('T')[0];
+      const expenseDate = String(expense.date || '').split('T')[0];
       if (data.hasOwnProperty(expenseDate)) {
         data[expenseDate] += expense.amount;
       }
