@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 
 const ProfitCenter = () => {
-  const { activeOrders, menu, settings, addNotification } = useStore();
+  const { activeOrders, menu, settings, addNotification, expenses, employees } = useStore();
 
   const closedOrders = useMemo(() => activeOrders.filter(o => o.status === 'FECHADO'), [activeOrders]);
 
@@ -31,7 +31,16 @@ const ProfitCenter = () => {
     const revenue = closedOrders.reduce((a, b) => a + b.total, 0);
     const profit = closedOrders.reduce((a, b) => a + b.profit, 0);
     const tax = closedOrders.reduce((a, b) => a + b.taxTotal, 0);
-    const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+    
+    // CUSTOS FIXOS: Soma de base_salary_kz da tabela staff
+    const fixedCosts = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
+    
+    // CUSTOS VARIÁVEIS: Soma de amount_kz da tabela expenses
+    const variableCosts = expenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+    
+    // LUCRO LÍQUIDO REAL: Receitas - Custos Fixos - Custos Variáveis - Impostos
+    const netProfit = revenue - fixedCosts - variableCosts - tax;
+    const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
     
     // Lucro por modalidade
     // Fix: Added explicit typing to Record<string, number> to prevent 'unknown' types in Object.entries mapping
@@ -56,7 +65,7 @@ const ProfitCenter = () => {
         .sort((a, b) => b.profit - a.profit)
         .slice(0, 5);
 
-    return { revenue, profit, tax, margin, byMethod, topMarginProducts };
+    return { revenue, netProfit, tax, margin, fixedCosts, variableCosts, byMethod, topMarginProducts };
   }, [closedOrders, menu]);
 
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
@@ -95,7 +104,7 @@ const ProfitCenter = () => {
          <div className="glass-panel p-10 rounded-[3rem] border-primary/40 bg-gradient-to-br from-primary/10 to-transparent relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 text-primary opacity-5 group-hover:opacity-10 transition-opacity"><Zap size={100}/></div>
             <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4">Lucro Líquido Real (Net Alpha)</p>
-            <h3 className="text-5xl font-mono font-bold text-white text-glow">{formatKz(metrics.profit)}</h3>
+            <h3 className="text-5xl font-mono font-bold text-white text-glow">{formatKz(metrics.netProfit)}</h3>
             <div className="mt-8 flex items-center gap-3">
                <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
                   <div className="h-full bg-primary" style={{width: `${metrics.margin}%`}}></div>
