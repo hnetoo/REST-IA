@@ -1,7 +1,7 @@
 {
   "name": "tasca-do-vereda-app",
   "private": true,
-  "version": "1.0.5",
+  "version": "1.0.6",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
     "tauri": "tauri",
     "desktop": "tauri dev",
     "build:app": "tauri build",
+    "build:msi": "tauri build --target msi",
     "test": "vitest run",
     "supabase:init": "./scripts/supabase-setup.ps1 init",
     "supabase:start": "./scripts/supabase-setup.ps1 start",

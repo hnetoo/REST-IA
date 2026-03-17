@@ -1,6 +1,6 @@
 {
-  "productName": "Tasca Do Vereda",
-  "version": "1.0.5",
+  "productName": "Tasca do Vereda POS",
+  "version": "1.0.6",
   "identifier": "ao.vereda.gestao.restaurante",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -11,7 +11,7 @@
   "app": {
     "windows": [
       {
-        "title": "Tasca Do VEREDA - Gestão Inteligente",
+        "title": "Tasca do Vereda POS v1.0.6",
         "label": "main",
         "width": 1280,
         "height": 800,
@@ -45,6 +45,9 @@
   "plugins": {
     "sql": {
       "preload": ["sqlite:tasca_vereda.db"]
+    },
+    "notification": {
+      "all": true
     }
   }
 }

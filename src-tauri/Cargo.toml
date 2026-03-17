@@ -1,7 +1,7 @@
 
 [package]
 name = "tasca-do-vereda"
-version = "1.0.5"
+version = "1.0.6"
 description = "Gestão Inteligente de Restaurante"
 authors = ["Vereda Systems"]
 edition = "2021"
