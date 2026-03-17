@@ -195,7 +195,7 @@ const OwnerDashboard = () => {
       const { data: salesData, error: salesError } = await supabase
         .from('orders')
         .select('id, invoice_number, table_id, total_amount, created_at')
-        .eq('status', 'closed')
+        .eq('status', 'FECHADO')
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -291,7 +291,7 @@ const OwnerDashboard = () => {
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
-        .eq('status', 'closed')
+        .eq('status', 'FECHADO')
         .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString())
         .lte('created_at', new Date().toISOString());
 
@@ -381,7 +381,7 @@ const OwnerDashboard = () => {
       const { data: todayData, error: todayError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
-        .eq('status', 'closed')
+        .eq('status', 'FECHADO')
         .gte('created_at', today.toISOString().split('T')[0])
         .lte('created_at', today.toISOString());
       
@@ -389,7 +389,7 @@ const OwnerDashboard = () => {
       const { data: yesterdayData, error: yesterdayError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
-        .eq('status', 'closed')
+        .eq('status', 'FECHADO')
         .gte('created_at', yesterday.toISOString().split('T')[0])
         .lte('created_at', yesterday.toISOString().split('T')[0] + 'T23:59:59');
       
@@ -446,7 +446,7 @@ const OwnerDashboard = () => {
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('id, created_at, total_amount, status')
-        .eq('status', 'closed')
+        .eq('status', 'FECHADO')
         .order('created_at', { ascending: false })
         .limit(50);
       
@@ -629,7 +629,7 @@ const OwnerDashboard = () => {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .eq('status', 'closed')
+          .eq('status', 'FECHADO')
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
@@ -651,7 +651,7 @@ const OwnerDashboard = () => {
         const { data: todayOrdersData, error: todayOrdersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .eq('status', 'closed')
+          .eq('status', 'FECHADO')
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
@@ -883,7 +883,7 @@ const OwnerDashboard = () => {
 
   // Calcular Break-even
   const custoOperacionalTotal = metrics.despesas + metrics.folhaSalarial;
-  const faturacaoAtual = metrics.totalVendas + metrics.historicoRevenue;
+  const faturacaoAtual = metrics.totalVendas; // REMOVIDO: + metrics.historicoRevenue
   const progressoBreakEven = custoOperacionalTotal > 0 ? Math.min((faturacaoAtual / custoOperacionalTotal) * 100, 100) : 0;
   const faturacaoNecessaria = Math.max(custoOperacionalTotal - faturacaoAtual, 0);
   const isAboveBreakEven = faturacaoAtual >= custoOperacionalTotal;
@@ -975,7 +975,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Faturação Total</span>
             </div>
             <div className="text-2xl font-black text-white mb-2">
-              {formatAKZ(metrics.totalVendas + metrics.historicoRevenue)}
+              {formatAKZ(metrics.totalVendas)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
