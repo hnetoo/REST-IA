@@ -717,8 +717,8 @@ const Reports = () => {
   ];
 
   return (
-    <div className="p-8 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar">
-      <header className="flex justify-between items-center mb-8">
+    <div className="p-4 md:p-6 lg:p-8 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-4">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight italic uppercase">Relatórios</h2>
           <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">Exportação e Análise</p>
@@ -780,7 +780,7 @@ const Reports = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
         {reportCategories.map((category, catIndex) => (
           <div key={catIndex} className="glass-panel p-8 rounded-2xl border border-white/5">
             <div className="flex items-center gap-4 mb-6">

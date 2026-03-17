@@ -792,8 +792,8 @@ const Inventory = () => {
   };
 
   return (
-    <div className="p-8 min-h-screen bg-background text-slate-200 overflow-x-hidden">
-      <header className="flex justify-between items-center mb-8">
+    <div className="p-4 md:p-6 lg:p-8 min-h-screen bg-background text-slate-200 overflow-x-hidden">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-4">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight italic uppercase">Catálogo & Inventário</h2>
           <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">Gestão Central de Mercadorias</p>
@@ -914,7 +914,7 @@ const Inventory = () => {
       <div className="animate-in fade-in duration-500">
         {activeTab === 'menu' && (
           <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-orange-500">
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
               {menu.map(dish => {
                 const cat = categories.find(c => c.id === dish.category_id);
                 return (

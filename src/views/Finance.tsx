@@ -227,8 +227,8 @@ const Finance = () => {
   };
 
   return (
-    <div className="p-8 h-full overflow-y-auto no-scrollbar bg-background">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+    <div className="p-4 md:p-6 lg:p-8 h-full overflow-y-auto no-scrollbar bg-background">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-10 gap-6">
         <div>
           <div className="flex items-center gap-2 text-primary mb-1">
              <PiggyBank size={18} className="animate-pulse" />
@@ -357,7 +357,7 @@ const Finance = () => {
                 </button>
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {paymentConfigs.map((config) => (
                   <div key={config.id} className={`glass-panel p-6 rounded-3xl border ${config.isActive ? 'border-white/10' : 'border-red-500/20 opacity-60'} flex flex-col gap-6`}>
                      <div className="flex justify-between items-start">

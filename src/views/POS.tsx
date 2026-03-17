@@ -49,8 +49,17 @@ const POS = () => {
   const [orderToChangeId, setOrderToChangeId] = useState<string | null>(null);
   
   // Estados para responsividade
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Detectar tamanho de tela
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSidebarCollapsed(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const currentOrder = activeOrders.find(o => o.id === activeOrderId);
   

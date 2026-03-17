@@ -895,13 +895,13 @@ const OwnerDashboard = () => {
   return (
     <div className="min-h-screen overflow-y-auto overflow-x-hidden bg-[#070b14] scrollbar-thin scrollbar-thumb-orange-500">
       {/* HEADER - OWNER HUB */}
-      <header className="sticky top-0 z-50 flex justify-between items-center p-4 bg-white/5 backdrop-blur-md border border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-            <Settings className="w-5 h-5 text-white" />
+      <header className="sticky top-0 z-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 md:p-4 bg-white/5 backdrop-blur-md border border-white/10">
+        <div className="flex items-center gap-3 mb-2 sm:mb-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-cyan-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-white mb-1">OWNER HUB</h1>
+            <h1 className="text-lg sm:text-xl font-black text-white mb-1">OWNER HUB</h1>
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
               <span className="text-xs text-white/90">Caixa: Equilibrado</span>
@@ -951,9 +951,9 @@ const OwnerDashboard = () => {
         </div>
 
         {/* GRID DE INDICADORES (KPIs) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
           {/* Card 1: Vendas Hoje */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-amber-400" />
