@@ -22,6 +22,36 @@ interface Expense {
   status: string;
 }
 
+// Interface para dados de staff
+interface Staff {
+  id: string;
+  created_at: string;
+  full_name: string;
+  base_salary_kz: number;
+  position: string;
+  status: string;
+}
+
+// Interface para dados de produtos
+interface Product {
+  id: string;
+  created_at: string;
+  name: string;
+  price: number;
+  cost_price: number;
+  stock_quantity: number;
+  is_active: boolean;
+}
+
+// Interface para vendas por produto
+interface ProductSale {
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+}
+
 // Função para formatar moeda AKZ
 const formatAKZ = (value: number): string => {
   return new Intl.NumberFormat('pt-AO', {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, ShoppingCart, Users, Filter, Calendar, BarChart3, Utensils, Beer, CreditCard, Wallet, Smartphone } from 'lucide-react';
 import { generateSalesReport, generatePurchaseReport } from '../services/pdfService';
+import { generateStaffReport, generateExpensesReport, generateInventoryReport, generateProductSalesReport } from '../services/pdfSpecificReports';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -612,7 +613,7 @@ const Reports = () => {
   const generatePDF = (reportName: string) => {
     console.log('[REPORTS] Gerando PDF:', reportName);
     
-    switch(reportName) {
+    switch (reportName) {
       case 'Relatório de Vendas':
         generateSalesReport();
         break;
@@ -626,22 +627,31 @@ const Reports = () => {
         generateMenuAnalysis();
         break;
       case 'Inventário Atual':
-        generatePurchaseReport(); // Por enquanto usa o mesmo de compras
+        generateInventoryReport();
         break;
       case 'Movimentação':
-        generatePurchaseReport(); // Por enquanto usa o mesmo de compras
+        generateInventoryReport();
         break;
       case 'Produtos Mais Vendidos':
-        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        generateProductSalesReport(startDate, endDate);
         break;
       case 'Folha de Pagamento':
-        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        generateStaffReport();
         break;
       case 'Horas Trabalhadas':
-        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        generateStaffReport();
         break;
       case 'Desempenho':
-        generateSalesReport(); // Por enquanto usa o mesmo de vendas
+        generateStaffReport();
+        break;
+      case 'Relatório de Despesas':
+        generateExpensesReport();
+        break;
+      case 'Análise de Custos':
+        generateExpensesReport();
+        break;
+      case 'Vendas por Artigo':
+        generateProductSalesReport(startDate, endDate);
         break;
       default:
         console.log('[REPORTS] Relatório não implementado:', reportName);
@@ -654,12 +664,12 @@ const Reports = () => {
       icon: <DollarSign className="w-5 h-5" />,
       color: '#06b6d4',
       reports: [
-        { name: 'Relatório de Vendas', description: 'Vendas diárias e totais do período' },
-        { name: 'Relatório de Lucros', description: 'Análise de margens e rentabilidade' },
-        { name: 'Fluxo de Caixa', description: 'Entradas e saídas detalhadas' },
-        { name: 'Meios de Pagamento', description: 'Análise por método de pagamento (Fecho de Caixa)' },
-        { name: 'Vendas por Artigo', description: 'Análise detalhada por produto' },
-        { name: 'Análise de Performance de Menu', description: 'Engenharia de menu - margens vs volume' }
+        { name: 'Relatório de Vendas', description: 'Vendas diárias e totais do período', function: 'generateSalesReport' },
+        { name: 'Relatório de Lucros', description: 'Análise de margens e rentabilidade', function: 'generateSalesReport' },
+        { name: 'Fluxo de Caixa', description: 'Entradas e saídas detalhadas', function: 'generateSalesReport' },
+        { name: 'Meios de Pagamento', description: 'Análise por método de pagamento (Fecho de Caixa)', function: 'generateSalesReport' },
+        { name: 'Vendas por Artigo', description: 'Análise detalhada por produto', function: 'generateProductSalesReport' },
+        { name: 'Análise de Performance de Menu', description: 'Engenharia de menu - margens vs volume', function: 'generateSalesReport' }
       ]
     },
     {
@@ -667,9 +677,9 @@ const Reports = () => {
       icon: <ShoppingCart className="w-5 h-5" />,
       color: '#10b981',
       reports: [
-        { name: 'Inventário Atual', description: 'Stock disponível por produto' },
-        { name: 'Movimentação', description: 'Entradas e saídas de stock' },
-        { name: 'Produtos Mais Vendidos', description: 'Ranking de vendas por período' }
+        { name: 'Inventário Atual', description: 'Stock disponível por produto', function: 'generateInventoryReport' },
+        { name: 'Movimentação', description: 'Entradas e saídas de stock', function: 'generateInventoryReport' },
+        { name: 'Produtos Mais Vendidos', description: 'Ranking de vendas por período', function: 'generateProductSalesReport' }
       ]
     },
     {
@@ -677,9 +687,18 @@ const Reports = () => {
       icon: <Users className="w-5 h-5" />,
       color: '#f59e0b',
       reports: [
-        { name: 'Folha de Pagamento', description: 'Salários e comissões' },
-        { name: 'Horas Trabalhadas', description: 'Controlo de ponto e escalas' },
-        { name: 'Desempenho', description: 'Métricas por funcionário' }
+        { name: 'Folha de Pagamento', description: 'Salários e comissões', function: 'generateStaffReport' },
+        { name: 'Horas Trabalhadas', description: 'Controlo de ponto e escalas', function: 'generateStaffReport' },
+        { name: 'Desempenho', description: 'Métricas por funcionário', function: 'generateStaffReport' }
+      ]
+    },
+    {
+      name: 'Despesas',
+      icon: <Activity className="w-5 h-5" />,
+      color: '#ef4444',
+      reports: [
+        { name: 'Relatório de Despesas', description: 'Despesas detalhadas por categoria', function: 'generateExpensesReport' },
+        { name: 'Análise de Custos', description: 'Análise de custos fixos e variáveis', function: 'generateExpensesReport' }
       ]
     }
   ];
