@@ -11,7 +11,7 @@
     "tauri": "tauri",
     "desktop": "tauri dev",
     "build:app": "tauri build",
-    "build:msi": "tauri build --target msi",
+    "build:msi": "tauri build --target x86_64-pc-windows-msvc",
     "test": "vitest run",
     "supabase:init": "./scripts/supabase-setup.ps1 init",
     "supabase:start": "./scripts/supabase-setup.ps1 start",

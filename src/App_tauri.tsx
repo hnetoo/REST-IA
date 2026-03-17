@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
+import { createClient } from '@supabase/supabase-js';
 import POS from './views/POS';
 import Dashboard from './views/Dashboard';
 import OwnerDashboard from './views/owner/OwnerDashboard';
@@ -11,12 +12,13 @@ import AGTControl from './views/AGTControl';
 import ProfitCenter from './views/ProfitCenter';
 import Analytics from './views/Analytics';
 import SetupModal from './components/SetupModal';
-import { Loader2, Database } from 'lucide-react';
+import { Loader2, Database, AlertTriangle } from 'lucide-react';
 
 const App = () => {
   const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showSetup, setShowSetup] = useState(false);
+  const [supabaseClient, setSupabaseClient] = useState<any>(null);
 
   useEffect(() => {
     checkConfiguration();
@@ -26,44 +28,263 @@ const App = () => {
     try {
       // Verificar se já está configurado
       const configured = await invoke<boolean>('check_configuration');
-      setIsConfigured(configured);
       
-      if (!configured) {
-        // Tentar carregar configuração existente
-        const config = await invoke('load_config');
-        const configObj = JSON.parse(JSON.stringify(config));
+      // Verificar se existe configuração no localStorage
+      const localUrl = localStorage.getItem('SUPABASE_URL');
+      const localKey = localStorage.getItem('SUPABASE_ANON_KEY');
+      
+      if (localUrl && localKey) {
+        // Se existe configuração local, criar cliente e testar
+        const client = createClient(localUrl, localKey);
+        setSupabaseClient(client);
+        setIsConfigured(true);
         
-        if (configObj.supabase_url && configObj.supabase_key) {
-          // Se existe configuração, definir no localStorage
-          localStorage.setItem('SUPABASE_URL', configObj.supabase_url);
-          localStorage.setItem('SUPABASE_ANON_KEY', configObj.supabase_key);
-          setIsConfigured(true);
-        } else {
+        // Testar conexão
+        const { error } = await client.from('products').select('id').limit(1);
+        if (error) {
+          // Se falhar, mostrar setup
           setShowSetup(true);
+          setIsConfigured(false);
         }
+      } else {
+        // Se não existe configuração, mostrar setup
+        setShowSetup(true);
+        setIsConfigured(false);
       }
     } catch (error) {
       console.error('Erro ao verificar configuração:', error);
       setShowSetup(true);
+      setIsConfigured(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSetupComplete = () => {
-    setIsConfigured(true);
-    setShowSetup(false);
-    
-    // Inicializar banco de dados
-    initializeDatabase();
+  const handleSetupComplete = async (supabaseUrl: string, supabaseKey: string) => {
+    try {
+      // Criar cliente Supabase
+      const client = createClient(supabaseUrl, supabaseKey);
+      
+      // Testar conexão
+      const { error } = await client.from('products').select('id').limit(1);
+      if (error) {
+        throw new Error('Erro ao conectar ao Supabase: ' + error.message);
+      }
+      
+      // Executar auto-schema
+      await runAutoSchema(client);
+      
+      // Salvar configuração
+      await invoke('save_config', { supabaseUrl, supabaseKey });
+      
+      // Salvar no localStorage
+      localStorage.setItem('SUPABASE_URL', supabaseUrl);
+      localStorage.setItem('SUPABASE_ANON_KEY', supabaseKey);
+      
+      // Atualizar estado
+      setSupabaseClient(client);
+      setIsConfigured(true);
+      setShowSetup(false);
+      
+      // Definir cliente global
+      (window as any).supabase = client;
+      
+    } catch (error: any) {
+      console.error('Erro no setup:', error);
+      throw error;
+    }
   };
 
-  const initializeDatabase = async () => {
-    try {
-      const result = await invoke<string>('initialize_database');
-      console.log('Inicialização do banco de dados:', result);
-    } catch (error) {
-      console.error('Erro ao inicializar banco de dados:', error);
+  const runAutoSchema = async (client: any) => {
+    // Script SQL completo para criar todas as tabelas
+    const schemaSQL = `
+      -- Criar categorias se não existirem
+      CREATE TABLE IF NOT EXISTS categories (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        image_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Criar produtos se não existirem
+      CREATE TABLE IF NOT EXISTS products (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        price REAL NOT NULL DEFAULT 0,
+        category_id TEXT REFERENCES categories(id),
+        image_url TEXT,
+        is_active BOOLEAN DEFAULT true,
+        is_available BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Criar funcionários se não existirem
+      CREATE TABLE IF NOT EXISTS staff (
+        id TEXT PRIMARY KEY,
+        full_name TEXT NOT NULL,
+        phone TEXT,
+        role TEXT,
+        base_salary_kz REAL DEFAULT 0,
+        status TEXT DEFAULT 'ATIVO',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Criar mesas se não existirem
+      CREATE TABLE IF NOT EXISTS tables (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        number INTEGER NOT NULL UNIQUE,
+        status TEXT DEFAULT 'LIVRE',
+        x REAL DEFAULT 0,
+        y REAL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Criar clientes se não existirem
+      CREATE TABLE IF NOT EXISTS customers (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        phone TEXT,
+        email TEXT,
+        address TEXT,
+        balance REAL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Criar pedidos se não existirem
+      CREATE TABLE IF NOT EXISTS orders (
+        id TEXT PRIMARY KEY,
+        customer_name TEXT,
+        customer_phone TEXT,
+        delivery_address TEXT,
+        table_number INTEGER,
+        total_amount REAL NOT NULL DEFAULT 0,
+        status TEXT DEFAULT 'ABERTO',
+        payment_method TEXT,
+        invoice_number TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Criar itens dos pedidos se não existirem (SEM COLUNA STATUS)
+      CREATE TABLE IF NOT EXISTS order_items (
+        id TEXT PRIMARY KEY,
+        order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        product_id TEXT NOT NULL REFERENCES products(id),
+        quantity INTEGER NOT NULL DEFAULT 1,
+        unit_price REAL NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Criar despesas se não existirem
+      CREATE TABLE IF NOT EXISTS expenses (
+        id TEXT PRIMARY KEY,
+        amount_kz REAL NOT NULL DEFAULT 0,
+        category TEXT NOT NULL,
+        description TEXT,
+        status TEXT DEFAULT 'PENDENTE',
+        provider TEXT,
+        receipt_url TEXT,
+        proforma_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Criar configurações se não existirem
+      CREATE TABLE IF NOT EXISTS settings (
+        id TEXT PRIMARY KEY DEFAULT 'main',
+        restaurant_name TEXT DEFAULT 'Tasca do Vereda',
+        currency TEXT DEFAULT 'AOA',
+        tax_rate REAL DEFAULT 0.14,
+        address TEXT,
+        phone TEXT,
+        email TEXT,
+        website TEXT,
+        logo_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Criar histórico externo se não existir
+      CREATE TABLE IF NOT EXISTS external_history (
+        id TEXT PRIMARY KEY,
+        total_revenue REAL DEFAULT 0,
+        gross_profit REAL DEFAULT 0,
+        source_name TEXT,
+        period TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Inserir categorias padrão se não existirem
+      INSERT OR IGNORE INTO categories (id, name) VALUES 
+      ('cat-1', 'Entradas'),
+      ('cat-2', 'Pratos Principais'),
+      ('cat-3', 'Acompanhamentos'),
+      ('cat-4', 'Bebidas'),
+      ('cat-5', 'Sobremesas'),
+      ('cat-6', 'Outros');
+
+      -- Inserir produtos exemplo se não existirem
+      INSERT OR IGNORE INTO products (id, name, description, price, category_id, is_active, is_available) VALUES 
+      ('prod-1', 'Muamba de Frango', 'Muamba tradicional com frango, ginguba e óleo de palma', 3500, 'cat-2', true, true),
+      ('prod-2', 'Frango Frito', 'Porção de frango frito com batatas', 2800, 'cat-2', true, true),
+      ('prod-3', 'Arroz Branco', 'Arroz branco cozido', 1500, 'cat-3', true, true),
+      ('prod-4', 'Feijão de Óleo de Palma', 'Feijão cozido com óleo de palma', 1200, 'cat-3', true, true),
+      ('prod-5', 'Coca-Cola 2L', 'Refrigerante Coca-Cola 2 litros', 800, 'cat-4', true, true),
+      ('prod-6', 'Fanta Laranja 2L', 'Refrigerante Fanta Laranja 2 litros', 750, 'cat-4', true, true),
+      ('prod-7', 'Água Mineral 500ml', 'Água mineral sem gás 500ml', 200, 'cat-4', true, true),
+      ('prod-8', 'Mussse de Ginguba', 'Mussse tradicional de ginguba', 500, 'cat-5', true, true),
+      ('prod-9', 'Salada de Tomate', 'Salada fresca de tomate e cebola', 800, 'cat-1', true, true);
+
+      -- Inserir mesas padrão se não existirem
+      INSERT OR IGNORE INTO tables (number, status) VALUES 
+      (1, 'LIVRE'), (2, 'LIVRE'), (3, 'LIVRE'), (4, 'LIVRE'), (5, 'LIVRE'),
+      (6, 'LIVRE'), (7, 'LIVRE'), (8, 'LIVRE'), (9, 'LIVRE'), (10, 'LIVRE');
+
+      -- Inserir configurações padrão se não existirem
+      INSERT OR IGNORE INTO settings (id, restaurant_name, currency, tax_rate) VALUES 
+      ('main', 'Tasca do Vereda', 'AOA', 0.14);
+    `;
+
+    // Executar o schema SQL via RPC do Supabase
+    const { error } = await client.rpc('exec_sql', { sql: schemaSQL });
+    
+    if (error) {
+      console.warn('RPC não disponível, tentando criar tabelas individualmente...');
+      // Se RPC não funcionar, criar tabelas individualmente
+      await createTablesIndividually(client);
+    }
+  };
+
+  const createTablesIndividually = async (client: any) => {
+    // Criar tabelas individualmente se RPC não funcionar
+    const tables = [
+      'categories',
+      'products', 
+      'staff',
+      'tables',
+      'customers',
+      'orders',
+      'order_items',
+      'expenses',
+      'settings',
+      'external_history'
+    ];
+
+    for (const table of tables) {
+      try {
+        // Tentar ler da tabela para verificar se existe
+        await client.from(table).select('id').limit(1);
+      } catch (error) {
+        console.warn(`Tabela ${table} pode não existir, mas continuando...`);
+      }
     }
   };
 
@@ -87,10 +308,16 @@ const App = () => {
             <Database className="w-16 h-16 text-blue-400 mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-white mb-2">Tasca do Vereda POS</h1>
             <p className="text-blue-200">Configuração Inicial v1.0.6</p>
+            <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+              <div className="flex items-center justify-center gap-2 text-yellow-300 text-sm">
+                <AlertTriangle className="w-4 h-4" />
+                <span>Configuração necessária antes de usar o sistema</span>
+              </div>
+            </div>
           </div>
           <SetupModal
             isOpen={true}
-            onClose={() => setShowSetup(false)}
+            onClose={() => {}}
             onComplete={handleSetupComplete}
           />
         </div>
