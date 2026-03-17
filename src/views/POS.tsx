@@ -48,6 +48,10 @@ const POS = () => {
   
   const [orderToChangeId, setOrderToChangeId] = useState<string | null>(null);
   
+  // Estados para responsividade
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   const currentOrder = activeOrders.find(o => o.id === activeOrderId);
   
   // LOG DE DEBUG PARA PRODUTOS NO POS
@@ -375,7 +379,7 @@ const POS = () => {
   }).format(val);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background font-sans select-none min-w-[1024px]">
+    <div className="flex h-screen overflow-hidden bg-background font-sans select-none">
       
       {/* Sidebar Categorias */}
       <div className="w-24 bg-slate-950 border-r border-white/5 flex flex-col items-center py-10 gap-8 z-40 relative">
@@ -569,7 +573,7 @@ const POS = () => {
              </div>
            </div>
            {!activeTableId ? (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-6 animate-in fade-in zoom-in duration-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 md:gap-6 animate-in fade-in zoom-in duration-700">
                  {tables.map((table) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (
@@ -603,7 +607,7 @@ const POS = () => {
                  })}
               </div>
            ) : (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 lg:gap-6 animate-in fade-in zoom-in duration-700">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 md:gap-4 lg:gap-6 animate-in fade-in zoom-in duration-700">
                  {filteredBySearch.map((dish) => (
                     <button 
                       key={dish.id} 

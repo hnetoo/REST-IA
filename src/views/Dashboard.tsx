@@ -2,8 +2,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
-import { DollarSign, ShoppingBag, Users, TrendingUp, Sparkles, Loader2, Activity, Target, Clock, Zap, ChefHat, MonitorOff, Printer, History, PieChart } from 'lucide-react';
+import { DollarSign, ShoppingBag, Users, TrendingUp, Sparkles, Loader2, Activity, Target, Zap, ChefHat, MonitorOff, Printer, History, PieChart } from 'lucide-react';
 import { AIAnalysisResult, Order } from '../../types';
+import { supabase } from '../lib/supabaseService';
+import { printFinanceReport, printThermalInvoice } from '../lib/printService';
 
 const Dashboard = () => {
   const { activeOrders, customers, menu, settings, addNotification, expenses, loadExpenses, employees, loadEmployees } = useStore();
@@ -11,11 +13,21 @@ const Dashboard = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
 
+  // FUSO HORÁRIO DE ANGOLA (GMT+1) - IGUAL AO OWNER HUB
+  const getDateRangeToday = () => {
+    const now = new Date();
+    const nowAngola = new Date(now.getTime() + (60 * 60 * 1000)); // +1 hora
+    const today = new Date(nowAngola.getFullYear(), nowAngola.getMonth(), nowAngola.getDate());
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+    
+    return {
+      startDate: startOfDay.toISOString(),
+      endDate: endOfDay.toISOString()
+    };
+  };
+
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
-  
-  // FUSO HORÁRIO DE ANGOLA (GMT+1)
-  const nowAngola = new Date(new Date().getTime() + (60 * 60 * 1000)); // +1 hora
-  const today = new Date(nowAngola.getFullYear(), nowAngola.getMonth(), nowAngola.getDate()).toISOString().split('T')[0];
   
   // CARREGAR MÉTRICAS
   useEffect(() => {
@@ -25,29 +37,50 @@ const Dashboard = () => {
         await loadExpenses();
         await loadEmployees();
         
-        // Simular métricas baseadas em pedidos fechados (fallback seguro)
-        const orders = closedOrders.filter(o => String(new Date(o.timestamp).toISOString() || '').split('T')[0] === today);
-        const revenue = orders.reduce((acc, o) => acc + o.total, 0);
-        const profit = orders.reduce((acc, o) => acc + o.profit, 0);
+        // OBTER RANGE DE DATAS DE HOJE (GMT+1) - IGUAL AO OWNER HUB
+        const { startDate, endDate } = getDateRangeToday();
+        
+        // BUSCAR VENDAS DE HOJE COM A MESMA QUERY DO OWNER HUB
+        let vendasHoje = 0;
+        try {
+          const { data: todayOrdersData, error: todayOrdersError } = await supabase
+            .from('orders')
+            .select('total_amount, created_at, status')
+            .in('status', ['closed', 'paid', 'FECHADO'])
+            .gte('created_at', startDate)
+            .lte('created_at', endDate);
+
+          if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
+            vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+          }
+          
+          console.log('[DASHBOARD PRINCIPAL] Query vendas hoje (Owner Hub):', {
+            startDate,
+            endDate,
+            ordersCount: todayOrdersData?.length || 0,
+            vendasHoje
+          });
+        } catch (todayError) {
+          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar vendas de hoje:', todayError);
+        }
         
         // Calcular despesas do dia usando os dados carregados
+        const today = new Date(startDate).toISOString().split('T')[0];
         const todayExpenses = expenses.filter(exp => String(exp.createdAt || '').split('T')[0] === today);
         const totalExpenses = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
-        
-        console.log('[EXPENSES] Dados carregados com amount_kz:', expenses);
         
         // Calcular folha salarial usando os funcionários carregados
         const totalPayroll = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
         
         const mockMetrics = {
-          totalVendas: revenue,
+          totalVendas: vendasHoje,
           despesas: totalExpenses,
           folhaSalarial: totalPayroll,
-          lucroLiquido: (revenue || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((revenue || 0) * 0.065 || 0)
+          lucroLiquido: (vendasHoje || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((vendasHoje || 0) * 0.065 || 0)
         };
         
         setMetrics(mockMetrics);
-        console.log('[DASHBOARD PRINCIPAL] Métricas locais carregadas:', mockMetrics);
+        console.log('[DASHBOARD PRINCIPAL] Métricas sincronizadas com Owner Hub:', mockMetrics);
         
       } catch (error) {
         console.error('[DASHBOARD PRINCIPAL] Erro ao carregar métricas:', error);
@@ -56,12 +89,14 @@ const Dashboard = () => {
     };
     
     fetchMetrics();
-  }, [closedOrders, today, expenses, loadExpenses, employees, loadEmployees]);
+  }, [closedOrders, expenses, loadExpenses, employees, loadEmployees]);
   
   // USAR DADOS DO STORE GLOBAL (Owner Dashboard) para consistência
   const todayMetrics = useMemo(() => {
     // Se temos métricas globais, usar os dados reais calculados
     if (metrics && metrics.totalVendas > 0) {
+      const { startDate } = getDateRangeToday();
+      const today = new Date(startDate).toISOString().split('T')[0];
       const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
       const revenue = Number(metrics.totalVendas) || 0; // ELIMINAR NaN
       
@@ -109,8 +144,8 @@ const Dashboard = () => {
 
   const handleAIAnalysis = async () => {
     setLoadingAi(true);
-    const result = await analyzeBusinessPerformance(activeOrders, menu);
-    setAiAnalysis(result);
+    // Função AI não implementada ainda
+    setAiAnalysis(null);
     setLoadingAi(false);
   };
 
@@ -119,7 +154,7 @@ const Dashboard = () => {
       addNotification('warning', 'Nenhuma venda hoje para exportar.');
       return;
     }
-    printFinanceReport(todayMetrics.orders, settings, 'Relatório de Vendas de Hoje');
+    printFinanceReport('Relatório de Vendas de Hoje', todayMetrics.orders, ['id', 'total', 'timestamp'], settings);
     addNotification('success', 'Relatório exportado com sucesso.');
   };
 
