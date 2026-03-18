@@ -34,9 +34,8 @@ export const sqlMigrationService = {
           .from('categories')
           .upsert(validCategories.map((c: any) => ({
             id: c.id,
-            name: c.name,
-            // REMOVIDO: icon (coluna inexistente)
-            visible: typeof c.isVisibleDigital === 'boolean' ? c.isVisibleDigital : true
+            name: c.name
+            // REMOVIDO: visible (coluna inexistente - PGRST204)
           })));
         if (catError) console.error('Erro sincronizando categorias:', catError);
       }
@@ -64,8 +63,7 @@ export const sqlMigrationService = {
             description: m.description,
             image_url: m.image,
             category_id: m.categoryId,
-            is_visible_digital: typeof m.isVisibleDigital === 'boolean' ? m.isVisibleDigital : true,
-            // REMOVIDO: is_featured (coluna inexistente)
+            // REMOVIDO: is_visible_digital (coluna inexistente - PGRST204)
             is_active: true
           })));
         if (menuError) console.error('Erro sincronizando menu:', menuError);
@@ -83,8 +81,8 @@ export const sqlMigrationService = {
           const { error: ordersError } = await supabase
             .from('orders')
             .upsert(closedOrders.map((o: any) => ({
-              id: o.id,
-              table_id: o.tableId,
+              id: o.id, // Mantém ID original (pode ser string UUID)
+              table_id: typeof o.tableId === 'string' ? o.tableId : String(o.tableId), // Converte para string se for numérico
               total_amount: o.total,
               status: o.status === 'FECHADO' ? 'closed' : o.status, // Normalizar status
               payment_method: o.paymentMethod,
@@ -92,7 +90,7 @@ export const sqlMigrationService = {
               // REMOVIDO: hash (coluna inexistente)
               created_at: o.createdAt || new Date().toISOString(),
               updated_at: new Date().toISOString()
-              // ✅ REMOVIDO: 'customer_id' não existe na tabela
+              // ✅ CORRIGIDO: UUID syntax
             })));
           
           if (ordersError) {
@@ -106,7 +104,8 @@ export const sqlMigrationService = {
       const { error: stateError } = await supabase
         .from('app_settings') // ✅ CORRIGIDO: app_settings em vez de application_state
         .upsert({
-          id: 'current_settings',
+          // REMOVIDO: id (pode ser auto-incremento ou UUID gerado pelo DB)
+          restaurant_name: localData.settings?.restaurantName || 'REST IA OS',
           // REMOVIDO: data (coluna inexistente)
           updated_at: new Date().toISOString()
         });
