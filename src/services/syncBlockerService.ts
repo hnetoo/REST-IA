@@ -44,15 +44,25 @@ export const syncBlockerService = {
         window.fetch = function(input: any, init?: any) {
           const url = typeof input === 'string' ? input : input.url;
           
-          // Bloquear sync de produtos/categorias
+          // Bloquear APENAS operações de escrita perigosas
           if (url && (
             url.includes('/products') || 
             url.includes('/categories') ||
             url.includes('supabase') && 
-            (url.includes('upsert') || url.includes('insert'))
+            (url.includes('upsert') || url.includes('insert') || url.includes('update'))
           )) {
-            console.warn('[SyncBlocker] 🚫 TENTATIVA DE SYNC BLOQUEADA:', url);
-            return Promise.reject(new Error('Sync automático bloqueado para proteger dados'));
+            console.warn('[SyncBlocker] 🚫 TENTATIVA DE ESCRITA BLOQUEADA:', url);
+            return Promise.reject(new Error('Escrita automática bloqueada para proteger dados'));
+          }
+          
+          // PERMITIR LEITURA da tabela staff e outras operações seguras
+          if (url && (
+            url.includes('/staff') ||
+            url.includes('select') ||
+            url.includes('GET')
+          )) {
+            console.log('[SyncBlocker] ✅ LEITURA AUTORIZADA:', url);
+            return originalFetch.call(this, input, init);
           }
           
           // Permitir outros fetches
