@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { TrendingUp, DollarSign, Users, Wallet, Receipt, Calculator, RefreshCw, LogOut, Settings, TrendingDown, Package } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { fetchVendasHoje, fetchHistoricoExterno } from '../../lib/sharedMetrics';
 
 // Cache busting e revalidação forçada
 export const revalidate = 0;
@@ -260,35 +261,8 @@ const OwnerDashboard = () => {
     }
   };
 
-  // Buscar faturação histórica da tabela external_history (UNIFICADO)
-  const fetchHistoricoRevenue = async () => {
-    try {
-      const timestamp = Date.now(); // Timestamp único para evitar cache
-      const { data: historicoData, error: historicoError } = await supabase
-        .from('external_history')
-        .select('total_revenue, gross_profit, source_name, period')
-        .order('period', { ascending: false });
-
-      if (historicoError) {
-        console.error('[DASHBOARD] Erro ao buscar faturação histórica:', historicoError);
-        // Fallback para cálculo em tempo real se tabela não existir
-        return await calculateHistoricoFromOrders();
-      }
-
-      if (!historicoData || historicoData.length === 0) {
-        console.log('[DASHBOARD] Nenhum dado encontrado em external_history');
-        return 0;
-      }
-
-      const totalHistorico = historicoData.reduce((sum, record) => sum + Number(record.total_revenue || 0), 0);
-      console.log('[DASHBOARD] Faturação histórica total (external_history):', totalHistorico);
-      return totalHistorico;
-    } catch (error) {
-      console.error('[DASHBOARD] Erro na busca de faturação histórica:', error);
-      // Fallback para cálculo em tempo real
-      return await calculateHistoricoFromOrders();
-    }
-  };
+  // Buscar faturação histórica da tabela external_history (FUNÇÃO COMPARTILHADA)
+  // const fetchHistoricoRevenue = async () => { // REMOVIDO - usar sharedMetrics
 
   // Fallback: calcular histórico a partir das orders
   const calculateHistoricoFromOrders = async () => {
@@ -650,45 +624,12 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar vendas de hoje USANDO SQL PRECISO COM TIMEZONE DO SERVIDOR
-      let vendasHoje = 0;
-      try {
-        // SQL COM TIMEZONE AFRICA/LUANDA NO SERVIDOR - SEM DEPENDÊNCIA DO CLIENTE
-        const { data: todayOrdersData, error: todayOrdersError } = await supabase
-          .from('orders')
-          .select('total_amount, created_at, status')
-          .in('status', ['closed', 'paid'])
-          .gte('created_at', supabase.rpc('current_date_wat'))
-          .lt('created_at', supabase.rpc('next_date_wat'))
-          .cache('no-store'); // FORÇAR SEMPRE BUSCAR DADOS ATUALIZADOS
+      // Buscar vendas de hoje USANDO FUNÇÃO COMPARTILHADA
+      const vendasHoje = await fetchVendasHoje();
+      console.log('[OWNER HUB] Vendas Hoje (função compartilhada):', vendasHoje);
 
-        console.log('[OWNER HUB] SQL PRECISO - Africa/Luanda Servidor:', {
-          query: 'created_at >= (CURRENT_DATE AT TIME ZONE Africa/Luanda) AND created_at < (CURRENT_DATE AT TIME ZONE Africa/Luanda + INTERVAL 1 day)'
-        });
-
-        if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
-          // FILTRO ADICIONAL PARA GARANTIR TIMEZONE CORRETO
-          const hojeWAT = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
-          const vendasHojeFiltradas = todayOrdersData.filter(order => {
-            const dataOrder = new Date(order.created_at).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
-            return dataOrder === hojeWAT;
-          });
-          
-          vendasHoje = vendasHojeFiltradas.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
-          
-          console.log('[OWNER HUB] TIMEZONE AFRICA/LUANDA - Vendas Hoje:', {
-            hojeWAT, // "18/03/2026"
-            totalOrders: todayOrdersData.length,
-            vendasHojeFiltradas: vendasHojeFiltradas.length,
-            totalCalculado: vendasHoje
-          });
-        }
-      } catch (todayError) {
-        console.error('[DASHBOARD] Erro ao buscar vendas de hoje:', todayError);
-      }
-
-      // Buscar faturação histórica da tabela external_history (UNIFICADO)
-      const historicoExterno = await fetchHistoricoRevenue();
+      // Buscar faturação histórica da tabela external_history (FUNÇÃO COMPARTILHADA)
+      const historicoExterno = await fetchHistoricoExterno();
       setHistoricoExterno(historicoExterno); // Atualizar estado
       console.log('[DASHBOARD] Saldo de Transição (external_history):', historicoExterno);
 

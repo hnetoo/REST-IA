@@ -1409,19 +1409,42 @@ const SystemHub = () => {
       loadExternalHistory();
     }, []);
 
-    const handleAddRecord = (e: React.FormEvent) => {
+    const handleAddRecord = async (e: React.FormEvent) => {
       e.preventDefault();
-      const newRecord = {
-        id: Date.now().toString(),
-        system: formData.system,
-        period: formData.period,
-        revenue: parseFloat(formData.revenue),
-        profit: parseFloat(formData.profit),
-        date: new Date().toISOString().split('T')[0]
-      };
-      setRecords([newRecord, ...records]);
-      setFormData({ system: '', period: '', revenue: '', profit: '' });
-      setShowForm(false);
+      
+      try {
+        // PERSISTÊNCIA ATÔMICA - Upsert na tabela external_history
+        const { data, error } = await supabase
+          .from('external_history')
+          .upsert({
+            source_name: formData.system,
+            period: formData.period || new Date().toISOString().split('T')[0],
+            total_revenue: parseFloat(formData.revenue),
+            gross_profit: parseFloat(formData.profit),
+            updated_at: new Date().toISOString()
+          })
+          .select();
+
+        if (error) {
+          console.error('[SystemHub] Erro ao gravar no external_history:', error);
+          addNotification('error', 'Falha ao gravar registro histórico');
+          return;
+        }
+
+        console.log('[SystemHub] Registro gravado com sucesso:', data);
+        addNotification('success', 'Registro histórico gravado com sucesso!');
+        
+        // Limpar formulário apenas após confirmação da DB
+        setFormData({ system: '', period: '', revenue: '', profit: '' });
+        setShowForm(false);
+        
+        // Forçar revalidação de dados
+        await loadExternalHistory();
+        
+      } catch (error) {
+        console.error('[SystemHub] Erro na gravação:', error);
+        addNotification('error', 'Falha ao gravar registro histórico');
+      }
     };
 
     // BLINDAGEM TOTAL - EVITA CRASH COM ARRAY VAZIO
