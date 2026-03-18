@@ -710,13 +710,13 @@ const OwnerDashboard = () => {
 
       // NOVA ESTRUTURA DE CÁLCULO - MODO DE PRODUÇÃO
       
-      // 1. HISTÓRICO FIXO
-      const historicoFixo = 45000000; // 45.000.000 Kz
+      // 1. HISTÓRICO DA DB - ZERO HARDCODING
+      const historicoFixo = Number(historicoExterno) || 0; // LIDO DA DB
       
       // 2. VENDAS APP: SUM(total_price) de todas as ordens 'closed/paid' na DB
       const vendasApp = Number(totalVendas) || 0;
       
-      // 3. IVA 7%: PROIBIDO calcular sobre os 45M
+      // 3. IVA 7%: PROIBIDO calcular sobre valores fixos
       const ivaSete = vendasApp * 0.07; // Apenas sobre vendasApp
       
       // 4. DESPESAS TOTAIS: SUM(expenses) + SUM(staff_salaries)
