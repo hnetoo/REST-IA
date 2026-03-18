@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { printStaffSchedules, printPayroll } from '../lib/printService';
 import { 
@@ -7,13 +7,40 @@ import {
   Edit2, X, Plus, Save, Fingerprint, ChefHat, Wallet, Utensils,
   ShieldCheck, Timer, Download, Printer, CheckCircle
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const Employees = () => {
   const { 
     employees, workShifts, addEmployee, updateEmployee, removeEmployee, 
     addWorkShift, updateWorkShift, removeWorkShift,
-    clockIn, clockOut, attendance, addNotification, settings 
+    clockIn, clockOut, attendance, addNotification, settings,
+    loadEmployees // Adicionar função de carregamento
   } = useStore();
+  
+  // useEffect para carregar dados da tabela staff
+  useEffect(() => {
+    console.log("EMPLOYEES: Carregando dados da tabela staff...");
+    loadEmployees(); // Carregar dados do Supabase
+  }, [loadEmployees]);
+
+  // Log real dos dados
+  useEffect(() => {
+    console.log("DADOS REAIS DA TABELA STAFF:", employees);
+    console.log("TOTAL DE FUNCIONÁRIOS:", employees.length);
+    
+    // Calcular encargo mensal dinamicamente
+    const totalEncargos = employees.reduce((acc, emp) => {
+      const salary = Number(emp.salary) || 0;
+      const foodAllowance = Number(emp.foodAllowance) || 0;
+      const transportAllowance = Number(emp.transportAllowance) || 0;
+      const bonus = Number(emp.bonus) || 0;
+      const total = salary + foodAllowance + transportAllowance + bonus;
+      console.log(`Funcionário: ${emp.name}, Total: ${total}`);
+      return acc + total;
+    }, 0);
+    
+    console.log("ENCARGO MENSAL DINÂMICO:", totalEncargos);
+  }, [employees]);
   
   const [activeTab, setActiveTab] = useState<'LIST' | 'SCHEDULE' | 'ATTENDANCE' | 'PAYROLL'>('LIST');
 

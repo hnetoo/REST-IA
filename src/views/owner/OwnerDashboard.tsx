@@ -1034,12 +1034,9 @@ const OwnerDashboard = () => {
             </div>
             <div className="text-3xl font-black text-blue-400 mb-2">
               {(() => {
-                console.info("DEBUG STAFF UI: folhaSalarial =", metrics.folhaSalarial);
-                console.info("DEBUG STAFF UI: metrics =", metrics);
-                // FORÇAR VALOR REAL SE ESTIVER ZERO
-                const valorReal = metrics.folhaSalarial > 0 ? metrics.folhaSalarial : 385000;
-                console.info("DEBUG STAFF UI: valorReal =", valorReal);
-                return formatAKZ(valorReal);
+                console.log("DADOS REAIS DA TABELA STAFF:", metrics.folhaSalarial);
+                console.log("DADOS REAIS COMPLETOS:", metrics);
+                return formatAKZ(metrics.folhaSalarial || 0);
               })()}
             </div>
             <div className="text-xs text-white/60">Soma salários funcionários</div>
