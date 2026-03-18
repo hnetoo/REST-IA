@@ -100,11 +100,46 @@ const Dashboard = () => {
         // RENDIMENTO GLOBAL: Usar mesma fonte que Lucro Hoje (RPC)
         const totalSales = vendasHoje; // SINCRONIZADO: mesma fonte que vendas de hoje
         
+        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL
+        let historicoFinanceiro = 0;
+        try {
+          const { data: financialHistoryData, error: financialHistoryError } = await supabase
+            .from('financial_history')
+            .select('receita_total');
+
+          if (!financialHistoryError && financialHistoryData) {
+            historicoFinanceiro = financialHistoryData.reduce((acc, item) => acc + (Number(item.receita_total) || 0), 0);
+            console.log('[DASHBOARD PRINCIPAL] Histórico financeiro:', historicoFinanceiro);
+          }
+        } catch (financialError) {
+          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar histórico financeiro:', financialError);
+        }
+
+        // BUSCAR BUSINESS_STATS PARA RENDIMENTO GLOBAL
+        let businessStatsRevenue = 0;
+        try {
+          const { data: businessStatsData, error: businessStatsError } = await supabase
+            .from('business_stats')
+            .select('total_revenue')
+            .single();
+
+          if (!businessStatsError && businessStatsData) {
+            businessStatsRevenue = Number(businessStatsData.total_revenue) || 0;
+            console.log('[DASHBOARD PRINCIPAL] Business stats revenue:', businessStatsRevenue);
+          }
+        } catch (businessError) {
+          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar business_stats:', businessError);
+        }
+
+        // RENDIMENTO GLOBAL: Histórico financeiro + business_stats + vendas atuais
+        const rendimentoGlobal = historicoFinanceiro + businessStatsRevenue + (totalSales || 0);
+        
         const mockMetrics = {
-          totalVendas: totalSales, // RENDIMENTO GLOBAL - SOMA TOTAL HISTÓRICA
+          totalVendas: totalSales, // Vendas de hoje apenas
           despesas: totalExpenses,
           folhaSalarial: totalPayroll,
-          lucroLiquido: (totalSales || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((totalSales || 0) * 0.065 || 0)
+          lucroLiquido: (totalSales || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((totalSales || 0) * 0.065 || 0),
+          rendimentoGlobal: rendimentoGlobal // NOVO: Rendimento Global consolidado
         };
         
         setMetrics(mockMetrics);
@@ -318,9 +353,9 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
             Rendimento Global
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKz(totalSales)}</p>
+          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.rendimentoGlobal || totalSales)}</p>
           <div className="mt-2 text-[10px] text-emerald-500 font-bold">
-             Acumulado no Período
+             Histórico + Vendas Atuais
           </div>
         </div>
 
