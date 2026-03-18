@@ -103,16 +103,16 @@ const Dashboard = () => {
         // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL
         let historicoFinanceiro = 0;
         try {
-          const { data: financialHistoryData, error: financialHistoryError } = await supabase
-            .from('financial_history')
-            .select('receita_total');
+          const { data: externalHistoryData, error: externalHistoryError } = await supabase
+            .from('external_history')
+            .select('total_revenue');
 
-          if (!financialHistoryError && financialHistoryData) {
-            historicoFinanceiro = financialHistoryData.reduce((acc, item) => acc + (Number(item.receita_total) || 0), 0);
-            console.log('[DASHBOARD PRINCIPAL] Histórico financeiro:', historicoFinanceiro);
+          if (!externalHistoryError && externalHistoryData) {
+            historicoFinanceiro = externalHistoryData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
+            console.log('[DASHBOARD PRINCIPAL] Histórico financeiro (external_history):', historicoFinanceiro);
           }
         } catch (financialError) {
-          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar histórico financeiro:', financialError);
+          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar external_history:', financialError);
         }
 
         // BUSCAR BUSINESS_STATS PARA RENDIMENTO GLOBAL
@@ -131,7 +131,7 @@ const Dashboard = () => {
           console.error('[DASHBOARD PRINCIPAL] Erro ao buscar business_stats:', businessError);
         }
 
-        // RENDIMENTO GLOBAL: Histórico financeiro + business_stats + vendas atuais
+        // RENDIMENTO GLOBAL: Histórico financeiro (external_history) + business_stats + vendas atuais
         const rendimentoGlobal = historicoFinanceiro + businessStatsRevenue + (totalSales || 0);
         
         const mockMetrics = {
