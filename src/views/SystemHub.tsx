@@ -395,7 +395,7 @@ const SystemHub = () => {
           customDigitalMenuUrl: localSettings.customDigitalMenuUrl
         };
         await updateSettings(settingsToSave);
-        addNotification('success', 'Configurações do Ecosistema Cloud atualizadas com sucesso!');
+        addNotification('success', 'Configurações Cloud atualizadas');
         setTimeout(() => setIsSaving(false), 1000);
       } catch (error) {
         addNotification('error', 'Erro ao salvar configurações');
@@ -487,7 +487,7 @@ const SystemHub = () => {
               <button 
                 onClick={handleSaveSettings} 
                 disabled={isSaving}
-                className="w-full py-4 bg-white/5 border border-white/10 text-slate-300 rounded-xl font-black text-[9px] uppercase hover:bg-white/10 transition-all"
+                className="w-full py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 border border-emerald-400/30 text-white rounded-xl font-black text-[9px] uppercase hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-lg shadow-emerald-500/20"
               >
                 {isSaving ? 'Guardando...' : 'Guardar Credenciais'}
               </button>
