@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-03-18T18:53:22.981Z",
+  "status": "INTEGRITY_CHECK",
+  "ecosystem": {
+    "status": "SINCRONIZADO",
+    "errors": 4,
+    "conflicts": 0
+  },
+  "data": {
+    "products": {
+      "total": 89,
+      "withImages": 1,
+      "corrupted": 4,
+      "integrity": "CORROMPIDO"
+    },
+    "categories": {
+      "total": 13,
+      "integrity": "OK"
+    },
+    "staff": {
+      "total": 5,
+      "totalSalaries": 385000,
+      "integrity": "OK"
+    }
+  }
+}
