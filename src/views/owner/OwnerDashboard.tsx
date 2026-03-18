@@ -688,52 +688,67 @@ const OwnerDashboard = () => {
         }
       ];
 
-      // Calcular lucro líquido ajustado para o período
-      let folhaSalarialPeriodo = folhaSalarial || 0;
+      // REGRAS MATEMÁTICAS RÍGIDAS - SEM VALORES FANTASMA
+      
+      // 1. FANTASMA DE 45M: Ponto de partida (Histórico Externo)
+      const historicoExterno = 45000000; // 45.000.000 Kz
+      
+      // 2. FÓRMULA: Faturação Total = 45.000.000 + SUM(total_price das ordens com status 'closed' ou 'paid')
+      const faturacaoTotal = historicoExterno + (Number(totalVendas) || 0);
+      
+      // 3. IMPOSTO (IVA 7%): Apenas sobre vendas reais da App Principal
+      // FÓRMULA: Imposto = (Soma das vendas da App Principal) * 0,07
+      const imposto = (Number(totalVendas) || 0) * 0.07; // 7% APENAS SOBRE VENDAS REAIS
+      
+      // 4. Calcular custos de staff para o período
+      let custosStaff = folhaSalarial || 0;
       if (period === 'HOJE') {
         // Para o período HOJE, dividir a folha salarial por 30 (diário)
-        folhaSalarialPeriodo = (folhaSalarial || 0) / 30;
+        custosStaff = (folhaSalarial || 0) / 30;
       }
-
-      const receitaTotalCorrigida = (Number(totalVendas) || 0) + 45000000; // SOMAR HISTÓRICO EXTERNO FIXO DE 45.000.000 Kz
-      const lucroLiquido = receitaTotalCorrigida - (totalDespesas || 0) - folhaSalarialPeriodo;
+      
+      // 5. LUCRO LÍQUIDO REAL: FÓRMULA EXATA
+      // Lucro Líquido = (Faturação Total) - (Despesas Acumuladas) - (Custos de Staff) - (Imposto 7%)
+      const lucroLiquido = faturacaoTotal - (Number(totalDespesas) || 0) - custosStaff - imposto;
 
       const metricsResult = {
-        vendasHoje: Number(vendasHoje) || 0,
+        vendasHoje: Number(vendasHoje) || 0, // ESPELHO EXATO DA APP PRINCIPAL
         mesasAtivas: 0, // Calcular depois se necessário
         totalVendas: Number(totalVendas) || 0,
-        receitaTotal: receitaTotalCorrigida, // USAR RECEITA TOTAL CORRIGIDA
+        receitaTotal: faturacaoTotal, // Faturação Total = 45M + Vendas Reais
         despesas: Number(totalDespesas) || 0,
+        despesasAcumuladas: Number(totalExpensesAllTime) || 0, // Despesas totais acumuladas
         folhaSalarial: Number(folhaSalarial) || 0,
-        impostos: receitaTotalCorrigida * 0.065, // USAR RECEITA TOTAL CORRIGIDA PARA IMPOSTOS
+        impostos: imposto, // 7% APENAS SOBRE VENDAS REAIS
         historicoRevenue: await fetchHistoricoRevenue(),
-        lucroLiquido: Number(lucroLiquido) || 0,
-        margem: receitaTotalCorrigida > 0 ? (Number(lucroLiquido) / receitaTotalCorrigida) * 100 : 0
+        lucroLiquido: Number(lucroLiquido) || 0, // CÁLCULO REAL SEM FANTASMAS
+        margem: faturacaoTotal > 0 ? (Number(lucroLiquido) / faturacaoTotal) * 100 : 0
       };
 
-      console.log('[DASHBOARD] Métricas finais ANTES de setMetrics:', {
+      console.log('[DASHBOARD] CÁLCULOS MATEMÁTICOS EXATOS:', {
         periodo: period,
+        historicoExterno,
         totalVendas: Number(totalVendas) || 0,
-        receitaTotalCorrigida,
+        faturacaoTotal,
         totalDespesas: Number(totalDespesas) || 0,
-        folhaSalarial: Number(folhaSalarial) || 0,
-        impostos: receitaTotalCorrigida * 0.065,
+        custosStaff,
+        imposto, // 7% APENAS SOBRE VENDAS REAIS
         lucroLiquido: Number(lucroLiquido) || 0,
         vendasHoje: Number(vendasHoje) || 0
       });
 
       const finalMetrics = {
-        vendasHoje: Number(vendasHoje) || 0,
+        vendasHoje: Number(vendasHoje) || 0, // ESPELHO EXATO DA APP PRINCIPAL
         mesasAtivas: 0, // Calcular depois se necessário
         totalVendas: Number(totalVendas) || 0,
-        receitaTotal: receitaTotalCorrigida, // USAR RECEITA TOTAL CORRIGIDA (NÃO APENAS totalVendas)
+        receitaTotal: faturacaoTotal, // Faturação Total = 45M + Vendas Reais
         despesas: Number(totalDespesas) || 0,
-        despesasAcumuladas: Number(totalExpensesAllTime) || 0, // NOVO: Total acumulado
+        despesasAcumuladas: Number(totalExpensesAllTime) || 0, // Despesas totais acumuladas
         folhaSalarial: Number(folhaSalarial) || 0,
-        impostos: receitaTotalCorrigida * 0.065, // USAR RECEITA TOTAL CORRIGIDA PARA IMPOSTOS
+        impostos: imposto, // 7% APENAS SOBRE VENDAS REAIS
         historicoRevenue: await fetchHistoricoRevenue(),
-        lucroLiquido: Number(lucroLiquido) || 0,
-        margem: receitaTotalCorrigida > 0 ? (Number(lucroLiquido) / receitaTotalCorrigida) * 100 : 0
+        lucroLiquido: Number(lucroLiquido) || 0, // CÁLCULO REAL SEM FANTASMAS
+        margem: faturacaoTotal > 0 ? (Number(lucroLiquido) / faturacaoTotal) * 100 : 0
       };
 
       console.log('[DASHBOARD] Métricas finais DEPOIS de setMetrics:', {
