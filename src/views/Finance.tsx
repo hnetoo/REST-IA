@@ -35,9 +35,8 @@ const Finance = () => {
     category: 'OUTROS' as ExpenseCategory,
     status: 'PENDENTE',
     date: new Date().toISOString().split('T')[0],
-    paymentMethod: 'NUMERARIO',
-    receipt: '',
-    notes: ''
+    paymentMethod: 'NUMERARIO'
+    // REMOVIDO: receipt, notes (NÃO EXISTEM NA TABELA)
   });
 
   // BUSCAR TOTAL DE DESPESAS DA DB (SEM USAR VARIÁVEIS GLOBAIS)
@@ -164,9 +163,8 @@ const Finance = () => {
         category: newExpense.category,
         status: 'PENDING', // STATUS CORRETO
         created_at: new Date().toISOString(), // COLUNA CORRETA
-        paymentMethod: newExpense.paymentMethod,
-        receipt: newExpense.receipt,
-        notes: newExpense.notes
+        paymentMethod: newExpense.paymentMethod
+        // REMOVIDO: notes (NÃO EXISTE NA TABELA)
       };
 
       // VALIDAÇÃO DE RESPOSTA - INSERT REAL NA DB
@@ -185,9 +183,8 @@ const Finance = () => {
           category: 'OUTROS' as ExpenseCategory,
           status: 'PENDENTE',
           date: new Date().toISOString().split('T')[0],
-          paymentMethod: 'NUMERARIO',
-          receipt: '',
-          notes: ''
+          paymentMethod: 'NUMERARIO'
+          // REMOVIDO: receipt, notes
         });
         setIsAddingExpense(false);
         return;
@@ -207,12 +204,11 @@ const Finance = () => {
         setNewExpense({
           description: '',
           amount: 0,
-          category: '',
+          category: 'OUTROS' as ExpenseCategory,
           status: 'PENDENTE',
-          createdAt: new Date(),
-          paymentMethod: 'NUMERARIO',
-          receipt: '',
-          notes: ''
+          date: new Date().toISOString().split('T')[0],
+          paymentMethod: 'NUMERARIO'
+          // REMOVIDO: receipt, notes
         });
         setIsAddingExpense(false);
       }
@@ -239,9 +235,8 @@ const Finance = () => {
       category: expense.category,
       status: expense.status,
       date: expense.date || new Date().toISOString().split('T')[0],
-      paymentMethod: expense.paymentMethod,
-      receipt: expense.receipt || '',
-      notes: expense.notes || ''
+      paymentMethod: expense.paymentMethod
+      // REMOVIDO: receipt, notes (NÃO EXISTEM NA TABELA)
     });
   };
 
@@ -576,7 +571,7 @@ const Finance = () => {
                       <td className="px-6 py-4">
                         <div>
                           <div className="font-bold text-white text-sm">{expense.description}</div>
-                          {expense.notes && <div className="text-[8px] text-slate-400 mt-1">{expense.notes}</div>}
+                          {/* REMOVIDO: expense.notes (NÃO EXISTE NA TABELA) */}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -728,30 +723,11 @@ const Finance = () => {
                 <input 
                   type="date"
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
-                  value={newExpense.createdAt instanceof Date ? String(newExpense.createdAt.toISOString() || '').split('T')[0] : String(newExpense.createdAt || '').split('T')[0]}
-                  onChange={e => setNewExpense({...newExpense, createdAt: e.target.value})}
+                  value={newExpense.date || new Date().toISOString().split('T')[0]}
+                  onChange={e => setNewExpense({...newExpense, date: e.target.value})}
                 />
               </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Recibo</label>
-                <input 
-                  type="text"
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
-                  placeholder="Número do recibo (opcional)"
-                  value={newExpense.receipt}
-                  onChange={e => setNewExpense({...newExpense, receipt: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Notas</label>
-                <textarea 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary resize-none"
-                  placeholder="Observações adicionais (opcional)"
-                  rows={3}
-                  value={newExpense.notes}
-                  onChange={e => setNewExpense({...newExpense, notes: e.target.value})}
-                />
-              </div>
+              {/* REMOVIDO: Campos receipt e notes (NÃO EXISTEM NA TABELA) */}
               <div className="flex gap-4 pt-4">
                 <button 
                   onClick={() => {
