@@ -1009,16 +1009,37 @@ restoreFromSupabase: async () => {
           const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
           const { data: existingExpense } = await supabase
             .from('expenses')
-            .select('id')
+            .select('id, description, amount_kz')
             .eq('amount_kz', expense.amount)
             .eq('description', expense.description)
-            .eq('category', expense.category)
             .gte('created_at', oneMinuteAgo)
             .limit(1);
 
           if (existingExpense && existingExpense.length > 0) {
             console.log('[EXPENSE] Despesa duplicada detectada, ignorando:', existingExpense[0].id);
             return; // NÃO INSERIR DUPLICADA
+          }
+
+          // LIMPEZA DE DADOS: Remover despesa duplicada "Óleo (6.000 Kz)"
+          if (expense.description === 'Óleo' && expense.amount === 6000) {
+            const { data: oleoDuplicates } = await supabase
+              .from('expenses')
+              .select('id, created_at')
+              .eq('description', 'Óleo')
+              .eq('amount_kz', 6000)
+              .order('created_at', { ascending: false });
+            
+            if (oleoDuplicates && oleoDuplicates.length > 1) {
+              // Manter apenas o mais recente, remover os mais antigos
+              const toRemove = oleoDuplicates.slice(1);
+              for (const duplicate of toRemove) {
+                console.log('[EXPENSE] Removendo despesa duplicada de Óleo:', duplicate.id);
+                await supabase
+                  .from('expenses')
+                  .delete()
+                  .eq('id', duplicate.id);
+              }
+            }
           }
 
           // Inserir diretamente na tabela expenses
