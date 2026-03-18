@@ -26,7 +26,7 @@ const Reports = () => {
     }).format(value);
   };
 
-  // CARD 1: VENDAS POR ARTIGO
+  // CARD 1: VENDAS POR ARTIGO - Query que soma quantity por product_id
   const fetchVendasPorArtigo = async () => {
     setVendasPorArtigo(prev => ({ ...prev, loading: true }));
     try {
@@ -48,7 +48,7 @@ const Reports = () => {
         .from('categories')
         .select('id, name');
 
-      // Processar vendas por artigo
+      // Processar vendas por article - soma quantity por product_id
       const vendasMap = new Map();
       
       ordersData?.forEach(order => {
@@ -85,7 +85,7 @@ const Reports = () => {
     }
   };
 
-  // CARD 2: FINANÇAS DETALHADAS
+  // CARD 2: FINANÇAS DETALHADAS - Balanço orders vs expenses
   const fetchFinancasDetalhadas = async () => {
     setFinancasDetalhadas(prev => ({ ...prev, loading: true }));
     try {
@@ -134,7 +134,7 @@ const Reports = () => {
     }
   };
 
-  // CARD 3: RH E FALTAS
+  // CARD 3: RH E FALTAS - Lógica de cálculo (salario/30) * faltas
   const fetchRhEFaltas = async () => {
     setRhEFaltas(prev => ({ ...prev, loading: true }));
     try {
@@ -165,7 +165,7 @@ const Reports = () => {
     }
   };
 
-  // CARD 4: MAPA DE DESPESAS
+  // CARD 4: MAPA DE DESPESAS - Agrupamento por categoria
   const fetchMapaDespesas = async () => {
     setMapaDespesas(prev => ({ ...prev, loading: true }));
     try {
@@ -199,7 +199,7 @@ const Reports = () => {
     }
   };
 
-  // CARD 5: TOP RENTABILIDADE
+  // CARD 5: TOP RENTABILIDADE - Cálculo de margem bruta
   const fetchTopRentabilidade = async () => {
     setTopRentabilidade(prev => ({ ...prev, loading: true }));
     try {
@@ -209,7 +209,7 @@ const Reports = () => {
         .eq('is_active', true);
 
       const result = productsData
-        .map(product => ({
+        ?.map(product => ({
           nome: product.name,
           precoVenda: product.price || 0,
           precoCusto: product.cost_price || 0,
@@ -218,7 +218,7 @@ const Reports = () => {
         }))
         .filter(p => p.precoCusto > 0) // Apenas produtos com custo definido
         .sort((a, b) => b.margem - a.margem)
-        .slice(0, 10);
+        .slice(0, 10) || [];
 
       setTopRentabilidade({ data: result, loading: false });
     } catch (error) {
@@ -227,7 +227,7 @@ const Reports = () => {
     }
   };
 
-  // CARD 6: FLUXO POR TURNO
+  // CARD 6: FLUXO POR TURNO - Filtro por created_at (HH:mm)
   const fetchFluxoPorTurno = async () => {
     setFluxoPorTurno(prev => ({ ...prev, loading: true }));
     try {
@@ -241,7 +241,7 @@ const Reports = () => {
         .gte('created_at', new Date(start).toISOString())
         .lte('created_at', new Date(end).toISOString());
 
-      // Agrupar por faixa horária
+      // Agrupar por faixa horária baseado em created_at (HH:mm)
       const turnosMap = new Map();
       turnosMap.set('Manhã (6h-12h)', { turno: 'Manhã (6h-12h)', total: 0, pedidos: 0 });
       turnosMap.set('Almoço (12h-15h)', { turno: 'Almoço (12h-15h)', total: 0, pedidos: 0 });
@@ -272,7 +272,7 @@ const Reports = () => {
     }
   };
 
-  // CARD 7: ALERTAS DE STOCK
+  // CARD 7: ALERTAS DE STOCK - Filtro de stock_quantity < min_stock
   const fetchAlertasStock = async () => {
     setAlertasStock(prev => ({ ...prev, loading: true }));
     try {
@@ -281,27 +281,27 @@ const Reports = () => {
         .select('name, stock_quantity, cost_price, is_active')
         .eq('is_active', true);
 
-      const alertas = [];
+      const alertas: any[] = [];
       
       productsData?.forEach(product => {
-        const Alerts = [];
+        const alerts: string[] = [];
         
-        // Alerta de quantidade crítica
+        // Alerta de quantidade crítica (stock_quantity < min_stock)
         if (!product.stock_quantity || product.stock_quantity < 10) {
-          Alerts.push('Quantidade crítica');
+          alerts.push('Quantidade crítica');
         }
         
         // Alerta de sem preço de custo
         if (!product.cost_price || product.cost_price <= 0) {
-          Alerts.push('Sem preço de custo');
+          alerts.push('Sem preço de custo');
         }
         
-        if (Alerts.length > 0) {
+        if (alerts.length > 0) {
           alertas.push({
             nome: product.name,
             quantidade: product.stock_quantity || 0,
             precoCusto: product.cost_price || 0,
-            alertas: Alerts
+            alertas: alerts
           });
         }
       });
@@ -353,7 +353,6 @@ const Reports = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {/* Renderizar dados específicos do card aqui */}
           <div className="text-sm text-slate-300">
             {Array.isArray(data) && data.length > 0 ? (
               <span>{data.length} registros encontrados</span>
@@ -414,12 +413,12 @@ const Reports = () => {
         </div>
       </header>
 
-      {/* Grid de 7 Cards Dinâmicos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {/* Layout Grid com 7 Cards Dinâmicos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card
           title="Vendas por Artigo"
           icon={<Package size={20} />}
-          description="Agrupar itens vendidos por nome e categoria"
+          description="Query que soma quantity por product_id"
           data={vendasPorArtigo.data}
           loading={vendasPorArtigo.loading}
           onGenerate={fetchVendasPorArtigo}
@@ -429,7 +428,7 @@ const Reports = () => {
         <Card
           title="Finanças Detalhadas"
           icon={<DollarSign size={20} />}
-          description="Cruzar orders (receita) com expenses (despesas)"
+          description="Balanço orders vs expenses"
           data={financasDetalhadas.data}
           loading={financasDetalhadas.loading}
           onGenerate={fetchFinancasDetalhadas}
@@ -439,7 +438,7 @@ const Reports = () => {
         <Card
           title="RH e Faltas"
           icon={<UserCheck size={20} />}
-          description="Implementar lógica de descontos por dias de falta"
+          description="Lógica de cálculo (salario/30) * faltas"
           data={rhEFaltas.data}
           loading={rhEFaltas.loading}
           onGenerate={fetchRhEFaltas}
@@ -449,7 +448,7 @@ const Reports = () => {
         <Card
           title="Mapa de Despesas"
           icon={<Activity size={20} />}
-          description="Agrupar gastos por tipo (Stock, Luz, Renda)"
+          description="Agrupamento por categoria"
           data={mapaDespesas.data}
           loading={mapaDespesas.loading}
           onGenerate={fetchMapaDespesas}
@@ -459,7 +458,7 @@ const Reports = () => {
         <Card
           title="Top Rentabilidade"
           icon={<Target size={20} />}
-          description="Ranking dos 10 produtos com maior margem"
+          description="Cálculo de margem bruta"
           data={topRentabilidade.data}
           loading={topRentabilidade.loading}
           onGenerate={fetchTopRentabilidade}
@@ -469,7 +468,7 @@ const Reports = () => {
         <Card
           title="Fluxo por Turno"
           icon={<Clock size={20} />}
-          description="Total faturado por faixas horárias"
+          description="Filtro por created_at (HH:mm)"
           data={fluxoPorTurno.data}
           loading={fluxoPorTurno.loading}
           onGenerate={fetchFluxoPorTurno}
@@ -479,7 +478,7 @@ const Reports = () => {
         <Card
           title="Alertas de Stock"
           icon={<AlertTriangle size={20} />}
-          description="Produtos com quantidades críticas ou sem custo"
+          description="Filtro de stock_quantity < min_stock"
           data={alertasStock.data}
           loading={alertasStock.loading}
           onGenerate={fetchAlertasStock}
