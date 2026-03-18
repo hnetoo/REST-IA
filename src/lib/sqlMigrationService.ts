@@ -40,39 +40,20 @@ export const sqlMigrationService = {
         if (catError) console.error('Erro sincronizando categorias:', catError);
       }
 
-      let dishesWithInvalidCategory: any[] = [];
-
       if (localData.menu) {
-        const validDishes = localData.menu.filter((m: any) => m && m.id && m.name && typeof m.price === 'number');
-        const categoryIds = new Set((localData.categories || []).map((c: any) => c.id));
-        dishesWithInvalidCategory = validDishes.filter((m: any) => m.categoryId && !categoryIds.has(m.categoryId));
-        if (dishesWithInvalidCategory.length > 0) {
-          console.warn("SQLSync:menu:invalid_category_reference", {
-            count: dishesWithInvalidCategory.length,
-            dishIds: dishesWithInvalidCategory.map((d: any) => d.id)
-          });
-        }
-        // ✅ CORREÇÃO: Sincronizar TODOS os produtos, mesmo sem categoria
-        const dishesToSync = validDishes.filter((m: any) => {
-          // Se não tem categoryId, atribuir categoria padrão "Geral"
-          if (!m.categoryId) {
-            console.log("SQLSync:menu:no_category_assigned", { id: m.id, name: m.name });
-            // Sincronizar mesmo assim com category_id null ou valor padrão
-            return true;
-          }
-          // Se categoryId existe, sincronizar
-          return true;
-        });
-        console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: dishesToSync.length });
+        // ✅ SINCRONIZAÇÃO TOTAL: Enviar TODOS os itens sem validação de categoria
+        const allDishes = localData.menu.filter((m: any) => m && m.id && m.name && typeof m.price === 'number');
+        console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: allDishes.length });
+        
         const { error: menuError } = await supabase
           .from('products')
-          .upsert(dishesToSync.map((m: any) => ({
+          .upsert(allDishes.map((m: any) => ({
             id: m.id,
             name: m.name,
             price: m.price,
             description: m.description,
             image_url: m.image,
-            category_id: m.categoryId || null, // Permite null para produtos sem categoria
+            category_id: m.categoryId || null, // Envia null se não tiver categoria
             // REMOVIDO: is_visible_digital (coluna inexistente - PGRST204)
             is_active: true
           })));
