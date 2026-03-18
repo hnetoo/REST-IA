@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
+import { supabase } from '../lib/supabaseService';
 import { 
   TrendingUp, DollarSign, Banknote, LayoutDashboard, History, PiggyBank,
   Printer, ShieldCheck, FileText, Lock, Database, Search, Download, 
@@ -31,9 +32,9 @@ const Finance = () => {
   const [newExpense, setNewExpense] = useState<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>({
     description: '',
     amount: 0,
-    category: '', // CATEGORIA VAZIA - USUÁRIO ESCREVE TEXTO EXATO
+    category: 'OUTROS' as ExpenseCategory,
     status: 'PENDENTE',
-    createdAt: new Date(),
+    date: new Date().toISOString().split('T')[0],
     paymentMethod: 'NUMERARIO',
     receipt: '',
     notes: ''
@@ -52,9 +53,9 @@ const Finance = () => {
         return;
       }
 
-      const total = data?.reduce((sum, exp) => sum + Number(exp.amount || 0), 0) || 0;
+      const total = data?.reduce((sum: number, exp: any) => sum + Number(exp.amount || 0), 0) || 0;
       setTotalExpensesFromDB(total);
-      console.log('[FINANCE] Total de despesas da DB:', total);
+      console.log('[FINANCE] Total de despesas da DB:', total, 'registos:', data?.length || 0);
     } catch (error) {
       console.error('[FINANCE] Erro crítico ao buscar total:', error);
     }
@@ -156,13 +157,13 @@ const Finance = () => {
       if (error) {
         console.error('[FINANCE] Erro ao inserir despesa:', error);
         addNotification('error', `Falha ao salvar despesa: ${error.message}`);
-        // LIMPAR FORMULÁRIO SE FALHOU
+        // LIMPEZA DE FORMULÁRIO SE FALHOU
         setNewExpense({
           description: '',
           amount: 0,
-          category: '',
+          category: 'OUTROS' as ExpenseCategory,
           status: 'PENDENTE',
-          createdAt: new Date(),
+          date: new Date().toISOString().split('T')[0],
           paymentMethod: 'NUMERARIO',
           receipt: '',
           notes: ''
