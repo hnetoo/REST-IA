@@ -47,7 +47,7 @@ const Finance = () => {
       const cacheBuster = Date.now();
       const { data, error } = await supabase
         .from('expenses')
-        .select('amount, status')
+        .select('amount_kz, status')
         .setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
       if (error) {
@@ -57,7 +57,7 @@ const Finance = () => {
 
       // CALCULAR APENAS DESPESAS APROVADAS DA DB
       const approvedExpenses = data?.filter(exp => exp.status === 'APROVADO') || [];
-      const total = approvedExpenses.reduce((sum: number, exp: any) => sum + Number(exp.amount || 0), 0);
+      const total = approvedExpenses.reduce((sum: number, exp: any) => sum + Number(exp.amount_kz || 0), 0);
       
       setTotalExpensesFromDB(total);
       console.log('[FINANCE] Total de despesas da DB:', {
@@ -150,7 +150,7 @@ const Finance = () => {
       // PERSISTÊNCIA NO SUPABASE PRIMEIRO (SEM UPDATE OTIMISTA)
       const expenseData = {
         description: newExpense.description,
-        amount: newExpense.amount,
+        amount_kz: newExpense.amount,
         category: newExpense.category,
         status: newExpense.status,
         createdAt: new Date().toISOString(),
@@ -225,10 +225,10 @@ const Finance = () => {
     setEditingExpense(expense);
     setNewExpense({
       description: expense.description,
-      amount: expense.amount,
+      amount: expense.amount_kz,
       category: expense.category,
       status: expense.status,
-      createdAt: expense.createdAt,
+      date: expense.date || new Date().toISOString().split('T')[0],
       paymentMethod: expense.paymentMethod,
       receipt: expense.receipt || '',
       notes: expense.notes || ''
@@ -574,7 +574,7 @@ const Finance = () => {
                           {expense.category?.replace('_', ' ') || 'OUTROS'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount || 0)}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount_kz || 0)}</td>
                       <td className="px-6 py-4">
                         <span className={`text-[8px] font-black uppercase ${getStatusColor(expense.status)}`}>
                           {expense.status?.replace('_', ' ') || 'PENDENTE'}
