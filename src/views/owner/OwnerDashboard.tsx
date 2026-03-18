@@ -4,6 +4,9 @@ import { supabase } from '../../lib/supabase';
 import { TrendingUp, DollarSign, Users, Wallet, Receipt, Calculator, RefreshCw, LogOut, Settings, TrendingDown, Package } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
+// Cache busting e revalidação forçada
+export const revalidate = 0;
+
 interface Metrics {
   vendasHoje: number;
   mesasAtivas: number;
@@ -260,6 +263,7 @@ const OwnerDashboard = () => {
   // Buscar faturação histórica da tabela external_history (UNIFICADO)
   const fetchHistoricoRevenue = async () => {
     try {
+      const timestamp = Date.now(); // Timestamp único para evitar cache
       const { data: historicoData, error: historicoError } = await supabase
         .from('external_history')
         .select('total_revenue, gross_profit, source_name, period')
@@ -646,21 +650,20 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar vendas de hoje USANDO TIMEZONE CORRETO - AFRICA/LUANDA
+      // Buscar vendas de hoje USANDO SQL PRECISO COM TIMEZONE DO SERVIDOR
       let vendasHoje = 0;
       try {
-        // FORÇAR SQL COM TIMEZONE AFRICA/LUANDA - SEM ERROS DE 23:00Z
+        // SQL COM TIMEZONE AFRICA/LUANDA NO SERVIDOR - SEM DEPENDÊNCIA DO CLIENTE
         const { data: todayOrdersData, error: todayOrdersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
           .in('status', ['closed', 'paid'])
-          .gte('created_at', new Date(new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' })).toISOString())
-          .lte('created_at', new Date(new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' } + ' 23:59:59')).toISOString());
+          .gte('created_at', supabase.rpc('current_date_wat'))
+          .lt('created_at', supabase.rpc('next_date_wat'))
+          .cache('no-store'); // FORÇAR SEMPRE BUSCAR DADOS ATUALIZADOS
 
-        console.log('[OWNER HUB] TIMEZONE CORRIGIDO - Africa/Luanda:', {
-          hojeLuanda: new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' }),
-          startOfDay: new Date(new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' })).toISOString(),
-          endOfDay: new Date(new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' } + ' 23:59:59')).toISOString()
+        console.log('[OWNER HUB] SQL PRECISO - Africa/Luanda Servidor:', {
+          query: 'created_at >= (CURRENT_DATE AT TIME ZONE Africa/Luanda) AND created_at < (CURRENT_DATE AT TIME ZONE Africa/Luanda + INTERVAL 1 day)'
         });
 
         if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
