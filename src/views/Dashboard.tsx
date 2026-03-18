@@ -13,6 +13,29 @@ const Dashboard = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
 
+  // LIMPEZA DE LOCALSTORAGE - CONFIAR APENAS NA DB
+  useEffect(() => {
+    // Limpar valores financeiros antigos guardados no navegador
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('vendas') || key.includes('revenue') || key.includes('sales') || key.includes('lucro') || key.includes('metrics'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    // Limpar sessionStorage também
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && (key.includes('vendas') || key.includes('revenue') || key.includes('sales') || key.includes('lucro') || key.includes('metrics'))) {
+        sessionStorage.removeItem(key);
+      }
+    }
+    
+    console.log('[DASHBOARD PRINCIPAL] Limpeza de cache local concluída:', keysToRemove.length, 'itens removidos');
+  }, []); // Executar apenas na montagem
+
   // PROIBIÇÃO: Removida função getDateRangeToday - Base de dados é autoridade
 
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
@@ -21,17 +44,33 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
+        // VERIFICAÇÃO DE RLS - VALIDAR SESSÃO ANTES DE BUSCAR DADOS
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.error('[DASHBOARD PRINCIPAL] Sessão inválida:', sessionError);
+          // Forçar re-login se sessão inválida
+          addNotification('error', 'Sessão expirada. Por favor, faça login novamente.');
+          return;
+        }
+        
+        console.log('[DASHBOARD PRINCIPAL] Sessão válida:', session.user.email);
+        
         // Carregar despesas e funcionários do Supabase primeiro
         await loadExpenses();
         await loadEmployees();
         
-        // BUSCAR VENDAS DE HOJE - CHAMADA RPC SEM CALCULOS JAVASCRIPT
+        // BUSCAR VENDAS DE HOJE - CHAMADA RPC COM CACHE-BUSTING AGRESSIVO
         let vendasHoje = 0;
         try {
           // PROIBIÇÃO: Removido qualquer cálculo de data com new Date()
           // A base de dados é a única autoridade
+          const cacheBuster = Date.now(); // Cache-buster único
           const { data: rpcData, error: rpcError } = await supabase
-            .rpc('fetch_vendas_hoje');
+            .rpc('fetch_vendas_hoje')
+            .setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+            .setHeader('Pragma', 'no-cache')
+            .setHeader('Expires', '0');
 
           if (!rpcError && rpcData !== null) {
             vendasHoje = Number(rpcData) || 0;
@@ -39,7 +78,9 @@ const Dashboard = () => {
             console.log('[DASHBOARD PRINCIPAL] RPC fetch_vendas_hoje:', {
               total: vendasHoje,
               source: 'Supabase SQL com timezone Africa/Luanda',
-              sql: "WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Africa/Luanda')::date = (NOW() AT TIME ZONE 'Africa/Luanda')::date"
+              sql: "WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Africa/Luanda')::date = (NOW() AT TIME ZONE 'Africa/Luanda')::date",
+              cacheBuster,
+              headers: 'Cache-Control: no-cache, no-store, must-revalidate'
             });
           } else {
             console.error('[DASHBOARD PRINCIPAL] Erro RPC fetch_vendas_hoje:', rpcError);
@@ -56,8 +97,8 @@ const Dashboard = () => {
         // Calcular folha salarial usando os funcionários carregados
         const totalPayroll = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
         
-        // RENDIMENTO GLOBAL: Soma total histórica (MANTER COM ESTÁ)
-        const totalSales = closedOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+        // RENDIMENTO GLOBAL: Usar mesma fonte que Lucro Hoje (RPC)
+        const totalSales = vendasHoje; // SINCRONIZADO: mesma fonte que vendas de hoje
         
         const mockMetrics = {
           totalVendas: totalSales, // RENDIMENTO GLOBAL - SOMA TOTAL HISTÓRICA
