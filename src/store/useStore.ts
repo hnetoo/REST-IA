@@ -1005,6 +1005,22 @@ restoreFromSupabase: async () => {
             category: expense.category
           });
 
+          // VERIFICAÇÃO DE DUPLICAÇÃO - EVITAR MESMA DESPESA NO MESMO MINUTO
+          const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+          const { data: existingExpense } = await supabase
+            .from('expenses')
+            .select('id')
+            .eq('amount_kz', expense.amount)
+            .eq('description', expense.description)
+            .eq('category', expense.category)
+            .gte('created_at', oneMinuteAgo)
+            .limit(1);
+
+          if (existingExpense && existingExpense.length > 0) {
+            console.log('[EXPENSE] Despesa duplicada detectada, ignorando:', existingExpense[0].id);
+            return; // NÃO INSERIR DUPLICADA
+          }
+
           // Inserir diretamente na tabela expenses
           const { error } = await supabase
             .from('expenses')

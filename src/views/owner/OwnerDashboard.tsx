@@ -656,14 +656,25 @@ const OwnerDashboard = () => {
           .lte('created_at', endDate);
 
         if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
-          vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
-          console.log('[OWNER HUB] Detalhe das vendas de hoje:', {
+          // ALINHAMENTO WAT (Angola): Mesma lógica do Dashboard Principal
+          const hojeWAT = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+          const vendasHojeFiltradas = todayOrdersData.filter(order => {
+            const dataOrder = new Date(order.created_at).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+            return dataOrder === hojeWAT;
+          });
+          
+          vendasHoje = vendasHojeFiltradas.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+          
+          console.log('[OWNER HUB] ALINHAMENTO WAT Angola - Data corrigida:', {
+            hojeWAT, // Deve ser "18/03/2026"
             totalOrders: todayOrdersData.length,
-            orders: todayOrdersData.map(o => ({
+            vendasHojeFiltradas: vendasHojeFiltradas.length,
+            orders: vendasHojeFiltradas.map(o => ({
               id: o.id,
               amount: o.total_amount,
               status: o.status,
-              created_at: o.created_at
+              created_at: o.created_at,
+              dataOrder: new Date(o.created_at).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' })
             })),
             totalCalculado: vendasHoje
           });
@@ -808,7 +819,7 @@ const OwnerDashboard = () => {
     }
   };
 
-  // Subscrição real-time do Supabase
+  // Subscrição real-time do Supabase - SEM CACHE AGRESSIVO
   const subscribeToChanges = () => {
     const ordersChannel = supabase
       .channel('realtime-orders')
@@ -819,28 +830,30 @@ const OwnerDashboard = () => {
           table: 'orders' 
         }, 
         () => {
-          fetchMetrics();
+          console.log('[DASHBOARD] Mudança detectada em orders - invalidando cache');
+          fetchMetrics(); // FORÇAR REVALIDAÇÃO IMEDIATA
         }
       )
       .subscribe();
 
-    const purchasesChannel = supabase
-      .channel('realtime-purchases')
+    const expensesChannel = supabase
+      .channel('realtime-expenses')
       .on('postgres_changes', 
         { 
           event: '*', 
           schema: 'public', 
-          table: 'purchase_requests' 
+          table: 'expenses' 
         }, 
         () => {
-          fetchMetrics();
+          console.log('[DASHBOARD] Mudança detectada em expenses - invalidando cache');
+          fetchMetrics(); // FORÇAR REVALIDAÇÃO IMEDIATA
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(ordersChannel);
-      supabase.removeChannel(purchasesChannel);
+      supabase.removeChannel(expensesChannel);
     };
   };
   const handleResetProduction = async () => {
