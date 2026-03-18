@@ -71,7 +71,7 @@ export const sqlMigrationService = {
         // Apenas sincronizar ordens fechadas/pagas
         const closedOrders = validOrders.filter((o: any) => o.status === 'FECHADO' || o.status === 'closed' || o.status === 'paid');
         
-        // ✅ CORREÇÃO RADICAL: Remover table_id se não for UUID válido
+        // ✅ SINCRONIZAÇÃO FORÇADA: Enviar ordens mesmo sem UUID mapeado
         const tables = localData.tables || [];
         const tableMap = new Map();
         
@@ -82,42 +82,40 @@ export const sqlMigrationService = {
           }
         });
         
-        const closedOrdersWithValidTableId = closedOrders.filter((o: any) => {
-          if (!o.tableId) {
-            console.warn("SQLSync:orders:null_table_id_skipped", { id: o.id, tableId: o.tableId });
-            return false;
-          }
-          
-          // Obter UUID real da tabela
+        const closedOrdersToSync = closedOrders.map((o: any) => {
+          // Tentar obter UUID real da tabela
           const tableUuid = tableMap.get(String(o.tableId));
+          
+          // Se não encontrar UUID, enviar com table_id null (não bloquear)
           if (!tableUuid) {
-            console.warn("SQLSync:orders:table_not_found", { id: o.id, tableId: o.tableId });
-            return false; // Não sincronizar se não encontrar UUID
+            console.warn("SQLSync:orders:table_uuid_not_found", { 
+              id: o.id, 
+              tableId: o.tableId,
+              action: "sending_with_null_table_id"
+            });
           }
           
-          // Salvar UUID no objeto para uso posterior
-          o._tableUuid = tableUuid;
-          return true;
+          return {
+            ...o,
+            _tableUuid: tableUuid || null // UUID ou null, mas não bloqueia
+          };
         });
         
-        console.log("SQLSync:orders:prepare", { total: closedOrders.length, valid: closedOrdersWithValidTableId.length });
+        console.log("SQLSync:orders:prepare", { total: closedOrders.length, valid: closedOrdersToSync.length });
         
-        // ✅ REMOVIDAS COLUNAS INEXISTENTES: customer_id (orders)
-        if (closedOrdersWithValidTableId.length > 0) {
-          const { error: ordersError } = await supabase
-            .from('orders')
-            .upsert(closedOrdersWithValidTableId.map((o: any) => ({
-              id: o.id, // Mantém ID original (pode ser string UUID)
-              table_id: o._tableUuid, // ✅ UUID REAL salvo anteriormente
-              total_amount: o.total,
-              status: o.status === 'FECHADO' ? 'closed' : o.status, // Normalizar status
-              payment_method: o.paymentMethod,
-              invoice_number: o.invoiceNumber,
-              // REMOVIDO: hash (coluna inexistente)
-              created_at: o.createdAt || new Date().toISOString(),
-              updated_at: new Date().toISOString()
-              // ✅ CORRIGIDO: UUID syntax
-            })));
+        // ✅ SINCRONIZAÇÃO FORÇADA: Enviar todas as ordens
+        const { error: ordersError } = await supabase
+          .from('orders')
+          .upsert(closedOrdersToSync.map((o: any) => ({
+            id: o.id, // Mantém ID original
+            table_id: o._tableUuid, // UUID real ou null
+            total_amount: o.total,
+            status: o.status === 'FECHADO' ? 'closed' : o.status,
+            payment_method: o.paymentMethod,
+            invoice_number: o.invoiceNumber,
+            created_at: o.createdAt || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })));
           
           if (ordersError) {
             console.error('Erro sincronizando ordens:', ordersError);
@@ -125,22 +123,21 @@ export const sqlMigrationService = {
             console.log("SQLSync:orders:success", { count: closedOrders.length });
           }
         }
-      }
 
-      const { error: stateError } = await supabase
-        .from('app_settings') // ✅ CORRIGIDO: app_settings em vez de application_state
-        .upsert({
-          // REMOVIDO: id (pode ser auto-incremento ou UUID gerado pelo DB)
-          restaurant_name: localData.settings?.restaurantName || 'REST IA OS',
-          // REMOVIDO: data (coluna inexistente)
-          updated_at: new Date().toISOString()
-        });
-      if (stateError) console.error('Erro sincronizando estado:', stateError);
+        const { error: stateError } = await supabase
+          .from('app_settings') // ✅ CORRIGIDO: app_settings em vez de application_state
+          .upsert({
+            // REMOVIDO: id (pode ser auto-incremento ou UUID gerado pelo DB)
+            restaurant_name: localData.settings?.restaurantName || 'REST IA OS',
+            // REMOVIDO: data (coluna inexistente)
+            updated_at: new Date().toISOString()
+          });
+        if (stateError) console.error('Erro sincronizando estado:', stateError);
 
-      console.log("SQLSync:autoMigrate:done");
+        console.log("SQLSync:autoMigrate:done");
 
-      return true;
-    } catch (err) {
+        return true;
+    } catch (err: any) {
       console.error('Erro na migração SQL:', err);
       return false;
     }

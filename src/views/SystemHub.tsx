@@ -505,7 +505,7 @@ const SystemHub = () => {
               <button 
                 onClick={handleSaveSettings} 
                 disabled={isSaving}
-                className="w-full py-4 bg-[#3b82f6] border border-blue-400/30 text-white rounded-xl font-black text-[9px] uppercase hover:bg-[#2563eb] transition-all shadow-lg shadow-blue-500/20"
+                className="w-full py-4 bg-blue-600 hover:bg-blue-700 border-2 border-blue-400 text-white rounded-xl font-black text-[9px] uppercase transition-all shadow-lg shadow-blue-500/30"
               >
                 {isSaving ? 'Guardando...' : 'Guardar Credenciais'}
               </button>
