@@ -43,21 +43,32 @@ const Finance = () => {
   // BUSCAR TOTAL DE DESPESAS DA DB (SEM USAR VARIÁVEIS GLOBAIS)
   const fetchTotalExpensesFromDB = async () => {
     try {
+      // FORÇAR CACHE-BUSTING PARA GARANTIR DADOS ATUAIS
+      const cacheBuster = Date.now();
       const { data, error } = await supabase
         .from('expenses')
-        .select('amount')
-        .eq('status', 'APROVADO'); // Apenas despesas aprovadas
+        .select('amount, status')
+        .setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
       if (error) {
         console.error('[FINANCE] Erro ao buscar total de despesas:', error);
         return;
       }
 
-      const total = data?.reduce((sum: number, exp: any) => sum + Number(exp.amount || 0), 0) || 0;
+      // CALCULAR APENAS DESPESAS APROVADAS DA DB
+      const approvedExpenses = data?.filter(exp => exp.status === 'APROVADO') || [];
+      const total = approvedExpenses.reduce((sum: number, exp: any) => sum + Number(exp.amount || 0), 0);
+      
       setTotalExpensesFromDB(total);
-      console.log('[FINANCE] Total de despesas da DB:', total, 'registos:', data?.length || 0);
+      console.log('[FINANCE] Total de despesas da DB:', {
+        total,
+        registos: data?.length || 0,
+        aprovadas: approvedExpenses.length,
+        cacheBuster
+      });
     } catch (error) {
       console.error('[FINANCE] Erro crítico ao buscar total:', error);
+      setTotalExpensesFromDB(0); // Fallback seguro
     }
   };
 
