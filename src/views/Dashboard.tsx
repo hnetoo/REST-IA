@@ -13,19 +13,7 @@ const Dashboard = () => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
 
-  // FUSO HORÁRIO DE ANGOLA (GMT+1) - IGUAL AO OWNER HUB
-  const getDateRangeToday = () => {
-    const now = new Date();
-    const nowAngola = new Date(now.getTime() + (60 * 60 * 1000)); // +1 hora
-    const today = new Date(nowAngola.getFullYear(), nowAngola.getMonth(), nowAngola.getDate());
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-    
-    return {
-      startDate: startOfDay.toISOString(),
-      endDate: endOfDay.toISOString()
-    };
-  };
+  // PROIBIÇÃO: Removida função getDateRangeToday - Base de dados é autoridade
 
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
   
@@ -37,50 +25,31 @@ const Dashboard = () => {
         await loadExpenses();
         await loadEmployees();
         
-        // OBTER RANGE DE DATAS DE HOJE (GMT+1) - IGUAL AO OWNER HUB
-        const { startDate, endDate } = getDateRangeToday();
-        
-        // BUSCAR VENDAS DE HOJE COM FILTRO ESTRITO CURRENT_DATE (WAT Angola)
+        // BUSCAR VENDAS DE HOJE - CHAMADA RPC SEM CALCULOS JAVASCRIPT
         let vendasHoje = 0;
         try {
-          // QUERY SIMPLES: SELECT SUM(total_price) FROM orders WHERE created_at::date = CURRENT_DATE
-          const { data: todayOrdersData, error: todayOrdersError } = await supabase
-            .from('orders')
-            .select('total_amount, created_at, status')
-            .in('status', ['closed', 'paid'])
-            .gte('created_at', startDate)
-            .lte('created_at', endDate);
+          // PROIBIÇÃO: Removido qualquer cálculo de data com new Date()
+          // A base de dados é a única autoridade
+          const { data: rpcData, error: rpcError } = await supabase
+            .rpc('fetch_vendas_hoje');
 
-          if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
-            // FIX WAT (Angola): Garantir fuso horário correto
-            const hojeWAT = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
-            const vendasHojeFiltradas = todayOrdersData.filter(order => {
-              const dataOrder = new Date(order.created_at).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
-              return dataOrder === hojeWAT;
-            });
+          if (!rpcError && rpcData !== null) {
+            vendasHoje = Number(rpcData) || 0;
             
-            vendasHoje = vendasHojeFiltradas.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
-            
-            console.log('[DASHBOARD] FIX WAT Angola - Data corrigida:', {
-              hojeWAT, // Deve ser "18/03/2026"
-              totalOrders: todayOrdersData.length,
-              vendasHojeFiltradas: vendasHojeFiltradas.length,
-              totalCalculado: vendasHoje
+            console.log('[DASHBOARD PRINCIPAL] RPC fetch_vendas_hoje:', {
+              total: vendasHoje,
+              source: 'Supabase SQL com timezone Africa/Luanda',
+              sql: "WHERE (created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Africa/Luanda')::date = (NOW() AT TIME ZONE 'Africa/Luanda')::date"
             });
+          } else {
+            console.error('[DASHBOARD PRINCIPAL] Erro RPC fetch_vendas_hoje:', rpcError);
           }
-          
-          console.log('[DASHBOARD PRINCIPAL] Query vendas hoje (Owner Hub):', {
-            startDate,
-            endDate,
-            ordersCount: todayOrdersData?.length || 0,
-            vendasHoje
-          });
-        } catch (todayError) {
-          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar vendas de hoje:', todayError);
+        } catch (rpcError) {
+          console.error('[DASHBOARD PRINCIPAL] Erro crítico RPC:', rpcError);
         }
         
         // Calcular despesas do dia usando os dados carregados
-        const today = new Date(startDate).toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0]; // Data atual para despesas
         const todayExpenses = expenses.filter(exp => String(exp.createdAt || '').split('T')[0] === today);
         const totalExpenses = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
         
@@ -109,12 +78,37 @@ const Dashboard = () => {
     fetchMetrics();
   }, [closedOrders, expenses, loadExpenses, employees, loadEmployees]);
   
+  // ATUALIZAÇÃO EM TEMPO REAL - SUPABASE CHANNEL
+  useEffect(() => {
+    // Canal para ouvir mudanças nas ordens
+    const channel = supabase
+      .channel('dashboard-orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          console.log('[DASHBOARD PRINCIPAL] Mudança detectada em orders:', payload);
+          // Disparar RPC fetch_vendas_hoje novamente para atualizar sem refresh
+          fetchMetrics();
+        }
+      )
+      .subscribe();
+
+    // Cleanup ao desmontar
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []); // Executar apenas uma vez
+  
   // USAR DADOS DO STORE GLOBAL (Owner Dashboard) para consistência
   const todayMetrics = useMemo(() => {
     // Se temos métricas globais, usar os dados reais calculados
     if (metrics && metrics.totalVendas > 0) {
-      const { startDate } = getDateRangeToday();
-      const today = new Date(startDate).toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0]; // Data atual para despesas
       const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
       
       // FATURAÇÃO HOJE: Query SEPARADA - Apenas vendas de 18/03/2026
@@ -143,8 +137,7 @@ const Dashboard = () => {
     }
     
     // Fallback para cálculo local (se não tiver métricas globais)
-    const { startDate } = getDateRangeToday();
-    const today = new Date(startDate).toISOString().split('T')[0]; // DEFINIR today CORRETAMENTE
+    const today = new Date().toISOString().split('T')[0]; // Data atual sem cálculos complexos
     
     // VERIFICAÇÃO DE SEGURANÇA - EVITAR CRASH
     if (!closedOrders || !Array.isArray(closedOrders)) {
