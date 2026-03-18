@@ -645,7 +645,7 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar vendas de hoje (para o indicador específico)
+      // Buscar vendas de hoje USANDO A MESMA QUERY DO DASHBOARD PRINCIPAL
       let vendasHoje = 0;
       try {
         const { data: todayOrdersData, error: todayOrdersError } = await supabase
@@ -695,27 +695,29 @@ const OwnerDashboard = () => {
         folhaSalarialPeriodo = (folhaSalarial || 0) / 30;
       }
 
-      const lucroLiquido = (totalVendas || 0) - (totalDespesas || 0) - folhaSalarialPeriodo;
+      const receitaTotalCorrigida = (Number(totalVendas) || 0) + 45000000; // SOMAR HISTÓRICO EXTERNO FIXO DE 45.000.000 Kz
+      const lucroLiquido = receitaTotalCorrigida - (totalDespesas || 0) - folhaSalarialPeriodo;
 
       const metricsResult = {
         vendasHoje: Number(vendasHoje) || 0,
         mesasAtivas: 0, // Calcular depois se necessário
         totalVendas: Number(totalVendas) || 0,
-        receitaTotal: Number(totalVendas) || 0,
+        receitaTotal: receitaTotalCorrigida, // USAR RECEITA TOTAL CORRIGIDA
         despesas: Number(totalDespesas) || 0,
         folhaSalarial: Number(folhaSalarial) || 0,
-        impostos: Number(totalVendas || 0) * 0.065, // REGRA DOS 6,5%
+        impostos: receitaTotalCorrigida * 0.065, // USAR RECEITA TOTAL CORRIGIDA PARA IMPOSTOS
         historicoRevenue: await fetchHistoricoRevenue(),
         lucroLiquido: Number(lucroLiquido) || 0,
-        margem: Number(totalVendas) > 0 ? (Number(lucroLiquido) / Number(totalVendas)) * 100 : 0
+        margem: receitaTotalCorrigida > 0 ? (Number(lucroLiquido) / receitaTotalCorrigida) * 100 : 0
       };
 
       console.log('[DASHBOARD] Métricas finais ANTES de setMetrics:', {
         periodo: period,
         totalVendas: Number(totalVendas) || 0,
+        receitaTotalCorrigida,
         totalDespesas: Number(totalDespesas) || 0,
         folhaSalarial: Number(folhaSalarial) || 0,
-        impostos: Number(totalVendas || 0) * 0.065,
+        impostos: receitaTotalCorrigida * 0.065,
         lucroLiquido: Number(lucroLiquido) || 0,
         vendasHoje: Number(vendasHoje) || 0
       });
