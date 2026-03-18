@@ -47,7 +47,7 @@ const Finance = () => {
       const cacheBuster = Date.now();
       const { data, error } = await supabase
         .from('expenses')
-        .select('amount_kz, status')
+        .select('amount_kz, status, description')
         .setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
       if (error) {
@@ -55,16 +55,26 @@ const Finance = () => {
         return;
       }
 
+      console.log('[FINANCE] Dados brutos da DB:', data); // DEBUG
+
       // CALCULAR APENAS DESPESAS APROVADAS DA DB
       const approvedExpenses = data?.filter(exp => exp.status === 'APROVADO') || [];
-      const total = approvedExpenses.reduce((sum: number, exp: any) => sum + Number(exp.amount_kz || 0), 0);
+      console.log('[FINANCE] Despesas aprovadas:', approvedExpenses); // DEBUG
+      
+      // CONVERSÃO FORÇADA PARA NÚMERO COM LOG DETALHADO
+      const total = approvedExpenses.reduce((sum: number, exp: any) => {
+        const valor = Number(exp.amount_kz) || 0;
+        console.log(`[FINANCE] Despesa: ${exp.description} - amount_kz: ${exp.amount_kz} -> convertido: ${valor}`);
+        return sum + valor;
+      }, 0);
       
       setTotalExpensesFromDB(total);
       console.log('[FINANCE] Total de despesas da DB:', {
         total,
         registos: data?.length || 0,
         aprovadas: approvedExpenses.length,
-        cacheBuster
+        cacheBuster,
+        valores: approvedExpenses.map(exp => ({ desc: exp.description, amount_kz: exp.amount_kz, converted: Number(exp.amount_kz) || 0 }))
       });
     } catch (error) {
       console.error('[FINANCE] Erro crítico ao buscar total:', error);
@@ -225,7 +235,7 @@ const Finance = () => {
     setEditingExpense(expense);
     setNewExpense({
       description: expense.description,
-      amount: expense.amount_kz,
+      amount: expense.amount, // Usar amount do tipo Expense
       category: expense.category,
       status: expense.status,
       date: expense.date || new Date().toISOString().split('T')[0],
@@ -574,7 +584,7 @@ const Finance = () => {
                           {expense.category?.replace('_', ' ') || 'OUTROS'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount_kz || 0)}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount || 0)}</td>
                       <td className="px-6 py-4">
                         <span className={`text-[8px] font-black uppercase ${getStatusColor(expense.status)}`}>
                           {expense.status?.replace('_', ' ') || 'PENDENTE'}
