@@ -40,10 +40,10 @@ const Dashboard = () => {
         // OBTER RANGE DE DATAS DE HOJE (GMT+1) - IGUAL AO OWNER HUB
         const { startDate, endDate } = getDateRangeToday();
         
-        // BUSCAR VENDAS DE HOJE COM FILTRO ESTRITO DE 24 HORAS (GMT+1 Angola)
+        // BUSCAR VENDAS DE HOJE COM FILTRO ESTRITO created_at::date = CURRENT_DATE (GMT+1)
         let vendasHoje = 0;
         try {
-          // FILTRO ESTRITO: created_at::date = CURRENT_DATE AT TIME ZONE 'WAT' (GMT+1)
+          // FILTRO ESTRITO: APENAS VENDAS DE HOJE (GMT+1 Angola)
           const { data: todayOrdersData, error: todayOrdersError } = await supabase
             .from('orders')
             .select('total_amount, created_at, status')
@@ -61,17 +61,10 @@ const Dashboard = () => {
             
             vendasHoje = vendasHojeFiltradas.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
             
-            console.log('[DASHBOARD PRINCIPAL] Filtro estrito 24h GMT+1:', {
+            console.log('[DASHBOARD PRINCIPAL] Filtro estrito CURRENT_DATE GMT+1:', {
               hojeGMT1,
               totalOrders: todayOrdersData.length,
               vendasHojeFiltradas: vendasHojeFiltradas.length,
-              orders: vendasHojeFiltradas.map(o => ({
-                id: o.id,
-                amount: o.total_amount,
-                status: o.status,
-                created_at: o.created_at,
-                dataOrder: new Date(o.created_at).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' })
-              })),
               totalCalculado: vendasHoje
             });
           }
@@ -85,27 +78,6 @@ const Dashboard = () => {
         } catch (todayError) {
           console.error('[DASHBOARD PRINCIPAL] Erro ao buscar vendas de hoje:', todayError);
         }
-        
-        // RESET AUTOMÁTICO À MEIA-NOITE (GMT+1 Angola)
-        const agoraGMT1 = new Date().toLocaleString('pt-AO', { timeZone: 'Africa/Luanda' });
-        const dataAtualGMT1 = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
-        
-        // Verificar se mudou o dia comparando com data anterior
-        const dataAnterior = localStorage.getItem('dashboard_ultimo_dia');
-        if (dataAnterior !== dataAtualGMT1) {
-          console.log('[DASHBOARD PRINCIPAL] RESET DIÁRIO - Mudou de dia (GMT+1 Angola):', {
-            dataAnterior,
-            dataAtualGMT1,
-            horaAtualGMT1: agoraGMT1
-          });
-          
-          // Limpar estado de vendas do dia anterior
-          setTodaySales(0);
-          localStorage.setItem('dashboard_ultimo_dia', dataAtualGMT1);
-        }
-        
-        // ATUALIZAR ESTADO COM VALOR DE HOJE (CONSISTÊNCIA COM OWNER HUB)
-        setTodaySales(vendasHoje);
         
         // Calcular despesas do dia usando os dados carregados
         const today = new Date(startDate).toISOString().split('T')[0];
