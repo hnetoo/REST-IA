@@ -52,7 +52,16 @@ export const sqlMigrationService = {
             dishIds: dishesWithInvalidCategory.map((d: any) => d.id)
           });
         }
-        const dishesWithValidCategory = validDishes.filter((m: any) => !m.categoryId || categoryIds.has(m.categoryId));
+        // ✅ CORREÇÃO: Apenas sincronizar produtos com categoria válida
+        const dishesWithValidCategory = validDishes.filter((m: any) => {
+          // Se não tem categoryId, não sincronizar (evita NOT-NULL constraint)
+          if (!m.categoryId) {
+            console.warn("SQLSync:menu:null_category_skipped", { id: m.id, name: m.name });
+            return false;
+          }
+          // Se categoryId existe nas categorias, sincronizar
+          return categoryIds.has(m.categoryId);
+        });
         console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: dishesWithValidCategory.length });
         const { error: menuError } = await supabase
           .from('products')
@@ -76,11 +85,30 @@ export const sqlMigrationService = {
         // Apenas sincronizar ordens fechadas/pagas
         const closedOrders = validOrders.filter((o: any) => o.status === 'FECHADO' || o.status === 'closed' || o.status === 'paid');
         
+        // ✅ CORREÇÃO: Apenas sincronizar ordens com table_id válido
+        const closedOrdersWithValidTableId = closedOrders.filter((o: any) => {
+          // Se não tem tableId ou é inválido, não sincronizar
+          if (!o.tableId) {
+            console.warn("SQLSync:orders:null_table_id_skipped", { id: o.id, tableId: o.tableId });
+            return false;
+          }
+          // Se tableId for numérico, converter para string (evita UUID error)
+          const tableIdStr = typeof o.tableId === 'number' ? String(o.tableId) : o.tableId;
+          // Validar que não seja um número simples como "1"
+          if (tableIdStr === "1" || tableIdStr === "2" || tableIdStr === "3") {
+            console.warn("SQLSync:orders:invalid_table_id_format", { id: o.id, tableId: tableIdStr });
+            return false; // Não sincronizar para evitar UUID error
+          }
+          return true;
+        });
+        
+        console.log("SQLSync:orders:prepare", { total: closedOrders.length, valid: closedOrdersWithValidTableId.length });
+        
         // ✅ REMOVIDAS COLUNAS INEXISTENTES: customer_id (orders)
-        if (closedOrders.length > 0) {
+        if (closedOrdersWithValidTableId.length > 0) {
           const { error: ordersError } = await supabase
             .from('orders')
-            .upsert(closedOrders.map((o: any) => ({
+            .upsert(closedOrdersWithValidTableId.map((o: any) => ({
               id: o.id, // Mantém ID original (pode ser string UUID)
               table_id: typeof o.tableId === 'string' ? o.tableId : String(o.tableId), // Converte para string se for numérico
               total_amount: o.total,
