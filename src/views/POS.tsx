@@ -390,8 +390,18 @@ const POS = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-background font-sans select-none">
       
+      {/* Botão de Toggle da Sidebar - SEMPRE VISÍVEL */}
+      <button 
+        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        className="fixed top-4 left-4 z-[9999] w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-black shadow-lg hover:shadow-glow transition-all"
+        title="Alternar Sidebar"
+        aria-label="Alternar Sidebar"
+      >
+        <ChevronRight size={20} className={`transition-transform ${!isSidebarCollapsed ? 'rotate-180' : ''}`} />
+      </button>
+      
       {/* Sidebar Categorias */}
-      <div className="w-24 bg-slate-950 border-r border-white/5 flex flex-col items-center py-10 gap-8 z-40 relative">
+      <div className={`${isSidebarCollapsed ? 'w-0' : 'w-24'} bg-slate-950 border-r border-white/5 flex flex-col items-center py-10 gap-8 z-40 relative transition-all duration-300`}>
          <div className="flex-1 flex flex-col items-center gap-6 overflow-y-auto no-scrollbar w-full">
            <button 
               onClick={() => setSelectedCategoryId('TODOS')} 

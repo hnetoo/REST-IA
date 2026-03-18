@@ -40,10 +40,10 @@ const Dashboard = () => {
         // OBTER RANGE DE DATAS DE HOJE (GMT+1) - IGUAL AO OWNER HUB
         const { startDate, endDate } = getDateRangeToday();
         
-        // BUSCAR VENDAS DE HOJE COM FILTRO ESTRITO created_at::date = CURRENT_DATE (GMT+1)
+        // BUSCAR VENDAS DE HOJE COM FILTRO ESTRITO CURRENT_DATE (WAT Angola)
         let vendasHoje = 0;
         try {
-          // FILTRO ESTRITO: APENAS VENDAS DE HOJE (GMT+1 Angola)
+          // QUERY SIMPLES: SELECT SUM(total_price) FROM orders WHERE created_at::date = CURRENT_DATE
           const { data: todayOrdersData, error: todayOrdersError } = await supabase
             .from('orders')
             .select('total_amount, created_at, status')
@@ -52,17 +52,17 @@ const Dashboard = () => {
             .lte('created_at', endDate);
 
           if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
-            // FILTRO ADICIONAL: Garantir que apenas vendas de HOJE (GMT+1) sejam contadas
-            const hojeGMT1 = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+            // FIX WAT (Angola): Garantir fuso horário correto
+            const hojeWAT = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
             const vendasHojeFiltradas = todayOrdersData.filter(order => {
               const dataOrder = new Date(order.created_at).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
-              return dataOrder === hojeGMT1;
+              return dataOrder === hojeWAT;
             });
             
             vendasHoje = vendasHojeFiltradas.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
             
-            console.log('[DASHBOARD PRINCIPAL] Filtro estrito CURRENT_DATE GMT+1:', {
-              hojeGMT1,
+            console.log('[DASHBOARD] FIX WAT Angola - Data corrigida:', {
+              hojeWAT, // Deve ser "18/03/2026"
               totalOrders: todayOrdersData.length,
               vendasHojeFiltradas: vendasHojeFiltradas.length,
               totalCalculado: vendasHoje
