@@ -29,6 +29,7 @@ const Finance = () => {
   const [isSubmitting, setIsSubmitting] = useState(false); // ESTADO DE CARREGAMENTO
   const [loading, setLoading] = useState(false); // ESTADO DE BLOQUEIO TOTAL
   const [totalExpensesFromDB, setTotalExpensesFromDB] = useState(0); // TOTAL DA DB
+  const [expensesFromDB, setExpensesFromDB] = useState<any[]>([]); // DADOS DA DB PARA TABELA
   const [newExpense, setNewExpense] = useState<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>({
     description: '',
     amount: 0,
@@ -45,7 +46,7 @@ const Finance = () => {
       const cacheBuster = Date.now();
       const { data, error } = await supabase
         .from('expenses')
-        .select('amount_kz, status, description')
+        .select('amount_kz, status, description, category, created_at')
         .setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
       if (error) {
@@ -58,6 +59,9 @@ const Finance = () => {
       // SOMAR TODOS OS REGISTOS (INCLUINDO PENDING) - SEM FILTRO
       const allExpenses = data || [];
       console.log('[FINANCE] Todas as despesas:', allExpenses); // DEBUG
+      
+      // ARMAZENAR DADOS DA DB PARA TABELA
+      setExpensesFromDB(allExpenses);
       
       // CONVERSÃO FORÇADA PARA NÚMERO COM LOG DETALHADO
       const total = allExpenses.reduce((sum: number, exp: any) => {
@@ -540,7 +544,7 @@ const Finance = () => {
                       {formatKz(totalExpensesFromDB)}
                     </div>
                     <p className="text-xs text-red-300 uppercase tracking-wider">
-                      {expenses?.length || 0} despesas
+                      {expensesFromDB?.length || 0} despesas
                     </p>
                   </div>
                 </div>
@@ -558,8 +562,8 @@ const Finance = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {(expenses || []).slice(-20).map(expense => (
-                    <tr key={expense.id} className="hover:bg-white/5 transition-colors">
+                  {(expensesFromDB || []).slice(-20).map(expense => (
+                    <tr key={expense.id || expense.description} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4">
                         <div>
                           <div className="font-bold text-white text-sm">{expense.description}</div>
@@ -589,18 +593,9 @@ const Finance = () => {
                           >
                             <Edit2 size={16} />
                           </button>
-                          {expense.status === 'PENDENTE' && (
-                            <button 
-                              onClick={() => handleApproveExpense(expense)}
-                              className="p-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 rounded-lg transition-all"
-                              title="Aprovar despesa"
-                            >
-                              <Check size={16} />
-                            </button>
-                          )}
                           <button 
                             onClick={() => handleDeleteExpense(expense.id)}
-                            className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg transition-all"
+                            className="p-2 bg-white/5 text-slate-400 hover:text-red-500 rounded-lg transition-all"
                             title="Apagar despesa"
                           >
                             <Trash2 size={16} />
