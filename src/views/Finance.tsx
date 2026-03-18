@@ -57,12 +57,12 @@ const Finance = () => {
 
       console.log('[FINANCE] Dados brutos da DB:', data); // DEBUG
 
-      // CALCULAR APENAS DESPESAS APROVADAS DA DB
-      const approvedExpenses = data?.filter(exp => exp.status === 'APROVADO') || [];
-      console.log('[FINANCE] Despesas aprovadas:', approvedExpenses); // DEBUG
+      // SOMAR TODOS OS REGISTOS (INCLUINDO PENDING) - SEM FILTRO
+      const allExpenses = data || [];
+      console.log('[FINANCE] Todas as despesas:', allExpenses); // DEBUG
       
       // CONVERSÃO FORÇADA PARA NÚMERO COM LOG DETALHADO
-      const total = approvedExpenses.reduce((sum: number, exp: any) => {
+      const total = allExpenses.reduce((sum: number, exp: any) => {
         const valor = Number(exp.amount_kz) || 0;
         console.log(`[FINANCE] Despesa: ${exp.description} - amount_kz: ${exp.amount_kz} -> convertido: ${valor}`);
         return sum + valor;
@@ -72,9 +72,9 @@ const Finance = () => {
       console.log('[FINANCE] Total de despesas da DB:', {
         total,
         registos: data?.length || 0,
-        aprovadas: approvedExpenses.length,
+        todas: allExpenses.length,
         cacheBuster,
-        valores: approvedExpenses.map(exp => ({ desc: exp.description, amount_kz: exp.amount_kz, converted: Number(exp.amount_kz) || 0 }))
+        valores: allExpenses.map(exp => ({ desc: exp.description, amount_kz: exp.amount_kz, converted: Number(exp.amount_kz) || 0 }))
       });
     } catch (error) {
       console.error('[FINANCE] Erro crítico ao buscar total:', error);
@@ -162,8 +162,8 @@ const Finance = () => {
         description: newExpense.description,
         amount_kz: newExpense.amount,
         category: newExpense.category,
-        status: newExpense.status,
-        createdAt: new Date().toISOString(),
+        status: 'PENDING', // STATUS CORRETO
+        created_at: new Date().toISOString(), // COLUNA CORRETA
         paymentMethod: newExpense.paymentMethod,
         receipt: newExpense.receipt,
         notes: newExpense.notes
@@ -584,14 +584,14 @@ const Finance = () => {
                           {expense.category?.replace('_', ' ') || 'OUTROS'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount || 0)}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount_kz || 0)}</td>
                       <td className="px-6 py-4">
                         <span className={`text-[8px] font-black uppercase ${getStatusColor(expense.status)}`}>
                           {expense.status?.replace('_', ' ') || 'PENDENTE'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs text-slate-500 font-mono">
-                        {new Date(expense.createdAt || new Date()).toLocaleDateString('pt-AO')}
+                        {new Date(expense.created_at || new Date()).toLocaleDateString('pt-AO')}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex gap-2 justify-end">
