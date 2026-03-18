@@ -44,15 +44,22 @@ export const syncBlockerService = {
         window.fetch = function(input: any, init?: any) {
           const url = typeof input === 'string' ? input : input.url;
           
-          // Bloquear APENAS operações de escrita perigosas
+          // Bloquear APENAS operações de escrita perigosas (EXCETO staff)
           if (url && (
             url.includes('/products') || 
             url.includes('/categories') ||
-            url.includes('supabase') && 
-            (url.includes('upsert') || url.includes('insert') || url.includes('update'))
+            (url.includes('supabase') && 
+             (url.includes('upsert') || url.includes('insert') || url.includes('update')) &&
+             !url.includes('/staff'))
           )) {
             console.warn('[SyncBlocker] 🚫 TENTATIVA DE ESCRITA BLOQUEADA:', url);
             return Promise.reject(new Error('Escrita automática bloqueada para proteger dados'));
+          }
+          
+          // PERMITIR ESCRITA da tabela staff
+          if (url && url.includes('/staff')) {
+            console.log('[SyncBlocker] ✅ ESCRITA AUTORIZADA para staff:', url);
+            return originalFetch.call(this, input, init);
           }
           
           // PERMITIR LEITURA da tabela staff e outras operações seguras

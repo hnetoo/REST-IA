@@ -5,7 +5,7 @@ import { printStaffSchedules, printPayroll } from '../lib/printService';
 import { 
   Users, UserPlus, Calendar, Clock, Phone, DollarSign, Trash2, 
   Edit2, X, Plus, Save, Fingerprint, ChefHat, Wallet, Utensils,
-  ShieldCheck, Timer, Download, Printer, CheckCircle
+  ShieldCheck, Timer, Download, Printer, CheckCircle, Package, Sparkles, Backpack
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -239,12 +239,15 @@ const Employees = () => {
     setIsShiftModalOpen(false);
   };
 
-  const getRoleBadge = (role: UserRole) => {
+  const getRoleDisplay = (role: string) => {
     switch (role) {
       case 'ADMIN': return { icon: ShieldCheck, color: 'text-purple-500', bg: 'bg-purple-500/10', label: 'Gerente' };
       case 'COZINHA': return { icon: ChefHat, color: 'text-orange-500', bg: 'bg-orange-500/10', label: 'Chef' };
       case 'CAIXA': return { icon: Wallet, color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Caixa' };
       case 'GARCOM': return { icon: Utensils, color: 'text-emerald-500', bg: 'bg-emerald-500/10', label: 'Garçom' };
+      case 'AUXILIAR_COZINHA': return { icon: Package, color: 'text-yellow-500', bg: 'bg-yellow-500/10', label: 'Auxiliar de Cozinha' };
+      case 'LIMPEZA': return { icon: Sparkles, color: 'text-cyan-500', bg: 'bg-cyan-500/10', label: 'Limpeza' };
+      case 'ESTAFETA': return { icon: Backpack, color: 'text-pink-500', bg: 'bg-pink-500/10', label: 'Estafeta' };
       default: return { icon: Users, color: 'text-slate-500', bg: 'bg-slate-500/10', label: role };
     }
   };
@@ -617,8 +620,10 @@ const Employees = () => {
                     <option value="GARCOM">Garçom</option>
                     <option value="COZINHA">Chef / Cozinha</option>
                     <option value="CAIXA">Caixa</option>
-                    <option value="ADMIN">Gerente</option>
-                    <option value="GERENTE">Gerente</option>
+                    <option value="ADMIN">Administrador</option>
+                    <option value="AUXILIAR_COZINHA">Auxiliar de Cozinha</option>
+                    <option value="LIMPEZA">Limpeza</option>
+                    <option value="ESTAFETA">Estafeta</option>
                   </select>
                 </div>
                 <div>
