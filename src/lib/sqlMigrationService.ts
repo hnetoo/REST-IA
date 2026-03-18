@@ -52,26 +52,27 @@ export const sqlMigrationService = {
             dishIds: dishesWithInvalidCategory.map((d: any) => d.id)
           });
         }
-        // ✅ CORREÇÃO: Apenas sincronizar produtos com categoria válida
-        const dishesWithValidCategory = validDishes.filter((m: any) => {
-          // Se não tem categoryId, não sincronizar (evita NOT-NULL constraint)
+        // ✅ CORREÇÃO: Sincronizar TODOS os produtos, mesmo sem categoria
+        const dishesToSync = validDishes.filter((m: any) => {
+          // Se não tem categoryId, atribuir categoria padrão "Geral"
           if (!m.categoryId) {
-            console.warn("SQLSync:menu:null_category_skipped", { id: m.id, name: m.name });
-            return false;
+            console.log("SQLSync:menu:no_category_assigned", { id: m.id, name: m.name });
+            // Sincronizar mesmo assim com category_id null ou valor padrão
+            return true;
           }
-          // Se categoryId existe nas categorias, sincronizar
-          return categoryIds.has(m.categoryId);
+          // Se categoryId existe, sincronizar
+          return true;
         });
-        console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: dishesWithValidCategory.length });
+        console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: dishesToSync.length });
         const { error: menuError } = await supabase
           .from('products')
-          .upsert(dishesWithValidCategory.map((m: any) => ({
+          .upsert(dishesToSync.map((m: any) => ({
             id: m.id,
             name: m.name,
             price: m.price,
             description: m.description,
             image_url: m.image,
-            category_id: m.categoryId,
+            category_id: m.categoryId || null, // Permite null para produtos sem categoria
             // REMOVIDO: is_visible_digital (coluna inexistente - PGRST204)
             is_active: true
           })));
