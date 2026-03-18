@@ -28,17 +28,21 @@ const Reports = () => {
     }).format(value);
   };
 
-  // CARD 1: VENDAS POR ARTIGO - Query que soma quantity por product_id
+  // CARD 1: VENDAS POR ARTIGO - Query com order_items e products
   const fetchVendasPorArtigo = async () => {
     setVendasPorArtigo(prev => ({ ...prev, loading: true }));
     try {
       const { start, end } = dateRange;
       
-      // Se não houver filtro de data, buscar todos os dados
+      // Buscar dados de order_items fazendo join com products
       let query = supabase
-        .from('orders')
-        .select('items, created_at')
-        .eq('status', 'FECHADO');
+        .from('order_items')
+        .select(`
+          quantity,
+          product_id,
+          created_at,
+          products(name, category_id)
+        `);
 
       if (start && end) {
         query = query
@@ -46,64 +50,60 @@ const Reports = () => {
           .lte('created_at', new Date(end).toISOString());
       }
 
-      const { data: ordersData } = await query;
+      const { data: orderItemsData, error } = await query;
 
-      const { data: productsData } = await supabase
-        .from('products')
-        .select('id, name, category_id');
+      if (error) {
+        throw new Error(`Erro de Conexão: ${error.message}`);
+      }
 
+      // Buscar categorias
       const { data: categoriesData } = await supabase
         .from('categories')
         .select('id, name');
 
-      // Processar vendas por article - soma quantity por product_id
+      // Processar vendas por artigo
       const vendasMap = new Map();
       
-      ordersData?.forEach(order => {
-        const items = order.items || [];
-        if (Array.isArray(items)) {
-          items.forEach(item => {
-            const key = item.name || 'Produto Sem Nome';
-            const existing = vendasMap.get(key) || { 
-              nome: key, 
-              quantidade: 0, 
-              categoria: 'Sem Categoria' 
-            };
-            existing.quantidade += item.quantity || 1;
-            vendasMap.set(key, existing);
-          });
-        }
+      orderItemsData?.forEach((item: any) => {
+        const productName = item.products?.name || 'Produto Sem Nome';
+        const key = productName;
+        const existing = vendasMap.get(key) || { 
+          nome: key, 
+          quantidade: 0, 
+          categoria: 'Sem Categoria' 
+        };
+        existing.quantidade += item.quantity || 1;
+        existing.category_id = item.products?.category_id;
+        vendasMap.set(key, existing);
       });
 
       // Adicionar categorias
       const categoryMap = new Map(categoriesData?.map(c => [c.id, c.name]) || []);
-      const result = Array.from(vendasMap.values()).map(item => {
-        const product = productsData?.find(p => p.name === item.nome);
-        const categoryId = product?.category_id;
-        return {
-          ...item,
-          categoria: categoryId ? categoryMap.get(categoryId) || 'Sem Categoria' : 'Sem Categoria'
-        };
-      });
+      const result = Array.from(vendasMap.values()).map(item => ({
+        ...item,
+        categoria: item.category_id ? categoryMap.get(item.category_id) || 'Sem Categoria' : 'Sem Categoria'
+      }));
 
       setVendasPorArtigo({ data: result, loading: false });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar vendas por artigo:', error);
-      setVendasPorArtigo(prev => ({ ...prev, loading: false }));
+      setVendasPorArtigo({ 
+        data: [{ mensagem: `Erro de Conexão: ${error.message}`, tipo: 'erro' }], 
+        loading: false 
+      });
     }
   };
 
-  // CARD 2: FINANÇAS DETALHADAS - Balanço orders vs expenses
+  // CARD 2: FINANÇAS DETALHADAS - Balanço orders vs expenses (sem status filter)
   const fetchFinancasDetalhadas = async () => {
     setFinancasDetalhadas(prev => ({ ...prev, loading: true }));
     try {
       const { start, end } = dateRange;
       
-      // Buscar receitas (orders)
+      // Buscar receitas (orders) - remover filtro de status que pode não existir
       let ordersQuery = supabase
         .from('orders')
-        .select('total_amount, created_at')
-        .eq('status', 'FECHADO');
+        .select('total_amount, created_at');
 
       if (start && end) {
         ordersQuery = ordersQuery
@@ -111,7 +111,11 @@ const Reports = () => {
           .lte('created_at', new Date(end).toISOString());
       }
 
-      const { data: ordersData } = await ordersQuery;
+      const { data: ordersData, error: ordersError } = await ordersQuery;
+
+      if (ordersError) {
+        throw new Error(`Erro de Conexão: ${ordersError.message}`);
+      }
 
       // Buscar despesas (expenses)
       let expensesQuery = supabase
@@ -124,7 +128,11 @@ const Reports = () => {
           .lte('created_at', new Date(end).toISOString());
       }
 
-      const { data: expensesData } = await expensesQuery;
+      const { data: expensesData, error: expensesError } = await expensesQuery;
+
+      if (expensesError) {
+        throw new Error(`Erro de Conexão: ${expensesError.message}`);
+      }
 
       const totalReceita = ordersData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
       const totalDespesas = expensesData?.reduce((sum, expense) => sum + (expense.amount_kz || 0), 0) || 0;
@@ -147,9 +155,12 @@ const Reports = () => {
       };
 
       setFinancasDetalhadas({ data: [result], loading: false });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar finanças detalhadas:', error);
-      setFinancasDetalhadas(prev => ({ ...prev, loading: false }));
+      setFinancasDetalhadas({ 
+        data: [{ mensagem: `Erro de Conexão: ${error.message}`, tipo: 'erro' }], 
+        loading: false 
+      });
     }
   };
 
@@ -215,22 +226,32 @@ const Reports = () => {
     }
   };
 
-  // CARD 4: MAPA DE DESPESAS - Agrupamento por categoria
+  // CARD 4: MAPA DE DESPESAS - Agrupamento por categoria (sem filtro obrigatório)
   const fetchMapaDespesas = async () => {
     setMapaDespesas(prev => ({ ...prev, loading: true }));
     try {
       const { start, end } = dateRange;
-      if (!start || !end) return;
-
-      const { data: expensesData } = await supabase
+      
+      // Buscar despesas sem filtro obrigatório
+      let query = supabase
         .from('expenses')
-        .select('amount_kz, category, description')
-        .gte('created_at', new Date(start).toISOString())
-        .lte('created_at', new Date(end).toISOString());
+        .select('amount_kz, category, description');
+
+      if (start && end) {
+        query = query
+          .gte('created_at', new Date(start).toISOString())
+          .lte('created_at', new Date(end).toISOString());
+      }
+
+      const { data: expensesData, error } = await query;
+
+      if (error) {
+        throw new Error(`Erro de Conexão: ${error.message}`);
+      }
 
       // Agrupar por tipo de despesa
       const despesasMap = new Map();
-      expensesData?.forEach(expense => {
+      expensesData?.forEach((expense: any) => {
         const tipo = expense.category || 'Outros';
         const existing = despesasMap.get(tipo) || { tipo, total: 0, itens: [] };
         existing.total += expense.amount_kz || 0;
@@ -243,23 +264,30 @@ const Reports = () => {
 
       const result = Array.from(despesasMap.values()).sort((a, b) => b.total - a.total);
       setMapaDespesas({ data: result, loading: false });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar mapa de despesas:', error);
-      setMapaDespesas(prev => ({ ...prev, loading: false }));
+      setMapaDespesas({ 
+        data: [{ mensagem: `Erro de Conexão: ${error.message}`, tipo: 'erro' }], 
+        loading: false 
+      });
     }
   };
 
-  // CARD 5: TOP RENTABILIDADE - Cálculo de margem bruta
+  // CARD 5: TOP RENTABILIDADE - Cálculo de margem bruta (sem is_active filter)
   const fetchTopRentabilidade = async () => {
     setTopRentabilidade(prev => ({ ...prev, loading: true }));
     try {
-      const { data: productsData } = await supabase
+      // Buscar products sem filtro is_active que pode não existir
+      const { data: productsData, error } = await supabase
         .from('products')
-        .select('name, price, cost_price, is_active')
-        .eq('is_active', true);
+        .select('name, price, cost_price');
+
+      if (error) {
+        throw new Error(`Erro de Conexão: ${error.message}`);
+      }
 
       const result = productsData
-        ?.map(product => ({
+        ?.map((product: any) => ({
           nome: product.name,
           precoVenda: product.price || 0,
           precoCusto: product.cost_price || 0,
@@ -271,25 +299,37 @@ const Reports = () => {
         .slice(0, 10) || [];
 
       setTopRentabilidade({ data: result, loading: false });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar top rentabilidade:', error);
-      setTopRentabilidade(prev => ({ ...prev, loading: false }));
+      setTopRentabilidade({ 
+        data: [{ mensagem: `Erro de Conexão: ${error.message}`, tipo: 'erro' }], 
+        loading: false 
+      });
     }
   };
 
-  // CARD 6: FLUXO POR TURNO - Filtro por created_at (HH:mm)
+  // CARD 6: FLUXO POR TURNO - Filtro por created_at (HH:mm) sem status filter
   const fetchFluxoPorTurno = async () => {
     setFluxoPorTurno(prev => ({ ...prev, loading: true }));
     try {
       const { start, end } = dateRange;
-      if (!start || !end) return;
-
-      const { data: ordersData } = await supabase
+      
+      // Buscar orders sem filtro de status que pode não existir
+      let query = supabase
         .from('orders')
-        .select('total_amount, created_at')
-        .eq('status', 'FECHADO')
-        .gte('created_at', new Date(start).toISOString())
-        .lte('created_at', new Date(end).toISOString());
+        .select('total_amount, created_at');
+
+      if (start && end) {
+        query = query
+          .gte('created_at', new Date(start).toISOString())
+          .lte('created_at', new Date(end).toISOString());
+      }
+
+      const { data: ordersData, error } = await query;
+
+      if (error) {
+        throw new Error(`Erro de Conexão: ${error.message}`);
+      }
 
       // Agrupar por faixa horária baseado em created_at (HH:mm)
       const turnosMap = new Map();
@@ -298,7 +338,7 @@ const Reports = () => {
       turnosMap.set('Tarde (15h-18h)', { turno: 'Tarde (15h-18h)', total: 0, pedidos: 0 });
       turnosMap.set('Jantar (18h-23h)', { turno: 'Jantar (18h-23h)', total: 0, pedidos: 0 });
 
-      ordersData?.forEach(order => {
+      ordersData?.forEach((order: any) => {
         const hour = new Date(order.created_at).getHours();
         let turnoKey = '';
 
@@ -316,50 +356,60 @@ const Reports = () => {
 
       const result = Array.from(turnosMap.values());
       setFluxoPorTurno({ data: result, loading: false });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar fluxo por turno:', error);
-      setFluxoPorTurno(prev => ({ ...prev, loading: false }));
+      setFluxoPorTurno({ 
+        data: [{ mensagem: `Erro de Conexão: ${error.message}`, tipo: 'erro' }], 
+        loading: false 
+      });
     }
   };
 
-  // CARD 7: ALERTAS DE STOCK - Filtro de stock_quantity < min_stock
+  // CARD 7: ALERTAS DE STOCK - Filtro de stock_quantity < min_stock (sem is_active filter)
   const fetchAlertasStock = async () => {
     setAlertasStock(prev => ({ ...prev, loading: true }));
     try {
-      const { data: productsData } = await supabase
+      // Buscar products sem filtro is_active que pode não existir
+      const { data: productsData, error } = await supabase
         .from('products')
-        .select('name, stock_quantity, cost_price, is_active')
-        .eq('is_active', true);
+        .select('name, stock_quantity, cost_price');
+
+      if (error) {
+        throw new Error(`Erro de Conexão: ${error.message}`);
+      }
 
       const alertas: any[] = [];
       
-      productsData?.forEach(product => {
+      productsData?.forEach((product: any) => {
         const alerts: string[] = [];
         
-        // Alerta de quantidade crítica (stock_quantity < min_stock)
+        // Verificar stock baixo
         if (!product.stock_quantity || product.stock_quantity < 10) {
           alerts.push('Quantidade crítica');
         }
         
-        // Alerta de sem preço de custo
+        // Verificar preço de custo ausente
         if (!product.cost_price || product.cost_price <= 0) {
-          alerts.push('Sem preço de custo');
+          alerts.push('Preço de custo ausente');
         }
         
         if (alerts.length > 0) {
           alertas.push({
-            nome: product.name,
+            nome: product.name || 'Produto Sem Nome',
             quantidade: product.stock_quantity || 0,
             precoCusto: product.cost_price || 0,
-            alertas: alerts
+            alertas
           });
         }
       });
 
       setAlertasStock({ data: alertas, loading: false });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar alertas de stock:', error);
-      setAlertasStock(prev => ({ ...prev, loading: false }));
+      setAlertasStock({ 
+        data: [{ mensagem: `Erro de Conexão: ${error.message}`, tipo: 'erro' }], 
+        loading: false 
+      });
     }
   };
 
