@@ -239,7 +239,7 @@ const Employees = () => {
     setIsShiftModalOpen(false);
   };
 
-  const getRoleDisplay = (role: string) => {
+  const getRoleBadge = (role: string) => {
     switch (role) {
       case 'ADMIN': return { icon: ShieldCheck, color: 'text-purple-500', bg: 'bg-purple-500/10', label: 'Gerente' };
       case 'COZINHA': return { icon: ChefHat, color: 'text-orange-500', bg: 'bg-orange-500/10', label: 'Chef' };
@@ -248,6 +248,19 @@ const Employees = () => {
       case 'AUXILIAR_COZINHA': return { icon: Package, color: 'text-yellow-500', bg: 'bg-yellow-500/10', label: 'Auxiliar de Cozinha' };
       case 'LIMPEZA': return { icon: Sparkles, color: 'text-cyan-500', bg: 'bg-cyan-500/10', label: 'Limpeza' };
       case 'ESTAFETA': return { icon: Backpack, color: 'text-pink-500', bg: 'bg-pink-500/10', label: 'Estafeta' };
+      default: return { icon: Users, color: 'text-slate-500', bg: 'bg-slate-500/10', label: role };
+    }
+  };
+
+  const getRoleDisplay = (role: string) => {
+    switch (role) {
+      case 'ADMIN': return { icon: ShieldCheck, color: 'text-purple-500', bg: 'bg-purple-500/10', label: 'Gerente' };
+      case 'COZINHA': return { icon: ChefHat, color: 'text-orange-500', bg: 'bg-orange-500/10', label: 'Chef' };
+      case 'CAIXA': return { icon: Wallet, color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Caixa' };
+      case 'GARCOM': return { icon: Utensils, color: 'text-emerald-500', bg: 'bg-emerald-500/10', label: 'Garçom' };
+      case 'AUXILIAR_COZINHA': return { icon: Package, color: 'text-yellow-500', bg: 'bg-yellow-500/10', label: 'Auxiliar de Cozinha' };
+      case 'LIMPEZA': return { icon: Sparkles, color: 'text-cyan-500', bg: 'bg-cyan-500/10', label: 'Limpeza' };
+      case 'ESTAFETA': return { icon: Backpack, color: 'text-pink-500', bg: 'bg-pink-500/10', label: 'Estpefeta' };
       default: return { icon: Users, color: 'text-slate-500', bg: 'bg-slate-500/10', label: role };
     }
   };
