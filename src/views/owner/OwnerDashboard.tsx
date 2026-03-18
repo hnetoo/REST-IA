@@ -726,19 +726,20 @@ const OwnerDashboard = () => {
         vendasHoje: Number(vendasHoje) || 0,
         mesasAtivas: 0, // Calcular depois se necessário
         totalVendas: Number(totalVendas) || 0,
-        receitaTotal: Number(totalVendas) || 0,
+        receitaTotal: receitaTotalCorrigida, // USAR RECEITA TOTAL CORRIGIDA (NÃO APENAS totalVendas)
         despesas: Number(totalDespesas) || 0,
         despesasAcumuladas: Number(totalExpensesAllTime) || 0, // NOVO: Total acumulado
         folhaSalarial: Number(folhaSalarial) || 0,
-        impostos: Number(totalVendas || 0) * 0.065, // REGRA DOS 6,5%
+        impostos: receitaTotalCorrigida * 0.065, // USAR RECEITA TOTAL CORRIGIDA PARA IMPOSTOS
         historicoRevenue: await fetchHistoricoRevenue(),
         lucroLiquido: Number(lucroLiquido) || 0,
-        margem: Number(totalVendas) > 0 ? (Number(lucroLiquido) / Number(totalVendas)) * 100 : 0
+        margem: receitaTotalCorrigida > 0 ? (Number(lucroLiquido) / receitaTotalCorrigida) * 100 : 0
       };
 
       console.log('[DASHBOARD] Métricas finais DEPOIS de setMetrics:', {
         periodo: period,
         totalVendas: finalMetrics.totalVendas,
+        receitaTotal: finalMetrics.receitaTotal, // MOSTRAR RECEITA TOTAL CORRIGIDA
         totalDespesas: finalMetrics.despesas,
         folhaSalarial: finalMetrics.folhaSalarial,
         impostos: finalMetrics.impostos,
