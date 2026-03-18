@@ -73,6 +73,7 @@ const OwnerDashboard = () => {
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [todayExpenses, setTodayExpenses] = useState<number>(0);
   const [yearExpenses, setYearExpenses] = useState<number>(0);
+  const [historicoExterno, setHistoricoExterno] = useState<number>(0);
   
   // ESTADOS INDIVIDUAIS PARA SINCRONIZAÇÃO
   const [totalVendasNoState, setTotalVendasNoState] = useState<number>(0);
@@ -683,6 +684,11 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas de hoje:', todayError);
       }
 
+      // Buscar faturação histórica da tabela external_history (UNIFICADO)
+      const historicoExterno = await fetchHistoricoRevenue();
+      setHistoricoExterno(historicoExterno); // Atualizar estado
+      console.log('[DASHBOARD] Saldo de Transição (external_history):', historicoExterno);
+
       // Gerar dados para gráficos com base nas vendas
       const chartDataGenerated = [
         {
@@ -1079,9 +1085,9 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Saldo de Transição</span>
             </div>
             <div className="text-3xl font-black text-cyan-400 mb-2">
-              {formatAKZ(45000000)}
+              {formatAKZ(historicoExterno || 0)}
             </div>
-            <div className="text-xs text-white/60">45.000.000 Kz</div>
+            <div className="text-xs text-white/60">Saldo de external_history</div>
           </div>
 
           {/* Card 9: PATRIMÓNIO TOTAL */}
@@ -1093,9 +1099,9 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">PATRIMÓNIO TOTAL</span>
             </div>
             <div className="text-3xl font-black text-purple-400 mb-2">
-              {formatAKZ(45000000 + ((metrics.totalVendas || 0) - ((metrics.totalVendas || 0) * 0.07) - (metrics.despesasAcumuladas || 0) - (metrics.folhaSalarial || 0)))}
+              {formatAKZ((historicoExterno || 0) + ((metrics.totalVendas || 0) - ((metrics.totalVendas || 0) * 0.07) - (metrics.despesasAcumuladas || 0) - (metrics.folhaSalarial || 0)))}
             </div>
-            <div className="text-xs text-white/60">45.000.000 + Lucro Operacional</div>
+            <div className="text-xs text-white/60">Saldo Ext. + Lucro Operacional</div>
           </div>
         </div>
 
