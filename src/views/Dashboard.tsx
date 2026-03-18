@@ -46,12 +46,22 @@ const Dashboard = () => {
           const { data: todayOrdersData, error: todayOrdersError } = await supabase
             .from('orders')
             .select('total_amount, created_at, status')
-            .in('status', ['closed', 'paid', 'FECHADO'])
+            .in('status', ['closed', 'paid'])
             .gte('created_at', startDate)
             .lte('created_at', endDate);
 
           if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
             vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+            console.log('[DASHBOARD PRINCIPAL] Detalhe das vendas de hoje:', {
+              totalOrders: todayOrdersData.length,
+              orders: todayOrdersData.map(o => ({
+                id: o.id,
+                amount: o.total_amount,
+                status: o.status,
+                created_at: o.created_at
+              })),
+              totalCalculado: vendasHoje
+            });
           }
           
           console.log('[DASHBOARD PRINCIPAL] Query vendas hoje (Owner Hub):', {

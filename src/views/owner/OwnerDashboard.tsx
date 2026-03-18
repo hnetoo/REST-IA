@@ -195,7 +195,7 @@ const OwnerDashboard = () => {
       const { data: salesData, error: salesError } = await supabase
         .from('orders')
         .select('id, invoice_number, table_id, total_amount, created_at')
-        .in('status', ['closed', 'paid', 'FECHADO'])
+        .in('status', ['closed', 'paid'])
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -291,7 +291,7 @@ const OwnerDashboard = () => {
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
-        .in('status', ['closed', 'paid', 'FECHADO'])
+        .in('status', ['closed', 'paid'])
         .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString())
         .lte('created_at', new Date().toISOString());
 
@@ -381,7 +381,7 @@ const OwnerDashboard = () => {
       const { data: todayData, error: todayError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
-        .in('status', ['closed', 'paid', 'FECHADO'])
+        .in('status', ['closed', 'paid'])
         .gte('created_at', today.toISOString().split('T')[0])
         .lte('created_at', today.toISOString());
       
@@ -389,7 +389,7 @@ const OwnerDashboard = () => {
       const { data: yesterdayData, error: yesterdayError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
-        .in('status', ['closed', 'paid', 'FECHADO'])
+        .in('status', ['closed', 'paid'])
         .gte('created_at', yesterday.toISOString().split('T')[0])
         .lte('created_at', yesterday.toISOString().split('T')[0] + 'T23:59:59');
       
@@ -446,7 +446,7 @@ const OwnerDashboard = () => {
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('id, created_at, total_amount, status')
-        .in('status', ['closed', 'paid', 'FECHADO'])
+        .in('status', ['closed', 'paid'])
         .order('created_at', { ascending: false })
         .limit(50);
       
@@ -629,7 +629,7 @@ const OwnerDashboard = () => {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .in('status', ['closed', 'paid', 'FECHADO'])
+          .in('status', ['closed', 'paid'])
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
@@ -651,12 +651,22 @@ const OwnerDashboard = () => {
         const { data: todayOrdersData, error: todayOrdersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .in('status', ['closed', 'paid', 'FECHADO'])
+          .in('status', ['closed', 'paid'])
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
         if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
           vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+          console.log('[OWNER HUB] Detalhe das vendas de hoje:', {
+            totalOrders: todayOrdersData.length,
+            orders: todayOrdersData.map(o => ({
+              id: o.id,
+              amount: o.total_amount,
+              status: o.status,
+              created_at: o.created_at
+            })),
+            totalCalculado: vendasHoje
+          });
         }
       } catch (todayError) {
         console.error('[DASHBOARD] Erro ao buscar vendas de hoje:', todayError);

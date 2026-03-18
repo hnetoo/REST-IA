@@ -515,7 +515,7 @@ export const useStore = create<StoreState>()(
             : state.customers;
 
           const newOrders: Order[] = state.activeOrders.map(o => 
-            o.id === orderId ? { ...o, status: 'FECHADO' as const, paymentMethod, customerId, invoiceNumber, hash } : o
+            o.id === orderId ? { ...o, status: 'closed' as const, paymentMethod, customerId, invoiceNumber, hash } : o
           );
           
           const tableId = order.tableId;
@@ -554,9 +554,12 @@ export const useStore = create<StoreState>()(
               customer_phone: '',
               delivery_address: '',
               total_amount: finalOrder.total,
-              status: 'FECHADO',
+              status: 'closed', // MUDAR DE 'FECHADO' PARA 'closed' PARA CONSISTÊNCIA
               payment_method: finalOrder.paymentMethod || 'NUMERARIO',
-              invoice_number: finalOrder.invoiceNumber || null
+              invoice_number: finalOrder.invoiceNumber || null,
+              created_at: new Date().toISOString(),
+              table_id: finalOrder.tableId ? String(finalOrder.tableId) : null,
+              closed_at: new Date().toISOString()
             });
 
           if (error) {
