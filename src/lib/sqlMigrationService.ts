@@ -71,9 +71,16 @@ export const sqlMigrationService = {
         // Apenas sincronizar ordens fechadas/pagas
         const closedOrders = validOrders.filter((o: any) => o.status === 'FECHADO' || o.status === 'closed' || o.status === 'paid');
         
-        // ✅ CORREÇÃO: Mapear número da mesa para UUID real
+        // ✅ CORREÇÃO RADICAL: Remover table_id se não for UUID válido
         const tables = localData.tables || [];
-        const tableMap = new Map(tables.map((t: any) => [t.id, t.uuid || t.id])); // Mapeia número -> UUID
+        const tableMap = new Map();
+        
+        // Criar mapeamento seguro de ID -> UUID
+        tables.forEach((t: any) => {
+          if (t.id && t.uuid) {
+            tableMap.set(String(t.id), t.uuid);
+          }
+        });
         
         const closedOrdersWithValidTableId = closedOrders.filter((o: any) => {
           if (!o.tableId) {
@@ -82,12 +89,14 @@ export const sqlMigrationService = {
           }
           
           // Obter UUID real da tabela
-          const tableUuid = tableMap.get(o.tableId);
+          const tableUuid = tableMap.get(String(o.tableId));
           if (!tableUuid) {
             console.warn("SQLSync:orders:table_not_found", { id: o.id, tableId: o.tableId });
             return false; // Não sincronizar se não encontrar UUID
           }
           
+          // Salvar UUID no objeto para uso posterior
+          o._tableUuid = tableUuid;
           return true;
         });
         
@@ -99,7 +108,7 @@ export const sqlMigrationService = {
             .from('orders')
             .upsert(closedOrdersWithValidTableId.map((o: any) => ({
               id: o.id, // Mantém ID original (pode ser string UUID)
-              table_id: tableMap.get(o.tableId), // ✅ UUID REAL da tabela
+              table_id: o._tableUuid, // ✅ UUID REAL salvo anteriormente
               total_amount: o.total,
               status: o.status === 'FECHADO' ? 'closed' : o.status, // Normalizar status
               payment_method: o.paymentMethod,
