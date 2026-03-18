@@ -1009,9 +1009,23 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
-        {/* LINHA 2 (PERFORMANCE): Despesas Acumuladas | Impostos (7%) | Lucro Operacional */}
+        {/* LINHA 2 (CUSTOS): Custos com Staff | Despesas Acumuladas | Impostos (7%) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6">
-          {/* Card 4: Despesas Acumuladas */}
+          {/* Card 4: Custos com Staff */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Custos com Staff</span>
+            </div>
+            <div className="text-3xl font-black text-blue-400 mb-2">
+              {formatAKZ(metrics.folhaSalarial || 0)}
+            </div>
+            <div className="text-xs text-white/60">Soma salários funcionários</div>
+          </div>
+
+          {/* Card 5: Despesas Acumuladas */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
@@ -1020,12 +1034,12 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Acumuladas</span>
             </div>
             <div className="text-3xl font-black text-orange-400 mb-2">
-              {formatAKZ((metrics.despesas || 0) + (metrics.folhaSalarial || 0))}
+              {formatAKZ(metrics.despesasAcumuladas || 0)}
             </div>
-            <div className="text-xs text-white/60">Expenses + Staff</div>
+            <div className="text-xs text-white/60">Soma de todas as despesas</div>
           </div>
 
-          {/* Card 5: Impostos (7%) */}
+          {/* Card 6: Impostos (7%) */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
@@ -1036,10 +1050,13 @@ const OwnerDashboard = () => {
             <div className="text-3xl font-black text-purple-400 mb-2">
               {formatAKZ((metrics.totalVendas || 0) * 0.07)}
             </div>
-            <div className="text-xs text-white/60">Apenas sobre Vendas App</div>
+            <div className="text-xs text-white/60">Apenas sobre vendas da App</div>
           </div>
+        </div>
 
-          {/* Card 6: Lucro Operacional */}
+        {/* LINHA 3 (PATRIMÓNIO): Lucro Operacional | Saldo de Transição | PATRIMÓNIO TOTAL */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+          {/* Card 7: Lucro Operacional */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className={`w-12 h-12 ${metrics.lucroLiquido >= 0 ? 'bg-emerald-500/20' : 'bg-red-500/20'} rounded-xl flex items-center justify-center`}>
@@ -1048,15 +1065,12 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Operacional</span>
             </div>
             <div className="text-3xl font-black text-emerald-400 mb-2">
-              {formatAKZ(metrics.lucroLiquido)}
+              {formatAKZ((metrics.totalVendas || 0) - ((metrics.totalVendas || 0) * 0.07) - (metrics.despesasAcumuladas || 0) - (metrics.folhaSalarial || 0))}
             </div>
-            <div className="text-xs text-white/60">Vendas - Impostos - Despesas</div>
+            <div className="text-xs text-white/60">Vendas - Impostos - Despesas - Staff</div>
           </div>
-        </div>
 
-        {/* LINHA 3 (PATRIMÓNIO): Saldo de Transição | PATRIMÓNIO TOTAL */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-6">
-          {/* Card 7: Saldo de Transição */}
+          {/* Card 8: Saldo de Transição */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
@@ -1067,10 +1081,10 @@ const OwnerDashboard = () => {
             <div className="text-3xl font-black text-cyan-400 mb-2">
               {formatAKZ(45000000)}
             </div>
-            <div className="text-xs text-white/60">Valor Fixo: 45.000.000 Kz</div>
+            <div className="text-xs text-white/60">45.000.000 Kz</div>
           </div>
 
-          {/* Card 8: PATRIMÓNIO TOTAL */}
+          {/* Card 9: PATRIMÓNIO TOTAL */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
@@ -1079,9 +1093,9 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">PATRIMÓNIO TOTAL</span>
             </div>
             <div className="text-3xl font-black text-purple-400 mb-2">
-              {formatAKZ(45000000 + (metrics.lucroLiquido || 0))}
+              {formatAKZ(45000000 + ((metrics.totalVendas || 0) - ((metrics.totalVendas || 0) * 0.07) - (metrics.despesasAcumuladas || 0) - (metrics.folhaSalarial || 0)))}
             </div>
-            <div className="text-xs text-white/60">Saldo Transição + Lucro Operacional</div>
+            <div className="text-xs text-white/60">45.000.000 + Lucro Operacional</div>
           </div>
         </div>
 
