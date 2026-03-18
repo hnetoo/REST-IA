@@ -27,6 +27,7 @@ const Finance = () => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false); // ESTADO DE CARREGAMENTO
   const [loading, setLoading] = useState(false); // ESTADO DE BLOQUEIO TOTAL
+  const [totalExpensesFromDB, setTotalExpensesFromDB] = useState(0); // TOTAL DA DB
   const [newExpense, setNewExpense] = useState<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>({
     description: '',
     amount: 0,
@@ -37,6 +38,32 @@ const Finance = () => {
     receipt: '',
     notes: ''
   });
+
+  // BUSCAR TOTAL DE DESPESAS DA DB (SEM USAR VARIÁVEIS GLOBAIS)
+  const fetchTotalExpensesFromDB = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('amount')
+        .eq('status', 'APROVADO'); // Apenas despesas aprovadas
+
+      if (error) {
+        console.error('[FINANCE] Erro ao buscar total de despesas:', error);
+        return;
+      }
+
+      const total = data?.reduce((sum, exp) => sum + Number(exp.amount || 0), 0) || 0;
+      setTotalExpensesFromDB(total);
+      console.log('[FINANCE] Total de despesas da DB:', total);
+    } catch (error) {
+      console.error('[FINANCE] Erro crítico ao buscar total:', error);
+    }
+  };
+
+  // Buscar total na montagem e após cada operação
+  useEffect(() => {
+    fetchTotalExpensesFromDB();
+  }, [expenses.length]); // Atualizar quando mudar lista de despesas
 
   const closedOrders = useMemo(() => activeOrders.filter(o => o.status === 'FECHADO'), [activeOrders]);
   const today = new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }).split(',')[0];
@@ -98,50 +125,85 @@ const Finance = () => {
       return;
     }
     
-    // BLOQUEIO TOTAL - IMPEDIR CLIQUES DUPLOS
+    // BLOQUEIO TOTAL - IMPEDIR CLIQUES DUPLOS (DEBOUNCE)
+    if (isSubmitting || loading) {
+      console.log('[FINANCE] Bloqueado: Já existe uma operação em andamento');
+      return;
+    }
+    
     setIsSubmitting(true);
     setLoading(true);
     
     try {
-      // Adicionar ao estado local (Optimistic UI)
-      addExpense(newExpense);
-      
-      // LIMPEZA DE FORMULÁRIO IMEDIATA
-      setNewExpense({
-        description: '',
-        amount: 0,
-        category: '', // CATEGORIA VAZIA - USUÁRIO ESCREVE TEXTO EXATO
-        status: 'PENDENTE',
-        createdAt: new Date(),
-        paymentMethod: 'NUMERARIO',
-        receipt: '',
-        notes: ''
-      });
-      setIsAddingExpense(false);
-      
-      // PERSISTÊNCIA NO SUPABASE (APENAS UMA VEZ)
-      const { addExpenseWithPersistence } = useStore.getState();
-      if (addExpenseWithPersistence) {
-        await addExpense({
-          id: `exp-${Date.now()}`,
-          description: newExpense.description,
-          amount: newExpense.amount,
-          category: newExpense.category,
-          status: newExpense.status,
-          createdAt: newExpense.createdAt,
-          paymentMethod: newExpense.paymentMethod,
-          receipt: newExpense.receipt,
-          notes: newExpense.notes
+      // PERSISTÊNCIA NO SUPABASE PRIMEIRO (SEM UPDATE OTIMISTA)
+      const expenseData = {
+        description: newExpense.description,
+        amount: newExpense.amount,
+        category: newExpense.category,
+        status: newExpense.status,
+        createdAt: new Date().toISOString(),
+        paymentMethod: newExpense.paymentMethod,
+        receipt: newExpense.receipt,
+        notes: newExpense.notes
+      };
+
+      // VALIDAÇÃO DE RESPOSTA - INSERT REAL NA DB
+      const { data, error } = await supabase
+        .from('expenses')
+        .insert([expenseData])
+        .select();
+
+      if (error) {
+        console.error('[FINANCE] Erro ao inserir despesa:', error);
+        addNotification('error', `Falha ao salvar despesa: ${error.message}`);
+        // LIMPAR FORMULÁRIO SE FALHOU
+        setNewExpense({
+          description: '',
+          amount: 0,
+          category: '',
+          status: 'PENDENTE',
+          createdAt: new Date(),
+          paymentMethod: 'NUMERARIO',
+          receipt: '',
+          notes: ''
         });
+        setIsAddingExpense(false);
+        return;
       }
+
+      console.log('[FINANCE] Despesa inserida com sucesso:', data);
       
-      addNotification('success', 'Despesa adicionada com sucesso.');
+      // ADICIONAR AO ESTADO APENAS APÓS CONFIRMAÇÃO DA DB
+      if (data && data.length > 0) {
+        addExpense(data[0]);
+        addNotification('success', 'Despesa adicionada com sucesso.');
+        
+        // BUSCAR TOTAL ATUALIZADO DA DB
+        await fetchTotalExpensesFromDB();
+        
+        // LIMPEZA DE FORMULÁRIO APÓS SUCESSO
+        setNewExpense({
+          description: '',
+          amount: 0,
+          category: '',
+          status: 'PENDENTE',
+          createdAt: new Date(),
+          paymentMethod: 'NUMERARIO',
+          receipt: '',
+          notes: ''
+        });
+        setIsAddingExpense(false);
+      }
       
     } catch (error) {
       console.error('Erro ao adicionar despesa:', error);
       addNotification('error', 'Erro ao adicionar despesa. Tente novamente.');
       
       // REATIVAR BOTÃO APENAS EM CASO DE ERRO
+      setIsSubmitting(false);
+      setLoading(false);
+    } finally {
+      // SEMPRE REATIVAR BOTÃO NO FINAL
       setIsSubmitting(false);
       setLoading(false);
     }
@@ -466,7 +528,7 @@ const Finance = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-black text-white">
-                      {formatKz(expenses?.reduce((acc, exp) => acc + Number(exp.amount_kz || exp.amount || 0), 0))}
+                      {formatKz(totalExpensesFromDB)}
                     </div>
                     <p className="text-xs text-red-300 uppercase tracking-wider">
                       {expenses?.length || 0} despesas
