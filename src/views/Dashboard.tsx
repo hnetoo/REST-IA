@@ -87,11 +87,14 @@ const Dashboard = () => {
         // Calcular folha salarial usando os funcionários carregados
         const totalPayroll = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
         
+        // RENDIMENTO GLOBAL: Soma total histórica (MANTER COM ESTÁ)
+        const totalSales = closedOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+        
         const mockMetrics = {
-          totalVendas: vendasHoje,
+          totalVendas: totalSales, // RENDIMENTO GLOBAL - SOMA TOTAL HISTÓRICA
           despesas: totalExpenses,
           folhaSalarial: totalPayroll,
-          lucroLiquido: (vendasHoje || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((vendasHoje || 0) * 0.065 || 0)
+          lucroLiquido: (totalSales || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((totalSales || 0) * 0.065 || 0)
         };
         
         setMetrics(mockMetrics);
@@ -113,24 +116,30 @@ const Dashboard = () => {
       const { startDate } = getDateRangeToday();
       const today = new Date(startDate).toISOString().split('T')[0];
       const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
-      const revenue = Number(metrics.totalVendas) || 0; // ELIMINAR NaN
       
-      // FÓRMULA OBRIGATÓRIA: Lucro = (Vendas de Hoje) - (Despesas do Dia) - (Custo Staff Pro-rata) - (Impostos 6.5%)
-      const despesasDoDia = Number(metrics.despesas) || 0; // ELIMINAR NaN
-      const custoStaff = Number(metrics.folhaSalarial) || 0; // ELIMINAR NaN
-      const impostos = revenue * 0.065;
-      const profit = (revenue || 0) - (0) - (0) - ((revenue || 0) * 0.065 || 0);
-      
-      console.log('[DASHBOARD PRINCIPAL] Cálculo do Lucro Hoje:', {
-        revenue,
-        despesasDoDia,
-        custoStaff,
-        impostos,
-        profit,
-        metrics
+      // FATURAÇÃO HOJE: Query SEPARADA - Apenas vendas de 18/03/2026
+      const hojeWAT = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+      const vendasHojeFiltradas = orders.filter(order => {
+        const dataOrder = new Date(order.timestamp).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+        return dataOrder === hojeWAT;
       });
       
-      return { revenue, profit, count: orders.length, orders };
+      const faturacaoHoje = vendasHojeFiltradas.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
+      
+      console.log('[DASHBOARD PRINCIPAL] FATURAÇÃO HOJE (SEPARADA):', {
+        hojeWAT, // "18/03/2026"
+        totalOrders: orders.length,
+        vendasHojeFiltradas: vendasHojeFiltradas.length,
+        faturacaoHoje,
+        totalVendasGlobal: metrics.totalVendas // RENDIMENTO GLOBAL (diferente)
+      });
+      
+      return { 
+        revenue: faturacaoHoje, // FATURAÇÃO HOJE (independente)
+        profit: (faturacaoHoje || 0) - (0) - (0) - ((faturacaoHoje || 0) * 0.065 || 0),
+        count: vendasHojeFiltradas.length, 
+        orders: vendasHojeFiltradas 
+      };
     }
     
     // Fallback para cálculo local (se não tiver métricas globais)
@@ -155,7 +164,8 @@ const Dashboard = () => {
       .slice(0, 5);
   }, [closedOrders]);
 
-  const totalSales = closedOrders.reduce((acc, o) => acc + (o.total), 0); 
+  // RENDIMENTO GLOBAL: Soma total histórica (MANTER COM ESTÁ - NÃO MOVER)
+  const totalSales = closedOrders.reduce((acc, o) => acc + (o.total || 0), 0); 
   const activeOrderCount = activeOrders.filter(o => o.status === 'ABERTO').length;
   
   const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
