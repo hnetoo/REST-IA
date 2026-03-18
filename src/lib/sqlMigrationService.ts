@@ -41,9 +41,13 @@ export const sqlMigrationService = {
       }
 
       if (localData.menu) {
-        // ✅ SINCRONIZAÇÃO TOTAL: Enviar TODOS os itens sem validação de categoria
+        // ✅ CORREÇÃO: Obter primeira categoria válida como padrão
+        const validCategories = localData.categories || [];
+        const firstValidCategory = validCategories.length > 0 ? validCategories[0].id : null;
+        
+        // ✅ SINCRONIZAÇÃO TOTAL: Enviar TODOS os itens com categoria padrão se necessário
         const allDishes = localData.menu.filter((m: any) => m && m.id && m.name && typeof m.price === 'number');
-        console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: allDishes.length });
+        console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: allDishes.length, defaultCategory: firstValidCategory });
         
         const { error: menuError } = await supabase
           .from('products')
@@ -53,7 +57,7 @@ export const sqlMigrationService = {
             price: m.price,
             description: m.description,
             image_url: m.image,
-            category_id: m.categoryId || null, // Envia null se não tiver categoria
+            category_id: m.categoryId || firstValidCategory, // ✅ Usa categoria padrão, não NULL
             // REMOVIDO: is_visible_digital (coluna inexistente - PGRST204)
             is_active: true
           })));
@@ -67,20 +71,23 @@ export const sqlMigrationService = {
         // Apenas sincronizar ordens fechadas/pagas
         const closedOrders = validOrders.filter((o: any) => o.status === 'FECHADO' || o.status === 'closed' || o.status === 'paid');
         
-        // ✅ CORREÇÃO: Apenas sincronizar ordens com table_id válido
+        // ✅ CORREÇÃO: Mapear número da mesa para UUID real
+        const tables = localData.tables || [];
+        const tableMap = new Map(tables.map((t: any) => [t.id, t.uuid || t.id])); // Mapeia número -> UUID
+        
         const closedOrdersWithValidTableId = closedOrders.filter((o: any) => {
-          // Se não tem tableId ou é inválido, não sincronizar
           if (!o.tableId) {
             console.warn("SQLSync:orders:null_table_id_skipped", { id: o.id, tableId: o.tableId });
             return false;
           }
-          // Se tableId for numérico, converter para string (evita UUID error)
-          const tableIdStr = typeof o.tableId === 'number' ? String(o.tableId) : o.tableId;
-          // Validar que não seja um número simples como "1"
-          if (tableIdStr === "1" || tableIdStr === "2" || tableIdStr === "3") {
-            console.warn("SQLSync:orders:invalid_table_id_format", { id: o.id, tableId: tableIdStr });
-            return false; // Não sincronizar para evitar UUID error
+          
+          // Obter UUID real da tabela
+          const tableUuid = tableMap.get(o.tableId);
+          if (!tableUuid) {
+            console.warn("SQLSync:orders:table_not_found", { id: o.id, tableId: o.tableId });
+            return false; // Não sincronizar se não encontrar UUID
           }
+          
           return true;
         });
         
@@ -92,7 +99,7 @@ export const sqlMigrationService = {
             .from('orders')
             .upsert(closedOrdersWithValidTableId.map((o: any) => ({
               id: o.id, // Mantém ID original (pode ser string UUID)
-              table_id: typeof o.tableId === 'string' ? o.tableId : String(o.tableId), // Converte para string se for numérico
+              table_id: tableMap.get(o.tableId), // ✅ UUID REAL da tabela
               total_amount: o.total,
               status: o.status === 'FECHADO' ? 'closed' : o.status, // Normalizar status
               payment_method: o.paymentMethod,
