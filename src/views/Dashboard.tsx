@@ -129,11 +129,20 @@ const Dashboard = () => {
     }
     
     // Fallback para cálculo local (se não tiver métricas globais)
+    const { startDate } = getDateRangeToday();
+    const today = new Date(startDate).toISOString().split('T')[0]; // DEFINIR today CORRETAMENTE
+    
+    // VERIFICAÇÃO DE SEGURANÇA - EVITAR CRASH
+    if (!closedOrders || !Array.isArray(closedOrders)) {
+      console.log('[DASHBOARD PRINCIPAL] closedOrders é nulo ou inválido, retornando valores zerados');
+      return { revenue: 0, profit: 0, count: 0, orders: [] };
+    }
+    
     const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
     const revenue = orders.reduce((acc, o) => acc + Number(o.total || 0), 0); // ELIMINAR NaN
     const profit = (revenue || 0) - (0) - (0) - ((revenue || 0) * 0.065 || 0);
     return { revenue, profit, count: orders.length, orders };
-  }, [closedOrders, today, metrics]);
+  }, [closedOrders, metrics]); // REMOVIDO today DEPENDÊNCIA
 
   const recentInvoices = useMemo(() => {
     return [...closedOrders]
