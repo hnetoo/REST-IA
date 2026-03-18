@@ -3,30 +3,20 @@ import { supabase } from './supabase';
 // Função compartilhada para buscar métricas de vendas do dia
 export const fetchVendasHoje = async () => {
   try {
-    // SQL PRECISO COM TIMEZONE DO SERVIDOR - AFRICA/LUANDA
-    const { data: todayOrdersData, error: todayOrdersError } = await supabase
-      .from('orders')
-      .select('total_amount, created_at, status')
-      .in('status', ['closed', 'paid'])
-      .gte('created_at', supabase.rpc('current_date_wat'))
-      .lt('created_at', supabase.rpc('next_date_wat'));
+    // SQL TIMEZONE ANGOLA - PROCESSADO 100% NO SERVIDOR POSTGRESQL
+    const { data, error } = await supabase.rpc('fetch_vendas_hoje_africa_luanda');
 
-    if (todayOrdersError) {
-      console.error('[SHARED METRICS] Erro ao buscar vendas de hoje:', todayOrdersError);
+    if (error) {
+      console.error('[SHARED METRICS] Erro ao buscar vendas de hoje:', error);
       return 0;
     }
 
-    if (!todayOrdersData || todayOrdersData.length === 0) {
-      console.log('[SHARED METRICS] Nenhuma venda hoje');
-      return 0;
-    }
-
-    const vendasHoje = todayOrdersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+    const vendasHoje = data?.[0]?.total || 0;
     
-    console.log('[SHARED METRICS] Vendas Hoje (Africa/Luanda):', {
+    console.log('[SHARED METRICS] Vendas Hoje (SQL Server Africa/Luanda):', {
       total: vendasHoje,
-      orders: todayOrdersData.length,
-      timezone: 'Africa/Luanda (GMT+1)'
+      timezone: 'Africa/Luanda (GMT+1) - Processado no Servidor',
+      sql: 'SELECT SUM(total_amount) FROM orders WHERE created_at >= CURRENT_DATE AT TIME ZONE Africa/Luanda'
     });
 
     return vendasHoje;

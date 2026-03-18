@@ -57,16 +57,17 @@ interface Staff {
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
+  // ESTADO INICIAL 100% DB-DEPENDENTE - SEM VALORES FIXOS
   const [metrics, setMetrics] = useState<Metrics>({
-    vendasHoje: 0,
-    mesasAtivas: 0,
-    totalVendas: 0,
-    receitaTotal: 0,
-    despesas: 0,
-    despesasAcumuladas: 0, // NOVO: Inicializar com 0
-    folhaSalarial: 0,
-    impostos: 0,
-    historicoRevenue: 0
+    vendasHoje: 0,        // Será lido da DB
+    mesasAtivas: 0,        // Será lido da DB
+    totalVendas: 0,        // Será lido da DB
+    receitaTotal: 0,        // Será lido da DB
+    despesas: 0,           // Será lido da DB
+    despesasAcumuladas: 0,  // Será lido da DB
+    folhaSalarial: 0,       // Será lido da DB
+    impostos: 0,            // Será lido da DB
+    historicoRevenue: 0      // Será lido da DB
   });
   const [period, setPeriod] = useState<'HOJE' | 'SEMANA' | 'MÊS' | 'ANO'>('HOJE');
   const [isOnline, setIsOnline] = useState(true);
@@ -78,6 +79,64 @@ const OwnerDashboard = () => {
   const [todayExpenses, setTodayExpenses] = useState<number>(0);
   const [yearExpenses, setYearExpenses] = useState<number>(0);
   const [historicoExterno, setHistoricoExterno] = useState<number>(0);
+  
+  // SINCRONIZAÇÃO EM TEMPO REAL - SUPABASE CHANNELS
+  useEffect(() => {
+    // Canal para ouvir mudanças nas transações
+    const channel = supabase
+      .channel('db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          console.log('[OWNER HUB] Mudança detectada em orders:', payload);
+          // Forçar re-execução das funções de fetch
+          fetchMetrics();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'external_history'
+        },
+        (payload) => {
+          console.log('[OWNER HUB] Mudança detectada em external_history:', payload);
+          // Forçar re-execução das funções de fetch
+          fetchMetrics();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'expenses'
+        },
+        (payload) => {
+          console.log('[OWNER HUB] Mudança detectada em expenses:', payload);
+          // Forçar re-execução das funções de fetch
+          fetchMetrics();
+        }
+      )
+      .subscribe();
+
+    // Cleanup ao desmontar
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []); // Executar apenas uma vez
+
+  // PERSISTÊNCIA DE NAVEGAÇÃO - BUSCAR DADOS EM CADA MONTAGEM
+  useEffect(() => {
+    console.log('[OWNER HUB] Componente montado - Buscando dados da DB...');
+    fetchMetrics(); // Buscar dados sempre que o componente for montado
+  }, []); // Executar apenas na montagem
   
   // ESTADOS INDIVIDUAIS PARA SINCRONIZAÇÃO
   const [totalVendasNoState, setTotalVendasNoState] = useState<number>(0);
