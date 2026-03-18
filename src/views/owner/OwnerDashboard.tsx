@@ -699,99 +699,70 @@ const OwnerDashboard = () => {
         }
       ];
 
-      // REGRAS MATEMÁTICAS RÍGIDAS - SEM VALORES FANTASMA
+      // NOVA ESTRUTURA DE CÁLCULO - MODO DE PRODUÇÃO
       
-      // 1. FANTASMA DE 45M: Ponto de partida (Histórico Externo)
-      const historicoExterno = 45000000; // 45.000.000 Kz
+      // 1. HISTÓRICO FIXO
+      const historicoFixo = 45000000; // 45.000.000 Kz
       
-      // 2. FÓRMULA: Faturação Total = 45.000.000 + SUM(total_price das ordens com status 'closed' ou 'paid')
-      const faturacaoTotal = historicoExterno + (Number(totalVendas) || 0);
+      // 2. VENDAS APP: SUM(total_price) de todas as ordens 'closed/paid' na DB
+      const vendasApp = Number(totalVendas) || 0;
       
-      // 3. IMPOSTO (IVA 7%): Apenas sobre vendas reais da App Principal
-      // FÓRMULA: Imposto = (Soma das vendas da App Principal) * 0,07
-      const imposto = (Number(totalVendas) || 0) * 0.07; // 7% APENAS SOBRE VENDAS REAIS
+      // 3. IVA 7%: PROIBIDO calcular sobre os 45M
+      const ivaSete = vendasApp * 0.07; // Apenas sobre vendasApp
       
-      // 4. Calcular custos de staff para o período
-      let custosStaff = folhaSalarial || 0;
+      // 4. DESPESAS TOTAIS: SUM(expenses) + SUM(staff_salaries)
+      let despesasTotais = (Number(totalDespesas) || 0) + (Number(folhaSalarial) || 0);
       if (period === 'HOJE') {
         // Para o período HOJE, dividir a folha salarial por 30 (diário)
-        custosStaff = (folhaSalarial || 0) / 30;
+        despesasTotais = (Number(totalDespesas) || 0) + ((Number(folhaSalarial) || 0) / 30);
       }
       
-      // 5. LUCRO LÍQUIDO REAL: FÓRMULA EXATA
-      // Lucro Líquido = (Faturação Total) - (Despesas Acumuladas) - (Custos de Staff) - (Imposto 7%)
-      const lucroLiquido = faturacaoTotal - (Number(totalDespesas) || 0) - custosStaff - imposto;
+      // 5. LUCRO OPERACIONAL: (vendasApp - ivaSete - despesasTotais)
+      const lucroOperacional = vendasApp - ivaSete - despesasTotais;
+      
+      // 6. LUCRO TOTAL CONSOLIDADO: (historicoFixo + Lucro Operacional)
+      const lucroTotalConsolidado = historicoFixo + lucroOperacional;
 
       const metricsResult = {
         vendasHoje: Number(vendasHoje) || 0, // ESPELHO EXATO DA APP PRINCIPAL
         mesasAtivas: 0, // Calcular depois se necessário
         totalVendas: Number(totalVendas) || 0,
-        receitaTotal: faturacaoTotal, // Faturação Total = 45M + Vendas Reais
+        receitaTotal: lucroTotalConsolidado, // LUCRO TOTAL CONSOLIDADO
         despesas: Number(totalDespesas) || 0,
         despesasAcumuladas: Number(totalExpensesAllTime) || 0, // Despesas totais acumuladas
         folhaSalarial: Number(folhaSalarial) || 0,
-        impostos: imposto, // 7% APENAS SOBRE VENDAS REAIS
+        impostos: ivaSete, // 7% APENAS SOBRE VENDAS REAIS
         historicoRevenue: await fetchHistoricoRevenue(),
-        lucroLiquido: Number(lucroLiquido) || 0, // CÁLCULO REAL SEM FANTASMAS
-        margem: faturacaoTotal > 0 ? (Number(lucroLiquido) / faturacaoTotal) * 100 : 0
+        lucroLiquido: lucroOperacional, // LUCRO OPERACIONAL
+        lucroTotalConsolidado: lucroTotalConsolidado, // LUCRO TOTAL CONSOLIDADO
+        margem: vendasApp > 0 ? (Number(lucroOperacional) / vendasApp) * 100 : 0
       };
 
-      console.log('[DASHBOARD] CÁLCULOS MATEMÁTICOS EXATOS:', {
+      console.log('[DASHBOARD] MODO DE PRODUÇÃO - CÁLCULOS EXATOS:', {
         periodo: period,
-        historicoExterno,
-        totalVendas: Number(totalVendas) || 0,
-        faturacaoTotal,
-        totalDespesas: Number(totalDespesas) || 0,
-        custosStaff,
-        imposto, // 7% APENAS SOBRE VENDAS REAIS
-        lucroLiquido: Number(lucroLiquido) || 0,
+        historicoFixo,
+        vendasApp,
+        ivaSete,
+        despesasTotais,
+        lucroOperacional,
+        lucroTotalConsolidado,
         vendasHoje: Number(vendasHoje) || 0
       });
-
-      const finalMetrics = {
-        vendasHoje: Number(vendasHoje) || 0, // ESPELHO EXATO DA APP PRINCIPAL
-        mesasAtivas: 0, // Calcular depois se necessário
-        totalVendas: Number(totalVendas) || 0,
-        receitaTotal: faturacaoTotal, // Faturação Total = 45M + Vendas Reais
-        despesas: Number(totalDespesas) || 0,
-        despesasAcumuladas: Number(totalExpensesAllTime) || 0, // Despesas totais acumuladas
-        folhaSalarial: Number(folhaSalarial) || 0,
-        impostos: imposto, // 7% APENAS SOBRE VENDAS REAIS
-        historicoRevenue: await fetchHistoricoRevenue(),
-        lucroLiquido: Number(lucroLiquido) || 0, // CÁLCULO REAL SEM FANTASMAS
-        margem: faturacaoTotal > 0 ? (Number(lucroLiquido) / faturacaoTotal) * 100 : 0
-      };
-
-      console.log('[DASHBOARD] Métricas finais DEPOIS de setMetrics:', {
-        periodo: period,
-        totalVendas: finalMetrics.totalVendas,
-        receitaTotal: finalMetrics.receitaTotal, // MOSTRAR RECEITA TOTAL CORRIGIDA
-        totalDespesas: finalMetrics.despesas,
-        folhaSalarial: finalMetrics.folhaSalarial,
-        impostos: finalMetrics.impostos,
-        lucroLiquido: finalMetrics.lucroLiquido,
-        vendasHoje: finalMetrics.vendasHoje
-      });
-
-      // ATUALIZAR GRÁFICOS E DADOS VISUAIS
-      await fetchTopProducts();
-      await fetchChartData();
-      await fetchRecentSales();
       
       // FORÇAR ATUALIZAÇÃO DO ESTADO
-      setMetrics(finalMetrics);
+      setMetrics(metricsResult);
       setChartData(chartDataGenerated);
       
       // SINCRONIZAR ESTADOS INDIVIDUAIS IMEDIATAMENTE
-      setTotalVendasNoState(finalMetrics.totalVendas);
-      setDespesasNoState(finalMetrics.despesas);
-      setDespesasAcumuladasNoState(finalMetrics.despesasAcumuladas);
-      setFolhaSalarialNoState(finalMetrics.folhaSalarial);
+      setTotalVendasNoState(metricsResult.totalVendas);
+      setDespesasNoState(metricsResult.despesas);
+      setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas);
+      setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
       // VERIFICAÇÃO IMEDIATA DO ESTADO
       setTimeout(() => {
         console.log('[DASHBOARD] Estado ATUALIZADO (verificação):', {
-          metricsState: finalMetrics, // USAR finalMetrics em vez de metrics
+          metricsState: metricsResult,
           totalVendasNoState: totalVendasNoState,
           despesasNoState: despesasNoState,
           despesasAcumuladasNoState: despesasAcumuladasNoState,
