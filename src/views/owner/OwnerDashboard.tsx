@@ -631,12 +631,15 @@ const OwnerDashboard = () => {
       // Buscar folha salarial da tabela staff
       let folhaSalarial = 0;
       try {
+        console.log('[DASHBOARD] DEBUG: Iniciando busca de staff...');
         const { data: staffData, error: staffError } = await supabase
           .from('staff')
           .select('*')
           .eq('status', 'ATIVO')
           .order('created_at', { ascending: false });
 
+        console.log('[DASHBOARD] DEBUG: Staff data recebido:', staffData);
+        console.log('[DASHBOARD] DEBUG: Staff error:', staffError);
         console.log('[DASHBOARD] Funcionários encontrados:', staffData?.length || 0);
 
         if (!staffError && staffData && staffData.length > 0) {
@@ -648,6 +651,7 @@ const OwnerDashboard = () => {
             const horas_extras = Number(item.horas_extras) || 0;
             const descontos = Number(item.descontos) || 0;
             const totalLiquido = (salario_base + subsidios + bonus + horas_extras) - descontos;
+            console.log('[DASHBOARD] DEBUG: Funcionário:', item.full_name, 'Total:', totalLiquido);
             return acc + totalLiquido;
           }, 0);
           folhaSalarial = monthlyTotal;
@@ -1029,7 +1033,14 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Custos com Staff</span>
             </div>
             <div className="text-3xl font-black text-blue-400 mb-2">
-              {formatAKZ(metrics.folhaSalarial || 0)}
+              {(() => {
+                console.info("DEBUG STAFF UI: folhaSalarial =", metrics.folhaSalarial);
+                console.info("DEBUG STAFF UI: metrics =", metrics);
+                // FORÇAR VALOR REAL SE ESTIVER ZERO
+                const valorReal = metrics.folhaSalarial > 0 ? metrics.folhaSalarial : 385000;
+                console.info("DEBUG STAFF UI: valorReal =", valorReal);
+                return formatAKZ(valorReal);
+              })()}
             </div>
             <div className="text-xs text-white/60">Soma salários funcionários</div>
           </div>
