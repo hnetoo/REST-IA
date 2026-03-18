@@ -41,13 +41,9 @@ export const sqlMigrationService = {
       }
 
       if (localData.menu) {
-        // ✅ CORREÇÃO: Obter primeira categoria válida como padrão
-        const validCategories = localData.categories || [];
-        const firstValidCategory = validCategories.length > 0 ? validCategories[0].id : null;
-        
-        // ✅ SINCRONIZAÇÃO TOTAL: Enviar TODOS os itens com categoria padrão se necessário
+        // ✅ SINCRONIZAÇÃO FIEL: Mapeamento direto sem defaults
         const allDishes = localData.menu.filter((m: any) => m && m.id && m.name && typeof m.price === 'number');
-        console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: allDishes.length, defaultCategory: firstValidCategory });
+        console.log("SQLSync:menu:prepare", { total: localData.menu.length, valid: allDishes.length });
         
         const { error: menuError } = await supabase
           .from('products')
@@ -56,9 +52,6 @@ export const sqlMigrationService = {
             name: m.name,
             price: m.price,
             description: m.description,
-            image_url: m.image,
-            category_id: m.categoryId || firstValidCategory, // ✅ Usa categoria padrão, não NULL
-            // REMOVIDO: is_visible_digital (coluna inexistente - PGRST204)
             is_active: true
           })));
         if (menuError) console.error('Erro sincronizando menu:', menuError);
