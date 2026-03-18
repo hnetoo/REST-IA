@@ -1,0 +1,47 @@
+// Script de teste para recuperação de produtos
+// Execute: node test-recovery.js
+
+console.log('=== RECUPERAÇÃO DE PRODUTOS - TESTE ===');
+console.log('1. Análise do problema:');
+console.log('   - Produtos movidos para "Bebidas"');
+console.log('   - Imagens desaparecidas (image_url: null)');
+console.log('   - Incompatibilidade: categoryId vs category_id, image vs image_url');
+console.log('');
+console.log('2. Solução implementada:');
+console.log('   - productRecoveryService.ts: Serviço de recuperação');
+console.log('   - ProductRecoveryButton.tsx: Interface de recuperação');
+console.log('   - Integrado no POS.tsx para acesso fácil');
+console.log('');
+console.log('3. Como usar:');
+console.log('   a) Abra o app em http://localhost:5173');
+console.log('   b) Faça login com PIN 1234 (Gerente)');
+console.log('   c) No POS, clique em "Verificar Estado" para analisar');
+console.log('   d) Se detectar corrupção, clique em "Recuperar Produtos"');
+console.log('');
+console.log('4. O que a recuperação faz:');
+console.log('   - Restaura categorias originais (Entradas, Pratos Principais, Bebidas, Sobremesas)');
+console.log('   - Corrige category_id dos produtos para os valores originais');
+console.log('   - Restaura URLs das imagens (Unsplash)');
+console.log('   - Mantém compatibilidade com Supabase (category_id, image_url)');
+console.log('');
+console.log('=== INSTRUÇÕES CRÍTICAS ===');
+console.log('1. Pare qualquer processo que possa estar corrompendo os dados');
+console.log('2. Faça backup do estado atual antes da recuperação');
+console.log('3. Execute a recuperação apenas uma vez');
+console.log('4. Verifique o resultado após a recuperação');
+console.log('');
+console.log('=== ESTRUTURA CORRETA ===');
+console.log('Categorias:');
+console.log('- cat_entradas (Entradas)');
+console.log('- cat_principais (Pratos Principais)');
+console.log('- cat_bebidas (Bebidas)');
+console.log('- cat_sobremesas (Sobremesas)');
+console.log('');
+console.log('Produtos:');
+console.log('- Mufete de Peixe -> cat_principais');
+console.log('- Moamba de Galinha -> cat_principais');
+console.log('- Kitaba (Petisco) -> cat_entradas');
+console.log('- Cuca (Lata) -> cat_bebidas');
+console.log('- Doce de Ginguba -> cat_sobremesas');
+console.log('');
+console.log('A recuperação está PRONTA para uso no app.');

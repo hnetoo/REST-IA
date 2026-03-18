@@ -8,13 +8,15 @@ import {
   Banknote, X, Utensils, MoveHorizontal, Sparkles, Loader2,
   ChevronRight, Grid3X3, Tag, ShoppingBasket, FileText,
   UserPlus, History, LogOut, CheckCircle2, MoreVertical,
-  ChevronLeft, Layout, Clock, QrCode, ArrowRightLeft, User, Users, Monitor, Shield, Settings, Trash2, Check
+  ChevronLeft, Layout, Clock, QrCode, ArrowRightLeft, User, Users, Monitor, Shield, Settings, Trash2, Check, DollarSign
 } from 'lucide-react';
 import { Dish, PaymentMethod, Order, Table, Customer } from '../../types';
 import { printThermalInvoice, printTableReview, printCashClosing } from '../lib/printService';
 import ThermalPrinterManager from '../lib/thermalPrinterConfig';
 import LazyImage from '../components/LazyImage';
 import PaymentModal from '../components/PaymentModal';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const POS = () => {
   const navigate = useNavigate();
@@ -46,6 +48,12 @@ const POS = () => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedSubAccount, setSelectedSubAccount] = useState<any>(null);
   
+  // Estados para o sistema de caixa
+  const [isCashOpen, setIsCashOpen] = useState(false);
+  const [cashOpeningAmount, setCashOpeningAmount] = useState(0);
+  const [isCashOpeningModalOpen, setIsCashOpeningModalOpen] = useState(false);
+  const [todayCashFlow, setTodayCashFlow] = useState<any>(null);
+  
   const [orderToChangeId, setOrderToChangeId] = useState<string | null>(null);
   
   // Estados para responsividade
@@ -60,6 +68,37 @@ const POS = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+  
+  // Verificar estado do caixa ao carregar
+  useEffect(() => {
+    checkCashStatus();
+  }, []);
+
+  // Função para verificar status do caixa
+  const checkCashStatus = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: cashFlow } = await supabase
+        .from('cash_flow')
+        .select('*')
+        .eq('date', today)
+        .eq('status', 'open')
+        .single();
+
+      if (cashFlow) {
+        setIsCashOpen(true);
+        setCashOpeningAmount(cashFlow.opening_amount || 0);
+        setTodayCashFlow(cashFlow);
+      } else {
+        setIsCashOpen(false);
+        setTodayCashFlow(null);
+      }
+    } catch (error) {
+      console.log('[CAIXA] Nenhum caixa aberto encontrado hoje');
+      setIsCashOpen(false);
+      setTodayCashFlow(null);
+    }
+  };
   
   const currentOrder = activeOrders.find(o => o.id === activeOrderId);
   
@@ -130,17 +169,74 @@ const POS = () => {
     addNotification('info', `Monitor do Cliente para Mesa ${target} ativo.`);
   };
 
-  const handleCashClosingClick = () => {
-    if (closedToday.length === 0) {
-      addNotification('warning', 'Nenhuma venda fechada hoje.');
-      return;
-    }
-
+  const handleCashClosingClick = async () => {
     try {
-      printCashClosing(closedToday, settings, currentUser?.name || 'Operador');
-      addNotification('success', 'Relatório de Fecho Gerado.');
+      console.log('[FECHO] Iniciando leitura da tabela orders do dia...');
+      
+      // Buscar dados diretamente da tabela orders do Supabase
+      const today = new Date().toISOString().split('T')[0];
+      const { data: todayOrders, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('status', 'FECHADO')
+        .gte('created_at', `${today}T00:00:00`)
+        .lte('created_at', `${today}T23:59:59`)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[FECHO] Erro ao buscar orders do dia:', error);
+        addNotification('error', 'Erro ao buscar dados do fecho.');
+        return;
+      }
+
+      if (!todayOrders || todayOrders.length === 0) {
+        addNotification('warning', 'Nenhuma venda fechada encontrada hoje na tabela orders.');
+        return;
+      }
+
+      console.log('[FECHO] Encontrados pedidos:', todayOrders.length, 'registros');
+
+      // Agrupar por payment_method (Cash, Multicaixa, etc.)
+      const groupedByPayment = todayOrders.reduce((acc: any, order: any) => {
+        const method = order.payment_method || 'OUTRO';
+        const total = parseFloat(order.total) || 0;
+        
+        if (!acc[method]) {
+          acc[method] = {
+            count: 0,
+            total: 0,
+            orders: []
+          };
+        }
+        
+        acc[method].count += 1;
+        acc[method].total += total;
+        acc[method].orders.push(order);
+        
+        return acc;
+      }, {});
+
+      // Formatar dados para impressão
+      const formattedOrders = todayOrders.map((order: any) => ({
+        id: order.id,
+        invoiceNumber: order.invoice_number || `INV-${order.id?.slice(-6)}`,
+        tableId: order.table_id,
+        total: parseFloat(order.total) || 0,
+        paymentMethod: order.payment_method || 'OUTRO',
+        timestamp: order.created_at,
+        items: [] // Não precisamos dos itens para o relatório de fecho
+      }));
+
+      console.log('[FECHO] Dados agrupados por método:', groupedByPayment);
+      console.log('[FECHO] Total geral:', formattedOrders.reduce((sum, o) => sum + o.total, 0));
+
+      // Chamar função de impressão existente com os dados do Supabase
+      printCashClosing(formattedOrders, settings, currentUser?.name || 'Operador');
+      addNotification('success', `Relatório de Fecho gerado com ${todayOrders.length} vendas.`);
+      
     } catch (err) {
-      addNotification('error', 'Falha ao processar fecho.');
+      console.error('[FECHO] Erro ao processar fecho:', err);
+      addNotification('error', 'Falha ao processar fecho. Tente novamente.');
     }
   };
 

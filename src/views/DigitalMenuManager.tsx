@@ -1,14 +1,70 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Eye, EyeOff, Star, Tag, Utensils, QrCode, Smartphone, Sparkles, Cloud, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Star, Tag, Utensils, QrCode, Smartphone, Sparkles, Cloud, AlertTriangle, CheckCircle, RefreshCw, Trash2, Shield, ShieldOff, Wifi, WifiOff } from 'lucide-react';
+import { ProductRecoveryButton } from '../components/ProductRecoveryButton';
+import { cleanFetchService } from '../services/cleanFetchService';
+import { syncBlockerService } from '../services/syncBlockerService';
+import { sqlMigrationService } from '../lib/sqlMigrationService';
 
 const DigitalMenuManager = () => {
   const { menu, categories, settings, notifications, toggleDishVisibility, toggleDishFeatured, toggleCategoryVisibility, updateSettings } = useStore();
   const [isEditingUrl, setIsEditingUrl] = useState(false);
   const [tempUrl, setTempUrl] = useState(settings.customDigitalMenuUrl || '');
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<'synced' | 'pending' | 'conflict'>('synced');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncDetails, setLastSyncDetails] = useState<any>(null);
 
   const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(val);
+
+  // Função de sincronização manual com status real
+  const handleManualSync = async () => {
+    if (!settings.supabaseUrl || !settings.supabaseKey) {
+      alert('Configure as credenciais do Supabase primeiro.');
+      return;
+    }
+
+    setIsSyncing(true);
+    setCloudSyncStatus('pending');
+
+    try {
+      const currentState = {
+        categories,
+        menu,
+        activeOrders: [], // Será filtrado no serviço
+        tables: [], // Será mapeado no serviço
+        settings
+      };
+
+      const result = await sqlMigrationService.autoMigrate(settings, currentState);
+      
+      setCloudSyncStatus(result.status);
+      setLastSyncDetails(result.details);
+      
+      if (result.success) {
+        console.log('✅ Sincronização concluída com sucesso:', result.details);
+      } else {
+        console.error('❌ Erro na sincronização:', result.details);
+      }
+    } catch (error: any) {
+      console.error('❌ Erro crítico na sincronização:', error);
+      setCloudSyncStatus('pending');
+      setLastSyncDetails({ error: error.message });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Ativar bloqueador de sync ao montar o componente
+  useEffect(() => {
+    console.log('[DigitalMenuManager] 🛡️ Ativando bloqueador de sync...');
+    syncBlockerService.disableAutoSync();
+    
+    return () => {
+      console.log('[DigitalMenuManager] 🔓 Limpando bloqueador de sync...');
+      syncBlockerService.enableSync();
+    };
+  }, []);
 
   const syncStatus = useMemo(() => {
     const hasCloud = !!settings.supabaseUrl;
@@ -66,6 +122,30 @@ const DigitalMenuManager = () => {
           <h2 className="text-4xl font-black text-white italic uppercase tracking-tighter">Gestão Menu Público</h2>
         </div>
         <div className="flex gap-4">
+          {/* Botão de Limpeza de Cache Corrompido */}
+          <button
+            onClick={async () => {
+              try {
+                await cleanFetchService.cleanAndFetch();
+                alert('Cache limpo e dados recarregados do Supabase com sucesso!');
+              } catch (error: any) {
+                alert(`Erro na limpeza: ${error.message}`);
+              }
+            }}
+            className="glass-panel p-4 rounded-2xl border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-all group"
+            title="Limpar cache corrompido e recarregar do Supabase"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-500/20 rounded-xl">
+                <Trash2 size={16} className="text-red-500 group-hover:scale-110 transition-transform" />
+              </div>
+              <div className="flex-1">
+                <div className="text-[8px] font-black text-red-500 uppercase mb-1">Limpar Cache</div>
+                <div className="text-xs text-slate-400">Corrigir "Tudo Bebidas"</div>
+              </div>
+            </div>
+          </button>
+          
           {/* Configuração da URL do Menu Digital */}
           <div className="glass-panel p-4 rounded-2xl border border-white/10 bg-white/5">
             <div className="flex items-center gap-3">
@@ -139,37 +219,60 @@ const DigitalMenuManager = () => {
           )}
           
           <div className="px-6 py-3 bg-primary/10 border border-primary/20 rounded-2xl flex items-center gap-3">
-            <Smartphone size={20} className="text-primary" />
-            <div className="text-[10px] font-black uppercase text-slate-400">Estado: <span className="text-emerald-500">Live</span></div>
-          </div>
-          <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4">
-            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center ${syncStatus.hasCloud ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-              <Cloud size={18} />
-            </div>
-            <div className="text-[9px] uppercase font-black tracking-widest text-slate-400">
+            {isSyncing ? (
+              <RefreshCw size={20} className="text-primary animate-spin" />
+            ) : cloudSyncStatus === 'synced' ? (
+              <Wifi size={20} className="text-emerald-500" />
+            ) : cloudSyncStatus === 'conflict' ? (
+              <AlertTriangle size={20} className="text-red-500" />
+            ) : (
+              <WifiOff size={20} className="text-yellow-500" />
+            )}
+            <div className="text-[10px] font-black uppercase text-slate-400">
               <div className="flex items-center gap-1">
-                {syncStatus.hasCloud ? (
+                {isSyncing ? (
                   <>
-                    <CheckCircle size={10} className="text-emerald-400" />
-                    <span className="text-emerald-400">Cloud Sync Ativo</span>
+                    <RefreshCw size={10} className="text-primary animate-spin" />
+                    <span className="text-primary">Sincronizando...</span>
+                  </>
+                ) : cloudSyncStatus === 'synced' ? (
+                  <>
+                    <CheckCircle size={10} className="text-emerald-500" />
+                    <span className="text-emerald-500">Sincronizado</span>
+                  </>
+                ) : cloudSyncStatus === 'conflict' ? (
+                  <>
+                    <AlertTriangle size={10} className="text-red-500" />
+                    <span className="text-red-500">Erro de Conflito</span>
                   </>
                 ) : (
                   <>
-                    <AlertTriangle size={10} className="text-red-400" />
-                    <span className="text-red-400">Cloud Sync Desativado</span>
+                    <WifiOff size={10} className="text-yellow-500" />
+                    <span className="text-yellow-500">Pendente</span>
                   </>
                 )}
               </div>
               <div className="mt-1 text-[8px] text-slate-500">
-                {syncStatus.totalLocalDishes} pratos • {syncStatus.totalLocalCategories} categorias
+                {menu.length} pratos • {categories.length} categorias
               </div>
-              {syncStatus.lastSyncNotificationMessage && (
-                <div className="mt-1 text-[8px] text-slate-500 truncate max-w-[220px]">
-                  {syncStatus.lastSyncNotificationMessage}
+              {lastSyncDetails && (
+                <div className="mt-1 text-[8px] text-slate-500">
+                  {lastSyncDetails.error ? `Erro: ${lastSyncDetails.error}` : 
+                   `Atualizados: ${lastSyncDetails.categories?.updated || 0} cat, ${lastSyncDetails.products?.updated || 0} prod`}
                 </div>
               )}
             </div>
           </div>
+          
+          {/* Botão de Sincronização Manual */}
+          <button
+            onClick={handleManualSync}
+            disabled={isSyncing || !settings.supabaseUrl || !settings.supabaseKey}
+            className="px-6 py-3 bg-emerald-500 text-black rounded-2xl font-black text-xs uppercase shadow-glow hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
+            {isSyncing ? 'Sincronizando...' : 'Sincronizar Agora'}
+          </button>
         </div>
       </header>
 
