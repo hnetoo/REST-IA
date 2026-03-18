@@ -35,7 +35,7 @@
     "better-sqlite3": "^12.6.2",
     "dotenv": "^17.2.4",
     "i18next": "^23.11.5",
-    "jspdf": "^4.2.0",
+    "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.454.0",
     "pg": "^8.18.0",

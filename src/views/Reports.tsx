@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, ShoppingCart, Users, Filter, Calendar, BarChart3, Utensils, Beer, CreditCard, Wallet, Smartphone, Package, Clock, Target, AlertTriangle, TrendingDown, Receipt, UserCheck, PieChart, LineChart } from 'lucide-react';
+import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, ShoppingCart, Users, Filter, Calendar, BarChart3, Utensils, Beer, CreditCard, Wallet, Smartphone, Package, Clock, Target, AlertTriangle, TrendingDown, Receipt, UserCheck, PieChart, LineChart, FileDown } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const Reports = () => {
   const { settings } = useStore();
@@ -31,14 +33,20 @@ const Reports = () => {
     setVendasPorArtigo(prev => ({ ...prev, loading: true }));
     try {
       const { start, end } = dateRange;
-      if (!start || !end) return;
-
-      const { data: ordersData } = await supabase
+      
+      // Se não houver filtro de data, buscar todos os dados
+      let query = supabase
         .from('orders')
         .select('items, created_at')
-        .eq('status', 'FECHADO')
-        .gte('created_at', new Date(start).toISOString())
-        .lte('created_at', new Date(end).toISOString());
+        .eq('status', 'FECHADO');
+
+      if (start && end) {
+        query = query
+          .gte('created_at', new Date(start).toISOString())
+          .lte('created_at', new Date(end).toISOString());
+      }
+
+      const { data: ordersData } = await query;
 
       const { data: productsData } = await supabase
         .from('products')
@@ -90,22 +98,33 @@ const Reports = () => {
     setFinancasDetalhadas(prev => ({ ...prev, loading: true }));
     try {
       const { start, end } = dateRange;
-      if (!start || !end) return;
-
+      
       // Buscar receitas (orders)
-      const { data: ordersData } = await supabase
+      let ordersQuery = supabase
         .from('orders')
         .select('total_amount, created_at')
-        .eq('status', 'FECHADO')
-        .gte('created_at', new Date(start).toISOString())
-        .lte('created_at', new Date(end).toISOString());
+        .eq('status', 'FECHADO');
+
+      if (start && end) {
+        ordersQuery = ordersQuery
+          .gte('created_at', new Date(start).toISOString())
+          .lte('created_at', new Date(end).toISOString());
+      }
+
+      const { data: ordersData } = await ordersQuery;
 
       // Buscar despesas (expenses)
-      const { data: expensesData } = await supabase
+      let expensesQuery = supabase
         .from('expenses')
-        .select('amount_kz, category, created_at')
-        .gte('created_at', new Date(start).toISOString())
-        .lte('created_at', new Date(end).toISOString());
+        .select('amount_kz, category, created_at');
+
+      if (start && end) {
+        expensesQuery = expensesQuery
+          .gte('created_at', new Date(start).toISOString())
+          .lte('created_at', new Date(end).toISOString());
+      }
+
+      const { data: expensesData } = await expensesQuery;
 
       const totalReceita = ordersData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
       const totalDespesas = expensesData?.reduce((sum, expense) => sum + (expense.amount_kz || 0), 0) || 0;
@@ -138,20 +157,45 @@ const Reports = () => {
   const fetchRhEFaltas = async () => {
     setRhEFaltas(prev => ({ ...prev, loading: true }));
     try {
-      // Simulação - buscar dados reais de staff e faltas
-      const staffData = [
-        { nome: 'Funcionário 1', salarioBase: 150000, diasFalta: 2 },
-        { nome: 'Funcionário 2', salarioBase: 120000, diasFalta: 0 },
-        { nome: 'Funcionário 3', salarioBase: 180000, diasFalta: 1 }
-      ];
+      const { start, end } = dateRange;
+      
+      // Tentar buscar dados de assiduidade/funcionários
+      let staffQuery = supabase
+        .from('staff')
+        .select('*');
 
+      if (start && end) {
+        staffQuery = staffQuery
+          .gte('created_at', new Date(start).toISOString())
+          .lte('created_at', new Date(end).toISOString());
+      }
+
+      const { data: staffData, error: staffError } = await staffQuery;
+
+      if (staffError || !staffData || staffData.length === 0) {
+        // Se não houver dados, retornar mensagem informativa
+        setRhEFaltas({ 
+          data: [{ 
+            mensagem: 'Nenhuma falta registada no período',
+            tipo: 'info'
+          }], 
+          loading: false 
+        });
+        return;
+      }
+
+      // Processar dados reais de faltas
       const result = staffData.map(staff => {
-        const descontoDiario = staff.salarioBase / 30;
-        const totalDesconto = descontoDiario * staff.diasFalta;
-        const salarioLiquido = staff.salarioBase - totalDesconto;
+        const diasFalta = staff.absences || 0;
+        const salarioBase = staff.salary || 0;
+        const descontoDiario = salarioBase / 30;
+        const totalDesconto = descontoDiario * diasFalta;
+        const salarioLiquido = salarioBase - totalDesconto;
 
         return {
-          ...staff,
+          nome: staff.name || 'Funcionário Sem Nome',
+          salarioBase,
+          diasFalta,
           descontoDiario,
           totalDesconto,
           salarioLiquido
@@ -161,7 +205,13 @@ const Reports = () => {
       setRhEFaltas({ data: result, loading: false });
     } catch (error) {
       console.error('Erro ao buscar RH e faltas:', error);
-      setRhEFaltas(prev => ({ ...prev, loading: false }));
+      setRhEFaltas({ 
+        data: [{ 
+          mensagem: 'Erro ao carregar dados de RH',
+          tipo: 'erro'
+        }], 
+        loading: false 
+      });
     }
   };
 
@@ -313,7 +363,263 @@ const Reports = () => {
     }
   };
 
-  // Carregar todos os cards
+  // Funções de exportação PDF
+  const generateVendasPorArtigoPDF = () => {
+    const doc = new jsPDF();
+    const data = vendasPorArtigo.data;
+    
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.text('Tasca do Vereda - Relatório de Vendas por Artigo', 14, 15);
+    
+    // Período
+    doc.setFontSize(10);
+    doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 25);
+    
+    // Tabela
+    const tableData = data.map((item: any) => [
+      item.nome || 'Produto',
+      item.quantidade || 0,
+      item.categoria || 'Sem Categoria'
+    ]);
+    
+    (doc as any).autoTable({
+      head: [['Produto', 'Quantidade', 'Categoria']],
+      body: tableData,
+      startY: 35,
+      theme: 'grid'
+    });
+    
+    // Rodapé
+    doc.setFontSize(8);
+    const lastY = (doc as any).lastAutoTable?.finalY || 45;
+    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
+    
+    doc.save('vendas-por-artigo.pdf');
+  };
+
+  const generateFinancasDetalhadasPDF = () => {
+    const doc = new jsPDF();
+    const data = financasDetalhadas.data[0];
+    
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.text('Tasca do Vereda - Relatório Financeiro Detalhado', 14, 15);
+    
+    // Período
+    doc.setFontSize(10);
+    doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 25);
+    
+    // Resumo
+    doc.setFontSize(12);
+    doc.text('Resumo Financeiro', 14, 40);
+    doc.setFontSize(10);
+    doc.text(`Total Receitas: ${formatKz(data?.totalReceita || 0)}`, 14, 50);
+    doc.text(`Total Despesas: ${formatKz(data?.totalDespesas || 0)}`, 14, 58);
+    doc.text(`Lucro Líquido: ${formatKz(data?.lucroLiquido || 0)}`, 14, 66);
+    
+    // Tabela de despesas por categoria
+    if (data?.despesasPorCategoria?.length > 0) {
+      const tableData = data.despesasPorCategoria.map((item: any) => [
+        item.categoria || 'Categoria',
+        formatKz(item.total || 0)
+      ]);
+      
+      (doc as any).autoTable({
+        head: [['Categoria', 'Total']],
+        body: tableData,
+        startY: 80,
+        theme: 'grid'
+      });
+    }
+    
+    // Rodapé
+    doc.setFontSize(8);
+    const lastY = (doc as any).lastAutoTable?.finalY || 90;
+    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
+    
+    doc.save('financas-detalhadas.pdf');
+  };
+
+  const generateRhEFaltasPDF = () => {
+    const doc = new jsPDF();
+    const data = rhEFaltas.data;
+    
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.text('Tasca do Vereda - Relatório de RH e Faltas', 14, 15);
+    
+    // Período
+    doc.setFontSize(10);
+    doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 25);
+    
+    // Verificar se há dados ou mensagem
+    if (data.length === 1 && data[0].mensagem) {
+      doc.setFontSize(12);
+      doc.text(data[0].mensagem, 14, 40);
+    } else {
+      // Tabela
+      const tableData = data.map((item: any) => [
+        item.nome || 'Funcionário',
+        formatKz(item.salarioBase || 0),
+        item.diasFalta || 0,
+        formatKz(item.totalDesconto || 0),
+        formatKz(item.salarioLiquido || 0)
+      ]);
+      
+      (doc as any).autoTable({
+        head: [['Funcionário', 'Salário Base', 'Dias Falta', 'Total Desconto', 'Salário Líquido']],
+        body: tableData,
+        startY: 35,
+        theme: 'grid'
+      });
+    }
+    
+    // Rodapé
+    doc.setFontSize(8);
+    const lastY = (doc as any).lastAutoTable?.finalY || 50;
+    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
+    
+    doc.save('rh-e-faltas.pdf');
+  };
+
+  const generateMapaDespesasPDF = () => {
+    const doc = new jsPDF();
+    const data = mapaDespesas.data;
+    
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.text('Tasca do Vereda - Mapa de Despesas', 14, 15);
+    
+    // Período
+    doc.setFontSize(10);
+    doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 25);
+    
+    // Tabela
+    const tableData = data.map((item: any) => [
+      item.tipo || 'Tipo',
+      formatKz(item.total || 0)
+    ]);
+    
+    (doc as any).autoTable({
+      head: [['Tipo de Despesa', 'Total']],
+      body: tableData,
+      startY: 35,
+      theme: 'grid'
+    });
+    
+    // Rodapé
+    doc.setFontSize(8);
+    const lastY = (doc as any).lastAutoTable?.finalY || 45;
+    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
+    
+    doc.save('mapa-despesas.pdf');
+  };
+
+  const generateTopRentabilidadePDF = () => {
+    const doc = new jsPDF();
+    const data = topRentabilidade.data;
+    
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.text('Tasca do Vereda - Top Rentabilidade', 14, 15);
+    
+    // Período
+    doc.setFontSize(10);
+    doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 25);
+    
+    // Tabela
+    const tableData = data.map((item: any) => [
+      item.nome || 'Produto',
+      formatKz(item.precoVenda || 0),
+      formatKz(item.precoCusto || 0),
+      formatKz(item.margem || 0),
+      `${(item.margemPercentual || 0).toFixed(1)}%`
+    ]);
+    
+    (doc as any).autoTable({
+      head: [['Produto', 'Preço Venda', 'Preço Custo', 'Margem', '% Margem']],
+      body: tableData,
+      startY: 35,
+      theme: 'grid'
+    });
+    
+    // Rodapé
+    doc.setFontSize(8);
+    const lastY = (doc as any).lastAutoTable?.finalY || 45;
+    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
+    
+    doc.save('top-rentabilidade.pdf');
+  };
+
+  const generateFluxoPorTurnoPDF = () => {
+    const doc = new jsPDF();
+    const data = fluxoPorTurno.data;
+    
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.text('Tasca do Vereda - Fluxo por Turno', 14, 15);
+    
+    // Período
+    doc.setFontSize(10);
+    doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 25);
+    
+    // Tabela
+    const tableData = data.map((item: any) => [
+      item.turno || 'Turno',
+      formatKz(item.total || 0),
+      item.pedidos || 0
+    ]);
+    
+    (doc as any).autoTable({
+      head: [['Turno', 'Total Faturado', 'Nº Pedidos']],
+      body: tableData,
+      startY: 35,
+      theme: 'grid'
+    });
+    
+    // Rodapé
+    doc.setFontSize(8);
+    const lastY = (doc as any).lastAutoTable?.finalY || 45;
+    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
+    
+    doc.save('fluxo-por-turno.pdf');
+  };
+
+  const generateAlertasStockPDF = () => {
+    const doc = new jsPDF();
+    const data = alertasStock.data;
+    
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.text('Tasca do Vereda - Alertas de Stock', 14, 15);
+    
+    // Período
+    doc.setFontSize(10);
+    doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 25);
+    
+    // Tabela
+    const tableData = data.map((item: any) => [
+      item.nome || 'Produto',
+      item.quantidade || 0,
+      formatKz(item.precoCusto || 0),
+      (item.alertas || []).join(', ')
+    ]);
+    
+    (doc as any).autoTable({
+      head: [['Produto', 'Quantidade', 'Preço Custo', 'Alertas']],
+      body: tableData,
+      startY: 35,
+      theme: 'grid'
+    });
+    
+    // Rodapé
+    doc.setFontSize(8);
+    const lastY = (doc as any).lastAutoTable?.finalY || 45;
+    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
+    
+    doc.save('alertas-stock.pdf');
+  };
   const loadAllCards = async () => {
     setLoading(true);
     await Promise.all([
@@ -335,7 +641,7 @@ const Reports = () => {
   }, [dateRange]);
 
   // Componente Card
-  const Card = ({ title, icon, description, data, loading, onGenerate, color }: any) => (
+  const Card = ({ title, icon, description, data, loading, onGenerate, onGeneratePDF, color }: any) => (
     <div className="glass-panel p-6 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
       <div className="flex items-center gap-4 mb-4">
         <div className={`p-3 rounded-xl text-white`} style={{ backgroundColor: color }}>
@@ -355,19 +661,33 @@ const Reports = () => {
         <div className="space-y-3">
           <div className="text-sm text-slate-300">
             {Array.isArray(data) && data.length > 0 ? (
-              <span>{data.length} registros encontrados</span>
+              data.length === 1 && data[0].mensagem ? (
+                <span>{data[0].mensagem}</span>
+              ) : (
+                <span>{data.length} registros encontrados</span>
+              )
             ) : (
               <span>Sem dados disponíveis</span>
             )}
           </div>
           
-          <button
-            onClick={onGenerate}
-            className="w-full py-2 bg-white/10 border border-white/20 text-white rounded-xl text-sm font-black uppercase hover:bg-white/20 transition-all flex items-center justify-center gap-2"
-          >
-            <BarChart3 size={16} />
-            Gerar Detalhes
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onGenerate}
+              className="flex-1 py-2 bg-white/10 border border-white/20 text-white rounded-xl text-sm font-black uppercase hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+            >
+              <BarChart3 size={16} />
+              Gerar Detalhes
+            </button>
+            
+            <button
+              onClick={onGeneratePDF}
+              className="py-2 px-3 bg-white/10 border border-white/20 text-white rounded-xl text-sm font-black uppercase hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+              title="Exportar PDF"
+            >
+              <FileDown size={16} />
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -422,6 +742,7 @@ const Reports = () => {
           data={vendasPorArtigo.data}
           loading={vendasPorArtigo.loading}
           onGenerate={fetchVendasPorArtigo}
+          onGeneratePDF={generateVendasPorArtigoPDF}
           color="#06b6d4"
         />
         
@@ -432,6 +753,7 @@ const Reports = () => {
           data={financasDetalhadas.data}
           loading={financasDetalhadas.loading}
           onGenerate={fetchFinancasDetalhadas}
+          onGeneratePDF={generateFinancasDetalhadasPDF}
           color="#10b981"
         />
         
@@ -442,6 +764,7 @@ const Reports = () => {
           data={rhEFaltas.data}
           loading={rhEFaltas.loading}
           onGenerate={fetchRhEFaltas}
+          onGeneratePDF={generateRhEFaltasPDF}
           color="#f59e0b"
         />
         
@@ -452,6 +775,7 @@ const Reports = () => {
           data={mapaDespesas.data}
           loading={mapaDespesas.loading}
           onGenerate={fetchMapaDespesas}
+          onGeneratePDF={generateMapaDespesasPDF}
           color="#ef4444"
         />
         
@@ -462,6 +786,7 @@ const Reports = () => {
           data={topRentabilidade.data}
           loading={topRentabilidade.loading}
           onGenerate={fetchTopRentabilidade}
+          onGeneratePDF={generateTopRentabilidadePDF}
           color="#8b5cf6"
         />
         
@@ -472,6 +797,7 @@ const Reports = () => {
           data={fluxoPorTurno.data}
           loading={fluxoPorTurno.loading}
           onGenerate={fetchFluxoPorTurno}
+          onGeneratePDF={generateFluxoPorTurnoPDF}
           color="#ec4899"
         />
         
@@ -482,6 +808,7 @@ const Reports = () => {
           data={alertasStock.data}
           loading={alertasStock.loading}
           onGenerate={fetchAlertasStock}
+          onGeneratePDF={generateAlertasStockPDF}
           color="#f97316"
         />
       </div>
