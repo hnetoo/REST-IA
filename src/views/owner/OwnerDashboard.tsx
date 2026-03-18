@@ -962,10 +962,12 @@ const OwnerDashboard = () => {
           ))}
         </div>
 
-        {/* GRID DE INDICADORES (KPIs) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+        {/* GRID DE INDICADORES - 3 LINHAS ORGANIZADAS */}
+        
+        {/* LINHA 1 (OPERACIONAL): Vendas Hoje | Despesas Hoje | Ticket Médio */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6">
           {/* Card 1: Vendas Hoje */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-amber-400" />
@@ -978,89 +980,110 @@ const OwnerDashboard = () => {
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
 
-          {/* Card 2: Saldo de Transição - VALOR FIXO 45.000.000 Kz */}
+          {/* Card 2: Despesas Hoje */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-emerald-400" />
+              <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+                <TrendingDown className="w-6 h-6 text-red-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Hoje</span>
+            </div>
+            <div className="text-3xl font-black text-red-400 mb-2">
+              {formatAKZ(metrics.despesas)}
+            </div>
+            <div className="text-xs text-white/60">Hoje - Africa/Luanda</div>
+          </div>
+
+          {/* Card 3: Ticket Médio */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                <Calculator className="w-6 h-6 text-blue-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Ticket Médio</span>
+            </div>
+            <div className="text-3xl font-black text-blue-400 mb-2">
+              {formatAKZ(metrics.vendasHoje > 0 ? metrics.vendasHoje / (metrics.vendasHoje > 0 ? 1 : 1) : 0)}
+            </div>
+            <div className="text-xs text-white/60">Vendas Hoje ÷ Pedidos</div>
+          </div>
+        </div>
+
+        {/* LINHA 2 (PERFORMANCE): Despesas Acumuladas | Impostos (7%) | Lucro Operacional */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+          {/* Card 4: Despesas Acumuladas */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                <TrendingDown className="w-6 h-6 text-orange-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Acumuladas</span>
+            </div>
+            <div className="text-3xl font-black text-orange-400 mb-2">
+              {formatAKZ((metrics.despesas || 0) + (metrics.folhaSalarial || 0))}
+            </div>
+            <div className="text-xs text-white/60">Expenses + Staff</div>
+          </div>
+
+          {/* Card 5: Impostos (7%) */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                <Receipt className="w-6 h-6 text-purple-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Impostos (7%)</span>
+            </div>
+            <div className="text-3xl font-black text-purple-400 mb-2">
+              {formatAKZ((metrics.totalVendas || 0) * 0.07)}
+            </div>
+            <div className="text-xs text-white/60">Apenas sobre Vendas App</div>
+          </div>
+
+          {/* Card 6: Lucro Operacional */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className={`w-12 h-12 ${metrics.lucroLiquido >= 0 ? 'bg-emerald-500/20' : 'bg-red-500/20'} rounded-xl flex items-center justify-center`}>
+                <TrendingUp className={`w-6 h-6 ${metrics.lucroLiquido >= 0 ? 'text-emerald-400' : 'text-red-400'}`} />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Operacional</span>
+            </div>
+            <div className="text-3xl font-black text-emerald-400 mb-2">
+              {formatAKZ(metrics.lucroLiquido)}
+            </div>
+            <div className="text-xs text-white/60">Vendas - Impostos - Despesas</div>
+          </div>
+        </div>
+
+        {/* LINHA 3 (PATRIMÓNIO): Saldo de Transição | PATRIMÓNIO TOTAL */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-6">
+          {/* Card 7: Saldo de Transição */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-cyan-400" />
               </div>
               <span className="text-xs text-white/60 uppercase tracking-wider">Saldo de Transição</span>
             </div>
-            <div className="text-3xl font-black text-emerald-400 mb-2">
+            <div className="text-3xl font-black text-cyan-400 mb-2">
               {formatAKZ(45000000)}
             </div>
             <div className="text-xs text-white/60">Valor Fixo: 45.000.000 Kz</div>
           </div>
 
-          {/* Card 3: Lucro Operacional REST IA */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-cyan-400" />
-              </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Operacional REST IA</span>
-            </div>
-            <div className="text-3xl font-black text-cyan-400 mb-2">
-              {formatAKZ(metrics.lucroLiquido)}
-            </div>
-            <div className="text-xs text-white/60">Vendas - Despesas - Staff - IVA(7%)</div>
-          </div>
-
-          {/* Card 4: Património Total */}
+          {/* Card 8: PATRIMÓNIO TOTAL */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-purple-400" />
               </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">Património Total</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">PATRIMÓNIO TOTAL</span>
             </div>
             <div className="text-3xl font-black text-purple-400 mb-2">
               {formatAKZ(45000000 + (metrics.lucroLiquido || 0))}
             </div>
-            <div className="text-xs text-white/60">45.000.000 + Lucro Operacional</div>
+            <div className="text-xs text-white/60">Saldo Transição + Lucro Operacional</div>
           </div>
-
-          {/* Card 2: Faturação Total */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-cyan-400" />
-              </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">Faturação Total</span>
-            </div>
-            <div className="text-2xl font-black text-white mb-2">
-              {formatAKZ(metrics.totalVendas + metrics.historicoRevenue)}
-            </div>
-            <div className="text-xs text-white/60">Moeda: AKZ</div>
-          </div>
-
-          {/* Card 3: Lucro Líquido */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-12 h-12 ${lucroLiquido >= 0 ? 'bg-emerald-500/20' : 'bg-red-500/20'} rounded-xl flex items-center justify-center`}>
-                <TrendingUp className={`w-6 h-6 ${lucroLiquido >= 0 ? 'text-emerald-400' : 'text-red-400'}`} />
-              </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Líquido</span>
-            </div>
-            <div className={`text-2xl font-black ${lucroLiquido >= 0 ? 'text-emerald-400' : 'text-red-400'} mb-2`}>
-              {formatAKZ(lucroLiquido)}
-            </div>
-            <div className="text-xs text-white/60">Moeda: AKZ</div>
-          </div>
-
-          {/* Card 4: Ticket Médio */}
-          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-cyan-400" />
-              </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">Ticket Médio</span>
-            </div>
-            <div className="text-2xl font-black text-white mb-2">
-              {ticketMedio > 0 ? formatAKZ(ticketMedio) : '---'}
-            </div>
-            <div className="text-xs text-white/60">Moeda: AKZ</div>
-          </div>
+        </div>
 
           {/* CARD 5: Despesas Hoje */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6 hover:bg-white/10 transition-all max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500">
