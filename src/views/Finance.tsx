@@ -34,9 +34,8 @@ const Finance = () => {
     amount: 0,
     category: 'OUTROS' as ExpenseCategory,
     status: 'PENDENTE',
-    date: new Date().toISOString().split('T')[0],
-    paymentMethod: 'NUMERARIO'
-    // REMOVIDO: receipt, notes (NÃO EXISTEM NA TABELA)
+    date: new Date().toISOString().split('T')[0]
+    // REMOVIDO: paymentMethod (NÃO EXISTE NA TABELA)
   });
 
   // BUSCAR TOTAL DE DESPESAS DA DB (SEM USAR VARIÁVEIS GLOBAIS)
@@ -162,9 +161,8 @@ const Finance = () => {
         amount_kz: newExpense.amount,
         category: newExpense.category,
         status: 'PENDING', // STATUS CORRETO
-        created_at: new Date().toISOString(), // COLUNA CORRETA
-        paymentMethod: newExpense.paymentMethod
-        // REMOVIDO: notes (NÃO EXISTE NA TABELA)
+        created_at: new Date().toISOString() // COLUNA CORRETA
+        // REMOVIDO: paymentMethod (NÃO EXISTE NA TABELA)
       };
 
       // VALIDAÇÃO DE RESPOSTA - INSERT REAL NA DB
@@ -182,9 +180,8 @@ const Finance = () => {
           amount: 0,
           category: 'OUTROS' as ExpenseCategory,
           status: 'PENDENTE',
-          date: new Date().toISOString().split('T')[0],
-          paymentMethod: 'NUMERARIO'
-          // REMOVIDO: receipt, notes
+          date: new Date().toISOString().split('T')[0]
+          // REMOVIDO: paymentMethod (NÃO EXISTE NA TABELA)
         });
         setIsAddingExpense(false);
         return;
@@ -206,9 +203,8 @@ const Finance = () => {
           amount: 0,
           category: 'OUTROS' as ExpenseCategory,
           status: 'PENDENTE',
-          date: new Date().toISOString().split('T')[0],
-          paymentMethod: 'NUMERARIO'
-          // REMOVIDO: receipt, notes
+          date: new Date().toISOString().split('T')[0]
+          // REMOVIDO: paymentMethod (NÃO EXISTE NA TABELA)
         });
         setIsAddingExpense(false);
       }
@@ -234,9 +230,8 @@ const Finance = () => {
       amount: expense.amount, // Usar amount do tipo Expense
       category: expense.category,
       status: expense.status,
-      date: expense.date || new Date().toISOString().split('T')[0],
-      paymentMethod: expense.paymentMethod
-      // REMOVIDO: receipt, notes (NÃO EXISTEM NA TABELA)
+      date: expense.date || new Date().toISOString().split('T')[0]
+      // REMOVIDO: paymentMethod, receipt, notes (NÃO EXISTEM NA TABELA)
     });
   };
 
@@ -256,9 +251,8 @@ const Finance = () => {
       amount: 0,
       category: 'OUTROS',
       status: 'PENDENTE',
-      date: new Date().toISOString().split('T')[0],
-      paymentMethod: 'NUMERARIO'
-      // REMOVIDO: createdAt, receipt, notes (NÃO EXISTEM NA TABELA)
+      date: new Date().toISOString().split('T')[0]
+      // REMOVIDO: paymentMethod, createdAt, receipt, notes (NÃO EXISTEM NA TABELA)
     });
     addNotification('success', 'Despesa atualizada com sucesso.');
   };
@@ -702,20 +696,7 @@ const Finance = () => {
                   onChange={e => setNewExpense({...newExpense, amount: parseFloat(e.target.value) || 0})}
                 />
               </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Método de Pagamento</label>
-                <select 
-                  className="w-full p-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
-                  value={newExpense.paymentMethod}
-                  onChange={e => setNewExpense({...newExpense, paymentMethod: e.target.value as PaymentMethod})}
-                >
-                  <option value="NUMERARIO">Numerário</option>
-                  <option value="TPA">TPA / Cartão</option>
-                  <option value="TRANSFERENCIA">Transferência</option>
-                  <option value="QR_CODE">QR Code / Referência</option>
-                  <option value="PAGAR_DEPOIS">Conta Corrente / Pagar Depois</option>
-                </select>
-              </div>
+              {/* REMOVIDO: Campo paymentMethod (NÃO EXISTE NA TABELA) */}
               <div>
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Data</label>
                 <input 
@@ -736,9 +717,8 @@ const Finance = () => {
                       amount: 0,
                       category: 'OUTROS', // CATEGORIA VÁLIDA
                       status: 'PENDENTE',
-                      date: new Date().toISOString().split('T')[0],
-                      paymentMethod: 'NUMERARIO'
-                      // REMOVIDO: receipt, notes (NÃO EXISTEM NA TABELA)
+                      date: new Date().toISOString().split('T')[0]
+                      // REMOVIDO: paymentMethod, receipt, notes (NÃO EXISTEM NA TABELA)
                     });
                   }}
                   className="flex-1 py-4 bg-white/5 text-slate-400 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/10 transition-all"
