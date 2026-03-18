@@ -696,6 +696,45 @@ const OwnerDashboard = () => {
       setHistoricoExterno(historicoExterno); // Atualizar estado
       console.log('[DASHBOARD] Saldo de Transição (external_history):', historicoExterno);
 
+      // Buscar dados de business_stats para rendimento global
+      let totalBusinessStats = 0;
+      try {
+        const { data: businessStatsData, error: businessStatsError } = await supabase
+          .from('business_stats')
+          .select('total_revenue')
+          .single();
+
+        if (!businessStatsError && businessStatsData) {
+          totalBusinessStats = Number(businessStatsData.total_revenue) || 0;
+          console.log('[DASHBOARD] Total de business_stats:', totalBusinessStats);
+        } else {
+          console.log('[DASHBOARD] Nenhum dado em business_stats');
+        }
+      } catch (businessError) {
+        console.error('[DASHBOARD] Erro ao buscar business_stats:', businessError);
+      }
+
+      // Buscar dados de financial_history para rendimento global
+      let totalFinancialHistory = 0;
+      try {
+        const { data: financialHistoryData, error: financialHistoryError } = await supabase
+          .from('financial_history')
+          .select('receita_total');
+
+        if (!financialHistoryError && financialHistoryData) {
+          totalFinancialHistory = financialHistoryData.reduce((acc, item) => acc + (Number(item.receita_total) || 0), 0);
+          console.log('[DASHBOARD] Total de financial_history:', totalFinancialHistory);
+        } else {
+          console.log('[DASHBOARD] Nenhum dado em financial_history');
+        }
+      } catch (financialError) {
+        console.error('[DASHBOARD] Erro ao buscar financial_history:', financialError);
+      }
+
+      // Calcular Rendimento Global = business_stats + financial_history
+      const rendimentoGlobal = totalBusinessStats + totalFinancialHistory;
+      console.log('[DASHBOARD] Rendimento Global calculado:', rendimentoGlobal);
+
       // Gerar dados para gráficos com base nas vendas
       const chartDataGenerated = [
         {
@@ -748,7 +787,8 @@ const OwnerDashboard = () => {
         historicoRevenue: await fetchHistoricoRevenue(),
         lucroLiquido: lucroOperacional, // LUCRO OPERACIONAL
         lucroTotalConsolidado: lucroTotalConsolidado, // LUCRO TOTAL CONSOLIDADO
-        margem: vendasApp > 0 ? (Number(lucroOperacional) / vendasApp) * 100 : 0
+        margem: vendasApp > 0 ? (Number(lucroOperacional) / vendasApp) * 100 : 0,
+        rendimentoGlobal: rendimentoGlobal // NOVO: Rendimento Global = business_stats + financial_history
       };
 
       console.log('[DASHBOARD] MODO DE PRODUÇÃO - CÁLCULOS EXATOS:', {
@@ -977,7 +1017,7 @@ const OwnerDashboard = () => {
 
         {/* GRID DE INDICADORES - 3 LINHAS ORGANIZADAS */}
         
-        {/* LINHA 1 (OPERACIONAL): Vendas Hoje | Despesas Hoje | Ticket Médio */}
+        {/* LINHA 1 (OPERACIONAL): Vendas Hoje | Despesas Hoje | Rendimento Global */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6">
           {/* Card 1: Vendas Hoje */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
@@ -1007,18 +1047,18 @@ const OwnerDashboard = () => {
             <div className="text-xs text-white/60">Hoje - Africa/Luanda</div>
           </div>
 
-          {/* Card 3: Ticket Médio */}
+          {/* Card 3: Rendimento Global */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                <Calculator className="w-6 h-6 text-blue-400" />
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-400" />
               </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">Ticket Médio</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Rendimento Global</span>
             </div>
-            <div className="text-3xl font-black text-blue-400 mb-2">
-              {formatAKZ(metrics.vendasHoje > 0 ? metrics.vendasHoje / (metrics.vendasHoje > 0 ? 1 : 1) : 0)}
+            <div className="text-3xl font-black text-purple-400 mb-2">
+              {formatAKZ(metrics.rendimentoGlobal || 0)}
             </div>
-            <div className="text-xs text-white/60">Vendas Hoje ÷ Pedidos</div>
+            <div className="text-xs text-white/60">business_stats + financial_history</div>
           </div>
         </div>
 
