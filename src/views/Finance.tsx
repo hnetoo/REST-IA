@@ -248,7 +248,6 @@ const Finance = () => {
     
     updateExpense(editingExpense.id, {
       ...newExpense,
-      createdAt: newExpense.createdAt,
       updatedAt: new Date()
     });
     setEditingExpense(null);
@@ -257,10 +256,9 @@ const Finance = () => {
       amount: 0,
       category: 'OUTROS',
       status: 'PENDENTE',
-      createdAt: new Date(),
-      paymentMethod: 'NUMERARIO',
-      receipt: '',
-      notes: ''
+      date: new Date().toISOString().split('T')[0],
+      paymentMethod: 'NUMERARIO'
+      // REMOVIDO: createdAt, receipt, notes (NÃO EXISTEM NA TABELA)
     });
     addNotification('success', 'Despesa atualizada com sucesso.');
   };
@@ -736,12 +734,11 @@ const Finance = () => {
                     setNewExpense({
                       description: '',
                       amount: 0,
-                      category: '', // CATEGORIA VAZIA - USUÁRIO ESCREVE TEXTO EXATO
+                      category: 'OUTROS', // CATEGORIA VÁLIDA
                       status: 'PENDENTE',
-                      date: new Date(),
-                      paymentMethod: 'NUMERARIO',
-                      receipt: '',
-                      notes: ''
+                      date: new Date().toISOString().split('T')[0],
+                      paymentMethod: 'NUMERARIO'
+                      // REMOVIDO: receipt, notes (NÃO EXISTEM NA TABELA)
                     });
                   }}
                   className="flex-1 py-4 bg-white/5 text-slate-400 font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white/10 transition-all"
