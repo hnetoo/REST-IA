@@ -645,18 +645,25 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar vendas de hoje USANDO A MESMA QUERY DO DASHBOARD PRINCIPAL
+      // Buscar vendas de hoje USANDO TIMEZONE CORRETO - AFRICA/LUANDA
       let vendasHoje = 0;
       try {
+        // FORÇAR SQL COM TIMEZONE AFRICA/LUANDA - SEM ERROS DE 23:00Z
         const { data: todayOrdersData, error: todayOrdersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
           .in('status', ['closed', 'paid'])
-          .gte('created_at', startDate)
-          .lte('created_at', endDate);
+          .gte('created_at', new Date(new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' })).toISOString())
+          .lte('created_at', new Date(new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' } + ' 23:59:59')).toISOString());
+
+        console.log('[OWNER HUB] TIMEZONE CORRIGIDO - Africa/Luanda:', {
+          hojeLuanda: new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' }),
+          startOfDay: new Date(new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' })).toISOString(),
+          endOfDay: new Date(new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' } + ' 23:59:59')).toISOString()
+        });
 
         if (!todayOrdersError && todayOrdersData && todayOrdersData.length > 0) {
-          // ALINHAMENTO WAT (Angola): Mesma lógica do Dashboard Principal
+          // FILTRO ADICIONAL PARA GARANTIR TIMEZONE CORRETO
           const hojeWAT = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
           const vendasHojeFiltradas = todayOrdersData.filter(order => {
             const dataOrder = new Date(order.created_at).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
@@ -665,17 +672,10 @@ const OwnerDashboard = () => {
           
           vendasHoje = vendasHojeFiltradas.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
           
-          console.log('[OWNER HUB] ALINHAMENTO WAT Angola - Data corrigida:', {
-            hojeWAT, // Deve ser "18/03/2026"
+          console.log('[OWNER HUB] TIMEZONE AFRICA/LUANDA - Vendas Hoje:', {
+            hojeWAT, // "18/03/2026"
             totalOrders: todayOrdersData.length,
             vendasHojeFiltradas: vendasHojeFiltradas.length,
-            orders: vendasHojeFiltradas.map(o => ({
-              id: o.id,
-              amount: o.total_amount,
-              status: o.status,
-              created_at: o.created_at,
-              dataOrder: new Date(o.created_at).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' })
-            })),
             totalCalculado: vendasHoje
           });
         }
@@ -976,6 +976,48 @@ const OwnerDashboard = () => {
               {formatAKZ(metrics.vendasHoje)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
+          </div>
+
+          {/* Card 2: Saldo de Transição - VALOR FIXO 45.000.000 Kz */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-emerald-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Saldo de Transição</span>
+            </div>
+            <div className="text-3xl font-black text-emerald-400 mb-2">
+              {formatAKZ(45000000)}
+            </div>
+            <div className="text-xs text-white/60">Valor Fixo: 45.000.000 Kz</div>
+          </div>
+
+          {/* Card 3: Lucro Operacional REST IA */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-cyan-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Operacional REST IA</span>
+            </div>
+            <div className="text-3xl font-black text-cyan-400 mb-2">
+              {formatAKZ(metrics.lucroLiquido)}
+            </div>
+            <div className="text-xs text-white/60">Vendas - Despesas - Staff - IVA(7%)</div>
+          </div>
+
+          {/* Card 4: Património Total */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Património Total</span>
+            </div>
+            <div className="text-3xl font-black text-purple-400 mb-2">
+              {formatAKZ(45000000 + (metrics.lucroLiquido || 0))}
+            </div>
+            <div className="text-xs text-white/60">45.000.000 + Lucro Operacional</div>
           </div>
 
           {/* Card 2: Faturação Total */}

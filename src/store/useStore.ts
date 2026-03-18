@@ -1033,17 +1033,19 @@ restoreFromSupabase: async () => {
               // Manter apenas o mais recente, remover os mais antigos
               const toRemove = oleoDuplicates.slice(1);
               for (const duplicate of toRemove) {
-                console.log('[EXPENSE] Removendo despesa duplicada de Óleo:', duplicate.id);
+                console.log('[EXPENSE] REMOVENDO DUPLICATA ÓLEO:', duplicate.id);
                 await supabase
                   .from('expenses')
                   .delete()
                   .eq('id', duplicate.id);
               }
+              // FORÇAR RELOAD APÓS LIMPEZA
+              await get().loadExpenses();
             }
           }
 
           // Inserir diretamente na tabela expenses
-          const { error } = await supabase
+          const { data, error } = await supabase
             .from('expenses')
             .insert({
               id: expense.id || `exp-${Date.now()}`,
@@ -1053,12 +1055,17 @@ restoreFromSupabase: async () => {
               status: 'PENDING',
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
-            });
+            })
+            .select(); // FORÇAR RETORNO DOS DADOS
 
+          // AGUARDAR CONFIRMAÇÃO ANTES DE FECHAR MODAL
           if (error) {
             console.error('[EXPENSE] Erro ao persistir despesa no Supabase:', error);
+            throw error; // PROPAGAR ERRO PARA TRATAMENTO
           } else {
-            console.log('[EXPENSE] Despesa persistida com sucesso no Supabase');
+            console.log('[EXPENSE] Despesa persistida com sucesso no Supabase:', data);
+            // FORÇAR RELOAD DAS DESPESAS APÓS INSERÇÃO
+            await get().loadExpenses();
           }
         } catch (error) {
           console.error('[EXPENSE] Erro na persistência da despesa:', error);
