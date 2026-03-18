@@ -35,7 +35,7 @@ export const sqlMigrationService = {
           .upsert(validCategories.map((c: any) => ({
             id: c.id,
             name: c.name,
-            icon: c.icon,
+            // REMOVIDO: icon (coluna inexistente)
             visible: typeof c.isVisibleDigital === 'boolean' ? c.isVisibleDigital : true
           })));
         if (catError) console.error('Erro sincronizando categorias:', catError);
@@ -65,7 +65,7 @@ export const sqlMigrationService = {
             image_url: m.image,
             category_id: m.categoryId,
             is_visible_digital: typeof m.isVisibleDigital === 'boolean' ? m.isVisibleDigital : true,
-            is_featured: typeof m.isFeatured === 'boolean' ? m.isFeatured : false,
+            // REMOVIDO: is_featured (coluna inexistente)
             is_active: true
           })));
         if (menuError) console.error('Erro sincronizando menu:', menuError);
@@ -89,7 +89,7 @@ export const sqlMigrationService = {
               status: o.status === 'FECHADO' ? 'closed' : o.status, // Normalizar status
               payment_method: o.paymentMethod,
               invoice_number: o.invoiceNumber,
-              hash: o.hash,
+              // REMOVIDO: hash (coluna inexistente)
               created_at: o.createdAt || new Date().toISOString(),
               updated_at: new Date().toISOString()
               // ✅ REMOVIDO: 'customer_id' não existe na tabela
@@ -107,7 +107,7 @@ export const sqlMigrationService = {
         .from('app_settings') // ✅ CORRIGIDO: app_settings em vez de application_state
         .upsert({
           id: 'current_settings',
-          data: JSON.stringify(localData),
+          // REMOVIDO: data (coluna inexistente)
           updated_at: new Date().toISOString()
         });
       if (stateError) console.error('Erro sincronizando estado:', stateError);

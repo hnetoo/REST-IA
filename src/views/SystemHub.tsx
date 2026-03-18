@@ -375,12 +375,30 @@ const SystemHub = () => {
     const [localSettings, setLocalSettings] = useState({
       ...settings,
       // Valores padrão atualizados
-      supabaseUrl: 'https://tboiuiwlqfzcvakxrsmj.supabase.co',
-      supabaseKey: 'sb_publishable_fBMKbbzNYBe8d1rzdWyerg_4We8tZEm',
-      customDigitalMenuUrl: 'https://rest-ia.vercel.app/#/menu-public'
+      supabaseUrl: settings.supabaseUrl || 'https://tboiuiwlqfzcvakxrsmj.supabase.co',
+      supabaseKey: settings.supabaseKey || 'sb_publishable_fBMKbbzNYBe8d1rzdWyerg_4We8tZEm',
+      customDigitalMenuUrl: settings.customDigitalMenuUrl || 'https://rest-ia.vercel.app/#/menu-public'
     });
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncing, setIsSyncing] = useState<string | null>(null);
+
+    // Carregar configurações do localStorage ao montar
+    useEffect(() => {
+      const storedSettings = localStorage.getItem('app-settings');
+      if (storedSettings) {
+        try {
+          const parsed = JSON.parse(storedSettings);
+          setLocalSettings(prev => ({
+            ...prev,
+            supabaseUrl: parsed.supabaseUrl || prev.supabaseUrl,
+            supabaseKey: parsed.supabaseKey || prev.supabaseKey,
+            customDigitalMenuUrl: parsed.customDigitalMenuUrl || prev.customDigitalMenuUrl
+          }));
+        } catch (error) {
+          console.error('Erro ao carregar configurações do localStorage:', error);
+        }
+      }
+    }, []);
 
     const handleSaveSettings = async (e: React.FormEvent) => {
       e.preventDefault();
