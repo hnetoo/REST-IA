@@ -22,7 +22,8 @@ export const sqlMigrationService = {
 
     console.log("SQLSync:autoMigrate:start", {
       categories: localData.categories ? localData.categories.length : 0,
-      menu: localData.menu ? localData.menu.length : 0
+      menu: localData.menu ? localData.menu.length : 0,
+      staff: localData.staff ? localData.staff.length : 0
     });
 
     try {
@@ -30,8 +31,67 @@ export const sqlMigrationService = {
       const syncDetails = {
         categories: { updated: 0, conflicts: 0, errors: 0 },
         products: { updated: 0, conflicts: 0, errors: 0 },
-        orders: { updated: 0, conflicts: 0, errors: 0 }
+        orders: { updated: 0, conflicts: 0, errors: 0 },
+        staff: { updated: 0, conflicts: 0, errors: 0 }
       };
+
+      // 0. SINCRONIZAÇÃO DE STAFF (FUNCIONÁRIOS)
+      if (localData.staff) {
+        const validStaff = localData.staff.filter((s: any) => s && s.id && s.full_name);
+        
+        for (const staffMember of validStaff) {
+          try {
+            // Verificar timestamp no Supabase
+            const { data: existingStaff, error: fetchError } = await supabase
+              .from('staff')
+              .select('updated_at')
+              .eq('id', staffMember.id)
+              .single();
+
+            if (fetchError && fetchError.code !== 'PGRST116') {
+              console.error('Erro ao buscar staff:', fetchError);
+              syncDetails.staff.errors++;
+              continue;
+            }
+
+            const localUpdatedAt = new Date(staffMember.updatedAt || Date.now());
+            const remoteUpdatedAt = existingStaff ? new Date(existingStaff.updated_at) : new Date(0);
+
+            if (localUpdatedAt > remoteUpdatedAt) {
+              // Local é mais recente - fazer update parcial
+              const updateData: any = { 
+                full_name: staffMember.name || staffMember.full_name,
+                role: staffMember.role || 'EMPLOYEE',
+                base_salary_kz: staffMember.salary || 0,
+                phone: staffMember.phone || '',
+                status: staffMember.status || 'ACTIVE',
+                email: staffMember.email || '',
+                updated_at: new Date().toISOString()
+              };
+
+              const { error: updateError } = await supabase
+                .from('staff')
+                .upsert({ id: staffMember.id, ...updateData });
+
+              if (updateError) {
+                console.error('Erro ao atualizar staff:', updateError);
+                syncDetails.staff.errors++;
+              } else {
+                syncDetails.staff.updated++;
+                console.log(`✅ Staff atualizado: ${staffMember.name || staffMember.full_name}`);
+              }
+            } else if (remoteUpdatedAt > localUpdatedAt) {
+              // Conflito - remoto mais recente
+              syncDetails.staff.conflicts++;
+              syncStatus = 'conflict';
+              console.warn(`⚠️ Conflito no staff ${staffMember.name || staffMember.full_name}: remoto mais recente`);
+            }
+          } catch (err) {
+            console.error('Erro crítico no staff:', err);
+            syncDetails.staff.errors++;
+          }
+        }
+      }
 
       // 1. SINCRONIZAÇÃO DE CATEGORIAS COM LAST-WRITE-WINS
       if (localData.categories) {
@@ -246,7 +306,7 @@ export const sqlMigrationService = {
       console.log("SQLSync:autoMigrate:done", { status: syncStatus, details: syncDetails });
 
       return {
-        success: syncDetails.categories.errors === 0 && syncDetails.products.errors === 0 && syncDetails.orders.errors === 0,
+        success: syncDetails.categories.errors === 0 && syncDetails.products.errors === 0 && syncDetails.orders.errors === 0 && syncDetails.staff.errors === 0,
         status: syncStatus,
         details: syncDetails
       };
