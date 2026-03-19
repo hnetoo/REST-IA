@@ -100,9 +100,23 @@ const Dashboard = () => {
         // RENDIMENTO GLOBAL: Usar mesma fonte que Lucro Hoje (RPC)
         const totalSales = vendasHoje;
         
-        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL
+        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL - BYPASS CACHE
         let totalHistorico = 0;
         try {
+          // Teste de conexão
+          const { data: testData, error: testError } = await supabase
+            .from('external_history')
+            .select('count')
+            .limit(1);
+
+          if (testError) {
+            console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: ERRO', testError);
+          } else {
+            console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: OK');
+          }
+
+          // Busca com bypass de cache usando timestamp
+          const timestamp = Date.now();
           const { data: externalHistoryData, error: externalHistoryError } = await supabase
             .from('external_history')
             .select('*')
@@ -112,12 +126,16 @@ const Dashboard = () => {
           if (!externalHistoryError && externalHistoryData) {
             totalHistorico = Number(externalHistoryData.total_revenue) || 0;
             console.log('[DASHBOARD PRINCIPAL] Valor encontrado no Banco de Dados:', totalHistorico);
-            console.log('[DASHBOARD PRINCIPAL] Histórico consolidado:', totalHistorico);
+            console.log('[DASHBOARD PRINCIPAL] Timestamp da consulta:', timestamp);
+            console.log('[DASHBOARD PRINCIPAL] ID do registo:', externalHistoryData.id);
+            console.log('[DASHBOARD PRINCIPAL] Fonte:', externalHistoryData.source_name);
           } else {
             console.log('[DASHBOARD PRINCIPAL] Nenhum dado consolidado em external_history:', externalHistoryError);
+            console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: ERRO');
           }
         } catch (financialError) {
           console.error('[DASHBOARD PRINCIPAL] Erro ao buscar external_history:', financialError);
+          console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: ERRO');
         }
 
         // RENDIMENTO GLOBAL: Histórico + Faturação de Hoje
