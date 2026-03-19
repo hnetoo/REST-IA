@@ -184,6 +184,14 @@ const Dashboard = () => {
         const todayExpenses = expenses.filter(exp => String(exp.createdAt || '').split('T')[0] === today);
         const totalExpenses = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
         
+        console.log('[DASHBOARD] DEBUG DESPESAS HOJE:', {
+          today,
+          totalExpenses: expenses.length,
+          todayExpenses: todayExpenses.length,
+          valorTotal: totalExpenses,
+          dadosBrutos: todayExpenses.map(e => ({ id: e.id, amount: e.amount, createdAt: e.createdAt }))
+        });
+        
         // Calcular folha salarial usando os funcionários carregados
         const totalPayroll = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
         
@@ -216,6 +224,32 @@ const Dashboard = () => {
         } catch (financialError) {
           console.error('[DASHBOARD PRINCIPAL] ❌ Erro crítico ao buscar:', financialError);
           console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: ERRO');
+        }
+
+        // BUSCAR SOMA DIRETA DA TABELA ORDERS PARA CONFIRMAR RENDIMENTO GLOBAL
+        try {
+          console.log('[DASHBOARD PRINCIPAL] Buscando soma direta da tabela orders...');
+          
+          const { data: ordersData, error: ordersError } = await supabase
+            .from('orders')
+            .select('total_amount');
+
+          console.log("🔍 DEBUG ORDERS -> Registros encontrados:", ordersData?.length);
+          console.log("🔍 DEBUG ORDERS -> Erro (se houver):", ordersError);
+
+          if (!ordersError && ordersData && ordersData.length > 0) {
+            const somaOrders = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+            console.log('[DASHBOARD PRINCIPAL] ✅ SOMA DIRETA ORDERS:', somaOrders);
+            console.log('[DASHBOARD PRINCIPAL] Número de ordens somadas:', ordersData.length);
+            
+            // USAR SOMA DIRETA DAS ORDENS EM VEZ DO HISTÓRICO
+            totalHistorico = somaOrders;
+            console.log('[DASHBOARD PRINCIPAL] 🔄 USANDO SOMA DIRETA ORDERS COMO RENDIMENTO GLOBAL');
+          } else {
+            console.log('[DASHBOARD PRINCIPAL] ❌ Erro ao buscar soma direta orders:', ordersError);
+          }
+        } catch (ordersDirectError) {
+          console.error('[DASHBOARD PRINCIPAL] ❌ Erro crítico ao buscar soma direta orders:', ordersDirectError);
         }
 
         // RENDIMENTO GLOBAL: Histórico + Faturação de Hoje
