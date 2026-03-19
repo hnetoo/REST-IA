@@ -24,27 +24,6 @@ const ProfitCenter = () => {
   const { activeOrders, menu, settings, addNotification, expenses, employees } = useStore();
 
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
-
-  const handleExportProfitReport = () => {
-    if (closedOrders.length === 0) {
-      addNotification('warning', 'Nenhuma venda para exportar.');
-      return;
-    }
-    
-    // Preparar dados para o relatório
-    const reportData = closedOrders.map(order => ({
-      'ID': order.id,
-      'Data': new Date(order.timestamp || '').toLocaleString('pt-AO'),
-      'Total': formatKz(order.total || 0),
-      'Lucro': formatKz(order.profit || 0),
-      'Método': order.paymentMethod || 'N/A'
-    }));
-    
-    const columns = ['ID', 'Data', 'Total', 'Lucro', 'Método'];
-    
-    printFinanceReport('Relatório de Centro de Lucro', reportData, columns, settings);
-    addNotification('success', 'Relatório exportado com sucesso.');
-  };
   
   const metrics = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -71,11 +50,11 @@ const ProfitCenter = () => {
     const netProfit = revenue - variableCosts - fixedCosts - tax;
     const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
     
-    // Lucro por modalidade
+    // Lucro por modalidade - APENAS VENDAS DE HOJE
     // Fix: Added explicit typing to Record<string, number> to prevent 'unknown' types in Object.entries mapping
-    const byMethod = closedOrders.reduce((acc: Record<string, number>, o) => {
+    const byMethod = todayOrders.reduce((acc: Record<string, number>, o) => {
       const m = o.paymentMethod || 'OUTRO';
-      acc[m] = (acc[m] || 0) + o.profit;
+      acc[m] = (acc[m] || 0) + (o.total || 0);
       return acc;
     }, {} as Record<string, number>);
 
@@ -87,23 +66,84 @@ const ProfitCenter = () => {
             productProfit[i.dishId] = { name: dish?.name || 'Desconhecido', profit: 0, qty: 0 };
         }
         // CÁLCULO DA MARGEM: (price - cost_price) * unidades_vendidas
-        const unitPrice = Number(i.unitPrice || 0);
-        const unitCost = Number(i.unitCost || 0);
-        const margin = (unitPrice - unitCost) * i.quantity;
-        productProfit[i.dishId].profit += margin;
+        const dish = menu.find(d => d.id === i.dishId);
+        const itemProfit = (dish?.price || 0 - dish?.cost_price || 0) * i.quantity;
+        productProfit[i.dishId].profit += itemProfit;
         productProfit[i.dishId].qty += i.quantity;
     });
 
     const topMarginProducts = Object.values(productProfit)
-        .sort((a, b) => b.profit - a.profit)
-        .slice(0, 5);
+      .sort((a, b) => b.profit - a.profit)
+      .slice(0, 5);
 
-    return { revenue, netProfit, tax, margin, fixedCosts, variableCosts, byMethod, topMarginProducts };
-  }, [closedOrders, menu]);
+    return {
+      revenue,
+      netProfit,
+      margin,
+      fixedCosts,
+      variableCosts,
+      tax,
+      todayOrders,
+      byMethod,
+      topMarginProducts
+    };
+  }, [closedOrders, expenses, employees, menu]);
 
-  const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
-    style: 'currency', currency: 'AOA', maximumFractionDigits: 0 
-  }).format(val);
+  const handleExportProfitReport = () => {
+    if (metrics.todayOrders.length === 0) {
+      addNotification('warning', 'Nenhuma venda hoje para exportar.');
+      return;
+    }
+    
+    // Preparar dados para o relatório CSV
+    const today = new Date().toISOString().split('T')[0];
+    
+    const csvData = [
+      ['RELATÓRIO EXECUTIVO - CENTRO DE LUCRO'],
+      ['Data:', today],
+      [],
+      ['RESUMO FINANCEIRO'],
+      ['Métrica', 'Valor'],
+      ['Faturação Bruta', formatKz(metrics.revenue)],
+      ['Despesas Variáveis (Hoje)', formatKz(metrics.variableCosts)],
+      ['Despesas Fixas (Mês)', formatKz(metrics.fixedCosts)],
+      ['Impostos (6.5%)', formatKz(metrics.tax)],
+      ['LUCRO LÍQUIDO', formatKz(metrics.netProfit)],
+      ['Margem de Lucro', metrics.margin.toFixed(1) + '%'],
+      [],
+      ['ECOSSISTEMA DE PAGAMENTOS'],
+      ['Método', 'Valor'],
+      ...Object.entries(metrics.byMethod).map(([method, amount]) => [
+        method.toUpperCase(),
+        formatKz(amount as number)
+      ]),
+      [],
+      ['TOP PRODUTOS POR MARGEM'],
+      ['Produto', 'Quantidade', 'Lucro'],
+      ...metrics.topMarginProducts.map(product => [
+        product.name,
+        product.qty.toString(),
+        formatKz(product.profit || 0)
+      ])
+    ];
+    
+    // Converter para CSV
+    const csvContent = csvData.map(row => row.join(',')).join('\n');
+    
+    // Criar blob e download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `centro_lucro_${today}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    addNotification('success', 'Relatório executivo exportado com sucesso.');
+    console.log('[PROFIT CENTER] ✅ Relatório executivo exportado para CSV');
+  };
 
   // Cores futuristas
   const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
@@ -136,8 +176,18 @@ const ProfitCenter = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
          <div className="glass-panel p-10 rounded-[3rem] border-primary/40 bg-gradient-to-br from-primary/10 to-transparent relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 text-primary opacity-5 group-hover:opacity-10 transition-opacity"><Zap size={100}/></div>
-            <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4">Lucro Líquido Real (Net Alpha)</p>
-            <h3 className="text-5xl font-mono font-bold text-white text-glow">{formatKz(metrics.netProfit)}</h3>
+            <div className="relative">
+              <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4">Lucro Líquido Real (Net Alpha)</p>
+              <div className="relative group">
+                <h3 className="text-5xl font-mono font-bold text-white text-glow">{formatKz(metrics.netProfit)}</h3>
+                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-slate-800 text-white text-xs rounded-lg p-3 w-64 z-10 border border-slate-600">
+                  <p className="font-bold mb-1">Cálculo do Lucro Líquido:</p>
+                  <p className="text-slate-300">Faturação - Despesas Hoje - Despesas Fixas (Mês) - Impostos (6.5%)</p>
+                  <p className="text-slate-400 mt-1 text-[10px]">Inclui custos fixos mensais e despesas variáveis do dia</p>
+                  <div className="absolute top-full left-8 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-slate-800"></div>
+                </div>
+              </div>
+            </div>
             <div className="mt-8 flex items-center gap-3">
                <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
                   <div className="h-full bg-primary" style={{width: `${metrics.margin}%`}}></div>
