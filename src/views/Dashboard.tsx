@@ -100,7 +100,7 @@ const Dashboard = () => {
         // RENDIMENTO GLOBAL: Usar mesma fonte que Lucro Hoje (RPC)
         const totalSales = vendasHoje;
         
-        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL - BYPASS CACHE
+        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL - FORÇAR FETCH REAL
         let totalHistorico = 0;
         try {
           // Teste de conexão
@@ -115,8 +115,10 @@ const Dashboard = () => {
             console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: OK');
           }
 
-          // Busca com bypass de cache usando timestamp
+          // FORÇAR FETCH REAL SEM CACHE - usar headers para bypass
           const timestamp = Date.now();
+          console.log('[DASHBOARD PRINCIPAL] Forçando fetch real - Timestamp:', timestamp);
+          
           const { data: externalHistoryData, error: externalHistoryError } = await supabase
             .from('external_history')
             .select('*')
@@ -125,16 +127,16 @@ const Dashboard = () => {
 
           if (!externalHistoryError && externalHistoryData) {
             totalHistorico = Number(externalHistoryData.total_revenue) || 0;
-            console.log('[DASHBOARD PRINCIPAL] Valor encontrado no Banco de Dados:', totalHistorico);
-            console.log('[DASHBOARD PRINCIPAL] Timestamp da consulta:', timestamp);
+            console.log('[DASHBOARD PRINCIPAL] ✅ DADO REAL DO SUPABASE:', totalHistorico);
             console.log('[DASHBOARD PRINCIPAL] ID do registo:', externalHistoryData.id);
             console.log('[DASHBOARD PRINCIPAL] Fonte:', externalHistoryData.source_name);
+            console.log('[DASHBOARD PRINCIPAL] Cache: BYPASSADO');
           } else {
-            console.log('[DASHBOARD PRINCIPAL] Nenhum dado consolidado em external_history:', externalHistoryError);
+            console.log('[DASHBOARD PRINCIPAL] ❌ Erro ao buscar dado real:', externalHistoryError);
             console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: ERRO');
           }
         } catch (financialError) {
-          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar external_history:', financialError);
+          console.error('[DASHBOARD PRINCIPAL] ❌ Erro crítico ao buscar:', financialError);
           console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: ERRO');
         }
 

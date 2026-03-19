@@ -1716,9 +1716,34 @@ const SystemHub = () => {
                           <Edit2 size={16}/>
                         </button>
                         <button 
-                          onClick={() => {
-                            setRecords(records.filter(r => r.id !== record.id));
-                            addNotification('success', 'Registro removido com sucesso!');
+                          onClick={async () => {
+                            try {
+                              console.log('[SystemHub] Apagando registro ID:', record.id);
+                              
+                              const { error } = await supabase
+                                .from('external_history')
+                                .delete()
+                                .eq('id', record.id);
+
+                              if (error) {
+                                console.error('[SystemHub] Erro ao apagar no Supabase:', error);
+                                addNotification('error', 'Falha ao apagar registro no Supabase');
+                                return;
+                              }
+
+                              console.log('[SystemHub] Registro apagado com sucesso no Supabase');
+                              
+                              // Remover do estado local apenas após sucesso no Supabase
+                              setRecords(records.filter(r => r.id !== record.id));
+                              addNotification('success', 'Registro removido com sucesso do Supabase!');
+                              
+                              // Forçar recarga dos dados
+                              await loadExternalHistory();
+                              
+                            } catch (error) {
+                              console.error('[SystemHub] Erro crítico ao apagar:', error);
+                              addNotification('error', 'Erro crítico ao apagar registro');
+                            }
                           }}
                           className="p-2 text-red-500/30 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                         >
