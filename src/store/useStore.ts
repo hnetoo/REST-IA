@@ -535,10 +535,16 @@ export const useStore = create<StoreState>()(
         // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
         const finalOrder = get().activeOrders.find(o => o.id === orderId);
         if (finalOrder && finalOrder.status === 'FECHADO') {
+          // CAPTURAR OPERADOR ANTES DE PERSISTIR - DEBUG COMPLETO
           const currentUser = get().currentUser;
           const sellerName = currentUser?.name || currentUser?.email || 'Operador';
           
-          console.log('[POS] Persistindo venda no Supabase:', {
+          // DEBUG: Mostrar objeto completo que vai para o Supabase
+          console.log('[POS] === OBJETO COMPLETO DA VENDA PARA PERSISTIR ===');
+          console.log('[POS] Final Order:', finalOrder);
+          console.log('[POS] Current User:', currentUser);
+          console.log('[POS] Seller Name:', sellerName);
+          console.log('[POS] Objeto que será inserido no Supabase:', {
             id: finalOrder.id,
             customer_name: finalOrder.subAccountName || 'Cliente',
             seller_name: sellerName,
@@ -546,39 +552,52 @@ export const useStore = create<StoreState>()(
             delivery_address: '',
             total_amount: finalOrder.total,
             status: 'closed',
-            payment_method: finalOrder.paymentMethod || 'NUMERARIO'
+            payment_method: finalOrder.paymentMethod || 'NUMERARIO',
+            invoice_number: finalOrder.invoiceNumber || null,
+            created_at: new Date().toISOString(),
+            table_id: finalOrder.tableId ? String(finalOrder.tableId) : null,
+            closed_at: new Date().toISOString()
           });
 
-          // USAR INSERT() EM VEZ DE UPSERT() - FORÇAR GRAVAÇÃO
-          const { error } = await supabase
-            .from('orders')
-            .insert({
-              id: finalOrder.id,
-              customer_name: finalOrder.subAccountName || 'Cliente',
-              seller_name: sellerName, // NOME DO OPERADOR
-              customer_phone: '',
-              delivery_address: '',
-              total_amount: finalOrder.total,
-              status: 'closed',
-              payment_method: finalOrder.paymentMethod || 'NUMERARIO',
-              invoice_number: finalOrder.invoiceNumber || null,
-              created_at: new Date().toISOString(),
-              table_id: finalOrder.tableId ? String(finalOrder.tableId) : null,
-              closed_at: new Date().toISOString()
-            });
+          // USAR INSERT() EM VEZ DE UPSERT() - FORÇAR GRAVAÇÃO COM TRATAMENTO DE ERRO
+          let insertError = null;
+          try {
+            const { error } = await supabase
+              .from('orders')
+              .insert({
+                id: finalOrder.id,
+                customer_name: finalOrder.subAccountName || 'Cliente',
+                seller_name: sellerName, // NOME DO OPERADOR
+                customer_phone: '',
+                delivery_address: '',
+                total_amount: finalOrder.total,
+                status: 'closed',
+                payment_method: finalOrder.paymentMethod || 'NUMERARIO',
+                invoice_number: finalOrder.invoiceNumber || null,
+                created_at: new Date().toISOString(),
+                table_id: finalOrder.tableId ? String(finalOrder.tableId) : null,
+                closed_at: new Date().toISOString()
+              });
 
-          if (error) {
-            console.error('[POS] ❌ ERRO CRÍTICO AO PERSISTIR VENDA:', error);
-            console.error('[POS] Detalhes do erro:', {
-              code: error.code,
-              message: error.message,
-              details: error.details,
-              hint: error.hint
+            insertError = error;
+          } catch (catchError) {
+            console.error('[POS] ❌ ERRO DE EXCEÇÃO AO TENTAR PERSISTIR:', catchError);
+            insertError = catchError;
+          }
+
+          if (insertError) {
+            console.error('[POS] ❌ ERRO CRÍTICO AO PERSISTIR VENDA:', insertError);
+            console.error('[POS] Detalhes completos do erro:', {
+              code: insertError.code,
+              message: insertError.message,
+              details: insertError.details,
+              hint: insertError.hint
             });
-            get().addNotification('error', `Falha ao gravar venda: ${error.message}`);
-            return { success: false, error };
+            console.error('[POS] Verifique se a tabela orders existe e se as colunas estão corretas');
+            get().addNotification('error', `Falha crítica ao gravar venda: ${insertError.message}`);
+            return { success: false, error: insertError };
           } else {
-            console.log('[POS] ✅ Venda persistida com sucesso no Supabase');
+            console.log('[POS] ✅ Venda persistida com sucesso no Supabase - ID:', finalOrder.id);
             
             // PERSISTIR ITENS DO PEDIDO NA TABELA order_items - GARANTIR EXECUÇÃO IMEDIATA
             console.log('[POS] Persistindo itens do pedido:', finalOrder.items);
