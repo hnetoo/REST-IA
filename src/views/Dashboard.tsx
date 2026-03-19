@@ -48,12 +48,20 @@ const Dashboard = () => {
         
         if (sessionError || !session) {
           console.error('[DASHBOARD PRINCIPAL] Sessão inválida:', sessionError);
-          // Forçar re-login se sessão inválida
+          console.log('[DASHBOARD PRINCIPAL] Tentando verificar usuário no store...');
+          
+          // VERIFICAR USUÁRIO NO STORE
+          const store = useStore.getState();
+          console.log('[DASHBOARD PRINCIPAL] Store state:', { 
+            hasCurrentUser: !!store.currentUser,
+            currentUserKeys: store.currentUser ? Object.keys(store.currentUser) : []
+          });
+          
           addNotification('error', 'Sessão expirada. Por favor, faça login novamente.');
           return;
         }
         
-        console.log('[DASHBOARD PRINCIPAL] Sessão válida:', session.user.email);
+        console.log('[DASHBOARD PRINCIPAL] Sessão válida:', session?.user?.email || 'email não disponível');
         
         // Carregar despesas e funcionários do Supabase primeiro
         await loadExpenses();

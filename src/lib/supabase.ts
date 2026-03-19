@@ -10,5 +10,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(
   supabaseUrl,
-  supabaseAnonKey
+  supabaseAnonKey,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 2
+      }
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'rest-ia-app/1.0.0'
+      }
+    }
+  }
 );
