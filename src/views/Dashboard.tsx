@@ -100,39 +100,32 @@ const Dashboard = () => {
         // RENDIMENTO GLOBAL: Usar mesma fonte que Lucro Hoje (RPC)
         const totalSales = vendasHoje; // SINCRONIZADO: mesma fonte que vendas de hoje
         
-        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL
-        let historicoFinanceiro = 0;
+        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL - SEM FILTROS
+        let totalHistoricalRevenue = 0;
         try {
+          console.log('[DASHBOARD PRINCIPAL] Buscando histórico TOTAL em external_history...');
           const { data: externalHistoryData, error: externalHistoryError } = await supabase
             .from('external_history')
             .select('total_revenue');
 
           if (!externalHistoryError && externalHistoryData) {
-            historicoFinanceiro = externalHistoryData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
-            console.log('[DASHBOARD PRINCIPAL] Histórico financeiro (external_history):', historicoFinanceiro);
+            totalHistoricalRevenue = externalHistoryData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
+            console.log('[DASHBOARD PRINCIPAL] Histórico TOTAL (external_history):', totalHistoricalRevenue);
+            console.log('[DASHBOARD PRINCIPAL] Items encontrados:', externalHistoryData.length);
+          } else {
+            console.log('[DASHBOARD PRINCIPAL] Nenhum dado em external_history:', externalHistoryError);
           }
         } catch (financialError) {
           console.error('[DASHBOARD PRINCIPAL] Erro ao buscar external_history:', financialError);
         }
 
-        // BUSCAR BUSINESS_STATS PARA RENDIMENTO GLOBAL
-        let businessStatsRevenue = 0;
-        try {
-          const { data: businessStatsData, error: businessStatsError } = await supabase
-            .from('business_stats')
-            .select('total_revenue')
-            .single();
-
-          if (!businessStatsError && businessStatsData) {
-            businessStatsRevenue = Number(businessStatsData.total_revenue) || 0;
-            console.log('[DASHBOARD PRINCIPAL] Business stats revenue:', businessStatsRevenue);
-          }
-        } catch (businessError) {
-          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar business_stats:', businessError);
-        }
-
-        // RENDIMENTO GLOBAL: Histórico financeiro (external_history) + business_stats + vendas atuais
-        const rendimentoGlobal = historicoFinanceiro + businessStatsRevenue + (totalSales || 0);
+        // RENDIMENTO GLOBAL: Histórico TOTAL + vendas de hoje (SEM FILTROS)
+        const rendimentoGlobal = totalHistoricalRevenue + (totalSales || 0);
+        console.log('[DASHBOARD PRINCIPAL] RENDIMENTO GLOBAL CALCULADO:', {
+          totalHistoricalRevenue,
+          vendasHoje: totalSales,
+          rendimentoGlobal
+        });
         
         const mockMetrics = {
           totalVendas: totalSales, // Vendas de hoje apenas
@@ -267,7 +260,19 @@ const Dashboard = () => {
   };
 
   const formatKz = (val: number) => {
-    return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(val);
+    return new Intl.NumberFormat('pt-AO', { 
+      style: 'currency', 
+      currency: 'AOA', 
+      maximumFractionDigits: 0,
+      minimumFractionDigits: 0
+    }).format(val);
+  };
+
+  const formatKzWithSeparators = (val: number) => {
+    return new Intl.NumberFormat('pt-AO', { 
+      maximumFractionDigits: 0,
+      minimumFractionDigits: 0
+    }).format(val) + ',00 Kz';
   };
 
   return (
@@ -353,7 +358,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
             Rendimento Global
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.rendimentoGlobal || totalSales)}</p>
+          <p className="text-2xl font-mono font-bold text-white">{formatKzWithSeparators(metrics?.rendimentoGlobal || totalSales)}</p>
           <div className="mt-2 text-[10px] text-emerald-500 font-bold">
              Histórico + Vendas Atuais
           </div>
