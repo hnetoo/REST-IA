@@ -149,59 +149,27 @@ const Dashboard = () => {
         // RENDIMENTO GLOBAL: Usar mesma fonte que Lucro Hoje (RPC)
         const totalSales = vendasHoje;
         
-        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL - FORÇAR FETCH REAL
+        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL - SOMA TOTAL DE TODOS OS REGISTROS
         try {
-          // Teste de conexão
-          const { data: testData, error: testError } = await supabase
-            .from('external_history')
-            .select('count')
-            .limit(1);
-
-          if (testError) {
-            console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: ERRO', testError);
-          } else {
-            console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: OK');
-          }
-
-          // FORÇAR FETCH REAL SEM CACHE - usar headers para bypass
-          const timestamp = Date.now();
-          console.log('[DASHBOARD PRINCIPAL] Forçando fetch real - Timestamp:', timestamp);
+          console.log('[DASHBOARD PRINCIPAL] Buscando TODOS os registros do external_history...');
           
-          // TESTE: Remover filtro CONSOLIDADO se necessário
-          const { data: externalHistoryData, error: externalHistoryError } = await supabase
+          // QUERY SEM FILTROS - BUSCAR TODOS OS REGISTROS
+          const { data: allHistoryData, error: allHistoryError } = await supabase
             .from('external_history')
-            .select('*')
-            .eq('period', 'CONSOLIDADO')
-            .single();
+            .select('*');
 
-          // DEBUG QUERY - LOGS DO SUPABASE
-          console.log("🔍 DEBUG QUERY -> Registros encontrados:", externalHistoryData ? 1 : 0);
-          console.log("🔍 DEBUG QUERY -> Erro do Supabase (se houver):", externalHistoryError);
-          console.log("🔍 DEBUG QUERY -> Dados brutos:", externalHistoryData);
+          console.log("🔍 DEBUG QUERY TOTAL -> Todos registros encontrados:", allHistoryData?.length);
+          console.log("🔍 DEBUG QUERY TOTAL -> Erro (se houver):", allHistoryError);
+          console.log("🔍 DEBUG QUERY TOTAL -> Dados brutos:", allHistoryData);
 
-          // SE CONSOLIDADO NÃO FUNCIONAR, TENTAR SEM FILTRO
-          if (externalHistoryError || !externalHistoryData) {
-            console.log("🔍 DEBUG -> CONSOLIDADO falhou, tentando SEM FILTRO...");
-            const { data: allData, error: allError } = await supabase
-              .from('external_history')
-              .select('*');
-            
-            console.log("🔍 DEBUG QUERY SEM FILTRO -> Todos registros:", allData?.length);
-            console.log("🔍 DEBUG QUERY SEM FILTRO -> Erro:", allError);
-            
-            if (!allError && allData && allData.length > 0) {
-              // Somar todos os registros
-              totalHistorico = allData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
-              console.log("🔍 DEBUG -> Soma de todos os registros:", totalHistorico);
-            }
-          } else if (!externalHistoryError && externalHistoryData) {
-            totalHistorico = Number(externalHistoryData.total_revenue) || 0;
-            console.log('[DASHBOARD PRINCIPAL] ✅ DADO REAL DO SUPABASE:', totalHistorico);
-            console.log('[DASHBOARD PRINCIPAL] ID do registo:', externalHistoryData.id);
-            console.log('[DASHBOARD PRINCIPAL] Fonte:', externalHistoryData.source_name);
-            console.log('[DASHBOARD PRINCIPAL] Cache: BYPASSADO');
+          if (!allHistoryError && allHistoryData && allHistoryData.length > 0) {
+            // SOMA TOTAL DE TODOS OS REGISTROS
+            totalHistorico = allHistoryData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
+            console.log('[DASHBOARD PRINCIPAL] ✅ SOMA TOTAL DE TODO HISTÓRICO:', totalHistorico);
+            console.log('[DASHBOARD PRINCIPAL] Número de registros somados:', allHistoryData.length);
+            console.log('[DASHBOARD PRINCIPAL] Fonte: TODOS os registros da tabela external_history');
           } else {
-            console.log('[DASHBOARD PRINCIPAL] ❌ Erro ao buscar dado real:', externalHistoryError);
+            console.log('[DASHBOARD PRINCIPAL] ❌ Nenhum registro encontrado ou erro na query:', allHistoryError);
             console.log('[DASHBOARD PRINCIPAL] Status da Conexão Supabase: ERRO');
           }
         } catch (financialError) {
