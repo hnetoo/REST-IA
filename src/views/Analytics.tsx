@@ -22,13 +22,13 @@ const Analytics = () => {
   const realMetrics = useMemo(() => {
     const today = String(new Date().toISOString().split('T')[0] || '');
     
-    // Vendas Hoje: filtrar pedidos fechados de hoje
+    // Vendas Hoje: filtrar pedidos fechados de hoje (incluindo todos os status de venda)
     const todayOrders = activeOrders.filter(order => 
-      order.status === 'FECHADO' && 
+      ['FECHADO', 'closed', 'paid'].includes(order.status) && 
       String(order.timestamp || '').split('T')[0] === today
     );
     
-    const totalSalesToday = todayOrders.reduce((acc, order) => acc + order.total, 0);
+    const totalSalesToday = todayOrders.reduce((acc, order) => acc + (order.total || 0), 0);
     const totalOrdersToday = todayOrders.length;
     const ticketMedio = totalOrdersToday > 0 ? totalSalesToday / totalOrdersToday : 0;
     
@@ -61,12 +61,12 @@ const Analytics = () => {
       const dateStr = date.toISOString().split('T')[0];
       const dayName = date.toLocaleDateString('pt-AO', { weekday: 'short', day: 'numeric' });
       
-      // Vendas do dia
+      // Vendas do dia (incluindo todos os status de venda)
       const dayOrders = activeOrders.filter(order => 
-        order.status === 'FECHADO' && 
+        ['FECHADO', 'closed', 'paid'].includes(order.status) && 
         String(order.timestamp || '').split('T')[0] === dateStr
       );
-      const sales = dayOrders.reduce((acc, order) => acc + order.total, 0);
+      const sales = dayOrders.reduce((acc, order) => acc + (order.total || 0), 0);
       
       // Compras do dia
       const dayExpenses = expenses.filter(expense => 
@@ -120,10 +120,10 @@ const Analytics = () => {
   const realTopProducts = useMemo(() => {
     const productSales: Record<string, { name: string, category: string, sales: number }> = {};
     
-    // Filtrar apenas pedidos fechados
-    const closedOrders = activeOrders.filter(order => order.status === 'FECHADO');
+    // Filtrar apenas pedidos fechados (incluindo todos os status de venda)
+    const closedOrders = activeOrders.filter(order => ['FECHADO', 'closed', 'paid'].includes(order.status));
     
-    closedOrders.flatMap((order: any) => order.items).forEach((item: any) => {
+    closedOrders.flatMap((order: any) => order.items || []).forEach((item: any) => {
       const dish = menu.find(d => d.id === item.dishId);
       if (!productSales[item.dishId]) {
         productSales[item.dishId] = {
@@ -132,7 +132,7 @@ const Analytics = () => {
           sales: 0
         };
       }
-      productSales[item.dishId].sales += item.quantity;
+      productSales[item.dishId].sales += item.quantity || 0;
     });
 
     return Object.values(productSales)
