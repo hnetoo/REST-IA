@@ -11,6 +11,13 @@ import { printThermalInvoice, printFinanceReport } from '../lib/printService';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
 import { PaymentMethodConfig, Order, Expense, ExpenseCategory, ExpenseStatus } from '../../types';
 
+const formatKz = (val: number) => 
+  new Intl.NumberFormat('pt-AO', { 
+    style: 'currency', 
+    currency: 'AOA', 
+    maximumFractionDigits: 0 
+  }).format(val);
+
 const Finance = () => {
   const { activeOrders, settings, menu, customers, addNotification, paymentConfigs, addPaymentConfig, updatePaymentConfig, expenses, addExpense, updateExpense, removeExpense, approveExpense } = useStore();
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SALES' | 'AUDIT' | 'LEGAL' | 'CONFIG' | 'EXPENSES'>('OVERVIEW');
@@ -89,26 +96,37 @@ const Finance = () => {
     fetchTotalExpensesFromDB();
   }, [expenses.length]); // Atualizar quando mudar lista de despesas
 
-  const closedOrders = useMemo(() => activeOrders.filter(o => o.status === 'FECHADO'), [activeOrders]);
-  const today = new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }).split(',')[0];
+  const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
+  const today = new Date().toISOString().split('T')[0];
 
   const metrics = useMemo(() => {
-    const gross = closedOrders.reduce((acc, o) => acc + o.total, 0);
-    const tax = closedOrders.reduce((acc, o) => acc + o.taxTotal, 0);
-    const profit = closedOrders.reduce((acc, o) => acc + o.profit, 0);
-    const todayOrders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
-    const todayGross = todayOrders.reduce((acc, o) => acc + o.total, 0);
-    const todayProfit = todayOrders.reduce((acc, o) => acc + o.profit, 0);
+    const gross = closedOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+    const tax = closedOrders.reduce((acc, o) => acc + (o.taxTotal || 0), 0);
+    const profit = closedOrders.reduce((acc, o) => acc + (o.profit || 0), 0);
     
-    // Agrupar pagamentos por método
-    const payments = closedOrders.reduce((acc: any, o) => {
+    // VENDAS DE HOJE - mesmo filtro do Dashboard
+    const todayOrders = closedOrders.filter(o => String(o.timestamp || '').split('T')[0] === today);
+    const todayGross = todayOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+    const todayProfit = todayOrders.reduce((acc, o) => acc + (o.profit || 0), 0);
+    
+    // DESPESAS DE HOJE - mesmo filtro do Dashboard
+    const todayExpenses = expenses.filter(expense => 
+      String(expense.createdAt || '').split('T')[0] === today
+    );
+    const todayExpensesTotal = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+    
+    // LUCRO LÍQUIDO REAL DE HOJE
+    const todayNetProfit = todayGross - todayExpensesTotal;
+    
+    // Agrupar pagamentos por método - APENAS DE HOJE
+    const payments = todayOrders.reduce((acc: any, o) => {
       const methodId = o.paymentMethod || 'OUTRO';
-      acc[methodId] = (acc[methodId] || 0) + o.total;
+      acc[methodId] = (acc[methodId] || 0) + (o.total || 0);
       return acc;
     }, {});
 
-    return { gross, tax, profit, todayGross, todayProfit, payments };
-  }, [closedOrders, today]);
+    return { gross, tax, profit, todayGross, todayProfit, todayNetProfit, todayExpensesTotal, payments };
+  }, [closedOrders, today, expenses]);
 
   const handleExportSAFT = async () => {
     setSaftLoading(true);
@@ -350,7 +368,7 @@ const Finance = () => {
                    <div className="absolute top-0 right-0 p-8 text-primary opacity-10 group-hover:scale-110 transition-transform"><TrendingUp size={80}/></div>
                    <div>
                         <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-3">Lucro Líquido Real (Hoje)</p>
-                        <h3 className="text-5xl font-mono font-bold text-white text-glow mb-4">{formatKz(metrics.todayProfit)}</h3>
+                        <h3 className="text-5xl font-mono font-bold text-white text-glow mb-4">{formatKz(metrics.todayNetProfit)}</h3>
                         <div className="flex items-center gap-6 mt-6">
                             <div className="flex flex-col">
                                 <span className="text-[8px] font-black text-slate-500 uppercase">Faturação Bruta</span>
@@ -358,10 +376,13 @@ const Finance = () => {
                             </div>
                             <div className="w-px h-8 bg-white/10"></div>
                             <div className="flex flex-col">
-                                <span className="text-[8px] font-black text-slate-500 uppercase">Margem Diária</span>
-                                <span className="text-lg font-mono font-bold text-emerald-500">
-                                    {metrics.todayGross > 0 ? ((metrics.todayProfit / metrics.todayGross) * 100).toFixed(1) : '0'}%
-                                </span>
+                                <span className="text-[8px] font-black text-slate-500 uppercase">Despesas Hoje</span>
+                                <span className="text-lg font-mono font-bold text-red-500">{formatKz(metrics.todayExpensesTotal)}</span>
+                            </div>
+                            <div className="w-px h-8 bg-white/10"></div>
+                            <div className="flex flex-col">
+                                <span className="text-[8px] font-black text-slate-500 uppercase">Lucro Líquido</span>
+                                <span className="text-lg font-mono font-bold text-emerald-500">{formatKz(metrics.todayNetProfit)}</span>
                             </div>
                         </div>
                    </div>
@@ -404,17 +425,27 @@ const Finance = () => {
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                   {closedOrders.slice(-20).map(o => (
-                     <tr key={o.id} className="hover:bg-white/5 transition-colors">
-                        <td className="px-8 py-6 font-bold text-white text-xs">{o.invoiceNumber}</td>
-                        <td className="px-8 py-6 text-xs text-slate-500 font-mono">{new Date(o.timestamp).toLocaleString()}</td>
-                        <td className="px-8 py-6 font-mono font-bold text-white">{formatKz(o.total)}</td>
-                        <td className="px-8 py-6 font-mono text-orange-500">{formatKz(o.taxTotal)}</td>
-                        <td className="px-8 py-6 text-right">
-                           <button onClick={() => printThermalInvoice(o, menu, settings, customers.find(c => c.id === o.customerId))} className="p-3 bg-white/5 text-slate-400 hover:text-primary rounded-xl transition-all"><Printer size={18}/></button>
+                   {metrics.payments && Object.entries(metrics.payments).length > 0 ? (
+                      Object.entries(metrics.payments).map(([paymentMethod, total]: any, index) => (
+                        <tr key={index} className="hover:bg-white/5 transition-colors">
+                           <td className="px-8 py-6 font-bold text-white text-xs">{paymentMethod}</td>
+                           <td className="px-8 py-6 text-xs text-slate-500 font-mono">{new Date().toLocaleDateString('pt-AO')}</td>
+                           <td className="px-8 py-6 font-mono font-bold text-white">{formatKz(total)}</td>
+                           <td className="px-8 py-6 font-mono text-orange-500">{formatKz(total * 0.065)}</td>
+                           <td className="px-8 py-6 text-right">
+                              <button className="p-3 bg-white/5 text-slate-400 hover:text-primary rounded-xl transition-all">
+                                 <Printer size={18}/>
+                              </button>
+                           </td>
+                        </tr>
+                      ))
+                   ) : (
+                      <tr>
+                        <td colSpan={5} className="px-8 py-12 text-center text-slate-500">
+                           Nenhuma venda registrada hoje
                         </td>
-                     </tr>
-                   ))}
+                      </tr>
+                   )}
                 </tbody>
              </table>
           </div>
