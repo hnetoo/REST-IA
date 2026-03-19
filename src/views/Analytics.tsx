@@ -146,34 +146,64 @@ const Analytics = () => {
   //   ...
   // ];
 
-  // Dados para gráfico de pizza das despesas
+  // Dados para gráfico de pizza das despesas - FORÇAR CATEGORIAS CORRETAS
   const expensePieData = useMemo(() => {
     const grouped: Record<string, number> = {};
     
     expenses.forEach(expense => {
-      // FORÇAR LEITURA DO CAMPO CATEGORY - DEBUG COMPLETO
-      console.log('[ANALYTICS] Despesa bruta:', expense);
+      // DEBUG COMPLETO - MOSTRAR OBJETO INTEIRO
+      console.log('[ANALYTICS] === DESPESA BRUTA ===');
+      console.log('[ANALYTICS] Objeto completo:', expense);
       console.log('[ANALYTICS] Campo category:', expense.category);
       console.log('[ANALYTICS] Campo description:', expense.description);
+      console.log('[ANALYTICS] Campo amount_kz:', expense.amount_kz);
       
-      // MAPEAR CATEGORIAS com fallback completo e FORÇAR valor
-      let categoryName = expense.category;
+      // FORÇAR CATEGORIA COM MAPEAMENTO DIRETO
+      let categoryName = 'OUTROS'; // PADRÃO
       
-      if (!categoryName || categoryName === 'undefined' || categoryName === '') {
-        categoryName = expense.description || 'Geral';
+      // TENTAR VÁRIAS FONTES DE CATEGORIA
+      if (expense.category && expense.category !== 'undefined' && expense.category !== '') {
+        categoryName = String(expense.category);
+      } else if (expense.description && expense.description !== 'undefined' && expense.description !== '') {
+        categoryName = String(expense.description);
       }
       
-      // ÚLTIMO RESGUARDO - NUNCA deixar undefined
-      if (!categoryName || categoryName === 'undefined' || categoryName === '') {
-        categoryName = 'Outros';
+      // MAPEAMENTO DE CATEGORIAS CONHECIDAS
+      const categoryMap: Record<string, string> = {
+        'ALIMENTAÇÃO': 'Alimentação',
+        'TRANSPORTE': 'Transporte',
+        'ÁGUA': 'Água',
+        'LUZ': 'Luz',
+        'ALUGUEL': 'Aluguel',
+        'SALÁRIOS': 'Salários',
+        'MATERIAL': 'Material',
+        'MANUTENÇÃO': 'Manutenção',
+        'LIMPEZA': 'Limpeza',
+        'MARKETING': 'Marketing',
+        'SOFTWARE': 'Software',
+        'OUTROS': 'Outros'
+      };
+      
+      // APLICAR MAPEAMENTO
+      if (categoryMap[categoryName.toUpperCase()]) {
+        categoryName = categoryMap[categoryName.toUpperCase()];
       }
       
-      console.log('[ANALYTICS] Categoria final:', categoryName);
+      // ÚLTIMO RESGUARDO - NUNCA undefined
+      if (!categoryName || categoryName === 'undefined' || categoryName === '') {
+        categoryName = 'OUTROS';
+      }
+      
+      console.log('[ANALYTICS] CATEGORIA FINAL:', categoryName);
+      console.log('[ANALYTICS] VALOR:', expense.amount_kz || expense.amount || 0);
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
       }
-      grouped[categoryName] += Number(expense.amount || 0);
+      
+      // USAR amount_kz (coluna real) ou amount (fallback)
+      const valor = Number(expense.amount_kz || expense.amount || 0);
+      grouped[categoryName] += valor;
     });
 
     const total = Object.values(grouped).reduce((acc, val) => acc + val, 0);
@@ -184,9 +214,10 @@ const Analytics = () => {
       percentage: total > 0 ? (amount / total) * 100 : 0
     }));
     
-    // LOG PARA DEPURAÇÃO
-    console.log('[ANALYTICS] Dados do Gráfico de Despesas:', chartData);
-    console.log('[ANALYTICS] Expenses brutos:', expenses);
+    // LOG FINAL PARA VERIFICAÇÃO
+    console.log('[ANALYTICS] === DADOS FINAIS DO GRÁFICO ===');
+    console.log('[ANALYTICS] Dados formatados:', chartData);
+    console.log('[ANALYTICS] Total calculado:', total);
     
     return chartData;
   }, [expenses]);

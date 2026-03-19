@@ -532,72 +532,59 @@ export const useStore = create<StoreState>()(
           };
         });
 
-        // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
+        // PERSISTÊNCIA IMEDIATA NO SUPABASE - FORÇAR GRAVAÇÃO
         const finalOrder = get().activeOrders.find(o => o.id === orderId);
         if (finalOrder && finalOrder.status === 'FECHADO') {
-          // CAPTURAR OPERADOR ANTES DE PERSISTIR - DEBUG COMPLETO
+          // FORÇAR OPERADOR - NÃO PODE SER NULL
           const currentUser = get().currentUser;
-          const sellerName = currentUser?.name || currentUser?.email || 'Operador';
+          const sellerName = currentUser?.name || 'OPERADOR_PADRAO';
           
-          // DEBUG: Mostrar objeto completo que vai para o Supabase
-          console.log('[POS] === OBJETO COMPLETO DA VENDA PARA PERSISTIR ===');
-          console.log('[POS] Final Order:', finalOrder);
-          console.log('[POS] Current User:', currentUser);
-          console.log('[POS] Seller Name:', sellerName);
-          console.log('[POS] Objeto que será inserido no Supabase:', {
-            id: finalOrder.id,
-            customer_name: finalOrder.subAccountName || 'Cliente',
-            seller_name: sellerName,
-            customer_phone: '',
-            delivery_address: '',
-            total_amount: finalOrder.total,
-            status: 'closed',
-            payment_method: finalOrder.paymentMethod || 'NUMERARIO',
-            invoice_number: finalOrder.invoiceNumber || null,
-            created_at: new Date().toISOString(),
-            table_id: finalOrder.tableId ? String(finalOrder.tableId) : null,
-            closed_at: new Date().toISOString()
-          });
-
-          // USAR INSERT() EM VEZ DE UPSERT() - FORÇAR GRAVAÇÃO COM TRATAMENTO DE ERRO
-          let insertError = null;
+          // FORÇAR MÉTODO DE PAGAMENTO - NÃO PODE SER OUTRO
+          let paymentMethod = finalOrder.paymentMethod || 'NUMERARIO';
+          if (paymentMethod === 'OUTRO' || !paymentMethod) {
+            paymentMethod = 'NUMERARIO';
+          }
+          
+          // FORÇAR NOME DO CLIENTE - NÃO PODE SER NULL
+          const customerName = finalOrder.subAccountName || 'CLIENTE_PADRAO';
+          
+          // DEBUG COMPLETO
+          console.log('=== VENDA PARA GRAVAR ===');
+          console.log('ID:', finalOrder.id);
+          console.log('OPERADOR:', sellerName);
+          console.log('CLIENTE:', customerName);
+          console.log('MÉTODO PAGAMENTO:', paymentMethod);
+          console.log('TOTAL:', finalOrder.total);
+          
+          // FORÇAR INSERT DIRETO
           try {
-            const { error } = await supabase
+            const { data, error } = await supabase
               .from('orders')
               .insert({
                 id: finalOrder.id,
-                customer_name: finalOrder.subAccountName || 'Cliente',
-                seller_name: sellerName, // NOME DO OPERADOR
-                customer_phone: '',
-                delivery_address: '',
+                customer_name: customerName,
+                seller_name: sellerName,
+                customer_phone: '999999999',
+                delivery_address: 'ENDEREÇO_PADRAO',
                 total_amount: finalOrder.total,
                 status: 'closed',
-                payment_method: finalOrder.paymentMethod || 'NUMERARIO',
-                invoice_number: finalOrder.invoiceNumber || null,
+                payment_method: paymentMethod,
                 created_at: new Date().toISOString(),
-                table_id: finalOrder.tableId ? String(finalOrder.tableId) : null,
                 closed_at: new Date().toISOString()
-              });
-
-            insertError = error;
-          } catch (catchError) {
-            console.error('[POS] ❌ ERRO DE EXCEÇÃO AO TENTAR PERSISTIR:', catchError);
-            insertError = catchError;
+              })
+              .select();
+              
+            if (error) {
+              console.error('❌ ERRO NA GRAVAÇÃO:', error);
+              get().addNotification('error', `FALHA AO GRAVAR VENDA: ${error.message}`);
+            } else {
+              console.log('✅ VENDA GRAVADA:', data);
+              get().addNotification('success', 'Venda gravada no banco!');
+            }
+          } catch (error) {
+            console.error('❌ FALHA CRÍTICA:', error);
+            get().addNotification('error', `FALHA CRÍTICA: ${error.message}`);
           }
-
-          if (insertError) {
-            console.error('[POS] ❌ ERRO CRÍTICO AO PERSISTIR VENDA:', insertError);
-            console.error('[POS] Detalhes completos do erro:', {
-              code: insertError.code,
-              message: insertError.message,
-              details: insertError.details,
-              hint: insertError.hint
-            });
-            console.error('[POS] Verifique se a tabela orders existe e se as colunas estão corretas');
-            get().addNotification('error', `Falha crítica ao gravar venda: ${insertError.message}`);
-            return { success: false, error: insertError };
-          } else {
-            console.log('[POS] ✅ Venda persistida com sucesso no Supabase - ID:', finalOrder.id);
             
             // PERSISTIR ITENS DO PEDIDO NA TABELA order_items - GARANTIR EXECUÇÃO IMEDIATA
             console.log('[POS] Persistindo itens do pedido:', finalOrder.items);
