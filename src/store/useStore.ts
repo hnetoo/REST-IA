@@ -535,26 +535,31 @@ export const useStore = create<StoreState>()(
         // PERSISTÊNCIA IMEDIATA NO SUPABASE - NOVO E CRÍTICO
         const finalOrder = get().activeOrders.find(o => o.id === orderId);
         if (finalOrder && finalOrder.status === 'FECHADO') {
+          const currentUser = get().currentUser;
+          const sellerName = currentUser?.name || currentUser?.email || 'Operador';
+          
           console.log('[POS] Persistindo venda no Supabase:', {
             id: finalOrder.id,
             customer_name: finalOrder.subAccountName || 'Cliente',
+            seller_name: sellerName,
             customer_phone: '',
             delivery_address: '',
             total_amount: finalOrder.total,
-            status: 'FECHADO',
+            status: 'closed',
             payment_method: finalOrder.paymentMethod || 'NUMERARIO'
           });
 
-          // Inserir diretamente na tabela orders - APENAS COLUNAS EXISTENTES
+          // USAR INSERT() EM VEZ DE UPSERT() - FORÇAR GRAVAÇÃO
           const { error } = await supabase
             .from('orders')
-            .upsert({
+            .insert({
               id: finalOrder.id,
               customer_name: finalOrder.subAccountName || 'Cliente',
+              seller_name: sellerName, // NOME DO OPERADOR
               customer_phone: '',
               delivery_address: '',
               total_amount: finalOrder.total,
-              status: 'closed', // MUDAR DE 'FECHADO' PARA 'closed' PARA CONSISTÊNCIA
+              status: 'closed',
               payment_method: finalOrder.paymentMethod || 'NUMERARIO',
               invoice_number: finalOrder.invoiceNumber || null,
               created_at: new Date().toISOString(),
@@ -563,10 +568,17 @@ export const useStore = create<StoreState>()(
             });
 
           if (error) {
-            console.error('[POS] Erro ao persistir venda no Supabase:', error);
+            console.error('[POS] ❌ ERRO CRÍTICO AO PERSISTIR VENDA:', error);
+            console.error('[POS] Detalhes do erro:', {
+              code: error.code,
+              message: error.message,
+              details: error.details,
+              hint: error.hint
+            });
+            get().addNotification('error', `Falha ao gravar venda: ${error.message}`);
             return { success: false, error };
           } else {
-            console.log('[POS] Venda persistida com sucesso no Supabase');
+            console.log('[POS] ✅ Venda persistida com sucesso no Supabase');
             
             // PERSISTIR ITENS DO PEDIDO NA TABELA order_items - GARANTIR EXECUÇÃO IMEDIATA
             console.log('[POS] Persistindo itens do pedido:', finalOrder.items);

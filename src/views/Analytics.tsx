@@ -151,8 +151,24 @@ const Analytics = () => {
     const grouped: Record<string, number> = {};
     
     expenses.forEach(expense => {
-      // MAPEAR CATEGORIAS com fallback completo
-      const categoryName = expense.category || expense.description || 'Outros';
+      // FORÇAR LEITURA DO CAMPO CATEGORY - DEBUG COMPLETO
+      console.log('[ANALYTICS] Despesa bruta:', expense);
+      console.log('[ANALYTICS] Campo category:', expense.category);
+      console.log('[ANALYTICS] Campo description:', expense.description);
+      
+      // MAPEAR CATEGORIAS com fallback completo e FORÇAR valor
+      let categoryName = expense.category;
+      
+      if (!categoryName || categoryName === 'undefined' || categoryName === '') {
+        categoryName = expense.description || 'Geral';
+      }
+      
+      // ÚLTIMO RESGUARDO - NUNCA deixar undefined
+      if (!categoryName || categoryName === 'undefined' || categoryName === '') {
+        categoryName = 'Outros';
+      }
+      
+      console.log('[ANALYTICS] Categoria final:', categoryName);
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;

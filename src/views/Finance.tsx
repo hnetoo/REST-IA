@@ -98,6 +98,18 @@ const Finance = () => {
 
   // SUBSCRIÇÃO EM TEMPO REAL DO SUPABASE - ATUALIZAÇÃO AUTOMÁTICA
   useEffect(() => {
+    // SUBSCRIÇÃO DE AUTENTICAÇÃO - DETECTAR MUDANÇAS DE SESSÃO
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[FINANCE] Auth state changed:', event, session);
+      
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Recarregar dados quando usuário fizer login ou refresh
+        console.log('[FINANCE] Usuário autenticado, recarregando dados...');
+        fetchTotalExpensesFromDB();
+      }
+    });
+
+    // SUBSCRIÇÃO DE MUDANÇAS NA TABELA ORDERS
     const channel = supabase
       .channel('finance-updates')
       .on(
@@ -113,7 +125,8 @@ const Finance = () => {
           // ATUALIZAR DADOS AUTOMATICAMENTE
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             // Forçar re-renderização com dados atualizados
-            window.location.reload(); // Solução rápida para garantir atualização
+            console.log('[FINANCE] Nova venda detectada, atualizando interface...');
+            fetchTotalExpensesFromDB();
           }
         }
       )
@@ -121,6 +134,7 @@ const Finance = () => {
 
     return () => {
       supabase.removeChannel(channel);
+      subscription?.unsubscribe();
     };
   }, []);
 
@@ -149,6 +163,9 @@ const Finance = () => {
     // Agrupar pagamentos por método - APENAS DE HOJE com mapeamento correto
     const payments = todayOrders.reduce((acc: any, o) => {
       let methodId = o.paymentMethod || 'OUTRO';
+      
+      // DEBUG: Mostrar método original e mapeado
+      console.log('[FINANCE] Método Original:', o.paymentMethod, '→ Método Mapeado:', methodId);
       
       // MAPEAR MÉTODOS DE PAGAMENTO CORRETAMENTE
       switch (methodId.toLowerCase()) {
@@ -183,6 +200,7 @@ const Finance = () => {
           methodId = 'OUTRO';
       }
       
+      console.log('[FINANCE] Método Final:', methodId, 'Valor:', o.total);
       acc[methodId] = (acc[methodId] || 0) + (o.total || 0);
       return acc;
     }, {});
