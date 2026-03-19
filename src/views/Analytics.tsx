@@ -159,8 +159,8 @@ const Analytics = () => {
       console.log('[ANALYTICS] Campo amount:', expense.amount);
       console.log('[ANALYTICS] Campo amount_kz:', expense.amount_kz);
       
-      // USAR CATEGORIA REAL - CONFORME SCHEMA DAS FOTOS
-      let categoryName = String(expense.categories || expense.category || 'OUTROS');
+      // USAR CATEGORIA REAL - CONFORME TIPO Expense
+      let categoryName = String(expense.category || 'OUTROS');
       
       // ÚLTIMO RESGUARDO - NUNCA undefined
       if (!categoryName || categoryName === 'undefined' || categoryName === '') {
@@ -168,14 +168,14 @@ const Analytics = () => {
       }
       
       console.log('[ANALYTICS] CATEGORIA FINAL:', categoryName);
-      console.log('[ANALYTICS] VALOR:', expense.amount_kz || 0);
+      console.log('[ANALYTICS] VALOR:', expense.amount || 0);
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
       }
       
-      // USAR amount_kz (coluna real confirmada)
-      const valor = Number(expense.amount_kz || 0);
+      // USAR amount (campo real do log)
+      const valor = Number(expense.amount || 0);
       grouped[categoryName] += valor;
     });
 
