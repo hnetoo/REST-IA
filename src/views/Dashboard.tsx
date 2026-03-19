@@ -537,34 +537,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-             <TrendingUp size={64} />
-          </div>
-          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Rendimento Global
-          </div>
-          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKzWithSeparators(rendimentoGlobalDinamico)}</p>
-          <div className="mt-2 text-[10px] text-emerald-500 font-bold">
-             Histórico + Vendas Atuais
-          </div>
-        </div>
-
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-             <TrendingUp size={64} />
-          </div>
-          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Despesas Acumuladas
-          </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
-          <div className="mt-2 text-[10px] text-orange-500 font-bold">
-             Mês Atual
-          </div>
-        </div>
-      </div>
-
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <div className="glass-panel p-6 rounded-2xl border border-white/5">
