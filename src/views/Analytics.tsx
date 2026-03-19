@@ -159,8 +159,8 @@ const Analytics = () => {
       console.log('[ANALYTICS] Campo amount:', expense.amount);
       console.log('[ANALYTICS] Campo amount_kz:', expense.amount_kz);
       
-      // USAR CATEGORIA REAL - SEM MAPEAMENTO FORÇADO
-      let categoryName = String(expense.category || 'OUTROS');
+      // USAR CATEGORIA REAL - CONFORME SCHEMA DAS FOTOS
+      let categoryName = String(expense.categories || expense.category || 'OUTROS');
       
       // ÚLTIMO RESGUARDO - NUNCA undefined
       if (!categoryName || categoryName === 'undefined' || categoryName === '') {
