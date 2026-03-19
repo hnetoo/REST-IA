@@ -41,8 +41,7 @@ const Dashboard = () => {
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
   
   // CARREGAR MÉTRICAS
-  useEffect(() => {
-    const fetchMetrics = async () => {
+  const fetchMetrics = async () => {
       try {
         // VERIFICAÇÃO DE RLS - VALIDAR SESSÃO ANTES DE BUSCAR DADOS
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -161,34 +160,50 @@ const Dashboard = () => {
       }
     };
     
-    fetchMetrics();
-  }, [closedOrders, expenses, loadExpenses, employees, loadEmployees]);
+    // Chamar fetchMetrics no useEffect
+    useEffect(() => {
+      fetchMetrics();
+    }, [closedOrders, expenses, loadExpenses, employees, loadEmployees]);
   
   // ATUALIZAÇÃO EM TEMPO REAL - SUPABASE CHANNEL
   useEffect(() => {
     // Canal para ouvir mudanças nas ordens
-    const channel = supabase
-      .channel('dashboard-orders-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'orders'
-        },
-        (payload) => {
-          console.log('[DASHBOARD PRINCIPAL] Mudança detectada em orders:', payload);
-          // Disparar RPC fetch_vendas_hoje novamente para atualizar sem refresh
-          fetchMetrics();
-        }
-      )
+    const ordersChannel = supabase.channel('orders_changes');
+    
+    ordersChannel
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'orders' 
+      }, (payload) => {
+        console.log('[DASHBOARD] Mudança nas ordens detectada:', payload);
+        // Forçar atualização das métricas
+        fetchMetrics();
+      })
       .subscribe();
 
-    // Cleanup ao desmontar
+    // Canal para ouvir mudanças no external_history (Rendimento Global)
+    const historyChannel = supabase.channel('external_history_changes');
+    
+    historyChannel
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'external_history' 
+      }, (payload) => {
+        console.log('[DASHBOARD] Mudança no histórico detectada:', payload);
+        console.log('[DASHBOARD] Atualizando Rendimento Global...');
+        // Forçar atualização imediata das métricas
+        fetchMetrics();
+      })
+      .subscribe();
+
+    // Limpeza dos canais
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(historyChannel);
     };
-  }, []); // Executar apenas uma vez
+  }, [fetchMetrics]); // Executar apenas uma vez
   
   // USAR DADOS DO STORE GLOBAL (Owner Dashboard) para consistência
   const todayMetrics = useMemo(() => {
