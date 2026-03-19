@@ -36,6 +36,34 @@ const Dashboard = () => {
     console.log('[DASHBOARD PRINCIPAL] Limpeza de cache local concluída:', keysToRemove.length, 'itens removidos');
   }, []); // Executar apenas na montagem
 
+  // SUBSCRIÇÃO EM TEMPO REAL DO SUPABASE - ATUALIZAÇÃO AUTOMÁTICA DO DASHBOARD
+  useEffect(() => {
+    const channel = supabase
+      .channel('dashboard-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          console.log('[DASHBOARD] Mudança em tempo real detectada:', payload);
+          
+          // ATUALIZAR DADOS AUTOMATICAMENTE
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Forçar re-renderização com dados atualizados
+            window.location.reload(); // Solução rápida para garantir atualização
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // PROIBIÇÃO: Removida função getDateRangeToday - Base de dados é autoridade
 
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);

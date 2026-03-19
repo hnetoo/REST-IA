@@ -96,6 +96,34 @@ const Finance = () => {
     fetchTotalExpensesFromDB();
   }, [expenses.length]); // Atualizar quando mudar lista de despesas
 
+  // SUBSCRIÇÃO EM TEMPO REAL DO SUPABASE - ATUALIZAÇÃO AUTOMÁTICA
+  useEffect(() => {
+    const channel = supabase
+      .channel('finance-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          console.log('[FINANCE] Mudança em tempo real detectada:', payload);
+          
+          // ATUALIZAR DADOS AUTOMATICAMENTE
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Forçar re-renderização com dados atualizados
+            window.location.reload(); // Solução rápida para garantir atualização
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
   const today = new Date().toISOString().split('T')[0];
 
