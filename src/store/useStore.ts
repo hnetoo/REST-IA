@@ -648,7 +648,6 @@ export const useStore = create<StoreState>()(
               console.warn('[POS] Pedido sem itens para persistir:', finalOrder);
               return { success: true, data: null };
             }
-          }
         }
         return { success: true, data: null };
       },
