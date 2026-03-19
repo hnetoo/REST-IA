@@ -252,11 +252,12 @@ const Dashboard = () => {
           console.error('[DASHBOARD PRINCIPAL] ❌ Erro crítico ao buscar soma direta orders:', ordersDirectError);
         }
 
-        // RENDIMENTO GLOBAL: Histórico + Faturação de Hoje
-        const rendimentoGlobal = totalHistorico + (totalSales || 0);
+        // RENDIMENTO GLOBAL: APENAS SOMA TOTAL DA TABELA ORDERS (SEM FILTROS)
+        const rendimentoGlobal = totalHistorico;
         
-        // PROVA DE CÁLCULO - SOMA REALTIME
-        console.log(`[SOMA REALTIME] Histórico: ${totalHistorico} + Vendas Hoje: ${totalSales} = Total: ${rendimentoGlobal}`);
+        // PROVA DE CÁLCULO - SOMA TOTAL ORDERS
+        console.log(`[RENDIMENTO GLOBAL] Soma TOTAL orders: ${totalHistorico}`);
+        console.log('[DASHBOARD PRINCIPAL] Rendimento Global (TOTAL ORDERS):', rendimentoGlobal);
         
         // DEBUG FINANCEIRO - INJETAR LOGS ANTES DE RENDERIZAR
         console.log("🔍 DEBUG FINANCEIRO -> Histórico Bruto do DB:", totalHistorico);
