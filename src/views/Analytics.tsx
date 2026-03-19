@@ -156,7 +156,7 @@ const Analytics = () => {
       console.log('[ANALYTICS] Objeto completo:', expense);
       console.log('[ANALYTICS] Campo category:', expense.category);
       console.log('[ANALYTICS] Campo description:', expense.description);
-      console.log('[ANALYTICS] Campo amount_kz:', expense.amount_kz);
+      console.log('[ANALYTICS] Campo amount:', expense.amount);
       
       // FORÇAR CATEGORIA COM MAPEAMENTO DIRETO
       let categoryName = 'OUTROS'; // PADRÃO
@@ -195,14 +195,14 @@ const Analytics = () => {
       }
       
       console.log('[ANALYTICS] CATEGORIA FINAL:', categoryName);
-      console.log('[ANALYTICS] VALOR:', expense.amount_kz || expense.amount || 0);
+      console.log('[ANALYTICS] VALOR:', expense.amount || 0);
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
       }
       
-      // USAR amount_kz (coluna real) ou amount (fallback)
-      const valor = Number(expense.amount_kz || expense.amount || 0);
+      // USAR amount (coluna real)
+      const valor = Number(expense.amount || 0);
       grouped[categoryName] += valor;
     });
 

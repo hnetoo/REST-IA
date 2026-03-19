@@ -164,11 +164,16 @@ const Finance = () => {
     const payments = todayOrders.reduce((acc: any, o) => {
       let methodId = o.paymentMethod || 'OUTRO';
       
+      // GARANTIR QUE methodId NUNCA SEJA NULL
+      if (!methodId || methodId === 'null' || methodId === null) {
+        methodId = 'OUTRO';
+      }
+      
       // DEBUG: Mostrar método original e mapeado
       console.log('[FINANCE] Método Original:', o.paymentMethod, '→ Método Mapeado:', methodId);
       
       // MAPEAR MÉTODOS DE PAGAMENTO CORRETAMENTE
-      switch (methodId.toLowerCase()) {
+      switch (String(methodId).toLowerCase()) {
         case 'cash':
         case 'numerário':
         case 'numerario':

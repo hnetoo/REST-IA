@@ -558,6 +558,7 @@ export const useStore = create<StoreState>()(
           
           // FORÇAR INSERT DIRETO
           try {
+            const currentUser = get().currentUser;
             const { data, error } = await supabase
               .from('orders')
               .insert({
@@ -569,6 +570,7 @@ export const useStore = create<StoreState>()(
                 total_amount: finalOrder.total,
                 status: 'closed',
                 payment_method: paymentMethod,
+                user_id: currentUser?.id || null,
                 created_at: new Date().toISOString(),
                 closed_at: new Date().toISOString()
               })
