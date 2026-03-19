@@ -156,44 +156,11 @@ const Analytics = () => {
       console.log('[ANALYTICS] Objeto completo:', expense);
       console.log('[ANALYTICS] Campo category:', expense.category);
       console.log('[ANALYTICS] Campo description:', expense.description);
+      console.log('[ANALYTICS] Campo amount:', expense.amount);
       console.log('[ANALYTICS] Campo amount_kz:', expense.amount_kz);
       
-      // FORÇAR CATEGORIA COM MAPEAMENTO DIRETO
-      let categoryName = 'OUTROS'; // PADRÃO
-      
-      // TENTAR VÁRIAS FONTES DE CATEGORIA
-      if (expense.category && expense.category !== 'undefined' && expense.category !== '') {
-        categoryName = String(expense.category);
-      } else if (expense.description && expense.description !== 'undefined' && expense.description !== '') {
-        categoryName = String(expense.description);
-      }
-      
-      // MAPEAMENTO DE CATEGORIAS CONHECIDAS
-      const categoryMap: Record<string, string> = {
-        'ALIMENTAÇÃO': 'Alimentação',
-        'ALIMENTAÇAO': 'Alimentação',
-        'TRANSPORTE': 'Transporte',
-        'ÁGUA': 'Água',
-        'LUZ': 'Luz',
-        'ALUGUEL': 'Aluguel',
-        'SALÁRIOS': 'Salários',
-        'MATERIAL': 'Material',
-        'MANUTENÇÃO': 'Manutenção',
-        'LIMPEZA': 'Limpeza',
-        'MARKETING': 'Marketing',
-        'SOFTWARE': 'Software',
-        'INTERNET': 'Internet',
-        'REABASTECIMENTO': 'Reabastecimento',
-        'REPOSIÇÃO': 'Reposição',
-        'REPOSIÇAO': 'Reposição',
-        'PAGAMENTOS': 'Pagamentos',
-        'OUTROS': 'Outros'
-      };
-      
-      // APLICAR MAPEAMENTO
-      if (categoryMap[categoryName.toUpperCase()]) {
-        categoryName = categoryMap[categoryName.toUpperCase()];
-      }
+      // USAR CATEGORIA REAL - SEM MAPEAMENTO FORÇADO
+      let categoryName = String(expense.category || 'OUTROS');
       
       // ÚLTIMO RESGUARDO - NUNCA undefined
       if (!categoryName || categoryName === 'undefined' || categoryName === '') {
@@ -201,14 +168,14 @@ const Analytics = () => {
       }
       
       console.log('[ANALYTICS] CATEGORIA FINAL:', categoryName);
-      console.log('[ANALYTICS] VALOR:', expense.amount_kz || 0);
+      console.log('[ANALYTICS] VALOR:', expense.amount || 0);
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
       }
       
-      // USAR amount_kz (coluna real)
-      const valor = Number(expense.amount_kz || 0);
+      // USAR amount (coluna real)
+      const valor = Number(expense.amount || 0);
       grouped[categoryName] += valor;
     });
 
