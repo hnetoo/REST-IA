@@ -39,6 +39,19 @@ const Dashboard = () => {
   // PROIBIÇÃO: Removida função getDateRangeToday - Base de dados é autoridade
 
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
+
+  // CÁLCULO DINÂMICO DO RENDIMENTO GLOBAL - PASSADO + PRESENTE
+  const rendimentoGlobalDinamico = useMemo(() => {
+    const valorHistorico = metrics?.rendimentoGlobal || 0;
+    const valorVendasHoje = activeOrders
+      .filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status))
+      .reduce((acc, order) => acc + (order.total || 0), 0);
+    
+    const total = valorHistorico + valorVendasHoje;
+    console.log(`[SOMA DINÂMICA] Histórico: ${valorHistorico} + Vendas Hoje: ${valorVendasHoje} = Total: ${total}`);
+    
+    return total;
+  }, [metrics?.rendimentoGlobal, activeOrders]); // Dependências: mudanças no histórico ou nas vendas
   
   // CARREGAR MÉTRICAS
   const fetchMetrics = async () => {
@@ -446,7 +459,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
             Rendimento Global
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKzWithSeparators(metrics?.rendimentoGlobal || 0)}</p>
+          <p className="text-2xl font-mono font-bold text-white">{formatKzWithSeparators(rendimentoGlobalDinamico)}</p>
           <div className="mt-2 text-[10px] text-emerald-500 font-bold">
              Histórico + Vendas Atuais
           </div>
