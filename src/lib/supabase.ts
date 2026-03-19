@@ -15,7 +15,9 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      storageKey: 'rest-ia-auth',
+      storage: window.localStorage
     },
     realtime: {
       params: {
