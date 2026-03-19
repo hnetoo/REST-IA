@@ -44,21 +44,46 @@ const Dashboard = () => {
   const fetchMetrics = async () => {
       try {
         // VERIFICAÇÃO DE RLS - VALIDAR SESSÃO ANTES DE BUSCAR DADOS
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        let { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError || !session) {
           console.error('[DASHBOARD PRINCIPAL] Sessão inválida:', sessionError);
-          console.log('[DASHBOARD PRINCIPAL] Tentando verificar usuário no store...');
+          console.log('[DASHBOARD PRINCIPAL] Tentando restaurar sessão do store...');
           
-          // VERIFICAR USUÁRIO NO STORE
+          // RESTAURAR SESSÃO DO STORE
           const store = useStore.getState();
           console.log('[DASHBOARD PRINCIPAL] Store state:', { 
             hasCurrentUser: !!store.currentUser,
             currentUserKeys: store.currentUser ? Object.keys(store.currentUser) : []
           });
           
-          addNotification('error', 'Sessão expirada. Por favor, faça login novamente.');
-          return;
+          if (store.currentUser) {
+            console.log('[DASHBOARD PRINCIPAL] Usuário encontrado no store, tentando restaurar sessão...');
+            
+            // TENTAR RESTAURAR SESSÃO USANDO SUPABASE AUTH
+            try {
+              // Verificar se há sessão persistente no localStorage
+              const { data: { session: persistedSession }, error: persistError } = await supabase.auth.getSession();
+              
+              if (persistedSession && !persistError) {
+                console.log('[DASHBOARD PRINCIPAL] ✅ Sessão persistente encontrada, restaurando...');
+                // Continuar com a sessão persistente
+                session = persistedSession;
+              } else {
+                console.log('[DASHBOARD PRINCIPAL] ❌ Nenhuma sessão persistente encontrada');
+                addNotification('error', 'Sessão expirada. Por favor, faça login novamente.');
+                return;
+              }
+            } catch (restoreError) {
+              console.error('[DASHBOARD PRINCIPAL] Erro ao restaurar sessão:', restoreError);
+              addNotification('error', 'Sessão expirada. Por favor, faça login novamente.');
+              return;
+            }
+          } else {
+            console.error('[DASHBOARD PRINCIPAL] Nenhum usuário encontrado no store');
+            addNotification('error', 'Sessão expirada. Por favor, faça login novamente.');
+            return;
+          }
         }
         
         console.log('[DASHBOARD PRINCIPAL] Sessão válida:', session?.user?.email || 'email não disponível');
