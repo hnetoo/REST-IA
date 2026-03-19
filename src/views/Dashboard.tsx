@@ -450,7 +450,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
             Rendimento Global
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKzWithSeparators(metrics?.rendimentoGlobal || totalSales)}</p>
+          <p className="text-2xl font-mono font-bold text-white">{formatKzWithSeparators(metrics?.rendimentoGlobal || 0)}</p>
           <div className="mt-2 text-[10px] text-emerald-500 font-bold">
              Histórico + Vendas Atuais
           </div>
