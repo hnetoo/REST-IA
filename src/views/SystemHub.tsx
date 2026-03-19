@@ -1368,7 +1368,7 @@ const SystemHub = () => {
   };
 
   const FinancialHistory = () => {
-    const [records, setRecords] = useState([]);
+    const [records, setRecords] = useState<any[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
@@ -1377,12 +1377,17 @@ const SystemHub = () => {
       revenue: '',
       profit: ''
     });
+    const [editingRecord, setEditingRecord] = useState<any>(null);
 
     const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
       style: 'currency', 
       currency: 'AOA', 
       maximumFractionDigits: 2 
     }).format(val);
+
+    const addNotification = (type: string, message: string) => {
+      console.log(`[SystemHub] ${type}: ${message}`);
+    };
 
     // Carregar dados do Supabase - QUERY CORRETA
     useEffect(() => {
@@ -1427,21 +1432,51 @@ const SystemHub = () => {
       loadExternalHistory();
     }, []);
 
+    const handleEditRecord = (record: any) => {
+      setEditingRecord(record);
+      setFormData({
+        system: record.system,
+        period: record.period,
+        revenue: record.revenue.toString(),
+        profit: record.profit.toString()
+      });
+      setShowForm(true);
+    };
+
     const handleAddRecord = async (e: React.FormEvent) => {
       e.preventDefault();
       
       try {
-        // PERSISTÊNCIA ATÔMICA - Upsert na tabela external_history
-        const { data, error } = await supabase
-          .from('external_history')
-          .upsert({
-            source_name: formData.system,
-            period: formData.period || new Date().toISOString().split('T')[0],
-            total_revenue: parseFloat(formData.revenue),
-            gross_profit: parseFloat(formData.profit),
-            updated_at: new Date().toISOString()
-          })
-          .select();
+        let result;
+        
+        if (editingRecord) {
+          // UPDATE - Editar registro existente
+          result = await supabase
+            .from('external_history')
+            .update({
+              source_name: formData.system,
+              period: formData.period || new Date().toISOString().split('T')[0],
+              total_revenue: parseFloat(formData.revenue),
+              gross_profit: parseFloat(formData.profit),
+              updated_at: new Date().toISOString()
+            })
+            .eq('source_name', editingRecord.system)
+            .select();
+        } else {
+          // INSERT - Novo registro
+          result = await supabase
+            .from('external_history')
+            .upsert({
+              source_name: formData.system,
+              period: formData.period || new Date().toISOString().split('T')[0],
+              total_revenue: parseFloat(formData.revenue),
+              gross_profit: parseFloat(formData.profit),
+              updated_at: new Date().toISOString()
+            })
+            .select();
+        }
+
+        const { data, error } = result;
 
         if (error) {
           console.error('[SystemHub] Erro ao gravar no external_history:', error);
@@ -1450,10 +1485,11 @@ const SystemHub = () => {
         }
 
         console.log('[SystemHub] Registro gravado com sucesso:', data);
-        addNotification('success', 'Registro histórico gravado com sucesso!');
+        addNotification('success', `Registro ${editingRecord ? 'atualizado' : 'gravado'} com sucesso!`);
         
         // Limpar formulário apenas após confirmação da DB
         setFormData({ system: '', period: '', revenue: '', profit: '' });
+        setEditingRecord(null);
         setShowForm(false);
         
         // Forçar revalidação de dados
@@ -1518,7 +1554,9 @@ const SystemHub = () => {
           {/* Formulário de Adição */}
           {showForm && (
             <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-              <h4 className="text-sm font-black text-white italic uppercase mb-6">Adicionar Registro Histórico</h4>
+              <h4 className="text-sm font-black text-white italic uppercase mb-6">
+                {editingRecord ? 'Editar Registro Histórico' : 'Adicionar Registro Histórico'}
+              </h4>
               <form onSubmit={handleAddRecord} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Sistema</label>
@@ -1694,7 +1732,16 @@ const SystemHub = () => {
 
             {/* Lista de Registros */}
             <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-              <h4 className="text-sm font-black text-white italic uppercase mb-6">Registros Históricos</h4>
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="text-sm font-black text-white italic uppercase">Registros Históricos</h4>
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="p-2 bg-primary text-black rounded-lg hover:brightness-110 transition-all"
+                  title="Adicionar Registro"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
               <div className="space-y-4">
                 {records.map((record) => (
                   <div key={record.id} className="group p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
@@ -1712,7 +1759,11 @@ const SystemHub = () => {
                         </div>
                       </div>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                        <button 
+                          onClick={() => handleEditRecord(record)}
+                          className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                          title="Editar Registro"
+                        >
                           <Edit2 size={16}/>
                         </button>
                         <button 
