@@ -168,14 +168,14 @@ const Analytics = () => {
       }
       
       console.log('[ANALYTICS] CATEGORIA FINAL:', categoryName);
-      console.log('[ANALYTICS] VALOR:', expense.amount || 0);
+      console.log('[ANALYTICS] VALOR:', expense.amount_kz || 0);
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
       }
       
-      // USAR amount (coluna real)
-      const valor = Number(expense.amount || 0);
+      // USAR amount_kz (coluna real confirmada)
+      const valor = Number(expense.amount_kz || 0);
       grouped[categoryName] += valor;
     });
 

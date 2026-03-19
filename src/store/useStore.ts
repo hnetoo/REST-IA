@@ -564,9 +564,9 @@ export const useStore = create<StoreState>()(
                 seller_name: sellerName,
                 customer_phone: '999999999',
                 delivery_address: 'ENDEREÇO_PADRAO',
-                amount: finalOrder.total,
+                total_amount: finalOrder.total,
                 status: 'closed',
-                paymentMethod: paymentMethod,
+                payment_method: paymentMethod,
                 user_id: currentUser?.id || null,
                 created_at: new Date().toISOString(),
                 closed_at: new Date().toISOString()
