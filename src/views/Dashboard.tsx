@@ -472,24 +472,11 @@ const Dashboard = () => {
              <ShoppingBag size={64} />
           </div>
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Pedidos Ativos
+            Despesas Hoje
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{activeOrderCount}</p>
-          <div className="mt-2 w-full bg-slate-700 h-1 rounded-full overflow-hidden">
-             <div className="bg-blue-500 h-full rounded-full" style={{width: `${Math.min(activeOrderCount * 10, 100)}%`}}></div>
-          </div>
-        </div>
-
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-             <Zap size={64} />
-          </div>
-          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Rendimento Global
-          </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKzWithSeparators(rendimentoGlobalDinamico)}</p>
-          <div className="mt-2 text-[10px] text-emerald-500 font-bold">
-             Histórico + Vendas Atuais
+          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
+          <div className="mt-2 text-[10px] text-orange-500 font-bold">
+             {expenses.length} Registros
           </div>
         </div>
 
@@ -498,13 +485,54 @@ const Dashboard = () => {
              <Users size={64} />
           </div>
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Ocupação
+            Custos Staff
           </div>
-          <p className="text-2xl font-mono font-bold text-white">65%</p>
-          <div className="mt-2 flex gap-1">
-             {[1,2,3,4,5,6,7,8].map(i => (
-                 <div key={i} className={`h-1.5 w-full rounded-sm ${i <= 5 ? 'bg-purple-500' : 'bg-slate-700'}`}></div>
-             ))}
+          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.folhaSalarial || 0)}</p>
+          <div className="mt-2 text-[10px] text-blue-500 font-bold">
+             {employees.length} Funcionários
+          </div>
+        </div>
+
+        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+             <Target size={64} />
+          </div>
+          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+            Lucro Operacional
+          </div>
+          <p className="text-2xl font-mono font-bold text-white text-glow">
+            {formatKz((todayMetrics.revenue || 0) - (metrics?.despesas || 0) - (metrics?.folhaSalarial || 0))}
+          </p>
+          <div className="mt-2 text-[10px] text-emerald-500 font-bold">
+             Vendas - (Despesas + Staff)
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+             <History size={64} />
+          </div>
+          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+            Saldo de Transição
+          </div>
+          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz(0)}</p>
+          <div className="mt-2 text-[10px] text-yellow-500 font-bold">
+             Em Implementação
+          </div>
+        </div>
+
+        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+             <TrendingUp size={64} />
+          </div>
+          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+            Despesas Acumuladas
+          </div>
+          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
+          <div className="mt-2 text-[10px] text-orange-500 font-bold">
+             Mês Atual
           </div>
         </div>
       </div>
