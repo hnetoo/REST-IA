@@ -180,6 +180,9 @@ const Dashboard = () => {
         // RENDIMENTO GLOBAL: Histórico + Faturação de Hoje
         const rendimentoGlobal = totalHistorico + (totalSales || 0);
         
+        // PROVA DE CÁLCULO - SOMA REALTIME
+        console.log(`[SOMA REALTIME] Histórico: ${totalHistorico} + Vendas Hoje: ${totalSales} = Total: ${rendimentoGlobal}`);
+        
         // DEBUG FINANCEIRO - INJETAR LOGS ANTES DE RENDERIZAR
         console.log("🔍 DEBUG FINANCEIRO -> Histórico Bruto do DB:", totalHistorico);
         console.log("🔍 DEBUG FINANCEIRO -> Vendas Hoje POS:", totalSales);
@@ -208,6 +211,15 @@ const Dashboard = () => {
       console.log("🔍 DEBUG HOME -> Utilizador voltou para Home, forçando re-cálculo...");
       fetchMetrics();
     }, [closedOrders, expenses, loadExpenses, employees, loadEmployees]);
+
+    // SINCRONIZAÇÃO DE VENDAS EM TEMPO REAL
+    useEffect(() => {
+      console.log("🔍 DEBUG VENDAS -> Mudança em activeOrders detectada, recalculando...");
+      console.log("🔍 DEBUG VENDAS -> Número de ordens ativas:", activeOrders.length);
+      
+      // Recalcular Rendimento Global sempre que as vendas mudam
+      fetchMetrics();
+    }, [activeOrders]); // Ouvir mudanças nas ordens ativas
   
   // ATUALIZAÇÃO EM TEMPO REAL - SUPABASE CHANNEL
   useEffect(() => {
