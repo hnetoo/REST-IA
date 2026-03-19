@@ -13,33 +13,62 @@ import {
   BarChart, Bar, Cell, PieChart, Pie, CartesianGrid
 } from 'recharts';
 
+const formatKz = (val: number) => 
+  new Intl.NumberFormat('pt-AO', { 
+    style: 'currency', 
+    currency: 'AOA', 
+    maximumFractionDigits: 0 
+  }).format(val);
+
 const ProfitCenter = () => {
   const { activeOrders, menu, settings, addNotification, expenses, employees } = useStore();
 
-  const closedOrders = useMemo(() => activeOrders.filter(o => o.status === 'FECHADO'), [activeOrders]);
+  const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
 
   const handleExportProfitReport = () => {
     if (closedOrders.length === 0) {
       addNotification('warning', 'Nenhuma venda para exportar.');
       return;
     }
-    printFinanceReport(closedOrders, settings, 'Relatório de Centro de Lucro');
+    
+    // Preparar dados para o relatório
+    const reportData = closedOrders.map(order => ({
+      'ID': order.id,
+      'Data': new Date(order.timestamp || '').toLocaleString('pt-AO'),
+      'Total': formatKz(order.total || 0),
+      'Lucro': formatKz(order.profit || 0),
+      'Método': order.paymentMethod || 'N/A'
+    }));
+    
+    const columns = ['ID', 'Data', 'Total', 'Lucro', 'Método'];
+    
+    printFinanceReport('Relatório de Centro de Lucro', reportData, columns, settings);
     addNotification('success', 'Relatório exportado com sucesso.');
   };
   
   const metrics = useMemo(() => {
-    const revenue = closedOrders.reduce((a, b) => a + b.total, 0);
-    const profit = closedOrders.reduce((a, b) => a + b.profit, 0);
-    const tax = closedOrders.reduce((a, b) => a + b.taxTotal, 0);
+    const today = new Date().toISOString().split('T')[0];
     
-    // CUSTOS FIXOS: Soma de base_salary_kz da tabela staff
+    // VENDAS HOJE: Mesma lógica do Dashboard
+    const todayOrders = closedOrders.filter(order => 
+      String(order.timestamp || '').split('T')[0] === today
+    );
+    const revenue = todayOrders.reduce((a, b) => a + (b.total || 0), 0);
+    
+    // DESPESAS HOJE: Mesma lógica do Dashboard
+    const todayExpenses = expenses.filter(expense => 
+      String(expense.createdAt || '').split('T')[0] === today
+    );
+    const variableCosts = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+    
+    // CUSTOS FIXOS: Soma de base_salary_kz da tabela staff (mantido)
     const fixedCosts = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
     
-    // CUSTOS VARIÁVEIS: Soma de amount_kz da tabela expenses
-    const variableCosts = expenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+    // IMPOSTOS: Taxa de 6.5% sobre vendas (mesma lógica do Dashboard)
+    const tax = revenue * 0.065;
     
-    // LUCRO LÍQUIDO REAL: Receitas - Custos Fixos - Custos Variáveis - Impostos
-    const netProfit = revenue - fixedCosts - variableCosts - tax;
+    // LUCRO LÍQUIDO REAL: VendasHoje - DespesasHoje - CustosFixos - Impostos
+    const netProfit = revenue - variableCosts - fixedCosts - tax;
     const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
     
     // Lucro por modalidade

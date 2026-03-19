@@ -151,8 +151,8 @@ const Analytics = () => {
     const grouped: Record<string, number> = {};
     
     expenses.forEach(expense => {
-      // MAPEAR CATEGORIAS com fallback
-      const categoryName = expense.category || 'Outros';
+      // MAPEAR CATEGORIAS com fallback completo
+      const categoryName = expense.category || expense.description || 'Geral';
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
