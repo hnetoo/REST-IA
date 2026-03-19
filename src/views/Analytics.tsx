@@ -199,6 +199,55 @@ const Analytics = () => {
   // Cores para gráficos
   const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
+  // FUNÇÃO DE EXPORTAÇÃO CSV
+  const exportToCSV = () => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Preparar dados para exportação
+    const csvData = [
+      ['Relatório de Analytics - ' + today],
+      [],
+      ['MÉTRICAS DO DIA'],
+      ['Métrica', 'Valor'],
+      ['Vendas Hoje', realMetrics.totalSalesToday.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })],
+      ['Ticket Médio', realMetrics.ticketMedio.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })],
+      ['Custo de Compras', realMetrics.totalExpensesToday.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })],
+      ['Lucro Bruto', realMetrics.lucroBruto.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })],
+      [],
+      ['TOP PRODUTOS'],
+      ['Produto', 'Categoria', 'Vendas'],
+      ...realTopProducts.map(product => [
+        product.name,
+        product.category,
+        product.sales.toString()
+      ]),
+      [],
+      ['DESPESAS POR CATEGORIA'],
+      ['Categoria', 'Valor', 'Percentagem'],
+      ...expensePieData.map(expense => [
+        expense.name,
+        expense.value.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
+        expense.percentage.toFixed(1) + '%'
+      ])
+    ];
+    
+    // Converter para CSV
+    const csvContent = csvData.map(row => row.join(',')).join('\n');
+    
+    // Criar blob e download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `analytics_${today}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('[ANALYTICS] ✅ Dados exportados com sucesso para CSV');
+  };
+
   // REMOVER ARRAY DE DADOS FICTÍCIOS - APENAS USAR DADOS REAIS
   // const topProducts = [
   //   { name: 'Muamba de Galinha', sales: 450, category: 'Pratos Principais' },
@@ -233,7 +282,11 @@ const Analytics = () => {
             <Filter size={16} />
           </button>
           
-          <button className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm hover:bg-white/20 transition-all">
+          <button 
+            onClick={exportToCSV}
+            className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm hover:bg-white/20 transition-all"
+            title="Exportar dados para CSV"
+          >
             <Download size={16} />
           </button>
         </div>
