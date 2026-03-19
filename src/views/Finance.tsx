@@ -148,7 +148,7 @@ const Finance = () => {
     
     // VENDAS DE HOJE - mesmo filtro do Dashboard
     const todayOrders = closedOrders.filter(o => String(o.timestamp || '').split('T')[0] === today);
-    const todayGross = todayOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+    const todayGross = todayOrders.reduce((acc, o) => acc + (o.total_amount || 0), 0);
     const todayProfit = todayOrders.reduce((acc, o) => acc + (o.profit || 0), 0);
     
     // DESPESAS DE HOJE - usar amount_kz (coluna real)
