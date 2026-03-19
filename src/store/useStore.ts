@@ -553,32 +553,37 @@ export const useStore = create<StoreState>()(
           console.log('MÉTODO PAGAMENTO:', paymentMethod);
           console.log('TOTAL:', finalOrder.total);
           
-          // FORÇAR INSERT DIRETO
+          // FORÇAR INSERT DIRETO - APENAS COLUNAS REAIS DO SCHEMA
           try {
             const currentUser = get().currentUser;
+            const orderData = {
+              id: finalOrder.id,
+              customer_name: customerName,
+              customer_phone: '999999999',
+              delivery_address: 'ENDEREÇO_PADRAO',
+              total_amount: finalOrder.total,
+              status: 'closed',
+              payment_method: paymentMethod,
+              user_id: currentUser?.id || null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            };
+            
+            console.log('=== DADOS PARA INSERT ===');
+            console.log('OBJETO COMPLETO:', orderData);
+            
             const { data, error } = await supabase
               .from('orders')
-              .insert({
-                id: finalOrder.id,
-                customer_name: customerName,
-                seller_name: sellerName,
-                customer_phone: '999999999',
-                delivery_address: 'ENDEREÇO_PADRAO',
-                total_amount: finalOrder.total,
-                status: 'closed',
-                payment_method: paymentMethod,
-                user_id: currentUser?.id || null,
-                created_at: new Date().toISOString(),
-                closed_at: new Date().toISOString()
-              })
+              .insert(orderData)
               .select();
               
             if (error) {
               console.error('❌ ERRO NA GRAVAÇÃO:', error);
+              console.error('❌ DETALHES DO ERRO:', JSON.stringify(error, null, 2));
               get().addNotification('error', `FALHA AO GRAVAR VENDA: ${error.message}`);
             } else {
-              console.log('✅ VENDA GRAVADA:', data);
-              get().addNotification('success', 'Venda gravada no banco!');
+              console.log('✅ VENDA GRAVADA COM SUCESSO:', data);
+              get().addNotification('success', 'Venda gravada com sucesso no Supabase');
             }
           } catch (error) {
             console.error('❌ FALHA CRÍTICA:', error);
