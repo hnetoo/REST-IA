@@ -118,13 +118,34 @@ const Dashboard = () => {
           const timestamp = Date.now();
           console.log('[DASHBOARD PRINCIPAL] Forçando fetch real - Timestamp:', timestamp);
           
+          // TESTE: Remover filtro CONSOLIDADO se necessário
           const { data: externalHistoryData, error: externalHistoryError } = await supabase
             .from('external_history')
             .select('*')
             .eq('period', 'CONSOLIDADO')
             .single();
 
-          if (!externalHistoryError && externalHistoryData) {
+          // DEBUG QUERY - LOGS DO SUPABASE
+          console.log("🔍 DEBUG QUERY -> Registros encontrados:", externalHistoryData ? 1 : 0);
+          console.log("🔍 DEBUG QUERY -> Erro do Supabase (se houver):", externalHistoryError);
+          console.log("🔍 DEBUG QUERY -> Dados brutos:", externalHistoryData);
+
+          // SE CONSOLIDADO NÃO FUNCIONAR, TENTAR SEM FILTRO
+          if (externalHistoryError || !externalHistoryData) {
+            console.log("🔍 DEBUG -> CONSOLIDADO falhou, tentando SEM FILTRO...");
+            const { data: allData, error: allError } = await supabase
+              .from('external_history')
+              .select('*');
+            
+            console.log("🔍 DEBUG QUERY SEM FILTRO -> Todos registros:", allData?.length);
+            console.log("🔍 DEBUG QUERY SEM FILTRO -> Erro:", allError);
+            
+            if (!allError && allData && allData.length > 0) {
+              // Somar todos os registros
+              totalHistorico = allData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
+              console.log("🔍 DEBUG -> Soma de todos os registros:", totalHistorico);
+            }
+          } else if (!externalHistoryError && externalHistoryData) {
             totalHistorico = Number(externalHistoryData.total_revenue) || 0;
             console.log('[DASHBOARD PRINCIPAL] ✅ DADO REAL DO SUPABASE:', totalHistorico);
             console.log('[DASHBOARD PRINCIPAL] ID do registo:', externalHistoryData.id);
@@ -141,6 +162,11 @@ const Dashboard = () => {
 
         // RENDIMENTO GLOBAL: Histórico + Faturação de Hoje
         const rendimentoGlobal = totalHistorico + (totalSales || 0);
+        
+        // DEBUG FINANCEIRO - INJETAR LOGS ANTES DE RENDERIZAR
+        console.log("🔍 DEBUG FINANCEIRO -> Histórico Bruto do DB:", totalHistorico);
+        console.log("🔍 DEBUG FINANCEIRO -> Vendas Hoje POS:", totalSales);
+        console.log("🔍 DEBUG FINANCEIRO -> Soma Final calculada:", rendimentoGlobal);
         console.log('[DASHBOARD PRINCIPAL] Rendimento Global:', rendimentoGlobal);
         
         const mockMetrics = {
@@ -162,6 +188,7 @@ const Dashboard = () => {
     
     // Chamar fetchMetrics no useEffect
     useEffect(() => {
+      console.log("🔍 DEBUG HOME -> Utilizador voltou para Home, forçando re-cálculo...");
       fetchMetrics();
     }, [closedOrders, expenses, loadExpenses, employees, loadEmployees]);
   
