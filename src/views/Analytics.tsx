@@ -156,7 +156,7 @@ const Analytics = () => {
       console.log('[ANALYTICS] Objeto completo:', expense);
       console.log('[ANALYTICS] Campo category:', expense.category);
       console.log('[ANALYTICS] Campo description:', expense.description);
-      console.log('[ANALYTICS] Campo amount:', expense.amount);
+      console.log('[ANALYTICS] Campo amount_kz:', expense.amount_kz);
       
       // FORÇAR CATEGORIA COM MAPEAMENTO DIRETO
       let categoryName = 'OUTROS'; // PADRÃO
@@ -171,6 +171,7 @@ const Analytics = () => {
       // MAPEAMENTO DE CATEGORIAS CONHECIDAS
       const categoryMap: Record<string, string> = {
         'ALIMENTAÇÃO': 'Alimentação',
+        'ALIMENTAÇAO': 'Alimentação',
         'TRANSPORTE': 'Transporte',
         'ÁGUA': 'Água',
         'LUZ': 'Luz',
@@ -181,6 +182,11 @@ const Analytics = () => {
         'LIMPEZA': 'Limpeza',
         'MARKETING': 'Marketing',
         'SOFTWARE': 'Software',
+        'INTERNET': 'Internet',
+        'REABASTECIMENTO': 'Reabastecimento',
+        'REPOSIÇÃO': 'Reposição',
+        'REPOSIÇAO': 'Reposição',
+        'PAGAMENTOS': 'Pagamentos',
         'OUTROS': 'Outros'
       };
       
@@ -195,14 +201,14 @@ const Analytics = () => {
       }
       
       console.log('[ANALYTICS] CATEGORIA FINAL:', categoryName);
-      console.log('[ANALYTICS] VALOR:', expense.amount || 0);
+      console.log('[ANALYTICS] VALOR:', expense.amount_kz || 0);
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
       }
       
-      // USAR amount (coluna real)
-      const valor = Number(expense.amount || 0);
+      // USAR amount_kz (coluna real)
+      const valor = Number(expense.amount_kz || 0);
       grouped[categoryName] += valor;
     });
 

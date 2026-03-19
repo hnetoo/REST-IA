@@ -151,18 +151,18 @@ const Finance = () => {
     const todayGross = todayOrders.reduce((acc, o) => acc + (o.total || 0), 0);
     const todayProfit = todayOrders.reduce((acc, o) => acc + (o.profit || 0), 0);
     
-    // DESPESAS DE HOJE - mesmo filtro do Dashboard
+    // DESPESAS DE HOJE - usar created_at do Supabase
     const todayExpenses = expenses.filter(expense => 
-      String(expense.createdAt || '').split('T')[0] === today
+      String(expense.created_at || '').split('T')[0] === today
     );
-    const todayExpensesTotal = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+    const todayExpensesTotal = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
     
     // LUCRO LÍQUIDO REAL DE HOJE
     const todayNetProfit = todayGross - todayExpensesTotal;
     
     // Agrupar pagamentos por método - APENAS DE HOJE com mapeamento correto
     const payments = todayOrders.reduce((acc: any, o) => {
-      let methodId = o.paymentMethod || 'OUTRO';
+      let methodId = o.payment_method || o.paymentMethod || 'OUTRO';
       
       // GARANTIR QUE methodId NUNCA SEJA NULL
       if (!methodId || methodId === 'null' || methodId === null) {
@@ -170,7 +170,7 @@ const Finance = () => {
       }
       
       // DEBUG: Mostrar método original e mapeado
-      console.log('[FINANCE] Método Original:', o.paymentMethod, '→ Método Mapeado:', methodId);
+      console.log('[FINANCE] Método Original:', o.payment_method, '→ Método Mapeado:', methodId);
       
       // MAPEAR MÉTODOS DE PAGAMENTO CORRETAMENTE
       switch (String(methodId).toLowerCase()) {

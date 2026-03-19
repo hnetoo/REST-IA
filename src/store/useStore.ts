@@ -532,20 +532,17 @@ export const useStore = create<StoreState>()(
           };
         });
 
-        // PERSISTÊNCIA IMEDIATA NO SUPABASE - FORÇAR GRAVAÇÃO
+        // PERSISTÊNCIA IMEDIATA NO SUPABASE - USAR VALORES REAIS
         const finalOrder = get().activeOrders.find(o => o.id === orderId);
         if (finalOrder && finalOrder.status === 'FECHADO') {
-          // FORÇAR OPERADOR - NÃO PODE SER NULL
+          // USAR OPERADOR REAL - NÃO FORÇAR PADRÃO
           const currentUser = get().currentUser;
-          const sellerName = currentUser?.name || 'OPERADOR_PADRAO';
+          const sellerName = currentUser?.name || finalOrder.subAccountName || 'OPERADOR_PADRAO';
           
-          // FORÇAR MÉTODO DE PAGAMENTO - NÃO PODE SER OUTRO
-          let paymentMethod = finalOrder.paymentMethod || 'NUMERARIO';
-          if (paymentMethod === 'OUTRO' || !paymentMethod) {
-            paymentMethod = 'NUMERARIO';
-          }
+          // USAR MÉTODO DE PAGAMENTO REAL - NÃO FORÇAR
+          const paymentMethod = finalOrder.paymentMethod || 'NUMERARIO';
           
-          // FORÇAR NOME DO CLIENTE - NÃO PODE SER NULL
+          // USAR NOME DO CLIENTE REAL - NÃO FORÇAR PADRÃO
           const customerName = finalOrder.subAccountName || 'CLIENTE_PADRAO';
           
           // DEBUG COMPLETO
