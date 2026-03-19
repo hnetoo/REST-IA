@@ -151,10 +151,13 @@ const Analytics = () => {
     const grouped: Record<string, number> = {};
     
     expenses.forEach(expense => {
-      if (!grouped[expense.category]) {
-        grouped[expense.category] = 0;
+      // MAPEAR CATEGORIAS com fallback
+      const categoryName = expense.category || 'Outros';
+      
+      if (!grouped[categoryName]) {
+        grouped[categoryName] = 0;
       }
-      grouped[expense.category] += Number(expense.amount || 0);
+      grouped[categoryName] += Number(expense.amount || 0);
     });
 
     const total = Object.values(grouped).reduce((acc, val) => acc + val, 0);
