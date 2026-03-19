@@ -118,9 +118,43 @@ const Finance = () => {
     // LUCRO LÍQUIDO REAL DE HOJE
     const todayNetProfit = todayGross - todayExpensesTotal;
     
-    // Agrupar pagamentos por método - APENAS DE HOJE
+    // Agrupar pagamentos por método - APENAS DE HOJE com mapeamento correto
     const payments = todayOrders.reduce((acc: any, o) => {
-      const methodId = o.paymentMethod || 'OUTRO';
+      let methodId = o.paymentMethod || 'OUTRO';
+      
+      // MAPEAR MÉTODOS DE PAGAMENTO CORRETAMENTE
+      switch (methodId.toLowerCase()) {
+        case 'cash':
+        case 'numerário':
+        case 'numerario':
+          methodId = 'Numerário';
+          break;
+        case 'card':
+        case 'tpa':
+        case 'multicaixa':
+        case 'pos':
+        case 'debit':
+        case 'credit':
+          methodId = 'TPA/Multicaixa';
+          break;
+        case 'transfer':
+        case 'transferência':
+        case 'transferencia':
+        case 'bank':
+          methodId = 'Transferência';
+          break;
+        case 'mpesa':
+        case 'm-pesa':
+          methodId = 'M-Pesa';
+          break;
+        case 'express':
+        case 'expresso':
+          methodId = 'Express';
+          break;
+        default:
+          methodId = 'OUTRO';
+      }
+      
       acc[methodId] = (acc[methodId] || 0) + (o.total || 0);
       return acc;
     }, {});
@@ -140,7 +174,61 @@ const Finance = () => {
     }
   };
 
-  const handleExportFinanceReport = () => {
+  const handlePrintSale = (paymentMethod: string, total: number) => {
+    // Criar dados da venda para impressão
+    const saleData = {
+      paymentMethod,
+      total,
+      date: new Date().toLocaleDateString('pt-AO'),
+      tax: total * 0.065,
+      net: total - (total * 0.065)
+    };
+
+    // Gerar conteúdo para impressão
+    const printContent = `
+      <html>
+        <head>
+          <title>Recibo de Venda - ${saleData.paymentMethod}</title>
+          <style>
+            body { font-family: monospace; padding: 20px; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .details { margin: 10px 0; }
+            .total { font-weight: bold; font-size: 18px; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>RECIBO DE VENDA</h2>
+            <p>Data: ${saleData.date}</p>
+          </div>
+          <div class="details">
+            <p><strong>Método de Pagamento:</strong> ${saleData.paymentMethod}</p>
+            <p><strong>Valor Bruto:</strong> ${formatKz(saleData.total)}</p>
+            <p><strong>IVA (6.5%):</strong> ${formatKz(saleData.tax)}</p>
+            <hr>
+            <p class="total"><strong>Valor Líquido:</strong> ${formatKz(saleData.net)}</p>
+          </div>
+          <div style="margin-top: 40px; text-align: center;">
+            <p>--- Assinatura ---</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Abrir janela de impressão
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.print();
+      printWindow.close();
+      
+      addNotification('success', 'Recibo enviado para impressão');
+    } else {
+      addNotification('error', 'Não foi possível abrir a janela de impressão');
+    }
+  };
+    const handleExportFinanceReport = () => {
     if (closedOrders.length === 0) {
       addNotification('warning', 'Nenhuma venda para exportar.');
       return;
@@ -433,7 +521,11 @@ const Finance = () => {
                            <td className="px-8 py-6 font-mono font-bold text-white">{formatKz(total)}</td>
                            <td className="px-8 py-6 font-mono text-orange-500">{formatKz(total * 0.065)}</td>
                            <td className="px-8 py-6 text-right">
-                              <button className="p-3 bg-white/5 text-slate-400 hover:text-primary rounded-xl transition-all">
+                              <button 
+                                onClick={() => handlePrintSale(paymentMethod, total)}
+                                className="p-3 bg-white/5 text-slate-400 hover:text-primary rounded-xl transition-all"
+                                title="Imprimir recibo"
+                              >
                                  <Printer size={18}/>
                               </button>
                            </td>
