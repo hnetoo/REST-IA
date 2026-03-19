@@ -98,22 +98,19 @@ const Dashboard = () => {
         const totalPayroll = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
         
         // RENDIMENTO GLOBAL: Usar mesma fonte que Lucro Hoje (RPC)
-        const totalSales = vendasHoje; // SINCRONIZADO: mesma fonte que vendas de hoje
+        const totalSales = vendasHoje;
         
-        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL - SEM DUPLICAÇÃO
+        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL
         let totalHistorico = 0;
         try {
-          console.log('[DASHBOARD PRINCIPAL] Buscando histórico CONSOLIDADO em external_history...');
           const { data: externalHistoryData, error: externalHistoryError } = await supabase
             .from('external_history')
             .select('total_revenue')
-            .eq('period', 'CONSOLIDADO'); // Buscar apenas consolidado para evitar duplicação
+            .eq('period', 'CONSOLIDADO');
 
           if (!externalHistoryError && externalHistoryData) {
             totalHistorico = externalHistoryData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
-            console.log('[DASHBOARD PRINCIPAL] Histórico CONSOLIDADO (external_history):', totalHistorico);
-            console.log('[DASHBOARD PRINCIPAL] Items consolidados encontrados:', externalHistoryData.length);
-            console.log('VALOR PUXADO DO SUPABASE:', totalHistorico);
+            console.log('[DASHBOARD PRINCIPAL] Histórico consolidado:', totalHistorico);
           } else {
             console.log('[DASHBOARD PRINCIPAL] Nenhum dado consolidado em external_history:', externalHistoryError);
           }
@@ -121,21 +118,16 @@ const Dashboard = () => {
           console.error('[DASHBOARD PRINCIPAL] Erro ao buscar external_history:', financialError);
         }
 
-        // RENDIMENTO GLOBAL: (Total do Histórico) + (Faturação de Hoje) - SEM DUPLICAÇÃO
+        // RENDIMENTO GLOBAL: Histórico + Faturação de Hoje
         const rendimentoGlobal = totalHistorico + (totalSales || 0);
-        console.log('[DASHBOARD PRINCIPAL] RENDIMENTO GLOBAL FINAL:', {
-          totalHistorico,
-          faturacaoHoje: totalSales,
-          rendimentoGlobal,
-          calculo: `${totalHistorico} + ${totalSales} = ${rendimentoGlobal}`
-        });
+        console.log('[DASHBOARD PRINCIPAL] Rendimento Global:', rendimentoGlobal);
         
         const mockMetrics = {
-          totalVendas: totalSales, // Vendas de hoje apenas
+          totalVendas: totalSales,
           despesas: totalExpenses,
           folhaSalarial: totalPayroll,
           lucroLiquido: (totalSales || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((totalSales || 0) * 0.065 || 0),
-          rendimentoGlobal: rendimentoGlobal // NOVO: Rendimento Global consolidado
+          rendimentoGlobal: rendimentoGlobal
         };
         
         setMetrics(mockMetrics);
