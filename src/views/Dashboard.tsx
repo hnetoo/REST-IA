@@ -512,14 +512,14 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-             <History size={64} />
+             <TrendingUp size={64} />
           </div>
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Saldo de Transição
+            Rendimento Global
           </div>
-          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz(0)}</p>
-          <div className="mt-2 text-[10px] text-yellow-500 font-bold">
-             Em Implementação
+          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKzWithSeparators(rendimentoGlobalDinamico)}</p>
+          <div className="mt-2 text-[10px] text-emerald-500 font-bold">
+             Histórico + Vendas Atuais
           </div>
         </div>
 
