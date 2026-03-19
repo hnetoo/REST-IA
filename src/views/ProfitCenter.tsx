@@ -32,13 +32,13 @@ const ProfitCenter = () => {
     const todayOrders = closedOrders.filter(order => 
       String(order.timestamp || '').split('T')[0] === today
     );
-    const revenue = todayOrders.reduce((a, b) => a + (b.total || 0), 0);
+    const revenue = todayOrders.reduce((a, b) => a + (b.total_amount || 0), 0);
     
     // DESPESAS HOJE: Mesma lógica do Dashboard
     const todayExpenses = expenses.filter(expense => 
-      String(expense.createdAt || '').split('T')[0] === today
+      String(expense.created_at || '').split('T')[0] === today
     );
-    const variableCosts = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+    const variableCosts = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
     
     // CUSTOS FIXOS: Soma de base_salary_kz da tabela staff (mantido)
     const fixedCosts = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
@@ -53,7 +53,7 @@ const ProfitCenter = () => {
     // Lucro por modalidade - APENAS VENDAS DE HOJE
     // Fix: Added explicit typing to Record<string, number> to prevent 'unknown' types in Object.entries mapping
     const byMethod = todayOrders.reduce((acc: Record<string, number>, o) => {
-      const m = o.paymentMethod || 'OUTRO';
+      const m = o.payment_method || 'OUTRO';
       acc[m] = (acc[m] || 0) + (o.total || 0);
       return acc;
     }, {} as Record<string, number>);
