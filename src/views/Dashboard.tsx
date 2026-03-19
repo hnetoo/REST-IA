@@ -105,11 +105,13 @@ const Dashboard = () => {
         try {
           const { data: externalHistoryData, error: externalHistoryError } = await supabase
             .from('external_history')
-            .select('total_revenue')
-            .eq('period', 'CONSOLIDADO');
+            .select('*')
+            .eq('period', 'CONSOLIDADO')
+            .single();
 
           if (!externalHistoryError && externalHistoryData) {
-            totalHistorico = externalHistoryData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
+            totalHistorico = Number(externalHistoryData.total_revenue) || 0;
+            console.log('[DASHBOARD PRINCIPAL] Valor encontrado no Banco de Dados:', totalHistorico);
             console.log('[DASHBOARD PRINCIPAL] Histórico consolidado:', totalHistorico);
           } else {
             console.log('[DASHBOARD PRINCIPAL] Nenhum dado consolidado em external_history:', externalHistoryError);
