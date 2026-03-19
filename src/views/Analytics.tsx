@@ -152,7 +152,7 @@ const Analytics = () => {
     
     expenses.forEach(expense => {
       // MAPEAR CATEGORIAS com fallback completo
-      const categoryName = expense.category || expense.description || 'Geral';
+      const categoryName = expense.category || expense.description || 'Outros';
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
@@ -162,11 +162,17 @@ const Analytics = () => {
 
     const total = Object.values(grouped).reduce((acc, val) => acc + val, 0);
     
-    return Object.entries(grouped).map(([category, amount]) => ({
+    const chartData = Object.entries(grouped).map(([category, amount]) => ({
       name: category,
       value: amount,
       percentage: total > 0 ? (amount / total) * 100 : 0
     }));
+    
+    // LOG PARA DEPURAÇÃO
+    console.log('[ANALYTICS] Dados do Gráfico de Despesas:', chartData);
+    console.log('[ANALYTICS] Expenses brutos:', expenses);
+    
+    return chartData;
   }, [expenses]);
 
   // Dados para gráfico de área das despesas (últimos 30 dias)
