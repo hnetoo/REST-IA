@@ -100,30 +100,40 @@ const Dashboard = () => {
         // RENDIMENTO GLOBAL: Usar mesma fonte que Lucro Hoje (RPC)
         const totalSales = vendasHoje; // SINCRONIZADO: mesma fonte que vendas de hoje
         
-        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL - SEM FILTROS
-        let totalHistoricalRevenue = 0;
+        // BUSCAR HISTÓRICO FINANCEIRO PARA RENDIMENTO GLOBAL - FINANCIAL_HISTORY
+        let totalHistorico = 0;
         try {
-          console.log('[DASHBOARD PRINCIPAL] Buscando histórico TOTAL em external_history...');
-          const { data: externalHistoryData, error: externalHistoryError } = await supabase
-            .from('external_history')
-            .select('total_revenue');
+          console.log('[DASHBOARD PRINCIPAL] Buscando histórico TOTAL em financial_history...');
+          const { data: financialHistoryData, error: financialHistoryError } = await supabase
+            .from('financial_history')
+            .select('receita_total');
 
-          if (!externalHistoryError && externalHistoryData) {
-            totalHistoricalRevenue = externalHistoryData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
-            console.log('[DASHBOARD PRINCIPAL] Histórico TOTAL (external_history):', totalHistoricalRevenue);
-            console.log('[DASHBOARD PRINCIPAL] Items encontrados:', externalHistoryData.length);
+          if (!financialHistoryError && financialHistoryData) {
+            totalHistorico = financialHistoryData.reduce((acc, item) => acc + (Number(item.receita_total) || 0), 0);
+            console.log('[DASHBOARD PRINCIPAL] Histórico TOTAL (financial_history):', totalHistorico);
+            console.log('[DASHBOARD PRINCIPAL] Items encontrados:', financialHistoryData.length);
           } else {
-            console.log('[DASHBOARD PRINCIPAL] Nenhum dado em external_history:', externalHistoryError);
+            console.log('[DASHBOARD PRINCIPAL] Nenhum dado em financial_history:', financialHistoryError);
+            // TENTAR EXTERNAL_HISTORY COMO FALLBACK
+            console.log('[DASHBOARD PRINCIPAL] Tentando fallback external_history...');
+            const { data: externalHistoryData, error: externalHistoryError } = await supabase
+              .from('external_history')
+              .select('total_revenue');
+
+            if (!externalHistoryError && externalHistoryData) {
+              totalHistorico = externalHistoryData.reduce((acc, item) => acc + (Number(item.total_revenue) || 0), 0);
+              console.log('[DASHBOARD PRINCIPAL] Fallback external_history:', totalHistorico);
+            }
           }
         } catch (financialError) {
-          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar external_history:', financialError);
+          console.error('[DASHBOARD PRINCIPAL] Erro ao buscar financial_history:', financialError);
         }
 
-        // RENDIMENTO GLOBAL: Histórico TOTAL + vendas de hoje (SEM FILTROS)
-        const rendimentoGlobal = totalHistoricalRevenue + (totalSales || 0);
-        console.log('[DASHBOARD PRINCIPAL] RENDIMENTO GLOBAL CALCULADO:', {
-          totalHistoricalRevenue,
-          vendasHoje: totalSales,
+        // RENDIMENTO GLOBAL: (Total do Histórico) + (Faturação de Hoje)
+        const rendimentoGlobal = totalHistorico + (totalSales || 0);
+        console.log('[DASHBOARD PRINCIPAL] RENDIMENTO GLOBAL FINAL:', {
+          totalHistorico,
+          faturacaoHoje: totalSales,
           rendimentoGlobal
         });
         
