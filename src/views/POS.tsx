@@ -614,15 +614,14 @@ const POS = () => {
              </div>
            </div>
            {!activeTableId ? (
-              <div style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important; width: 100% !important; max-width: 500px !important; margin: 0 auto !important;">
+              <div className="grid grid-cols-3 gap-3 w-full max-w-[500px] mx-auto p-4">
                  {tables.map((table) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (
                       <button 
                         key={table.id} 
                         onClick={() => handleTableClick(table)}
-                        className={`border-2 transition-all active:scale-90 relative group ${!isOccupied ? 'border-white/5 bg-white/[0.02] hover:border-primary/50 hover:bg-white/[0.05]' : 'border-primary bg-primary/10 shadow-glow scale-105'}`}
-                        style="aspect-ratio: 1 / 1 !important; border-radius: 12px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; background: #1a1a1a !important; color: white !important;"
+                        className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 relative group border-2 ${!isOccupied ? 'border-white/5 bg-[#1a1a1a] text-white' : 'border-primary bg-primary/10 text-primary shadow-lg'}`}
                       >
                          <span className={`text-sm font-black uppercase tracking-[0.2em] ${!isOccupied ? 'text-slate-600' : 'text-primary/60'}`}>{table.name}</span>
                          <span className={`text-4xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
