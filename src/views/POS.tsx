@@ -614,17 +614,18 @@ const POS = () => {
              </div>
            </div>
            {!activeTableId ? (
-              <div className="grid" style={{ display: 'grid !important', gridTemplateColumns: 'repeat(3, 1fr) !important', gap: '10px !important' }}>
+              <div className="grid" style={{ display: 'grid !important', gridTemplateColumns: 'repeat(3, 1fr) !important', gap: '15px !important', width: '100% !important', padding: '20px !important' }}>
                  {tables.map((table) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (
                       <button 
                         key={table.id} 
                         onClick={() => handleTableClick(table)}
-                        className={`aspect-square rounded-[2rem] border-2 flex flex-col items-center justify-center gap-3 transition-all active:scale-90 relative group ${!isOccupied ? 'border-white/5 bg-white/[0.02] hover:border-primary/50 hover:bg-white/[0.05]' : 'border-primary bg-primary/10 shadow-glow scale-105'}`}
+                        className={`rounded-[2rem] border-2 flex flex-col items-center justify-center gap-3 transition-all active:scale-90 relative group ${!isOccupied ? 'border-white/5 bg-white/[0.02] hover:border-primary/50 hover:bg-white/[0.05]' : 'border-primary bg-primary/10 shadow-glow scale-105'}`}
+                        style={{ width: '100% !important', aspectRatio: '1 / 1 !important', maxWidth: '150px !important', margin: '0 auto !important' }}
                       >
-                         <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${!isOccupied ? 'text-slate-600' : 'text-primary/60'}`}>{table.name}</span>
-                         <span className={`text-5xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
+                         <span className={`text-sm font-black uppercase tracking-[0.2em] ${!isOccupied ? 'text-slate-600' : 'text-primary/60'}`}>{table.name}</span>
+                         <span className={`text-2xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
                          
                          {isOccupied && (
                            <div className="absolute -top-3 -right-3 flex gap-1">
