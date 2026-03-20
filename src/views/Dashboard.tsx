@@ -508,7 +508,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
             Despesas Hoje
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesasAcumuladas || 0)}</p>
+          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
           <div className="mt-2 text-[10px] text-orange-500 font-bold">
              {expenses.length} Registros
           </div>
@@ -564,7 +564,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
             Despesas Acumuladas
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
+          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesasAcumuladas || 0)}</p>
           <div className="mt-2 text-[10px] text-orange-500 font-bold">
              Mês Atual
           </div>
