@@ -625,7 +625,7 @@ const POS = () => {
                         style={{ 
                           width: '100% !important', 
                           aspectRatio: '1 / 1 !important', 
-                          maxWidth: '150px !important', 
+                          maxWidth: '200px !important', 
                           borderRadius: '12px !important',
                           display: 'flex !important',
                           flexDirection: 'column',
@@ -634,7 +634,7 @@ const POS = () => {
                         }}
                       >
                          <span className={`text-sm font-black uppercase tracking-[0.2em] ${!isOccupied ? 'text-slate-600' : 'text-primary/60'}`}>{table.name}</span>
-                         <span className={`text-2xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
+                         <span className={`text-4xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
                          
                          {isOccupied && (
                            <div className="absolute -top-3 -right-3 flex gap-1">
