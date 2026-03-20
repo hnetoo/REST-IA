@@ -244,10 +244,10 @@ const Finance = () => {
     }
   };
 
-  const handlePrintSale = (paymentMethod: string, total: number) => {
+  const handlePrintSale = (payment_method: string, total: number) => {
     // Criar dados da venda para impressão
     const saleData = {
-      paymentMethod,
+      payment_method,
       total,
       date: new Date().toLocaleDateString('pt-AO'),
       tax: total * 0.065,
@@ -258,7 +258,7 @@ const Finance = () => {
     const printContent = `
       <html>
         <head>
-          <title>Recibo de Venda - ${saleData.paymentMethod}</title>
+          <title>Recibo de Venda - ${saleData.payment_method}</title>
           <style>
             body { font-family: monospace; padding: 20px; }
             .header { text-align: center; margin-bottom: 20px; }
@@ -272,7 +272,7 @@ const Finance = () => {
             <p>Data: ${saleData.date}</p>
           </div>
           <div class="details">
-            <p><strong>Método de Pagamento:</strong> ${saleData.paymentMethod}</p>
+            <p><strong>Método de Pagamento:</strong> ${saleData.payment_method}</p>
             <p><strong>Valor Bruto:</strong> ${formatKz(saleData.total)}</p>
             <p><strong>IVA (6.5%):</strong> ${formatKz(saleData.tax)}</p>
             <hr>
@@ -311,7 +311,7 @@ const Finance = () => {
       new Date(o.timestamp).toLocaleString('pt-AO'),
       formatKz(o.total),
       formatKz(o.taxTotal),
-      o.paymentMethod || 'N/A'
+      o.payment_method || 'N/A'
     ]);
 
     printFinanceReport(title, data, columns, settings);
@@ -584,15 +584,15 @@ const Finance = () => {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                    {metrics.payments && Object.entries(metrics.payments).length > 0 ? (
-                      Object.entries(metrics.payments).map(([paymentMethod, total]: any, index) => (
+                      Object.entries(metrics.payments).map(([payment_method, total]: any, index) => (
                         <tr key={index} className="hover:bg-white/5 transition-colors">
-                           <td className="px-8 py-6 font-bold text-white text-xs">{paymentMethod}</td>
+                           <td className="px-8 py-6 font-bold text-white text-xs">{payment_method}</td>
                            <td className="px-8 py-6 text-xs text-slate-500 font-mono">{new Date().toLocaleDateString('pt-AO')}</td>
                            <td className="px-8 py-6 font-mono font-bold text-white">{formatKz(total)}</td>
                            <td className="px-8 py-6 font-mono text-orange-500">{formatKz(total * 0.065)}</td>
                            <td className="px-8 py-6 text-right">
                               <button 
-                                onClick={() => handlePrintSale(paymentMethod, total)}
+                                onClick={() => handlePrintSale(payment_method, total)}
                                 className="p-3 bg-white/5 text-slate-400 hover:text-primary rounded-xl transition-all"
                                 title="Imprimir recibo"
                               >
