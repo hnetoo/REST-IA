@@ -181,6 +181,9 @@ const Finance = () => {
     
     // Agrupar pagamentos por método - APENAS DE HOJE com mapeamento correto
     const payments = todayOrders.reduce((acc: any, o) => {
+      // LOG DE DEPURAÇÃO - VALOR REAL NA DB
+      console.log('[FINANCE] VALOR REAL NA DB:', o.payment_method);
+      
       let methodId = o.payment_method || 'OUTRO';
       
       // GARANTIR QUE methodId NUNCA SEJA NULL
@@ -191,41 +194,28 @@ const Finance = () => {
       // DEBUG: Mostrar método original e mapeado
       console.log('[FINANCE] Método Original:', o.payment_method, '→ Método Mapeado:', methodId);
       
-      // MAPEAR MÉTODOS DE PAGAMENTO CORRETAMENTE
-      switch (String(methodId).toLowerCase()) {
-        case 'cash':
-        case 'numerário':
-        case 'numerario':
-          methodId = 'CASH';
-          break;
-        case 'card':
-        case 'tpa':
-        case 'multicaixa':
-        case 'pos':
-        case 'debit':
-        case 'credit':
-          methodId = 'TPA';
-          break;
-        case 'transfer':
-        case 'transferência':
-        case 'transferencia':
-        case 'bank':
-          methodId = 'Transferência';
-          break;
-        case 'mpesa':
-        case 'm-pesa':
-          methodId = 'M-Pesa';
-          break;
-        case 'express':
-        case 'expresso':
-          methodId = 'Express';
-          break;
-        default:
-          methodId = 'OUTRO';
+      // MAPEAMENTO FLEXÍVEL - ACEITAR VARIAÇÕES COMUNS
+      const method = String(o.payment_method || '').toUpperCase();
+      
+      if (method.includes('CASH') || method.includes('NUMER')) {
+        methodId = 'NUMERÁRIO';
+      } else if (method.includes('TPA') || method.includes('MULTI')) {
+        methodId = 'TPA / MULTICAIXA';
+      } else if (method.includes('TRANS')) {
+        methodId = 'TRANSFERÊNCIA';
+      } else if (method.includes('MPESA') || method.includes('M-PESA')) {
+        methodId = 'M-PESA';
+      } else if (method.includes('EXPRESS')) {
+        methodId = 'EXPRESS';
+      } else {
+        methodId = 'OUTRO';
       }
       
-      console.log('[FINANCE] Método Final:', methodId, 'Valor:', o.total);
-      acc[methodId] = (acc[methodId] || 0) + (o.total || 0);
+      // TOTALIZADOR - CONVERSÃO FORÇADA PARA NÚMERO
+      const valor = Number(o.total_amount || 0);
+      
+      console.log('[FINANCE] Método Final:', methodId, 'Valor:', valor, 'total_amount:', o.total_amount);
+      acc[methodId] = (acc[methodId] || 0) + valor;
       return acc;
     }, {});
 
