@@ -26,6 +26,7 @@ export interface PendingSyncOrder {
   created_at: string;
   updated_at: string;
   items: PendingSyncOrderItem[];
+  tableId?: number; // 🛡️ ID da mesa para liberar offline
 }
 
 export function getPendingSyncOrders(): PendingSyncOrder[] {

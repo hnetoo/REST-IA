@@ -586,13 +586,32 @@ export const useStore = create<StoreState>()(
             }
           }
 
+          // 🛡️ LIBERAR MESA APÓS VENDA CONFIRMADA
+          if (tableId) {
+            try {
+              const { error: tableError } = await supabase
+                .from('tables')
+                .update({ status: 'LIVRE' })
+                .eq('id', tableId);
+              
+              if (tableError) {
+                console.warn('[checkout] Erro ao liberar mesa no Supabase:', tableError);
+              } else {
+                console.log('[checkout] Mesa liberada com sucesso no Supabase:', tableId);
+              }
+            } catch (tableUpdateError) {
+              console.warn('[checkout] Erro crítico ao atualizar mesa:', tableUpdateError);
+            }
+          }
+
           applyLocalState();
           return { success: true };
         } catch (err) {
           // BLOCO CATCH: Falha de rede/offline - guardar no localStorage
           const pendingOrder: PendingSyncOrder = {
             ...orderData,
-            items: orderItems
+            items: orderItems,
+            tableId // 🛡️ Incluir ID da mesa para sincronização offline
           };
           addPendingSyncOrder(pendingOrder);
           applyLocalState();
