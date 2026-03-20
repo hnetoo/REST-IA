@@ -514,6 +514,7 @@ export const useStore = create<StoreState>()(
           ? (customers.find(c => c.id === customerId)?.name || order.subAccountName || 'CLIENTE_PADRAO')
           : (order.subAccountName || 'CLIENTE_PADRAO');
         const pm = paymentMethod || 'NUMERARIO';
+        const tableId = order.tableId; // 🛡️ Extrair tableId do order
 
         // Estrutura com EXATAMENTE os nomes de coluna do Supabase (schema real)
         const series = get().settings.invoiceSeries;
@@ -1115,7 +1116,8 @@ restoreFromSupabase: async () => {
 
           if (error) {
             console.error('[EXPENSE] Erro ao carregar despesas:', error);
-            get().addNotification('error', 'Falha ao carregar despesas');
+            // 🛡️ REMOVIDO: Notificação de erro para evitar avisos persistentes
+            // get().addNotification('error', 'Falha ao carregar despesas');
             return;
           }
 

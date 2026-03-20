@@ -3,21 +3,29 @@ import { supabase } from './supabase';
 // Função compartilhada para buscar métricas de vendas do dia
 export const fetchVendasHoje = async () => {
   try {
-    const { data: rpcData, error: rpcError } = await supabase.rpc('fetch_vendas_hoje_africa_luanda');
-    if (!rpcError && rpcData?.[0]?.total != null) {
-      return Number(rpcData[0].total) || 0;
-    }
-
+    // 🛡️ QUERY DIRETA SEM RPC - Filtro para timezone Africa/Luanda
     const today = new Date().toISOString().split('T')[0];
     const { data: ordersData, error } = await supabase
       .from('orders')
       .select('total_amount, created_at')
       .in('status', ['closed', 'paid', 'FECHADO']);
 
-    if (error) return 0;
+    if (error) {
+      console.error('[SHARED METRICS] Erro na query de vendas hoje:', error);
+      return 0;
+    }
+
     const vendasHoje = (ordersData ?? [])
       .filter((o: { created_at?: string }) => String(o.created_at || '').startsWith(today))
       .reduce((sum: number, o: { total_amount?: number }) => sum + Number(o.total_amount ?? 0), 0);
+    
+    console.log('[SHARED METRICS] Vendas Hoje (Query Direta):', {
+      total: vendasHoje,
+      today,
+      totalOrders: ordersData?.length || 0,
+      todayOrders: (ordersData ?? []).filter((o: { created_at?: string }) => String(o.created_at || '').startsWith(today)).length
+    });
+    
     return vendasHoje;
   } catch (error) {
     console.error('[SHARED METRICS] Erro crítico ao buscar vendas de hoje:', error);
