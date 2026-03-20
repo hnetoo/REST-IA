@@ -614,7 +614,7 @@ const POS = () => {
              </div>
            </div>
            {!activeTableId ? (
-              <div className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+              <div className="grid" style={{ display: 'grid !important', gridTemplateColumns: 'repeat(3, 1fr) !important', gap: '10px !important' }}>
                  {tables.map((table) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (

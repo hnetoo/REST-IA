@@ -570,15 +570,14 @@ const OwnerDashboard = () => {
         // QUERY COM FILTRO DE DATA BASEADO NO PERÍODO
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
-          .select('amount_kz, created_at, category, status')
+          .select('amount, created_at, category, status')
           .neq('status', 'PENDENTE') // APENAS DESPESAS APROVADAS
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
         if (!expensesError && expensesData && expensesData.length > 0) {
           // SOMAR APENAS DESPESAS DO PERÍODO SELECIONADO
-          totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-          console.log('[DASHBOARD] Total despesas do período:', totalDespesas);
+          totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
         } else {
           console.log('[DASHBOARD] Nenhuma despesa encontrada para o período');
           totalDespesas = 0;
@@ -587,13 +586,12 @@ const OwnerDashboard = () => {
         // NOVA QUERY PARA DESPESAS TOTAIS (SEM FILTRO DE DATA)
         const { data: allExpensesData, error: allExpensesError } = await supabase
           .from('expenses')
-          .select('amount_kz, created_at, category, status')
+          .select('amount, created_at, category, status')
           .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
 
         if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
           // SOMAR TODAS AS DESPESAS REGISTADAS
-          totalExpensesAllTime = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
-          console.log('[DASHBOARD] Total despesas acumuladas (todas):', totalExpensesAllTime);
+          totalExpensesAllTime = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
         } else {
           console.log('[DASHBOARD] Nenhuma despesa acumulada encontrada');
           totalExpensesAllTime = 0;
