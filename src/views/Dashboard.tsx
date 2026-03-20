@@ -227,11 +227,11 @@ const Dashboard = () => {
           console.log('[DASHBOARD PRINCIPAL] Mantendo valor padrão:', totalHistorico);
         }
 
-        // RENDIMENTO GLOBAL: FÓRMULA COMPLETA (external_history + orders + business_stats)
+        // RENDIMENTO GLOBAL: FONTE DA VERDADE (external_history + orders)
         let rendimentoGlobal = 0;
         
         try {
-          // 1. Buscar external_history (histórico correto)
+          // 1. Buscar external_history (histórico correto - 8.700.000,00 Kz)
           let historicoExterno = 0;
           const { data: historyData, error: historyError } = await supabase
             .from('external_history')
@@ -242,7 +242,7 @@ const Dashboard = () => {
             console.log('[DASHBOARD] External History (8.700.000,00 Kz):', historicoExterno);
           }
 
-          // 2. Buscar SOMA TOTAL da tabela orders
+          // 2. Buscar SOMA TOTAL da tabela orders (vendas reais)
           let somaOrders = 0;
           const { data: ordersData, error: ordersError } = await supabase
             .from('orders')
@@ -250,27 +250,15 @@ const Dashboard = () => {
 
           if (!ordersError && ordersData && ordersData.length > 0) {
             somaOrders = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
-            console.log('[DASHBOARD] Soma Orders:', somaOrders);
+            console.log('[DASHBOARD] Soma Orders (vendas reais):', somaOrders);
           }
 
-          // 3. Buscar business_stats
-          let businessStats = 0;
-          const { data: businessData, error: businessError } = await supabase
-            .from('business_stats')
-            .select('legacy_revenue_kz');
-
-          if (!businessError && businessData && businessData.length > 0) {
-            businessStats = businessData.reduce((acc, row) => acc + (Number(row.legacy_revenue_kz) || 0), 0);
-            console.log('[DASHBOARD] Business Stats:', businessStats);
-          }
-
-          // 4. Calcular Rendimento Global (fórmula completa)
-          rendimentoGlobal = historicoExterno + somaOrders + businessStats;
+          // 3. Calcular Rendimento Global (fórmula limpa)
+          rendimentoGlobal = historicoExterno + somaOrders;
           
-          console.log('[DASHBOARD] Rendimento Global (fórmula completa):', {
+          console.log('[DASHBOARD] Rendimento Global (fórmula limpa):', {
             external_history: historicoExterno,
             orders: somaOrders,
-            business_stats: businessStats,
             total: rendimentoGlobal
           });
         } catch (error) {
