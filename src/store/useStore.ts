@@ -536,10 +536,10 @@ export const useStore = create<StoreState>()(
 
         const orderItems = (order.items || []).map(item => ({
           order_id: order.id,
-          product_id: item.dish.id,
+          product_id: item.dish?.id || item.dishId, // 🛡️ Usar dish.id com fallback para dishId
           quantity: item.quantity,
-          unit_price: item.dish.price,
-          total_price: item.dish.price * item.quantity
+          unit_price: item.dish?.price || item.unitPrice, // 🛡️ Usar dish.price com fallback
+          total_price: (item.dish?.price || item.unitPrice) * item.quantity
         }));
 
         const applyLocalState = () => {
