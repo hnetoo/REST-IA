@@ -621,8 +621,8 @@ const POS = () => {
                       <button 
                         key={table.id} 
                         onClick={() => handleTableClick(table)}
-                        className={`rounded-[2rem] border-2 flex flex-col items-center justify-center gap-3 transition-all active:scale-90 relative group ${!isOccupied ? 'border-white/5 bg-white/[0.02] hover:border-primary/50 hover:bg-white/[0.05]' : 'border-primary bg-primary/10 shadow-glow scale-105'}`}
-                        style={{ width: '100% !important', aspectRatio: '1 / 1 !important', maxWidth: '150px !important', margin: '0 auto !important' }}
+                        className={`border-2 flex flex-col items-center justify-center gap-3 transition-all active:scale-90 relative group ${!isOccupied ? 'border-white/5 bg-white/[0.02] hover:border-primary/50 hover:bg-white/[0.05]' : 'border-primary bg-primary/10 shadow-glow scale-105'}`}
+                        style={{ width: '100% !important', aspectRatio: '1 / 1 !important', maxWidth: '150px !important', margin: '0 auto !important', borderRadius: '12px !important' }}
                       >
                          <span className={`text-sm font-black uppercase tracking-[0.2em] ${!isOccupied ? 'text-slate-600' : 'text-primary/60'}`}>{table.name}</span>
                          <span className={`text-2xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
