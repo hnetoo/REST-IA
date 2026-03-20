@@ -1057,7 +1057,7 @@ const OwnerDashboard = () => {
             <div className="text-3xl font-black text-purple-400 mb-2">
               {formatAKZ(metrics.rendimentoGlobal || 0)}
             </div>
-            <div className="text-xs text-white/60">business_stats + financial_history</div>
+            <div className="text-xs text-white/60">external_history + orders</div>
           </div>
         </div>
 
@@ -1137,7 +1137,7 @@ const OwnerDashboard = () => {
             <div className="text-3xl font-black text-cyan-400 mb-2">
               {formatAKZ(historicoExterno || 0)}
             </div>
-            <div className="text-xs text-white/60">Saldo de external_history</div>
+            <div className="text-xs text-white/60">8.700.000,00 Kz - external_history</div>
           </div>
 
           {/* Card 9: PATRIMÓNIO TOTAL */}
