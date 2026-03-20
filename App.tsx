@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { GlobalNotificationCenter } from './src/components/GlobalNotificationCenter';
+import { usePendingSyncOrders } from './src/hooks/usePendingSyncOrders';
 import Sidebar from './src/components/Sidebar';
 import Login from './src/views/Login';
 import OwnerLogin from './src/views/owner/OwnerLogin';
@@ -49,7 +49,14 @@ const GlobalNotificationCenter = () => {
 };
 
 const App = () => {
-  const { currentUser } = useStore();
+  const { currentUser, setMenu, setCategories, setTables, setCustomers } = useStore();
+  usePendingSyncOrders();
+
+  useEffect(() => {
+    import('./src/lib/supabaseDataLoader').then(({ loadAllFromSupabase }) => {
+      loadAllFromSupabase({ setMenu, setCategories, setTables, setCustomers }).catch(console.warn);
+    });
+  }, [setMenu, setCategories, setTables, setCustomers]);
 
   return (
     <Router>

@@ -8,7 +8,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 
 const Analytics = () => {
-  const { settings, activeOrders, menu, expenses } = useStore();
+  const { settings, activeOrders, menu, expenses, loadExpenses } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
   const [loading, setLoading] = useState(false);
 
@@ -17,6 +17,12 @@ const Analytics = () => {
     currency: 'AOA', 
     maximumFractionDigits: 2 
   }).format(val);
+
+  // Garanti que o Analytics usa dados reais do Supabase (evita category undefined em cache persistido)
+  useEffect(() => {
+    if (!navigator.onLine) return;
+    loadExpenses().catch(() => {});
+  }, [loadExpenses]);
 
   // Calcular métricas reais
   const realMetrics = useMemo(() => {
@@ -296,6 +302,7 @@ const Analytics = () => {
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
             className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:border-[#06b6d4]"
+            aria-label="Selecionar intervalo de datas"
           >
             <option>Hoje</option>
             <option>Últimos 7 dias</option>
@@ -304,7 +311,11 @@ const Analytics = () => {
             <option>Personalizado</option>
           </select>
           
-          <button className="px-4 py-2 bg-[#06b6d4] text-black rounded-xl text-sm font-black uppercase hover:brightness-110 transition-all">
+          <button 
+            className="px-4 py-2 bg-[#06b6d4] text-black rounded-xl text-sm font-black uppercase hover:brightness-110 transition-all"
+            title="Aplicar filtro"
+            aria-label="Aplicar filtro"
+          >
             <Filter size={16} />
           </button>
           

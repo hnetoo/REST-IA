@@ -14,84 +14,10 @@ export const MOCK_USERS: User[] = [
   { id: '4', name: 'Garçom', role: 'GARCOM', pin: '3333', permissions: ['POS_SALES'], status: 'ATIVO' },
 ];
 
-export const MOCK_CATEGORIES: MenuCategory[] = [
-  { id: 'cat_entradas', name: 'Entradas', icon: 'Coffee' },
-  { id: 'cat_principais', name: 'Pratos Principais', icon: 'Pizza' },
-  { id: 'cat_bebidas', name: 'Bebidas', icon: 'Beer' },
-  { id: 'cat_sobremesas', name: 'Sobremesas', icon: 'IceCream' },
-];
-
-export const MOCK_MENU: Dish[] = [
-  { 
-    id: '1', 
-    name: 'Mufete de Peixe', 
-    description: 'Peixe carapau ou cacusso grelhado com feijão de óleo de palma e mandioca.', 
-    price: 9500, 
-    costPrice: 4000,
-    categoryId: 'cat_principais', 
-    image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a3a2720?auto=format&fit=crop&w=600&q=80',
-    taxCode: 'NOR'
-  },
-  { 
-    id: '2', 
-    name: 'Moamba de Galinha', 
-    description: 'Galinha rija cozida lentamente em molho de moamba com quiabos.', 
-    price: 8200, 
-    costPrice: 3500,
-    categoryId: 'cat_principais', 
-    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=600&q=80',
-    taxCode: 'NOR'
-  },
-  { 
-    id: '8', 
-    name: 'Kitaba (Petisco)', 
-    description: 'Pasta de ginguba (amendoim) torrada temperada com gindungo.', 
-    price: 2000, 
-    costPrice: 500,
-    categoryId: 'cat_entradas', 
-    image: 'https://plus.unsplash.com/premium_photo-1694699435472-5c272db31ba6?auto=format&fit=crop&w=600&q=80',
-    taxCode: 'NOR'
-  },
-  { 
-    id: '12', 
-    name: 'Cuca (Lata)', 
-    description: 'A cerveja nacional preferida dos angolanos.', 
-    price: 900, 
-    costPrice: 450,
-    categoryId: 'cat_bebidas', 
-    image: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=600&q=80',
-    taxCode: 'NOR'
-  },
-  { 
-    id: '17', 
-    name: 'Doce de Ginguba', 
-    description: 'Pé de moleque caseiro, crocante e doce.', 
-    price: 800, 
-    costPrice: 200,
-    categoryId: 'cat_sobremesas', 
-    image: 'https://images.unsplash.com/photo-1563729768-dc77858ebd66?auto=format&fit=crop&w=600&q=80',
-    taxCode: 'NOR'
-  },
-];
-
-export const MOCK_STOCK: StockItem[] = [
-  { id: '1', name: 'Arroz Branco', quantity: 25, unit: 'kg', minThreshold: 10 },
-  { id: '2', name: 'Fuba de Bombó', quantity: 30, unit: 'kg', minThreshold: 10 },
-];
-
-export const MOCK_TABLES: Table[] = [
-  ...Array.from({ length: 8 }, (_, i) => ({
-    id: i + 1,
-    name: `Mesa ${i + 1}`,
-    seats: 4,
-    status: 'LIVRE' as const,
-    x: i % 4,
-    y: Math.floor(i / 4),
-    zone: 'INTERIOR' as const,
-    shape: 'SQUARE' as const,
-    rotation: 0,
-  })),
-];
-
+/** Dados vazios - app carrega de Supabase via supabaseDataLoader */
+export const MOCK_CATEGORIES: MenuCategory[] = [];
+export const MOCK_MENU: Dish[] = [];
+export const MOCK_STOCK: StockItem[] = [];
+export const MOCK_TABLES: Table[] = [];
 export const MOCK_CUSTOMERS: Customer[] = [];
 export const MOCK_RESERVATIONS: Reservation[] = [];

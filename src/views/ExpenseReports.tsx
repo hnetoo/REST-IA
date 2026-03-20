@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { 
   Calendar, Download, Filter, TrendingUp, TrendingDown, 
@@ -7,7 +7,7 @@ import {
 import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 const ExpenseReports = () => {
-  const { expenses, settings, addNotification } = useStore();
+  const { expenses, settings, addNotification, loadExpenses } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -18,6 +18,12 @@ const ExpenseReports = () => {
     currency: 'AOA', 
     maximumFractionDigits: 2 
   }).format(val);
+
+  // Garantir despesas reais e com categoria (Supabase-first)
+  useEffect(() => {
+    if (!navigator.onLine) return;
+    loadExpenses().catch(() => {});
+  }, [loadExpenses]);
 
   // Filtrar despesas por período
   const filteredExpenses = useMemo(() => {
@@ -147,6 +153,7 @@ const ExpenseReports = () => {
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
             className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:border-[#06b6d4]"
+            aria-label="Selecionar intervalo de datas"
           >
             <option value="Hoje">Hoje</option>
             <option value="7 dias">Últimos 7 dias</option>
@@ -161,12 +168,14 @@ const ExpenseReports = () => {
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
                 className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-[#06b6d4]"
+                aria-label="Data início"
               />
               <input 
                 type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
                 className="px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:border-[#06b6d4]"
+                aria-label="Data fim"
               />
             </div>
           )}

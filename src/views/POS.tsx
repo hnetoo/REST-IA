@@ -334,96 +334,16 @@ const POS = () => {
     }
 
     const orderToPrintId = currentOrder.id;
-    const orderData = currentOrder; // Salvar dados do pedido antes de qualquer alteração
+    const orderData = currentOrder;
     const customerData = customers.find(c => c.id === orderData.customerId);
     
-    console.log(`[POS] Finalizando pedido ${orderToPrintId} com método ${method}`);
-    
-    // TENTAR FINALIZAÇÃO NO BANCO (pode falhar com 401)
+    // checkoutTable: Supabase-first; em caso de falha grava em pending_sync_orders
     try {
-      console.log('[POS] Iniciando persistência da ordem...');
       const result = await checkoutTable(currentOrder.id, method, customerId);
-      
-      console.log('[POS] Resultado do checkoutTable:', result);
-      
-      // VERIFICAÇÃO CRÍTICA: Persistir itens do carrinho (independente do resultado)
-      console.log('[POS] Verificando itens do carrinho:', currentOrder.items);
-      console.log('[POS] ID do pedido atual:', currentOrder.id);
-      
-      if (currentOrder.items && currentOrder.items.length > 0) {
-        console.log('[POS] Iniciando persistência dos itens na tabela order_items...');
-        
-        try {
-          // BLOCO OBRIGATÓRIO: Inserir itens na tabela order_items
-          // VERIFICAÇÃO: currentOrder.id é válido?
-          if (!currentOrder.id) {
-            console.error('[POS] ERRO FATAL: currentOrder.id é inválido:', currentOrder.id);
-            addNotification('error', 'ID do pedido inválido. Não é possível salvar itens.');
-            return;
-          }
-          
-          const itemsToInsert = currentOrder.items.map(item => {
-            // VERIFICAÇÃO: item.dish.id é válido?
-            if (!item.dish.id) {
-              console.error('[POS] ERRO: item.dish.id é inválido:', item);
-              return null;
-            }
-            
-            return {
-              order_id: currentOrder.id,
-              product_id: item.dish.id,
-              quantity: item.quantity,
-              unit_price: item.dish.price,
-              total_price: item.quantity * item.dish.price
-            };
-          }).filter(item => item !== null); // Remover itens inválidos
-
-          if (itemsToInsert.length === 0) {
-            console.error('[POS] ERRO: Nenhum item válido para inserir após verificação');
-            addNotification('error', 'Nenhum item válido para salvar.');
-            return;
-          }
-
-          console.log('[POS] Itens formatados para inserção:', itemsToInsert);
-
-          // Inserir itens na tabela order_items
-          const { data: insertedItems, error: itemsError } = await supabase
-            .from('order_items')
-            .insert(itemsToInsert)
-            .select();
-
-          if (itemsError) {
-            console.error('[POS] ERRO AO SALVAR ITENS:', itemsError);
-            console.error('[POS] Detalhes do erro:', {
-              code: itemsError.code,
-              message: itemsError.message,
-              details: itemsError.details,
-              hint: itemsError.hint
-            });
-            console.error('[POS] Verificar RLS na tabela order_items - possível erro de permissão');
-            addNotification('error', 'Erro ao salvar itens da venda');
-          } else {
-            console.log('[POS] Itens do pedido persistidos com sucesso:', {
-              count: insertedItems?.length || 0,
-              items: insertedItems
-            });
-            addNotification('success', `${insertedItems?.length || 0} itens salvos com sucesso!`);
-          }
-        } catch (itemsError) {
-          console.error('[POS] Exceção ao persistir itens:', itemsError);
-          addNotification('error', 'Erro crítico ao salvar itens da venda');
-        }
-      } else {
-        console.warn('[POS] Pedido sem itens para persistir:', currentOrder);
-        addNotification('warning', 'Pedido sem itens para salvar');
-      }
-      
-      if (result) {
-        console.log('[POS] Ordem persistida com sucesso:', result);
+      if (result?.success) {
         addNotification('success', 'Venda registada com sucesso!');
-      } else {
-        console.error('[POS] Falha ao persistir ordem:', result);
-        addNotification('error', 'Erro ao salvar pedido');
+      } else if (result?.savedLocally) {
+        addNotification('error', 'Venda guardada localmente (Sem Internet)');
       }
     } catch (dbError) {
       console.error('[POS] Erro na gravação do pedido:', dbError);
@@ -536,7 +456,7 @@ const POS = () => {
             <button 
               onClick={() => {
                 const state = useStore.getState();
-                const lastOrder = state.activeOrders.find(o => o.status === 'FECHADO');
+                const lastOrder = state.activeOrders.find(o => ['FECHADO', 'closed', 'paid'].includes(o.status));
                 if (lastOrder) {
                   console.log('[POS] Reimprimindo último pedido:', lastOrder.invoiceNumber);
                   handleDirectPrint(lastOrder, state.customers.find(c => c.id === lastOrder.customerId));

@@ -3,22 +3,21 @@ import { supabase } from './supabase';
 // Função compartilhada para buscar métricas de vendas do dia
 export const fetchVendasHoje = async () => {
   try {
-    // SQL TIMEZONE ANGOLA - PROCESSADO 100% NO SERVIDOR POSTGRESQL
-    const { data, error } = await supabase.rpc('fetch_vendas_hoje_africa_luanda');
-
-    if (error) {
-      console.error('[SHARED METRICS] Erro ao buscar vendas de hoje:', error);
-      return 0;
+    const { data: rpcData, error: rpcError } = await supabase.rpc('fetch_vendas_hoje_africa_luanda');
+    if (!rpcError && rpcData?.[0]?.total != null) {
+      return Number(rpcData[0].total) || 0;
     }
 
-    const vendasHoje = data?.[0]?.total || 0;
-    
-    console.log('[SHARED METRICS] Vendas Hoje (SQL Server Africa/Luanda):', {
-      total: vendasHoje,
-      timezone: 'Africa/Luanda (GMT+1) - Processado no Servidor',
-      sql: 'SELECT SUM(total_amount) FROM orders WHERE created_at >= CURRENT_DATE AT TIME ZONE Africa/Luanda'
-    });
+    const today = new Date().toISOString().split('T')[0];
+    const { data: ordersData, error } = await supabase
+      .from('orders')
+      .select('total_amount, created_at')
+      .in('status', ['closed', 'paid', 'FECHADO']);
 
+    if (error) return 0;
+    const vendasHoje = (ordersData ?? [])
+      .filter((o: { created_at?: string }) => String(o.created_at || '').startsWith(today))
+      .reduce((sum: number, o: { total_amount?: number }) => sum + Number(o.total_amount ?? 0), 0);
     return vendasHoje;
   } catch (error) {
     console.error('[SHARED METRICS] Erro crítico ao buscar vendas de hoje:', error);

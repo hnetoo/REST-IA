@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabaseService';
 import { TrendingUp, DollarSign, Users, Wallet, Receipt, Calculator, RefreshCw, LogOut, Settings, TrendingDown, Package } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { fetchVendasHoje, fetchHistoricoExterno } from '../../lib/sharedMetrics';
@@ -144,58 +144,33 @@ const OwnerDashboard = () => {
   const [despesasAcumuladasNoState, setDespesasAcumuladasNoState] = useState<number>(0);
   const [folhaSalarialNoState, setFolhaSalarialNoState] = useState<number>(0);
 
-  // Função para obter range de datas baseado no período
   const getDateRange = (periodo: 'HOJE' | 'SEMANA' | 'MÊS' | 'ANO') => {
     const now = new Date();
-    
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
     switch (periodo) {
-      case 'HOJE':
-        // FUSO HORÁRIO DE ANGOLA (GMT+1)
-        const nowAngola = new Date(now.getTime() + (60 * 60 * 1000)); // +1 hora
-        const today = new Date(nowAngola.getFullYear(), nowAngola.getMonth(), nowAngola.getDate());
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-        
-        console.log('[DASHBOARD] Data HOJE (GMT+1 Angola):', {
-          data: today.toISOString().split('T')[0],
-          start: startOfDay.toISOString(),
-          end: endOfDay.toISOString(),
-          fuso: 'GMT+1 Angola'
-        });
-        
-        return {
-          startDate: startOfDay.toISOString(),
-          endDate: endOfDay.toISOString()
-        };
-        
-      case 'SEMANA':
+      case 'HOJE': {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        return { startDate: startOfDay.toISOString(), endDate: endOfDay.toISOString() };
+      }
+      case 'SEMANA': {
         const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay()); // Domingo como início da semana
+        startOfWeek.setDate(now.getDate() - now.getDay());
         startOfWeek.setHours(0, 0, 0, 0);
-        return {
-          startDate: startOfWeek.toISOString(),
-          endDate: endOfDay.toISOString()
-        };
-      
-      case 'MÊS':
+        return { startDate: startOfWeek.toISOString(), endDate: endOfDay.toISOString() };
+      }
+      case 'MÊS': {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        return {
-          startDate: startOfMonth.toISOString(),
-          endDate: endOfDay.toISOString()
-        };
-      
-      case 'ANO':
+        return { startDate: startOfMonth.toISOString(), endDate: endOfDay.toISOString() };
+      }
+      case 'ANO': {
         const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-        return {
-          startDate: startOfYear.toISOString(),
-          endDate: endOfDay.toISOString()
-        };
-      
-      default:
-        return {
-          startDate: startOfDay.toISOString(),
-          endDate: endOfDay.toISOString()
-        };
+        return { startDate: startOfYear.toISOString(), endDate: endOfDay.toISOString() };
+      }
+      default: {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        return { startDate: startOfDay.toISOString(), endDate: endOfDay.toISOString() };
+      }
     }
   };
 
@@ -259,7 +234,7 @@ const OwnerDashboard = () => {
       const { data: salesData, error: salesError } = await supabase
         .from('orders')
         .select('id, invoice_number, table_id, total_amount, created_at')
-        .in('status', ['closed', 'paid'])
+        .in('status', ['closed', 'paid', 'FECHADO'])
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -329,7 +304,7 @@ const OwnerDashboard = () => {
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
-        .in('status', ['closed', 'paid'])
+        .in('status', ['closed', 'paid', 'FECHADO'])
         .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString())
         .lte('created_at', new Date().toISOString());
 
@@ -419,7 +394,7 @@ const OwnerDashboard = () => {
       const { data: todayData, error: todayError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
-        .in('status', ['closed', 'paid'])
+        .in('status', ['closed', 'paid', 'FECHADO'])
         .gte('created_at', today.toISOString().split('T')[0])
         .lte('created_at', today.toISOString());
       
@@ -427,7 +402,7 @@ const OwnerDashboard = () => {
       const { data: yesterdayData, error: yesterdayError } = await supabase
         .from('orders')
         .select('total_amount, created_at')
-        .in('status', ['closed', 'paid'])
+        .in('status', ['closed', 'paid', 'FECHADO'])
         .gte('created_at', yesterday.toISOString().split('T')[0])
         .lte('created_at', yesterday.toISOString().split('T')[0] + 'T23:59:59');
       
@@ -465,12 +440,7 @@ const OwnerDashboard = () => {
       
     } catch (error) {
       console.error('[DASHBOARD] Erro ao buscar dados dos gráficos:', error);
-      // Fallback para dados mock se houver erro
-      const mockChartData = [
-        { date: 'Hoje', receitas: 85000, despesas: 12000 },
-        { date: 'Ontem', receitas: 72000, despesas: 10000 }
-      ];
-      setChartData(mockChartData);
+      setChartData([]);
     }
   };
 
@@ -484,7 +454,7 @@ const OwnerDashboard = () => {
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('id, created_at, total_amount, status')
-        .in('status', ['closed', 'paid'])
+        .in('status', ['closed', 'paid', 'FECHADO'])
         .order('created_at', { ascending: false })
         .limit(50);
       
@@ -635,7 +605,7 @@ const OwnerDashboard = () => {
         const { data: staffData, error: staffError } = await supabase
           .from('staff')
           .select('*')
-          .eq('status', 'ATIVO')
+          .in('status', ['active', 'ATIVO', 'activo'])
           .order('created_at', { ascending: false });
 
         console.log('[DASHBOARD] DEBUG: Staff data recebido:', staffData);
@@ -671,7 +641,7 @@ const OwnerDashboard = () => {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .in('status', ['closed', 'paid'])
+          .in('status', ['closed', 'paid', 'FECHADO'])
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
@@ -696,43 +666,20 @@ const OwnerDashboard = () => {
       setHistoricoExterno(historicoExterno); // Atualizar estado
       console.log('[DASHBOARD] Saldo de Transição (external_history):', historicoExterno);
 
-      // Buscar dados de business_stats para rendimento global
       let totalBusinessStats = 0;
       try {
         const { data: businessStatsData, error: businessStatsError } = await supabase
           .from('business_stats')
-          .select('total_revenue')
-          .single();
+          .select('legacy_revenue_kz');
 
-        if (!businessStatsError && businessStatsData) {
-          totalBusinessStats = Number(businessStatsData.total_revenue) || 0;
-          console.log('[DASHBOARD] Total de business_stats:', totalBusinessStats);
-        } else {
-          console.log('[DASHBOARD] Nenhum dado em business_stats');
+        if (!businessStatsError && businessStatsData?.length) {
+          totalBusinessStats = businessStatsData.reduce((acc, row) => acc + Number(row.legacy_revenue_kz ?? 0), 0);
         }
       } catch (businessError) {
         console.error('[DASHBOARD] Erro ao buscar business_stats:', businessError);
       }
 
-      // Buscar dados de financial_history para rendimento global
-      let totalFinancialHistory = 0;
-      try {
-        const { data: financialHistoryData, error: financialHistoryError } = await supabase
-          .from('financial_history')
-          .select('receita_total');
-
-        if (!financialHistoryError && financialHistoryData) {
-          totalFinancialHistory = financialHistoryData.reduce((acc, item) => acc + (Number(item.receita_total) || 0), 0);
-          console.log('[DASHBOARD] Total de financial_history:', totalFinancialHistory);
-        } else {
-          console.log('[DASHBOARD] Nenhum dado em financial_history');
-        }
-      } catch (financialError) {
-        console.error('[DASHBOARD] Erro ao buscar financial_history:', financialError);
-      }
-
-      // Calcular Rendimento Global = business_stats + financial_history
-      const rendimentoGlobal = totalBusinessStats + totalFinancialHistory;
+      const rendimentoGlobal = totalBusinessStats + historicoExterno;
       console.log('[DASHBOARD] Rendimento Global calculado:', rendimentoGlobal);
 
       // Gerar dados para gráficos com base nas vendas
@@ -784,7 +731,7 @@ const OwnerDashboard = () => {
         despesasAcumuladas: Number(totalExpensesAllTime) || 0, // Despesas totais acumuladas
         folhaSalarial: Number(folhaSalarial) || 0,
         impostos: ivaSete, // 7% APENAS SOBRE VENDAS REAIS
-        historicoRevenue: await fetchHistoricoRevenue(),
+        historicoRevenue: historicoExterno,
         lucroLiquido: lucroOperacional, // LUCRO OPERACIONAL
         lucroTotalConsolidado: lucroTotalConsolidado, // LUCRO TOTAL CONSOLIDADO
         margem: vendasApp > 0 ? (Number(lucroOperacional) / vendasApp) * 100 : 0,

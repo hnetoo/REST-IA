@@ -2,7 +2,11 @@ create extension if not exists "pgjwt" with schema "extensions";
 
 drop extension if exists "pg_net";
 
-alter table "public"."expenses" drop constraint "expenses_category_check";
+alter table "public"."expenses" drop constraint if exists "expenses_category_check";
+
+-- expenses_pkey pode existir como constraint que referencia um index;
+-- ao recriar a constraint/index, removemos primeiro a constraint para evitar erro 2BP01.
+alter table "public"."expenses" drop constraint if exists "expenses_pkey";
 
 drop index if exists "public"."expenses_pkey";
 
@@ -45,38 +49,38 @@ create or replace view "public"."dashboard_stats_v2" as  SELECT id AS order_id,
 
 
 
-  create policy "image_upload 1ifhysk_0"
+create policy "image_upload 1ifhysk_0"
   on "storage"."objects"
   as permissive
   for insert
-  to anon, authenticated, service_role, cli_login_postgres
+  to anon, authenticated, service_role
 with check (true);
 
 
 
-  create policy "image_upload 1ifhysk_1"
+create policy "image_upload 1ifhysk_1"
   on "storage"."objects"
   as permissive
   for update
-  to anon, authenticated, service_role, cli_login_postgres
+  to anon, authenticated, service_role
 using (true);
 
 
 
-  create policy "image_upload 1ifhysk_2"
+create policy "image_upload 1ifhysk_2"
   on "storage"."objects"
   as permissive
   for select
-  to anon, authenticated, service_role, cli_login_postgres
+  to anon, authenticated, service_role
 using (true);
 
 
 
-  create policy "image_upload 1ifhysk_3"
+create policy "image_upload 1ifhysk_3"
   on "storage"."objects"
   as permissive
   for delete
-  to anon, authenticated, service_role, cli_login_postgres
+  to anon, authenticated, service_role
 using (true);
 
 

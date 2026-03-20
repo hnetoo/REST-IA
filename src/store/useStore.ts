@@ -7,7 +7,8 @@ import { versionControlService } from '../lib/versionControlService';
 import { sqlMigrationService } from '../lib/sqlMigrationService';
 import { databaseService } from '../lib/databaseService';
 import { Table, Order, Dish, Customer, PaymentMethod, User, SystemSettings, Notification, MenuCategory, OrderType, Employee, AttendanceRecord, StockItem, Reservation, WorkShift, OrderItem, PermissionTemplate, AuditLog, PaymentMethodConfig, Expense, ExpenseCategory, ExpenseStatus } from '../../types';
-import { MOCK_MENU, MOCK_TABLES, MOCK_CUSTOMERS, MOCK_USERS, MOCK_CATEGORIES, MOCK_STOCK, MOCK_RESERVATIONS } from '../../constants';
+import { addPendingSyncOrder, type PendingSyncOrder } from '../lib/pendingSyncOrders';
+import { MOCK_TABLES, MOCK_USERS, MOCK_STOCK, MOCK_RESERVATIONS } from '../../constants';
 import defaultLogo from '/logo.png';
 
 const syncChannel = new BroadcastChannel('vereda_state_sync');
@@ -158,6 +159,11 @@ interface StoreState {
   backupToSupabase: () => Promise<void>;
   restoreFromSupabase: () => Promise<void>;
   resetFinancialData: () => void;
+
+  setMenu: (menu: Dish[]) => void;
+  setCategories: (categories: MenuCategory[]) => void;
+  setTables: (tables: Table[]) => void;
+  setCustomers: (customers: Customer[]) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -273,10 +279,10 @@ export const useStore = create<StoreState>()(
         }
       },
       tables: MOCK_TABLES,
-      categories: MOCK_CATEGORIES.map(c => ({...c, isVisibleDigital: true})),
-      menu: MOCK_MENU.map(m => ({...m, isVisibleDigital: true, isFeatured: false})),
+      categories: [],
+      menu: [],
       activeOrders: [],
-      customers: MOCK_CUSTOMERS,
+      customers: [],
       activeTableId: null,
       activeOrderId: null,
       customerDisplayMode: {},
@@ -499,161 +505,99 @@ export const useStore = create<StoreState>()(
       },
 
       checkoutTable: async (orderId, paymentMethod, customerId) => {
+        const order = get().activeOrders.find(o => o.id === orderId);
+        if (!order) return { success: false };
+
+        const currentUser = get().currentUser;
+        const customers = get().customers;
+        const customerName = customerId
+          ? (customers.find(c => c.id === customerId)?.name || order.subAccountName || 'CLIENTE_PADRAO')
+          : (order.subAccountName || 'CLIENTE_PADRAO');
+        const pm = paymentMethod || 'NUMERARIO';
+
+        // Estrutura com EXATAMENTE os nomes de coluna do Supabase (schema real)
         const series = get().settings.invoiceSeries;
         const count = get().invoiceCounter;
         const invoiceNumber = `FR VER${series}/${count}`;
-        const hash = Math.random().toString(36).substring(2, 12).toUpperCase();
-        
-        set(state => {
-          const order = state.activeOrders.find(o => o.id === orderId);
-          if (!order) return state;
+        const now = new Date().toISOString();
+        const orderData = {
+          id: order.id,
+          customer_name: customerName,
+          customer_phone: '999999999',
+          delivery_address: 'ENDEREÇO_PADRAO',
+          total_amount: order.total,
+          status: 'closed',
+          payment_method: pm,
+          invoice_number: invoiceNumber,
+          created_at: now,
+          updated_at: now
+        };
 
+        const orderItems = (order.items || []).map(item => ({
+          order_id: order.id,
+          product_id: item.dish.id,
+          quantity: item.quantity,
+          unit_price: item.dish.price,
+          total_price: item.dish.price * item.quantity
+        }));
+
+        const applyLocalState = () => {
+          const series = get().settings.invoiceSeries;
+          const count = get().invoiceCounter;
+          const invoiceNumber = `FR VER${series}/${count}`;
+          const hash = Math.random().toString(36).substring(2, 12).toUpperCase();
           const orderTotal = order.total;
-          
-          const newCustomers = customerId && paymentMethod === 'PAGAR_DEPOIS' 
-            ? state.customers.map(c => c.id === customerId ? { ...c, balance: c.balance + orderTotal } : c)
-            : state.customers;
-
-          const newOrders: Order[] = state.activeOrders.map(o => 
-            o.id === orderId ? { ...o, status: 'closed' as const, paymentMethod, customerId, invoiceNumber, hash } : o
-          );
-          
           const tableId = order.tableId;
-          const tableHasMoreOrders = newOrders.some(o => o.tableId === tableId && o.status === 'ABERTO');
 
-          return {
-            customers: newCustomers,
-            activeOrders: newOrders,
-            tables: tableId ? state.tables.map(t => t.id === tableId && !tableHasMoreOrders ? { ...t, status: 'LIVRE' as const } : t) : state.tables,
-            invoiceCounter: count + 1,
-            activeTableId: null,
-            activeOrderId: null,
-            customerDisplayMode: tableId ? { ...state.customerDisplayMode, [tableId]: 'MARKETING' as const } : state.customerDisplayMode
-          };
-        });
+          set(state => {
+            const newCustomers = customerId && paymentMethod === 'PAGAR_DEPOIS'
+              ? state.customers.map(c => c.id === customerId ? { ...c, balance: c.balance + orderTotal } : c)
+              : state.customers;
 
-        // PERSISTÊNCIA IMEDIATA NO SUPABASE - USAR VALORES REAIS
-        const finalOrder = get().activeOrders.find(o => o.id === orderId);
-        if (finalOrder && finalOrder.status === 'FECHADO') {
-          // USAR OPERADOR REAL - NÃO FORÇAR PADRÃO
-          const currentUser = get().currentUser;
-          const sellerName = currentUser?.name || finalOrder.subAccountName || 'OPERADOR_PADRAO';
-          
-          // USAR MÉTODO DE PAGAMENTO REAL - NÃO FORÇAR
-          const paymentMethod = finalOrder.paymentMethod || 'NUMERARIO';
-          
-          // USAR NOME DO CLIENTE REAL - NÃO FORÇAR PADRÃO
-          const customerName = finalOrder.subAccountName || 'CLIENTE_PADRAO';
-          
-          // DEBUG COMPLETO
-          console.log('=== VENDA PARA GRAVAR ===');
-          console.log('ID:', finalOrder.id);
-          console.log('OPERADOR:', sellerName);
-          console.log('CLIENTE:', customerName);
-          console.log('MÉTODO PAGAMENTO:', paymentMethod);
-          console.log('TOTAL:', finalOrder.total);
-          
-          // FORÇAR INSERT DIRETO - APENAS COLUNAS REAIS DO SCHEMA
-          try {
-            const currentUser = get().currentUser;
-            const orderData = {
-              id: finalOrder.id,
-              customer_name: customerName,
-              customer_phone: '999999999',
-              delivery_address: 'ENDEREÇO_PADRAO',
-              total_amount: finalOrder.total,
-              status: 'closed',
-              payment_method: paymentMethod,
-              user_id: currentUser?.id || null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+            const newOrders: Order[] = state.activeOrders.map(o =>
+              o.id === orderId ? { ...o, status: 'closed' as const, paymentMethod, customerId, invoiceNumber, hash } : o
+            );
+
+            const tableHasMoreOrders = newOrders.some(o => o.tableId === tableId && o.status === 'ABERTO');
+
+            return {
+              customers: newCustomers,
+              activeOrders: newOrders,
+              tables: tableId ? state.tables.map(t => t.id === tableId && !tableHasMoreOrders ? { ...t, status: 'LIVRE' as const } : t) : state.tables,
+              invoiceCounter: count + 1,
+              activeTableId: null,
+              activeOrderId: null,
+              customerDisplayMode: tableId ? { ...state.customerDisplayMode, [tableId]: 'MARKETING' as const } : state.customerDisplayMode
             };
-            
-            console.log('=== DADOS PARA INSERT ===');
-            console.log('OBJETO COMPLETO:', orderData);
-            
-            const { data, error } = await supabase
-              .from('orders')
-              .insert(orderData)
-              .select();
-              
-            if (error) {
-              console.error('❌ ERRO NA GRAVAÇÃO:', error);
-              console.error('❌ DETALHES DO ERRO:', JSON.stringify(error, null, 2));
-              get().addNotification('error', `FALHA AO GRAVAR VENDA: ${error.message}`);
-            } else {
-              console.log('✅ VENDA GRAVADA COM SUCESSO:', data);
-              get().addNotification('success', 'Venda gravada com sucesso no Supabase');
+          });
+        };
+
+        try {
+          const { error: orderError } = await supabase.from('orders').insert(orderData).select();
+          if (orderError) throw orderError;
+
+          if (orderItems.length > 0) {
+            const validItems = orderItems.filter(
+              i => typeof i.product_id === 'string' && /^[0-9a-f-]{36}$/i.test(i.product_id)
+            );
+            if (validItems.length > 0) {
+              const { error: itemsError } = await supabase.from('order_items').insert(validItems);
+              if (itemsError) console.warn('[checkout] order_items insert:', itemsError.message);
             }
-          } catch (error) {
-            console.error('❌ FALHA CRÍTICA:', error);
-            get().addNotification('error', `FALHA CRÍTICA: ${error.message}`);
           }
-            
-            // PERSISTIR ITENS DO PEDIDO NA TABELA order_items - GARANTIR EXECUÇÃO IMEDIATA
-            console.log('[POS] Persistindo itens do pedido:', finalOrder.items);
-            
-            if (finalOrder.items && finalOrder.items.length > 0) {
-              const orderItems = finalOrder.items.map(item => ({
-                order_id: finalOrder.id,
-                product_id: item.dish.id,
-                quantity: item.quantity,
-                unit_price: item.dish.price,
-                total_price: item.dish.price * item.quantity
-              }));
 
-              console.log('[POS] Itens formatados para inserção:', orderItems);
-
-              // Inserir todos os itens do pedido - EXECUÇÃO IMEDIATA
-              const { data: insertedItems, error: itemsError } = await supabase
-                .from('order_items')
-                .insert(orderItems)
-                .select();
-
-              if (itemsError) {
-                console.error('[POS] Erro ao persistir itens no Supabase:', itemsError);
-                console.error('[POS] Detalhes do erro:', {
-                  code: itemsError.code,
-                  message: itemsError.message,
-                  details: itemsError.details,
-                  hint: itemsError.hint
-                });
-                
-                // Tentar inserir um por um se falhar em lote
-                const insertIndividualItems = async () => {
-                  for (const orderItem of orderItems) {
-                    try {
-                      const { error: singleError } = await supabase
-                        .from('order_items')
-                        .insert(orderItem);
-                      
-                      if (singleError) {
-                        console.error('[POS] Erro ao inserir item individual:', singleError, orderItem);
-                      } else {
-                        console.log('[POS] Item individual inserido com sucesso:', orderItem);
-                      }
-                    } catch (singleCatchError) {
-                      console.error('[POS] Exceção ao inserir item individual:', singleCatchError, orderItem);
-                    }
-                  }
-                };
-
-                // Executar inserção individual como fallback
-                await insertIndividualItems();
-                return { success: false, error: itemsError };
-              } else {
-                console.log('[POS] Itens do pedido persistidos com sucesso:', {
-                  count: insertedItems?.length || 0,
-                  items: insertedItems
-                });
-                return { success: true, data: insertedItems };
-              }
-            } else {
-              console.warn('[POS] Pedido sem itens para persistir:', finalOrder);
-              return { success: true, data: null };
-            }
+          applyLocalState();
+          return { success: true };
+        } catch (err) {
+          // BLOCO CATCH: Falha de rede/offline - guardar no localStorage
+          const pendingOrder: PendingSyncOrder = {
+            ...orderData,
+            items: orderItems
+          };
+          addPendingSyncOrder(pendingOrder);
+          applyLocalState();
+          return { success: false, savedLocally: true };
         }
-        return { success: true, data: null };
       },
 
       updateOrderPaymentMethod: (orderId, newMethod) => {
@@ -1166,7 +1110,7 @@ restoreFromSupabase: async () => {
             id: exp.id,
             description: exp.description || '',
             amount: Number(exp.amount_kz || 0),
-            category: exp.category || 'OUTROS',
+            category: exp.category || exp.category_name || 'OUTROS',
             status: exp.status || 'PENDENTE',
             paymentMethod: exp.payment_method || 'NUMERARIO',
             receipt: exp.receipt || '',
@@ -1246,6 +1190,8 @@ restoreFromSupabase: async () => {
 
       setMenu: (menu: Dish[]) => set({ menu }),
       setCategories: (categories: MenuCategory[]) => set({ categories }),
+      setTables: (tables: Table[]) => set({ tables }),
+      setCustomers: (customers: Customer[]) => set({ customers }),
       
       // ✅ FUNÇÃO DE LIMPEZA TOTAL - HARD RESET
       clearAllData: () => {
@@ -1255,13 +1201,13 @@ restoreFromSupabase: async () => {
           menu: [],
           categories: [],
           activeOrders: [],
-          tables: MOCK_TABLES,
-          customers: MOCK_CUSTOMERS,
+          tables: [],
+          customers: [],
           users: MOCK_USERS,
           employees: [],
           attendance: [],
-          stock: MOCK_STOCK,
-          reservations: MOCK_RESERVATIONS,
+          stock: [],
+          reservations: [],
           workShifts: [],
           expenses: [],
           orders: [],

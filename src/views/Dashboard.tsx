@@ -68,18 +68,10 @@ const Dashboard = () => {
 
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
 
-  // CÁLCULO DINÂMICO DO RENDIMENTO GLOBAL - PASSADO + PRESENTE
+  // FONTE DA VERDADE: Apenas Supabase - ignorar localStorage e activeOrders
   const rendimentoGlobalDinamico = useMemo(() => {
-    const valorHistorico = metrics?.rendimentoGlobal || 0;
-    const valorVendasHoje = activeOrders
-      .filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status))
-      .reduce((acc, order) => acc + (order.total || 0), 0);
-    
-    const total = valorHistorico + valorVendasHoje;
-    console.log(`[SOMA DINÂMICA] Histórico: ${valorHistorico} + Vendas Hoje: ${valorVendasHoje} = Total: ${total}`);
-    
-    return total;
-  }, [metrics?.rendimentoGlobal, activeOrders]); // Dependências: mudanças no histórico ou nas vendas
+    return metrics?.rendimentoGlobal || 0;
+  }, [metrics?.rendimentoGlobal]);
   
   // CARREGAR MÉTRICAS
   const fetchMetrics = async () => {
@@ -182,6 +174,19 @@ const Dashboard = () => {
         const today = new Date().toISOString().split('T')[0]; // Data atual para despesas
         const todayExpenses = expenses.filter(exp => String(exp.createdAt || '').split('T')[0] === today);
         const totalExpenses = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+
+        // Despesas acumuladas (mês atual) em tempo local de Angola
+        const watNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
+        const monthExpensesTotal = expenses
+          .filter(exp => {
+            const expDate = new Date(exp.createdAt as any);
+            const watDate = new Date(expDate.toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
+            const sameMonth = watDate.getFullYear() === watNow.getFullYear() && watDate.getMonth() === watNow.getMonth();
+            const statusStr = String(exp.status || '');
+            const isPending = statusStr.toLowerCase().includes('pendente');
+            return sameMonth && !isPending;
+          })
+          .reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
         
         console.log('[DASHBOARD] DEBUG DESPESAS HOJE:', {
           today,
@@ -261,6 +266,7 @@ const Dashboard = () => {
         const mockMetrics = {
           totalVendas: totalSales,
           despesas: totalExpenses,
+          despesasAcumuladas: monthExpensesTotal,
           folhaSalarial: totalPayroll,
           lucroLiquido: (totalSales || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((totalSales || 0) * 0.065 || 0),
           rendimentoGlobal: rendimentoGlobal
@@ -502,7 +508,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
             Despesas Hoje
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
+          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesasAcumuladas || 0)}</p>
           <div className="mt-2 text-[10px] text-orange-500 font-bold">
              {expenses.length} Registros
           </div>
@@ -619,6 +625,8 @@ const Dashboard = () => {
                         <button 
                           onClick={() => handleReprint(order)}
                           className="p-3 bg-white/10 text-white rounded-xl hover:bg-primary hover:text-black transition-all"
+                          title="Reimprimir fatura"
+                          aria-label="Reimprimir fatura"
                         >
                             <Printer size={18} />
                         </button>
