@@ -659,14 +659,51 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar vendas de hoje USANDO FUNÇÃO COMPARTILHADA
-      const vendasHoje = await fetchVendasHoje();
-      console.log('[OWNER HUB] Vendas Hoje (função compartilhada):', vendasHoje);
+      // Buscar vendas de hoje USANDO QUERY DO DASHBOARD PRINCIPAL (FUNCIONANDO)
+      let vendasHoje = 0;
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('total_amount, created_at')
+          .eq('status', 'closed');
 
-      // Buscar faturação histórica da tabela external_history (FUNÇÃO COMPARTILHADA)
-      const historicoExterno = await fetchHistoricoExterno();
+        if (!ordersError && ordersData) {
+          // Filtrar por data no front-end (mesma lógica do dashboard principal)
+          vendasHoje = ordersData
+            .filter(order => String(order.created_at || '').split('T')[0] === today)
+            .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+          
+          console.log('[OWNER HUB] Vendas Hoje (Query Copiada):', {
+            total: vendasHoje,
+            today,
+            totalOrders: ordersData.length,
+            todayOrders: ordersData.filter(order => String(order.created_at || '').split('T')[0] === today).length
+          });
+        } else {
+          console.error('[OWNER HUB] Erro Query Vendas Hoje:', ordersError);
+        }
+      } catch (queryError) {
+        console.error('[OWNER HUB] Erro crítico Query Vendas:', queryError);
+      }
+
+      // FORÇAR LEITURA DE EXTERNAL_HISTORY PARA SALDO DE TRANSIÇÃO (8.700.000,00 Kz)
+      let historicoExterno = 0;
+      try {
+        const { data: historyData, error: historyError } = await supabase
+          .from('external_history')
+          .select('total_revenue');
+
+        if (!historyError && historyData && historyData.length > 0) {
+          historicoExterno = historyData.reduce((acc, row) => acc + (Number(row.total_revenue) || 0), 0);
+          console.log('[OWNER HUB] Saldo de Transição forçado (external_history):', historicoExterno);
+        } else {
+          console.log('[OWNER HUB] Nenhum dado em external_history, usando 0');
+        }
+      } catch (historyError) {
+        console.error('[OWNER HUB] Erro ao buscar external_history:', historyError);
+      }
       setHistoricoExterno(historicoExterno); // Atualizar estado
-      console.log('[DASHBOARD] Saldo de Transição (external_history):', historicoExterno);
 
       let totalBusinessStats = 0;
       try {
@@ -681,7 +718,7 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar business_stats:', businessError);
       }
 
-      // RENDIMENTO GLOBAL: FONTE DA VERDADE (external_history + orders)
+      // RENDIMENTO GLOBAL: COPIADO DO DASHBOARD PRINCIPAL (FUNCIONANDO)
       let rendimentoGlobal = 0;
       
       try {
