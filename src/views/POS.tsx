@@ -623,8 +623,8 @@ const POS = () => {
                         onClick={() => handleTableClick(table)}
                         className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 relative group border-2 ${!isOccupied ? 'border-white/5 bg-[#1a1a1a] text-white' : 'border-primary bg-primary/10 text-primary shadow-lg'}`}
                       >
-                         <span className={`text-sm font-black uppercase tracking-[0.2em] ${!isOccupied ? 'text-slate-600' : 'text-primary/60'}`}>{table.name}</span>
-                         <span className={`text-4xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
+                         <span className={`text-xs font-black uppercase tracking-widest ${!isOccupied ? 'text-slate-500' : 'text-primary/60'}`}>{table.name}</span>
+                         <span className={`text-6xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
                          
                          {isOccupied && (
                            <div className="absolute -top-3 -right-3 flex gap-1">
