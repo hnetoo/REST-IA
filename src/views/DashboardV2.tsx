@@ -1,23 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, Activity, CreditCard, ShoppingCart, Calendar, Clock, AlertTriangle, Users, BarChart3, Package, Filter, Download, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { DollarSign, TrendingUp, Activity, CreditCard, Clock, AlertTriangle, BarChart3, Package, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { formatKz, formatPercent, safeValue, getProfitColor, getPercentColor, formatDate, formatDateTime } from '../utils/format';
+import { formatKz } from '../utils/format';
 
 // Interfaces TypeScript para dados financeiros
-interface OrderData {
-  id: string;
-  created_at: string;
-  total: number;
-  status: string;
-  payment_method?: string;
-  order_items: {
-    quantity: number;
-    products: {
-      cost_price: number;
-      price: number;
-    };
-  }[];
-}
 
 interface ExpenseData {
   id: string;
@@ -74,11 +60,6 @@ const DashboardV2 = () => {
     historicoExternoProfit: 0,
     faturacaoTotal: 0
   });
-
-  // Formatar data para input
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
 
   // Carregar dados do dashboard
   const loadDashboardData = async () => {
@@ -173,7 +154,7 @@ const DashboardV2 = () => {
       const paymentMethodsMap = new Map<string, number>();
       const hourlySalesMap = new Map<string, { orders: number; revenue: number }>();
 
-      ordersData?.forEach((order: OrderData) => {
+      ordersData?.forEach((order) => {
         totalRevenue += order.total || 0;
         totalOrders++;
 
@@ -575,7 +556,7 @@ const DashboardV2 = () => {
               <div className="mt-4 pt-4 border-t border-slate-700">
                 <p className="text-slate-400 text-sm mb-2">Maiores Despesas</p>
                 <div className="space-y-1">
-                  {metrics.topExpenses.map((expense, index) => (
+                  {metrics.topExpenses.map((expense) => (
                     <div key={expense.id} className="flex justify-between text-xs">
                       <span className="text-slate-400">{expense.category}</span>
                       <span className="text-white font-medium">{formatKz(expense.amount || 0)}</span>
@@ -647,7 +628,7 @@ const DashboardV2 = () => {
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {metrics.auditLogs.length > 0 ? (
             metrics.auditLogs.map((log, index) => (
-              <div key={index} className="flex justify-between items-center p-3 bg-slate-800 rounded-lg">
+              <div key={index} className="flex justify-between items-center p-3 bg-slate-800 rounded-lg log-item">
                 <div className="flex-1">
                   <p className="text-white text-sm font-medium">{log.action}</p>
                   <p className="text-slate-400 text-xs">{log.details}</p>
