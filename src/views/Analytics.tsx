@@ -152,20 +152,15 @@ const Analytics = () => {
   //   ...
   // ];
 
-  // Dados para gráfico de pizza das despesas - FORÇAR CATEGORIAS CORRETAS
+  // Dados para gráfico de pizza das despesas - CORRIGIR MAPEAMENTO E CAMPOS
   const expensePieData = useMemo(() => {
     const grouped: Record<string, number> = {};
     
     expenses.forEach(expense => {
-      // DEBUG COMPLETO - MOSTRAR OBJETO INTEIRO
-      console.log('[ANALYTICS] === DESPESA BRUTA ===');
-      console.log('[ANALYTICS] Objeto completo:', expense);
-      console.log('[ANALYTICS] Campo category:', expense.category);
-      console.log('[ANALYTICS] Campo description:', expense.description);
-      console.log('[ANALYTICS] Campo amount:', expense.amount);
-      console.log('[ANALYTICS] Campo amount_kz:', expense.amount_kz);
+      // USAR CAMPO CORRETO amount (conforme tipo Expense)
+      const valor = Number(expense.amount || 0);
       
-      // USAR CATEGORIA REAL - CONFORME TIPO Expense
+      // USAR CATEGORIA REAL - SEM FILTRO DE STATUS (mostrar tudo)
       let categoryName = String(expense.category || 'OUTROS');
       
       // ÚLTIMO RESGUARDO - NUNCA undefined
@@ -173,30 +168,21 @@ const Analytics = () => {
         categoryName = 'OUTROS';
       }
       
-      console.log('[ANALYTICS] CATEGORIA FINAL:', categoryName);
-      console.log('[ANALYTICS] VALOR:', expense.amount || 0);
-      
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
       }
       
-      // USAR amount (campo real do log)
-      const valor = Number(expense.amount || 0);
       grouped[categoryName] += valor;
     });
 
     const total = Object.values(grouped).reduce((acc, val) => acc + val, 0);
     
+    // MAPEAMENTO CORRETO PARA O GRÁFICO - name é a chave esperada pelo PieChart
     const chartData = Object.entries(grouped).map(([category, amount]) => ({
-      name: category,
+      name: category,  // ← CHAVE CORRETA PARA O GRÁFICO
       value: amount,
       percentage: total > 0 ? (amount / total) * 100 : 0
     }));
-    
-    // LOG FINAL PARA VERIFICAÇÃO
-    console.log('[ANALYTICS] === DADOS FINAIS DO GRÁFICO ===');
-    console.log('[ANALYTICS] Dados formatados:', chartData);
-    console.log('[ANALYTICS] Total calculado:', total);
     
     return chartData;
   }, [expenses]);
