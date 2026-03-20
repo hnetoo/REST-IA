@@ -144,7 +144,7 @@ const POS = () => {
   const closedToday = useMemo(() => {
     const todayStr = new Date().toLocaleDateString('en-CA');
     return activeOrders.filter(o => {
-      if (o.status !== 'FECHADO') return false;
+      if (!['FECHADO', 'closed', 'paid'].includes(o.status)) return false;
       const orderDate = new Date(o.timestamp).toLocaleDateString('en-CA');
       return orderDate === todayStr;
     });
@@ -178,7 +178,7 @@ const POS = () => {
       const { data: todayOrders, error } = await supabase
         .from('orders')
         .select('*')
-        .eq('status', 'FECHADO')
+        .in('status', ['FECHADO', 'closed', 'paid'])
         .gte('created_at', `${today}T00:00:00`)
         .lte('created_at', `${today}T23:59:59`)
         .order('created_at', { ascending: false });
@@ -199,7 +199,7 @@ const POS = () => {
       // Agrupar por payment_method (Cash, Multicaixa, etc.)
       const groupedByPayment = todayOrders.reduce((acc: any, order: any) => {
         const method = order.payment_method || 'OUTRO';
-        const total = parseFloat(order.total) || 0;
+        const total = parseFloat(order.total_amount ?? order.total ?? 0) || 0;
         
         if (!acc[method]) {
           acc[method] = {
@@ -221,7 +221,7 @@ const POS = () => {
         id: order.id,
         invoiceNumber: order.invoice_number || `INV-${order.id?.slice(-6)}`,
         tableId: order.table_id,
-        total: parseFloat(order.total) || 0,
+        total: parseFloat(order.total_amount ?? order.total ?? 0) || 0,
         paymentMethod: order.payment_method || 'OUTRO',
         timestamp: order.created_at,
         items: [] // Não precisamos dos itens para o relatório de fecho
@@ -456,7 +456,13 @@ const POS = () => {
             <button 
               onClick={() => {
                 const state = useStore.getState();
-                const lastOrder = state.activeOrders.find(o => ['FECHADO', 'closed', 'paid'].includes(o.status));
+                const lastOrder = state.activeOrders
+                  .filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status))
+                  .sort((a, b) => {
+                    const ta = new Date(a.timestamp as any).getTime() || 0;
+                    const tb = new Date(b.timestamp as any).getTime() || 0;
+                    return tb - ta;
+                  })[0];
                 if (lastOrder) {
                   console.log('[POS] Reimprimindo último pedido:', lastOrder.invoiceNumber);
                   handleDirectPrint(lastOrder, state.customers.find(c => c.id === lastOrder.customerId));
@@ -713,7 +719,14 @@ const POS = () => {
                      >
                         <Printer size={20}/>
                      </button>
-                     <button onClick={() => { setActiveOrder(null); setActiveTable(null); }} className="p-3 bg-white/5 text-slate-400 hover:text-white rounded-xl border border-white/10 transition-all"><X size={20}/></button>
+                    <button
+                      onClick={() => { setActiveOrder(null); setActiveTable(null); }}
+                      className="p-3 bg-white/5 text-slate-400 hover:text-white rounded-xl border border-white/10 transition-all"
+                      title="Voltar para Mesas"
+                      aria-label="Voltar para Mesas"
+                    >
+                      <X size={20}/>
+                    </button>
                    </div>
                 </div>
                 
@@ -903,7 +916,14 @@ const POS = () => {
         <div className="fixed inset-y-0 right-0 w-[500px] bg-slate-950/95 backdrop-blur-2xl border-l border-white/10 z-[120] p-12 animate-in slide-in-from-right duration-500 shadow-2xl">
            <div className="flex justify-between items-center mb-12">
               <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Turno Atual</h3>
-              <button onClick={() => setIsHistoryOpen(false)} className="p-4 bg-white/5 rounded-xl text-slate-500 hover:text-white"><X size={24}/></button>
+              <button
+                onClick={() => setIsHistoryOpen(false)}
+                className="p-4 bg-white/5 rounded-xl text-slate-500 hover:text-white"
+                title="Fechar Turno"
+                aria-label="Fechar Turno"
+              >
+                <X size={24}/>
+              </button>
            </div>
            <div className="space-y-5 overflow-y-auto max-h-[calc(100vh-200px)] no-scrollbar pr-2">
               {closedToday.map(order => (
@@ -1051,32 +1071,38 @@ const POS = () => {
           setIsPaymentModalOpen(false);
           
           if (selectedSubAccount) {
-            // 🛡️ FECHAMENTO DE SUBCONTA BLINDADO (PRESERVAR ITENS PARA DASHBOARD)
-            console.log('[POS] Fechando subconta:', selectedSubAccount);
-            
-            // 🛡️ SEGURANÇA: Apenas atualizar ordem (preservar itens para relatório de vendas)
-            const { error } = await supabase
-              .from('orders')
-              .update({ 
-                payment_method: paymentMethod,
-                status: 'FECHADO'
-              })
-              .eq('id', selectedSubAccount.id);
-              
-            if (error) {
-              console.error('Erro ao atualizar subconta:', error);
-              throw error;
-            }
-            
-            // Remover subconta da visualização E atualizar estado
-            removeSubAccount(selectedSubAccount.id);
-            
-            // 🔄 FORÇAR ATUALIZAÇÃO DE ESTADO
-            if (activeOrderId === selectedSubAccount.id) {
-              setActiveOrder(null); // Limpar seleção se era a subconta ativa
-            }
-            
-            addNotification('success', 'Subconta fechada com sucesso');
+              // 🛡️ Fechar subconta SEM depender de existir no Supabase
+              // O checkoutTable persiste (ou salva pendente offline) e atualiza o estado local.
+              console.log('[POS] Fechando subconta (via checkoutTable):', selectedSubAccount);
+
+              const prevActiveTableId = activeTableId;
+              const prevActiveOrderId = activeOrderId;
+
+              const result = await checkoutTable(selectedSubAccount.id, paymentMethod as any);
+              if (result?.success) {
+                addNotification('success', 'Subconta fechada com sucesso');
+              } else if (result?.savedLocally) {
+                addNotification('error', 'Venda guardada localmente (Sem Internet)');
+              } else {
+                addNotification('error', 'Erro ao fechar subconta. Tente novamente.');
+              }
+
+              // Recarregar estado para imprimir e restaurar seleção (checkoutTable limpa active selection).
+              const state = useStore.getState();
+              const updatedSubAccount = state.activeOrders.find(o => o.id === selectedSubAccount.id);
+
+              if (updatedSubAccount) {
+                handleDirectPrint(updatedSubAccount, state.customers.find(c => c.id === updatedSubAccount.customerId));
+              }
+
+              // Restaurar seleção na principal (para não fechar a conta principal).
+              if (prevActiveTableId != null) {
+                const principalOpen = state.activeOrders.find(
+                  o => o.tableId === prevActiveTableId && o.subAccountName === 'Principal' && o.status === 'ABERTO'
+                );
+                setActiveTable(prevActiveTableId);
+                setActiveOrder(principalOpen ? principalOpen.id : (prevActiveOrderId ?? null));
+              }
             
           } else {
             // 🛡️ FECHAMENTO DE PEDIDO NORMAL (EXISTENTE)

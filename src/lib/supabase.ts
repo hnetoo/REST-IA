@@ -15,7 +15,9 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
+      // Evita tentativas de detetar sessão a partir de URLs de navegação/hash
+      // (pode causar erros repetidos no POS em rotas com fragmento)
+      detectSessionInUrl: false,
       storageKey: 'rest-ia-auth',
       storage: window.localStorage
     },
