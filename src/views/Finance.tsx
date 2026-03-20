@@ -9,7 +9,26 @@ import {
 } from 'lucide-react';
 import { printThermalInvoice, printFinanceReport } from '../lib/printService';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
-import { PaymentMethodConfig, Order, Expense, ExpenseCategory, ExpenseStatus } from '../../types';
+import { PaymentMethodConfig, Expense, ExpenseCategory, ExpenseStatus } from '../../types';
+
+// Tipo Order baseado no schema Supabase
+interface Order {
+  id: string;
+  created_at: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  payment_method: string | null;
+  status: string | null;
+  table_number: number | null;
+  total_amount: number;
+  updated_at: string | null;
+  
+  // Campos adicionais para compatibilidade com código existente
+  total?: number;
+  timestamp?: string | null;
+  taxTotal?: number;
+  profit?: number;
+}
 
 const formatKz = (val: number) => 
   new Intl.NumberFormat('pt-AO', { 
@@ -142,14 +161,14 @@ const Finance = () => {
   const today = new Date().toISOString().split('T')[0];
 
   const metrics = useMemo(() => {
-    const gross = closedOrders.reduce((acc, o) => acc + (o.total || 0), 0);
-    const tax = closedOrders.reduce((acc, o) => acc + (o.taxTotal || 0), 0);
-    const profit = closedOrders.reduce((acc, o) => acc + (o.profit || 0), 0);
+    const gross = closedOrders.reduce((acc, o) => acc + (o.total_amount || 0), 0);
+    const tax = closedOrders.reduce((acc, o) => acc + (o.total_amount * 0.065 || 0), 0);
+    const profit = closedOrders.reduce((acc, o) => acc + (o.total_amount * 0.935 || 0), 0);
     
     // VENDAS DE HOJE - mesmo filtro do Dashboard
-    const todayOrders = closedOrders.filter(o => String(o.timestamp || '').split('T')[0] === today);
-    const todayGross = todayOrders.reduce((acc, o) => acc + (o.total || 0), 0);
-    const todayProfit = todayOrders.reduce((acc, o) => acc + (o.profit || 0), 0);
+    const todayOrders = closedOrders.filter(o => String(o.created_at || '').split('T')[0] === today);
+    const todayGross = todayOrders.reduce((acc, o) => acc + (o.total_amount || 0), 0);
+    const todayProfit = todayOrders.reduce((acc, o) => acc + (o.total_amount * 0.935 || 0), 0);
     
     // DESPESAS DE HOJE - usar amount (coluna real)
     const todayExpenses = expenses.filter(expense => 
@@ -162,7 +181,7 @@ const Finance = () => {
     
     // Agrupar pagamentos por método - APENAS DE HOJE com mapeamento correto
     const payments = todayOrders.reduce((acc: any, o) => {
-      let methodId = o.paymentMethod || 'OUTRO';
+      let methodId = o.payment_method || 'OUTRO';
       
       // GARANTIR QUE methodId NUNCA SEJA NULL
       if (!methodId || methodId === 'null' || methodId === null) {
@@ -170,7 +189,7 @@ const Finance = () => {
       }
       
       // DEBUG: Mostrar método original e mapeado
-      console.log('[FINANCE] Método Original:', o.paymentMethod, '→ Método Mapeado:', methodId);
+      console.log('[FINANCE] Método Original:', o.payment_method, '→ Método Mapeado:', methodId);
       
       // MAPEAR MÉTODOS DE PAGAMENTO CORRETAMENTE
       switch (String(methodId).toLowerCase()) {
