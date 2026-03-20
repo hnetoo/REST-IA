@@ -614,7 +614,7 @@ const POS = () => {
              </div>
            </div>
            {!activeTableId ? (
-              <div className="grid" style={{ display: 'grid !important', gridTemplateColumns: 'repeat(3, 1fr) !important', gap: '15px !important' }}>
+              <div style="display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important; width: 100% !important; max-width: 500px !important; margin: 0 auto !important;">
                  {tables.map((table) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (
@@ -622,16 +622,7 @@ const POS = () => {
                         key={table.id} 
                         onClick={() => handleTableClick(table)}
                         className={`border-2 transition-all active:scale-90 relative group ${!isOccupied ? 'border-white/5 bg-white/[0.02] hover:border-primary/50 hover:bg-white/[0.05]' : 'border-primary bg-primary/10 shadow-glow scale-105'}`}
-                        style={{ 
-                          width: '100% !important', 
-                          aspectRatio: '1 / 1 !important', 
-                          maxWidth: '200px !important', 
-                          borderRadius: '12px !important',
-                          display: 'flex !important',
-                          flexDirection: 'column',
-                          alignItems: 'center !important',
-                          justifyContent: 'center !important'
-                        }}
+                        style="aspect-ratio: 1 / 1 !important; border-radius: 12px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; background: #1a1a1a !important; color: white !important;"
                       >
                          <span className={`text-sm font-black uppercase tracking-[0.2em] ${!isOccupied ? 'text-slate-600' : 'text-primary/60'}`}>{table.name}</span>
                          <span className={`text-4xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
