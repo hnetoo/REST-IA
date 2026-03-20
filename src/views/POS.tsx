@@ -323,7 +323,7 @@ const POS = () => {
     return activeOrders.filter(o => o.tableId === activeTableId && o.status === 'ABERTO');
   }, [activeOrders, activeTableId]);
 
-  const handleCheckoutFinal = async (method: PaymentMethod, customerId?: string) => {
+  const handleCheckoutFinal = async (method: PaymentMethod, customerId?: string, customerNif?: string) => {
     if (!currentOrder) return;
     
     // Se for Pagar Depois e não tiver cliente selecionado, abrir modal de clientes
@@ -339,7 +339,7 @@ const POS = () => {
     
     // checkoutTable: Supabase-first; em caso de falha grava em pending_sync_orders
     try {
-      const result = await checkoutTable(currentOrder.id, method, customerId);
+      const result = await checkoutTable(currentOrder.id, method, customerId, customerNif);
       if (result?.success) {
         addNotification('success', 'Venda registada com sucesso!');
       } else if (result?.savedLocally) {
@@ -614,7 +614,7 @@ const POS = () => {
              </div>
            </div>
            {!activeTableId ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 md:gap-6 animate-in fade-in zoom-in duration-700">
+              <div className="grid grid-cols-3 gap-4 md:gap-6 animate-in fade-in zoom-in duration-700">
                  {tables.map((table) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (
@@ -1078,7 +1078,7 @@ const POS = () => {
               const prevActiveTableId = activeTableId;
               const prevActiveOrderId = activeOrderId;
 
-              const result = await checkoutTable(selectedSubAccount.id, paymentMethod as any);
+              const result = await checkoutTable(selectedSubAccount.id, paymentMethod as any, undefined, customerNif);
               if (result?.success) {
                 addNotification('success', 'Subconta fechada com sucesso');
               } else if (result?.savedLocally) {
@@ -1122,7 +1122,7 @@ const POS = () => {
             }
             
             // Chamar função de impressão existente
-            await handleCheckoutFinal(selectedPaymentMethod!, selectedCustomerId);
+            await handleCheckoutFinal(selectedPaymentMethod!, selectedCustomerId, customerNif);
           }
           
         } catch (error) {

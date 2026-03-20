@@ -8,6 +8,10 @@ import { Table, TableZone } from '../../types';
 
 const TableLayout = () => {
   const { tables, activeOrders, setActiveTable, updateTablePosition, addNotification, removeTable, closeTable, addTable } = useStore();
+  
+  // DEBUG: Verificar mesas vindas da base de dados
+  console.log("MESAS_DATABASE:", tables);
+  
   const [activeZone, setActiveZone] = useState<TableZone>('INTERIOR');
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
