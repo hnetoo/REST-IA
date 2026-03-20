@@ -591,7 +591,7 @@ export const useStore = create<StoreState>()(
           if (tableId) {
             try {
               const { error: tableError } = await supabase
-                .from('tables')
+                .from('pos_tables')
                 .update({ status: 'LIVRE' })
                 .eq('id', tableId);
               
