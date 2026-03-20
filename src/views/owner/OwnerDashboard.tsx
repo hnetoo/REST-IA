@@ -387,63 +387,47 @@ const OwnerDashboard = () => {
     }
   };
 
-  // Buscar dados para gráficos
+  // Buscar dados para gráficos - DISTRIBUIÇÃO DE DESPESAS POR CATEGORIA
   const fetchChartData = async () => {
     try {
       console.log('[DASHBOARD] Buscando dados para gráficos...');
       
-      // BUSCAR DADOS REAIS DAS ORDENS PARA GRÁFICOS
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      // Dados de hoje
-      const { data: todayData, error: todayError } = await supabase
-        .from('orders')
-        .select('total_amount, created_at')
-        .in('status', ['closed', 'paid', 'FECHADO'])
-        .gte('created_at', today.toISOString().split('T')[0])
-        .lte('created_at', today.toISOString());
-      
-      // Dados de ontem
-      const { data: yesterdayData, error: yesterdayError } = await supabase
-        .from('orders')
-        .select('total_amount, created_at')
-        .in('status', ['closed', 'paid', 'FECHADO'])
-        .gte('created_at', yesterday.toISOString().split('T')[0])
-        .lte('created_at', yesterday.toISOString().split('T')[0] + 'T23:59:59');
-      
-      const todayRevenue = todayData?.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0) || 0;
-      const yesterdayRevenue = yesterdayData?.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0) || 0;
-      
-      // Dados de despesas (do período)
+      // BUSCAR DESPESAS AGRUPADAS POR CATEGORIA
       const { data: expensesData, error: expensesError } = await supabase
         .from('expenses')
-        .select('amount_kz, created_at')
-        .neq('status', 'PENDENTE')
-        .gte('created_at', today.toISOString().split('T')[0])
-        .lte('created_at', today.toISOString());
-      
-      const todayExpenses = expensesData?.reduce((sum, exp) => sum + (Number(exp.amount_kz) || 0), 0) || 0;
-      
-      // Criar dados para gráficos com valores reais
-      const realChartData = [
-        { 
-          date: 'Hoje', 
-          receitas: todayRevenue, 
-          despesas: todayExpenses,
-          vendas: todayRevenue
-        },
-        { 
-          date: 'Ontem', 
-          receitas: yesterdayRevenue, 
-          despesas: Math.round(todayExpenses * 0.8), // Estimativa
-          vendas: yesterdayRevenue
-        }
-      ];
+        .select('amount, category, status')
+        .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
 
-      setChartData(realChartData);
-      console.log('[DASHBOARD] Dados dos gráficos (reais):', realChartData);
+      if (expensesError) {
+        console.error('[DASHBOARD] Erro ao buscar despesas para gráfico:', expensesError);
+        setChartData([]);
+        return;
+      }
+
+      // AGRUPAR DESPESAS POR CATEGORIA
+      const categoryMap = new Map<string, number>();
+      
+      if (expensesData && expensesData.length > 0) {
+        expensesData.forEach(exp => {
+          const category = exp.category || 'OUTROS';
+          const amount = Number(exp.amount) || 0;
+          
+          if (categoryMap.has(category)) {
+            categoryMap.set(category, categoryMap.get(category)! + amount);
+          } else {
+            categoryMap.set(category, amount);
+          }
+        });
+      }
+
+      // CONVERTER PARA FORMATO DO GRÁFICO
+      const categoryChartData = Array.from(categoryMap.entries()).map(([name, value]) => ({
+        name: name,
+        value: value
+      }));
+
+      setChartData(categoryChartData);
+      console.log('[DASHBOARD] Dados do gráfico de categorias:', categoryChartData);
       
     } catch (error) {
       console.error('[DASHBOARD] Erro ao buscar dados dos gráficos:', error);
