@@ -831,7 +831,7 @@ const OwnerDashboard = () => {
         totalVendas: totalVendas || 0,
         receitaTotal: rendimentoGlobal || 0,
         despesas: totalDespesas || 0,
-        despesasAcumuladas: despesasAcumuladas || 0,
+        despesasAcumuladas: totalExpensesAllTime || 0, // CORRIGIDO: usar variável correta
         folhaSalarial: folhaSalarial || 0,
         impostos: (totalVendas || 0) * 0.07,
         historicoRevenue: historicoExterno || 0,
