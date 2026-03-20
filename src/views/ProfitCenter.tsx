@@ -53,8 +53,27 @@ const ProfitCenter = () => {
     // Lucro por modalidade - APENAS VENDAS DE HOJE
     // Fix: Added explicit typing to Record<string, number> to prevent 'unknown' types in Object.entries mapping
     const byMethod = todayOrders.reduce((acc: Record<string, number>, o) => {
-      const m = o.payment_method || 'OUTRO';
-      acc[m] = (acc[m] || 0) + (o.total || 0);
+      // PADRONIZAÇÃO DE LEITURA - LÓGICA ROBUSTA
+      const rawMethod = String(o.payment_method || '').toUpperCase();
+      let methodLabel = 'OUTRO';
+
+      if (rawMethod.includes('CASH') || rawMethod.includes('NUMER')) {
+        methodLabel = 'NUMERÁRIO';
+      } else if (rawMethod.includes('TPA') || rawMethod.includes('MULTI')) {
+        methodLabel = 'TPA / MULTICAIXA';
+      } else if (rawMethod.includes('TRANS')) {
+        methodLabel = 'TRANSFERÊNCIA';
+      } else if (rawMethod.includes('QR') || rawMethod.includes('REFER')) {
+        methodLabel = 'REFERÊNCIA QR';
+      } else if (rawMethod.includes('MPESA') || rawMethod.includes('M-PESA')) {
+        methodLabel = 'M-PESA';
+      } else if (rawMethod.includes('EXPRESS')) {
+        methodLabel = 'EXPRESS';
+      }
+
+      // TOTALIZAÇÃO REAL - USAR total_amount
+      const valor = Number(o.total_amount || 0);
+      acc[methodLabel] = (acc[methodLabel] || 0) + valor;
       return acc;
     }, {} as Record<string, number>);
 

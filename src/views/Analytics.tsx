@@ -34,7 +34,7 @@ const Analytics = () => {
       String(order.timestamp || '').split('T')[0] === today
     );
     
-    const totalSalesToday = todayOrders.reduce((acc, order) => acc + (order.total || 0), 0);
+    const totalSalesToday = todayOrders.reduce((acc, order) => acc + (order.total_amount || 0), 0);
     const totalOrdersToday = todayOrders.length;
     const ticketMedio = totalOrdersToday > 0 ? totalSalesToday / totalOrdersToday : 0;
     
@@ -72,7 +72,7 @@ const Analytics = () => {
         ['FECHADO', 'closed', 'paid'].includes(order.status) && 
         String(order.timestamp || '').split('T')[0] === dateStr
       );
-      const sales = dayOrders.reduce((acc, order) => acc + (order.total || 0), 0);
+      const sales = dayOrders.reduce((acc, order) => acc + (order.total_amount || 0), 0);
       
       // Compras do dia
       const dayExpenses = expenses.filter(expense => 
