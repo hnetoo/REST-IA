@@ -227,31 +227,42 @@ const Dashboard = () => {
           console.log('[DASHBOARD PRINCIPAL] Mantendo valor padrão:', totalHistorico);
         }
 
-        // BUSCAR SOMA DIRETA DA TABELA ORDERS PARA RENDIMENTO GLOBAL
+        // RENDIMENTO GLOBAL: USAR MESMA LÓGICA DO OWNER HUB (business_stats + external_history)
+        let rendimentoGlobal = 0;
+        
         try {
-          console.log('[DASHBOARD PRINCIPAL] Buscando soma direta da tabela orders...');
-          
-          const { data: ordersData, error: ordersError } = await supabase
-            .from('orders')
-            .select('total_amount');
+          // Buscar business_stats (mesma lógica do Owner Hub)
+          let totalBusinessStats = 0;
+          const { data: businessStatsData, error: businessStatsError } = await supabase
+            .from('business_stats')
+            .select('legacy_revenue_kz');
 
-          if (!ordersError && ordersData && ordersData.length > 0) {
-            const somaOrders = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
-            console.log('[DASHBOARD PRINCIPAL] ✅ SOMA DIRETA ORDERS:', somaOrders);
-            console.log('[DASHBOARD PRINCIPAL] Número de ordens somadas:', ordersData.length);
-            
-            // USAR SOMA DIRETA DAS ORDENS COMO RENDIMENTO GLOBAL
-            totalHistorico = somaOrders;
-            console.log('[DASHBOARD PRINCIPAL] 🔄 USANDO SOMA DIRETA ORDERS COMO RENDIMENTO GLOBAL');
-          } else {
-            console.log('[DASHBOARD PRINCIPAL] ❌ Erro ao buscar soma direta orders:', ordersError);
+          if (!businessStatsError && businessStatsData?.length) {
+            totalBusinessStats = businessStatsData.reduce((acc, row) => acc + Number(row.legacy_revenue_kz ?? 0), 0);
           }
-        } catch (ordersDirectError) {
-          console.error('[DASHBOARD PRINCIPAL] ❌ Erro crítico ao buscar soma direta orders:', ordersDirectError);
-        }
+          
+          // Buscar external_history (mesma lógica do Owner Hub)
+          let historicoExterno = 0;
+          const { data: historyData, error: historyError } = await supabase
+            .from('external_history')
+            .select('total_revenue');
 
-        // RENDIMENTO GLOBAL: APENAS SOMA TOTAL DA TABELA ORDERS (SEM FILTROS)
-        const rendimentoGlobal = totalHistorico;
+          if (!historyError && historyData?.length) {
+            historicoExterno = historyData.reduce((acc, row) => acc + Number(row.total_revenue ?? 0), 0);
+          }
+          
+          // Calcular rendimento global (mesma fórmula do Owner Hub)
+          rendimentoGlobal = totalBusinessStats + historicoExterno;
+          
+          console.log('[DASHBOARD] Rendimento Global (lógica Owner Hub):', {
+            businessStats: totalBusinessStats,
+            historicoExterno: historicoExterno,
+            total: rendimentoGlobal
+          });
+        } catch (error) {
+          console.error('[DASHBOARD] Erro ao calcular rendimento global:', error);
+          rendimentoGlobal = 0;
+        }
         
         // PROVA DE CÁLCULO - SOMA TOTAL ORDERS
         console.log(`[RENDIMENTO GLOBAL] Soma TOTAL orders: ${totalHistorico}`);
