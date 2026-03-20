@@ -351,13 +351,52 @@ const OwnerMobile = () => {
           </div>
         </div>
 
+        {/* Card Despesas */}
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+              <TrendingDown className="w-5 h-5 text-orange-400" />
+            </div>
+            <h3 className="text-sm font-bold text-white">Despesas</h3>
+          </div>
+          <div className="text-2xl font-black text-white">
+            {formatAOA(metrics.despesas)}
+          </div>
+        </div>
+
+        {/* Card Staff */}
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-blue-400" />
+            </div>
+            <h3 className="text-sm font-bold text-white">Custos Staff</h3>
+          </div>
+          <div className="text-2xl font-black text-white">
+            {formatAOA(metrics.folhaSalarial)}
+          </div>
+        </div>
+
+        {/* Card Lucro Líquido */}
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-green-400" />
+            </div>
+            <h3 className="text-sm font-bold text-white">Lucro Líquido</h3>
+          </div>
+          <div className="text-2xl font-black text-white">
+            {formatAOA((metrics.totalVendas || 0) - (metrics.despesas || 0) - (metrics.folhaSalarial || 0) - (metrics.impostos || 0))}
+          </div>
+        </div>
+
         {/* Card Impostos */}
         <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
               <Receipt className="w-5 h-5 text-purple-400" />
             </div>
-            <h3 className="text-sm font-bold text-white">Impostos (14%)</h3>
+            <h3 className="text-sm font-bold text-white">Impostos (6.5%)</h3>
           </div>
           <div className="text-2xl font-black text-white">
             {formatAOA(metrics.impostos)}
