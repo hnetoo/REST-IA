@@ -20,10 +20,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [customerNif, setCustomerNif] = React.useState<string>('');
 
   const paymentMethods = [
-    { id: 'NUMERARIO', name: 'NUMERÁRIO', icon: DollarSign, color: 'bg-green-500' },
+    { id: 'CASH', name: 'NUMERÁRIO', icon: DollarSign, color: 'bg-green-500' },
     { id: 'TPA', name: 'TPA', icon: CreditCard, color: 'bg-blue-500' },
     { id: 'QR_CODE', name: 'QR CODE', icon: QrCode, color: 'bg-purple-500' },
-    { id: 'TRANSFERENCIA', name: 'TRANSFERÊNCIA', icon: Building, color: 'bg-orange-500' }
+    { id: 'TRANSFER', name: 'TRANSFERÊNCIA', icon: Building, color: 'bg-orange-500' }
   ];
 
   const handleConfirm = () => {

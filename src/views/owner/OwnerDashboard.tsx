@@ -1064,7 +1064,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Vendas Hoje</span>
             </div>
             <div className="text-3xl font-black text-amber-400 mb-2">
-              {formatAKZ(metrics.vendasHoje)}
+              {formatAKZ(metrics?.vendasHoje || 0)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
@@ -1078,7 +1078,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Hoje</span>
             </div>
             <div className="text-3xl font-black text-red-400 mb-2">
-              {formatAKZ(metrics.despesas)}
+              {formatAKZ(metrics?.despesas || 0)}
             </div>
             <div className="text-xs text-white/60">Hoje - Africa/Luanda</div>
           </div>
@@ -1092,7 +1092,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Rendimento Global</span>
             </div>
             <div className="text-3xl font-black text-purple-400 mb-2">
-              {formatAKZ(metrics.rendimentoGlobal || 0)}
+              {formatAKZ(metrics?.rendimentoGlobal || 0)}
             </div>
             <div className="text-xs text-white/60">external_history + orders</div>
           </div>

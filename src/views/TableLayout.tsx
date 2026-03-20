@@ -74,7 +74,8 @@ const TableLayout = () => {
     addNotification('success', `Mesa ${nextId} adicionada com sucesso!`);
   };
 
-  const filteredTables = tables.filter(t => t.zone === activeZone);
+  // REMOVER FILTRAGEM - MOSTRAR TODAS AS MESAS SEM ZONAS
+  const filteredTables = tables;
 
   return (
     <div className="p-8 h-full bg-background flex flex-col overflow-hidden animate-in fade-in duration-700">
@@ -132,11 +133,11 @@ const TableLayout = () => {
           const isCritical = stats !== null && stats.minutes > 45;
           const isOccupied = table.status === 'OCUPADO';
 
-          // Posicionamento baseado em grid (x * 150px, y * 150px) - Reduzido de 240px (~60%)
+          // FORÇAR POSICIONAMENTO REAL DAS MESAS - USAR COORDENADAS EXATAS DA DB
           const style: React.CSSProperties = {
             position: 'absolute',
-            left: `${table.x * 150 + 40}px`,
-            top: `${table.y * 150 + 40}px`,
+            left: `${table.x}px`,
+            top: `${table.y}px`,
             transition: isDesignMode ? 'none' : 'all 0.5s ease'
           };
 
