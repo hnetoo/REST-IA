@@ -227,40 +227,26 @@ const Dashboard = () => {
           console.log('[DASHBOARD PRINCIPAL] Mantendo valor padrão:', totalHistorico);
         }
 
-        // RENDIMENTO GLOBAL: USAR MESMA LÓGICA DO OWNER HUB (business_stats + external_history)
+        // RENDIMENTO GLOBAL: ÚNICA FONTE DA VERDADE (TABELA orders)
         let rendimentoGlobal = 0;
         
         try {
-          // Buscar business_stats (mesma lógica do Owner Hub)
-          let totalBusinessStats = 0;
-          const { data: businessStatsData, error: businessStatsError } = await supabase
-            .from('business_stats')
-            .select('legacy_revenue_kz');
+          // Buscar SOMA TOTAL da tabela orders (única fonte verdadeira)
+          const { data: ordersData, error: ordersError } = await supabase
+            .from('orders')
+            .select('total_amount');
 
-          if (!businessStatsError && businessStatsData?.length) {
-            totalBusinessStats = businessStatsData.reduce((acc, row) => acc + Number(row.legacy_revenue_kz ?? 0), 0);
+          if (!ordersError && ordersData && ordersData.length > 0) {
+            rendimentoGlobal = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+            console.log('[DASHBOARD] Rendimento Global (tabela orders):', {
+              totalOrders: ordersData.length,
+              rendimentoGlobal: rendimentoGlobal
+            });
+          } else {
+            console.log('[DASHBOARD] Erro ao buscar orders:', ordersError);
           }
-          
-          // Buscar external_history (mesma lógica do Owner Hub)
-          let historicoExterno = 0;
-          const { data: historyData, error: historyError } = await supabase
-            .from('external_history')
-            .select('total_revenue');
-
-          if (!historyError && historyData?.length) {
-            historicoExterno = historyData.reduce((acc, row) => acc + Number(row.total_revenue ?? 0), 0);
-          }
-          
-          // Calcular rendimento global (mesma fórmula do Owner Hub)
-          rendimentoGlobal = totalBusinessStats + historicoExterno;
-          
-          console.log('[DASHBOARD] Rendimento Global (lógica Owner Hub):', {
-            businessStats: totalBusinessStats,
-            historicoExterno: historicoExterno,
-            total: rendimentoGlobal
-          });
         } catch (error) {
-          console.error('[DASHBOARD] Erro ao calcular rendimento global:', error);
+          console.error('[DASHBOARD] Erro crítico ao calcular rendimento global:', error);
           rendimentoGlobal = 0;
         }
         

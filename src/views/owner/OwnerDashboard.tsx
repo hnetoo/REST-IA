@@ -18,6 +18,8 @@ interface Metrics {
   folhaSalarial: number;
   impostos: number;
   historicoRevenue: number; // Adicionar histórico de owner_finances
+  rendimentoGlobal: number;
+  lucroLiquido: number;
 }
 
 // Tipos para as tabelas do Supabase
@@ -679,8 +681,28 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar business_stats:', businessError);
       }
 
-      const rendimentoGlobal = totalBusinessStats + historicoExterno;
-      console.log('[DASHBOARD] Rendimento Global calculado:', rendimentoGlobal);
+      // RENDIMENTO GLOBAL: ÚNICA FONTE DA VERDADE (TABELA orders)
+      let rendimentoGlobal = 0;
+      
+      try {
+        // Buscar SOMA TOTAL da tabela orders (única fonte verdadeira)
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('total_amount');
+
+        if (!ordersError && ordersData && ordersData.length > 0) {
+          rendimentoGlobal = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+          console.log('[OWNER HUB] Rendimento Global (tabela orders):', {
+            totalOrders: ordersData.length,
+            rendimentoGlobal: rendimentoGlobal
+          });
+        } else {
+          console.log('[OWNER HUB] Erro ao buscar orders:', ordersError);
+        }
+      } catch (error) {
+        console.error('[OWNER HUB] Erro crítico ao calcular rendimento global:', error);
+        rendimentoGlobal = 0;
+      }
 
       // Gerar dados para gráficos com base nas vendas
       const chartDataGenerated = [
@@ -750,13 +772,25 @@ const OwnerDashboard = () => {
       });
       
       // FORÇAR ATUALIZAÇÃO DO ESTADO
-      setMetrics(metricsResult);
+      setMetrics({
+        vendasHoje: vendasHoje || 0,
+        mesasAtivas: 0,
+        totalVendas: totalVendas || 0,
+        receitaTotal: rendimentoGlobal || 0,
+        despesas: totalDespesas || 0,
+        despesasAcumuladas: despesasAcumuladas || 0,
+        folhaSalarial: folhaSalarial || 0,
+        impostos: (totalVendas || 0) * 0.07,
+        historicoRevenue: historicoExterno || 0,
+        rendimentoGlobal: rendimentoGlobal || 0,
+        lucroLiquido: (totalVendas || 0) - ((totalVendas || 0) * 0.07) - (totalDespesas || 0) - (folhaSalarial || 0)
+      });
       setChartData(chartDataGenerated);
       
       // SINCRONIZAR ESTADOS INDIVIDUAIS IMEDIATAMENTE
       setTotalVendasNoState(metricsResult.totalVendas);
       setDespesasNoState(metricsResult.despesas);
-      setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas);
+      setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas || 0);
       setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
       // VERIFICAÇÃO IMEDIATA DO ESTADO
@@ -785,7 +819,9 @@ const OwnerDashboard = () => {
         despesasAcumuladas: 0, // NOVO: Inicializar com 0
         folhaSalarial: 0,
         impostos: 0,
-        historicoRevenue: 0
+        historicoRevenue: 0,
+        rendimentoGlobal: 0, // NOVO: Inicializar com 0
+        lucroLiquido: 0 // NOVO: Inicializar com 0
       });
     }
   };
