@@ -4,7 +4,7 @@ import { X, DollarSign, CreditCard, Smartphone, QrCode, Building } from 'lucide-
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (paymentMethod: string) => void;
+  onConfirm: (paymentMethod: string, customerNif?: string) => void;
   orderNumber: string;
   totalAmount: number;
 }
@@ -17,6 +17,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   totalAmount
 }) => {
   const [selectedMethod, setSelectedMethod] = React.useState<string>('');
+  const [customerNif, setCustomerNif] = React.useState<string>('');
 
   const paymentMethods = [
     { id: 'NUMERARIO', name: 'NUMERÁRIO', icon: DollarSign, color: 'bg-green-500' },
@@ -30,7 +31,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       alert('Por favor, selecione um método de pagamento');
       return;
     }
-    onConfirm(selectedMethod);
+    onConfirm(selectedMethod, customerNif || undefined);
   };
 
   if (!isOpen) return null;
@@ -62,6 +63,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               maximumFractionDigits: 0
             }).format(totalAmount).replace('AOA', '')} Kz
           </p>
+        </div>
+
+        {/* NIF do Cliente */}
+        <div className="bg-slate-800 rounded-xl p-4 mb-6 border border-slate-600">
+          <p className="text-sm text-gray-400 mb-1">NIF do Cliente (Opcional)</p>
+          <input
+            type="text"
+            value={customerNif}
+            onChange={(e) => setCustomerNif(e.target.value.replace(/\D/g, ''))}
+            placeholder="Digite o NIF (apenas números)"
+            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+            maxLength={15}
+          />
         </div>
 
         {/* Métodos de Pagamento */}

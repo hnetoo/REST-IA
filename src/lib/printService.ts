@@ -180,7 +180,7 @@ export const printThermalInvoice = (
         <div class="customer-box">
           <div class="bold">CLIENTE:</div>
           <div>NOME: ${customer?.name || 'CONSUMIDOR FINAL'}</div>
-          <div>NIF: ${customer?.nif || '999999999'}</div>
+          <div>NIF: ${customer?.nif || (customer?.nif === '' ? 'Não informado' : '999999999')}</div>
         </div>
 
         <table class="items-table">

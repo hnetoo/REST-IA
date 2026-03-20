@@ -504,7 +504,7 @@ export const useStore = create<StoreState>()(
         });
       },
 
-      checkoutTable: async (orderId, paymentMethod, customerId) => {
+      checkoutTable: async (orderId, paymentMethod, customerId, customerNif?) => {
         const order = get().activeOrders.find(o => o.id === orderId);
         if (!order) return { success: false };
 
@@ -525,6 +525,7 @@ export const useStore = create<StoreState>()(
           id: order.id,
           customer_name: customerName,
           customer_phone: '999999999',
+          customer_nif: customerNif || null, // NOVO: NIF do cliente opcional
           delivery_address: 'ENDEREÇO_PADRAO',
           total_amount: order.total,
           status: 'closed',

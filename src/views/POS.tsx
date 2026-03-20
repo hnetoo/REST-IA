@@ -1065,7 +1065,7 @@ const POS = () => {
         setIsPaymentModalOpen(false);
         setSelectedSubAccount(null);
       }}
-      onConfirm={async (paymentMethod: string) => {
+      onConfirm={async (paymentMethod: string, customerNif?: string) => {
         try {
           setIsFinalizing(true);
           setIsPaymentModalOpen(false);
