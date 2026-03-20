@@ -80,32 +80,6 @@ const DashboardV2 = () => {
     return date.toISOString().split('T')[0];
   };
 
-  // Definir range de datas
-  const setDateRange = (range: string) => {
-    const today = new Date();
-    let start = new Date();
-    let end = new Date();
-
-    switch (range) {
-      case 'hoje':
-        start = today;
-        end = today;
-        break;
-      case 'semana':
-        start = new Date(today.setDate(today.getDate() - 7));
-        end = today;
-        break;
-      case 'mes':
-        start = new Date(today.setMonth(today.getMonth() - 1));
-        end = today;
-        break;
-    }
-
-    setStartDate(formatDate(start));
-    setEndDate(formatDate(end));
-    setDateRange(range);
-  };
-
   // Carregar dados do dashboard
   const loadDashboardData = async () => {
     if (!startDate || !endDate) return;
@@ -224,7 +198,7 @@ const DashboardV2 = () => {
       });
 
       const totalExpenses = (expensesData && expensesData.length > 0) 
-        ? expensesData.reduce((sum, expense: ExpenseData) => sum + Number(expense?.amount || 0), 0) 
+        ? expensesData.reduce((sum, expense) => sum + Number(expense?.amount || 0), 0) 
         : 0;
 
       // LOG DE VALIDAÇÃO DO CÁLCULO
@@ -405,6 +379,8 @@ const DashboardV2 = () => {
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
               className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+              aria-label="Selecionar período de análise"
+              title="Selecionar período de análise"
             >
               <option value="hoje">Hoje</option>
               <option value="semana">Últimos 7 dias</option>
@@ -422,6 +398,8 @@ const DashboardV2 = () => {
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  placeholder="Data de início"
+                  title="Data de início do período"
                 />
               </div>
               <div>
@@ -431,6 +409,8 @@ const DashboardV2 = () => {
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  placeholder="Data de fim"
+                  title="Data de fim do período"
                 />
               </div>
             </>
