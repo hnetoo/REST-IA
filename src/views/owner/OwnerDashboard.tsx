@@ -681,24 +681,52 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar business_stats:', businessError);
       }
 
-      // RENDIMENTO GLOBAL: ÚNICA FONTE DA VERDADE (TABELA orders)
+      // RENDIMENTO GLOBAL: FÓRMULA COMPLETA (external_history + orders + business_stats)
       let rendimentoGlobal = 0;
       
       try {
-        // Buscar SOMA TOTAL da tabela orders (única fonte verdadeira)
+        // 1. Buscar external_history (histórico correto - 8.700.000,00 Kz)
+        let historicoExterno = 0;
+        const { data: historyData, error: historyError } = await supabase
+          .from('external_history')
+          .select('total_revenue');
+
+        if (!historyError && historyData && historyData.length > 0) {
+          historicoExterno = historyData.reduce((acc, row) => acc + (Number(row.total_revenue) || 0), 0);
+          console.log('[OWNER HUB] External History (8.700.000,00 Kz):', historicoExterno);
+        }
+
+        // 2. Buscar SOMA TOTAL da tabela orders
+        let somaOrders = 0;
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount');
 
         if (!ordersError && ordersData && ordersData.length > 0) {
-          rendimentoGlobal = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
-          console.log('[OWNER HUB] Rendimento Global (tabela orders):', {
-            totalOrders: ordersData.length,
-            rendimentoGlobal: rendimentoGlobal
-          });
-        } else {
-          console.log('[OWNER HUB] Erro ao buscar orders:', ordersError);
+          somaOrders = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+          console.log('[OWNER HUB] Soma Orders:', somaOrders);
         }
+
+        // 3. Buscar business_stats
+        let businessStats = 0;
+        const { data: businessData, error: businessError } = await supabase
+          .from('business_stats')
+          .select('legacy_revenue_kz');
+
+        if (!businessError && businessData && businessData.length > 0) {
+          businessStats = businessData.reduce((acc, row) => acc + (Number(row.legacy_revenue_kz) || 0), 0);
+          console.log('[OWNER HUB] Business Stats:', businessStats);
+        }
+
+        // 4. Calcular Rendimento Global (fórmula completa)
+        rendimentoGlobal = historicoExterno + somaOrders + businessStats;
+        
+        console.log('[OWNER HUB] Rendimento Global (fórmula completa):', {
+          external_history: historicoExterno,
+          orders: somaOrders,
+          business_stats: businessStats,
+          total: rendimentoGlobal
+        });
       } catch (error) {
         console.error('[OWNER HUB] Erro crítico ao calcular rendimento global:', error);
         rendimentoGlobal = 0;
