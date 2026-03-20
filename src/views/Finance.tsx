@@ -177,7 +177,7 @@ const Finance = () => {
         case 'cash':
         case 'numerário':
         case 'numerario':
-          methodId = 'Numerário';
+          methodId = 'CASH';
           break;
         case 'card':
         case 'tpa':
@@ -185,7 +185,7 @@ const Finance = () => {
         case 'pos':
         case 'debit':
         case 'credit':
-          methodId = 'TPA/Multicaixa';
+          methodId = 'TPA';
           break;
         case 'transfer':
         case 'transferência':

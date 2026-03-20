@@ -82,6 +82,11 @@ const OwnerDashboard = () => {
   const [yearExpenses, setYearExpenses] = useState<number>(0);
   const [historicoExterno, setHistoricoExterno] = useState<number>(0);
   
+  // DECLARAR VARIÁVEIS DE MÉTRICAS PARA EVITAR UNDEFINED
+  const totalVendasHoje = 0;
+  const despesasHoje = 0;
+  const rendimentoGlobalHoje = 0;
+  
   // SINCRONIZAÇÃO EM TEMPO REAL - SUPABASE CHANNELS
   useEffect(() => {
     // Canal para ouvir mudanças nas transações
