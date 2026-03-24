@@ -1113,12 +1113,20 @@ const POS = () => {
             
           } else {
             // 🛡️ FECHAMENTO DE PEDIDO NORMAL (EXISTENTE) - VALIDAÇÃO OBRIGATÓRIA
-            if (currentOrder) {
-              // VALIDAÇÃO: Método de pagamento é OBRIGATÓRIO (vem do PaymentModal)
-              if (!paymentMethod) {
-                addNotification('error', 'Selecione um método de pagamento antes de finalizar!');
-                return;
-              }
+            if (!currentOrder) {
+              console.error('[POS] Erro: Nenhum pedido atual encontrado');
+              addNotification('error', 'Nenhum pedido selecionado para finalizar!');
+              setIsFinalizing(false); // DESBLOQUEAR BOTÃO IMEDIATAMENTE
+              return;
+            }
+            
+            // VALIDAÇÃO: Método de pagamento é OBRIGATÓRIO (vem do PaymentModal)
+            if (!paymentMethod) {
+              console.error('[POS] Erro: Método de pagamento não selecionado');
+              addNotification('error', 'Selecione um método de pagamento antes de finalizar!');
+              setIsFinalizing(false); // DESBLOQUEAR BOTÃO IMEDIATAMENTE
+              return;
+            }
               
               const { error } = await supabase
                 .from('orders')
@@ -1132,7 +1140,6 @@ const POS = () => {
                 console.error('Erro ao atualizar método de pagamento:', error);
                 throw error;
               }
-            }
             
             // Chamar função de impressão existente
             await handleCheckoutFinal(paymentMethod as any, selectedCustomerId, customerNif);
