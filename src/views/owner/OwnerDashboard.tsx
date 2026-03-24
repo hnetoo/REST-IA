@@ -293,11 +293,9 @@ const OwnerDashboard = () => {
 
       console.log('[DASHBOARD] Dados de teste inseridos com sucesso!');
       
-      // Atualizar métricas e produtos após inserção
-      setTimeout(() => {
-        fetchMetrics();
-        fetchTopProducts();
-      }, 1000);
+      // Atualizar métricas e produtos após inserção - SEM TIMEOUT
+      fetchMetrics();
+      fetchTopProducts();
       
     } catch (error) {
       console.error('[DASHBOARD] Erro ao inserir dados de teste:', error);
@@ -918,16 +916,14 @@ const OwnerDashboard = () => {
       setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas || 0);
       setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
-      // VERIFICAÇÃO IMEDIATA DO ESTADO
-      setTimeout(() => {
-        console.log('[DASHBOARD] Estado ATUALIZADO (verificação):', {
-          metricsState: metricsResult,
-          totalVendasNoState: totalVendasNoState,
-          despesasNoState: despesasNoState,
-          despesasAcumuladasNoState: despesasAcumuladasNoState,
-          folhaSalarialNoState: folhaSalarialNoState
-        });
-      }, 100);
+      // VERIFICAÇÃO IMEDIATA DO ESTADO - SEM TIMEOUT
+      console.log('[DASHBOARD] Estado ATUALIZADO (verificação):', {
+        metricsState: metricsResult,
+        totalVendasNoState: totalVendasNoState,
+        despesasNoState: despesasNoState,
+        despesasAcumuladasNoState: despesasAcumuladasNoState,
+        folhaSalarialNoState: folhaSalarialNoState
+      });
 
       setIsLoading(false);
       
