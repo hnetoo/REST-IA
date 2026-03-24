@@ -1,12 +1,13 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
+import { supabase } from '../lib/supabaseService';
 import { printFinanceReport } from '../lib/printService';
 import { 
   Target, TrendingUp, DollarSign, Zap, Sparkles, 
   PieChart as PieIcon, BarChart3, ArrowUpRight, 
   Activity, Layers, ShoppingBag, CreditCard,
-  Rocket, Brain, Printer
+  Rocket, Brain, Printer, Loader2
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, 
@@ -21,30 +22,84 @@ const formatKz = (val: number) =>
   }).format(val);
 
 const ProfitCenter = () => {
-  const { activeOrders, menu, settings, addNotification, expenses, employees } = useStore();
+  const { activeOrders, menu, addNotification, expenses, employees } = useStore();
+  const [loading, setLoading] = useState(true);
+  const [ordersData, setOrdersData] = useState<any[]>([]);
+  const [velocityData, setVelocityData] = useState<any[]>([]);
+
+  // Carregar dados do Supabase
+  useEffect(() => {
+    const loadProfitData = async () => {
+      try {
+        setLoading(true);
+        
+        // Buscar ordens fechadas de hoje
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        const { data: orders, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('status', 'closed')
+          .gte('created_at', today.toISOString())
+          .lt('created_at', tomorrow.toISOString())
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('[PROFIT CENTER] Erro ao buscar ordens:', error);
+          throw error;
+        }
+
+        console.log('[PROFIT CENTER] Ordens carregadas:', orders?.length || 0);
+        setOrdersData(orders || []);
+
+        // Preparar dados para curva de velocidade (agrupar por hora)
+        const hourlyData = Array.from({ length: 24 }, (_, i) => {
+          const hour = i.toString().padStart(2, '0') + 'h';
+          const hourOrders = orders?.filter(o => {
+            const orderHour = new Date(o.created_at).getHours();
+            return orderHour === i;
+          }) || [];
+          
+          const total = hourOrders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+          
+          return { name: hour, v: total };
+        });
+
+        setVelocityData(hourlyData);
+
+      } catch (error) {
+        console.error('[PROFIT CENTER] Erro ao carregar dados:', error);
+        addNotification('error', 'Falha ao carregar dados do Centro de Lucro');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfitData();
+  }, [addNotification]);
 
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
   
   const metrics = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    // VENDAS HOJE: Mesma lógica do Dashboard
-    const todayOrders = closedOrders.filter(order => 
-      String(order.timestamp || '').split('T')[0] === today
-    );
+    // Usar dados do Supabase em vez do localStorage
+    const todayOrders = ordersData;
     const revenue = todayOrders.reduce((a, b) => a + (b.total_amount || 0), 0);
     
     // DESPESAS HOJE: Mesma lógica do Dashboard
+    const today = new Date().toISOString().split('T')[0];
     const todayExpenses = expenses.filter(expense => 
-      String(expense.created_at || '').split('T')[0] === today
+      String(expense.createdAt || '').split('T')[0] === today
     );
-    const variableCosts = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+    const variableCosts = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
     
     // CUSTOS FIXOS: Soma de base_salary_kz da tabela staff (mantido)
     const fixedCosts = employees.reduce((acc, emp) => acc + Number(emp.salary || 0), 0);
     
-    // IMPOSTOS: Taxa de 6.5% sobre vendas (mesma lógica do Dashboard)
-    const tax = revenue * 0.065;
+    // IMPOSTOS: Usar mesma lógica do Dashboard (14% como no salesService)
+    const tax = revenue * 0.14;
     
     // LUCRO LÍQUIDO REAL: VendasHoje - DespesasHoje - CustosFixos - Impostos
     const netProfit = revenue - variableCosts - fixedCosts - tax;
@@ -198,10 +253,17 @@ const ProfitCenter = () => {
             <div className="relative">
               <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] mb-4">Lucro Líquido Real (Net Alpha)</p>
               <div className="relative group">
-                <h3 className="text-5xl font-mono font-bold text-white text-glow">{formatKz(metrics.netProfit)}</h3>
+                {loading ? (
+                  <div className="flex items-center justify-center h-16">
+                    <Loader2 className="animate-spin text-primary" size={24} />
+                    <span className="ml-2 text-primary text-sm">Carregando...</span>
+                  </div>
+                ) : (
+                  <h3 className="text-5xl font-mono font-bold text-white text-glow">{formatKz(metrics.netProfit)}</h3>
+                )}
                 <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-slate-800 text-white text-xs rounded-lg p-3 w-64 z-10 border border-slate-600">
                   <p className="font-bold mb-1">Cálculo do Lucro Líquido:</p>
-                  <p className="text-slate-300">Faturação - Despesas Hoje - Despesas Fixas (Mês) - Impostos (6.5%)</p>
+                  <p className="text-slate-300">Faturação - Despesas Hoje - Despesas Fixas (Mês) - Impostos (14%)</p>
                   <p className="text-slate-400 mt-1 text-[10px]">Inclui custos fixos mensais e despesas variáveis do dia</p>
                   <div className="absolute top-full left-8 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-slate-800"></div>
                 </div>
@@ -217,8 +279,17 @@ const ProfitCenter = () => {
 
          <div className="glass-panel p-10 rounded-[3rem] border-white/5 relative overflow-hidden group">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4">Faturação Total Bruta</p>
-            <h3 className="text-4xl font-mono font-bold text-white">{formatKz(metrics.revenue)}</h3>
-            <p className="text-[10px] text-slate-500 mt-4 font-bold uppercase">Inclui {formatKz(metrics.tax)} de impostos retidos</p>
+            {loading ? (
+              <div className="flex items-center justify-center h-12">
+                <Loader2 className="animate-spin text-slate-400" size={20} />
+                <span className="ml-2 text-slate-400 text-sm">Carregando...</span>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-4xl font-mono font-bold text-white">{formatKz(metrics.revenue)}</h3>
+                <p className="text-[10px] text-slate-500 mt-4 font-bold uppercase">Inclui {formatKz(metrics.tax)} de impostos retidos</p>
+              </>
+            )}
          </div>
 
          <div className="glass-panel p-8 rounded-[3rem] border-white/5 flex flex-col justify-center relative overflow-hidden">
@@ -245,10 +316,7 @@ const ProfitCenter = () => {
            </div>
            <div className="h-[350px]">
              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[
-                  { name: '08h', v: 2000 }, { name: '10h', v: 5000 }, { name: '12h', v: 15000 }, 
-                  { name: '14h', v: 12000 }, { name: '16h', v: 7000 }, { name: '18h', v: 22000 }, { name: '20h', v: 35000 }, { name: '22h', v: 18000 }
-                ]}>
+                <AreaChart data={velocityData}>
                    <defs>
                      <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
