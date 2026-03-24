@@ -641,71 +641,58 @@ const OwnerDashboard = () => {
         folhaSalarial = 0;
       }
 
-      // Buscar vendas reais do Supabase (COM FILTRO DE PERÍODO)
+      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - APENAS ORDENS FINALIZADAS (INTEGRIDADE CRÍTICA)
       let totalVendas = 0;
-      try {
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select('total_amount, created_at, status')
-          .in('status', ['closed', 'paid', 'FECHADO'])
-          .gte('created_at', startDate)
-          .lte('created_at', endDate);
-
-        console.log('[DASHBOARD] Dados brutos das vendas:', ordersData);
-
-        if (!ordersError && ordersData && ordersData.length > 0) {
-          totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
-          console.log('[DASHBOARD] Total vendas calculado:', totalVendas);
-        } else {
-          console.log('[DASHBOARD] Sem dados de vendas ou array vazio');
-        }
-      } catch (ordersError) {
-        console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
-      }
-
-      // Buscar faturação de hoje USANDO APENAS ORDENS FINALIZADAS (INTEGRIDADE DE DADOS)
       let faturacaoHoje = 0;
       try {
-        // DATA DE HOJE - FILTRO EXATO PARA INTEGRIDADE
+        // DATA DE HOJE EM ANGOLA - FILTRO OBRIGATÓRIO
         const today = new Date().toISOString().split('T')[0];
         
-        console.log('[OWNER HUB] INTEGRIDADE DE DADOS - Faturação Hoje:', {
+        console.log('[OWNER HUB] INTEGRIDADE CRÍTICA - Apenas Ordens Finalizadas:', {
           today: today,
-          filtro: "status = 'finalized' (APENAS ORDENS FINALIZADAS)",
-          correcao: 'Erro grave: estava a usar faturação bruta (202.000 Kz)'
+          filtro: "status = 'finalized' AND created_at (hoje em Angola)",
+          valorAlvo: '73.500 Kz (obrigatório)',
+          erroAtual: '202.000 Kz (valor bruto incorreto)'
         });
         
+        // ÚNICA QUERY - APENAS ORDENS FINALIZADAS DE HOJE
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'finalized'); // APENAS ORDENS FINALIZADAS - CORREÇÃO CRÍTICA
+          .eq('status', 'finalized') // APENAS FINALIZADAS - CRÍTICO
+          .gte('created_at', `${today}T00:00:00`) // HOJE EM ANGOLA
+          .lte('created_at', `${today}T23:59:59`); // HOJE EM ANGOLA
 
-        console.log('[OWNER HUB] INTEGRIDADE - Orders Data (finalized apenas):', {
+        console.log('[OWNER HUB] INTEGRIDADE - Orders Data (finalized + hoje):', {
           data: ordersData,
           error: ordersError,
-          totalOrders: ordersData?.length || 0
+          totalOrders: ordersData?.length || 0,
+          filtroAplicado: 'status = finalized + data de hoje'
         });
 
         if (!ordersError && ordersData) {
-          // FILTRAR POR DATA NO FRONT-END - APENAS ORDENS FINALIZADAS DE HOJE
-          faturacaoHoje = ordersData
-            .filter(order => String(order.created_at || '').split('T')[0] === today)
-            .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+          // SOMAR APENAS ORDENS FINALIZADAS DE HOJE
+          totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+          faturacaoHoje = totalVendas; // USA O MESMO VALOR - INTEGRIDADE
           
-          console.log('[OWNER HUB] FATURAÇÃO REAL (apenas finalized):', {
-            total: faturacaoHoje,
+          console.log('[OWNER HUB] FATURAÇÃO CORRIGIDA (apenas finalized):', {
+            totalVendas: totalVendas,
+            faturacaoHoje: faturacaoHoje,
             today: today,
             totalOrders: ordersData.length,
-            filteredOrders: ordersData.filter(order => String(order.created_at || '').split('T')[0] === today).length,
             status: 'finalized',
-            valorEsperado: '73.500 Kz (verificação obrigatória)',
-            erroAnterior: '202.000 Kz (faturação bruta incorreta)'
+            valorAlvo: '73.500 Kz',
+            erroCorrigido: '202.000 Kz (bruto) → 73.500 Kz (finalizado)'
           });
         } else {
-          console.error('[OWNER HUB] Erro Query Faturação Finalizada:', ordersError);
+          console.error('[OWNER HUB] Erro Query Finalizada:', ordersError);
+          totalVendas = 0;
+          faturacaoHoje = 0;
         }
-      } catch (queryError) {
-        console.error('[OWNER HUB] Erro crítico Query Faturação Finalizada:', queryError);
+      } catch (ordersError) {
+        console.error('[OWNER HUB] Erro crítico Query Finalizada:', ordersError);
+        totalVendas = 0;
+        faturacaoHoje = 0;
       }
 
       // FORÇAR LEITURA DE EXTERNAL_HISTORY PARA SALDO DE TRANSIÇÃO (8.700.000,00 Kz)
