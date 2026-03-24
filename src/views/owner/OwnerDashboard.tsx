@@ -1209,7 +1209,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Impostos (7%)</span>
             </div>
             <div className="text-3xl font-black text-purple-400 mb-2">
-              {formatAKZ((metrics.totalVendas || 0) * 0.07)}
+              {formatAKZ(metrics?.impostos || 0)}
             </div>
             <div className="text-xs text-white/60">Apenas sobre vendas da App</div>
           </div>
@@ -1226,7 +1226,7 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Operacional</span>
             </div>
             <div className="text-3xl font-black text-emerald-400 mb-2">
-              {formatAKZ((metrics.totalVendas || 0) - ((metrics.totalVendas || 0) * 0.07) - (metrics.despesasAcumuladas || 0) - (metrics.folhaSalarial || 0))}
+              {formatAKZ((metrics?.faturacaoHoje || 0) - (metrics?.impostos || 0) - (metrics?.despesasAcumuladas || 0) - (metrics?.folhaSalarial || 0))}
             </div>
             <div className="text-xs text-white/60">Vendas - Impostos - Despesas - Staff</div>
           </div>
