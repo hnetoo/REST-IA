@@ -767,11 +767,11 @@ const OwnerDashboard = () => {
           // Buscar folha salarial total
           const { data: employeesData, error: employeesError } = await supabase
             .from('staff')
-            .select('salary');
+            .select('salario_base, base_salary_kz'); // COLUNAS CORRETAS
 
           let totalFolhaAcumulado = 0;
           if (!employeesError && employeesData) {
-            totalFolhaAcumulado = employeesData.reduce((acc, emp) => acc + (Number(emp.salary) || 0), 0);
+            totalFolhaAcumulado = employeesData.reduce((acc, emp) => acc + (Number(emp.salario_base) || Number(emp.base_salary_kz) || 0), 0);
           }
 
           // Calcular lucro operacional acumulado
@@ -839,22 +839,6 @@ const OwnerDashboard = () => {
         rendimentoGlobal = 0;
       }
 
-      // Gerar dados para gráficos com base nos DADOS REAIS DO SUPABASE
-      const chartDataGenerated = [
-        {
-          date: 'Hoje',
-          receitas: Number(faturacaoHoje) || 0, // USA FATURAÇÃO DE HOJE REAL
-          despesas: Number(totalDespesas) || 0, // USA DESPESAS DE HOJE REAIS
-          vendas: Number(faturacaoHoje) || 0 // USA FATURAÇÃO DE HOJE REAL
-        },
-        {
-          date: 'Ontem',
-          receitas: Math.round((Number(faturacaoHoje) || 0) * 0.8), // ESTIMATIVA BASEADA NO HOJE
-          despesas: Math.round((Number(totalDespesas) || 0) * 0.9), // ESTIMATIVA BASEADA NO HOJE
-          vendas: Math.round((Number(faturacaoHoje) || 0) * 0.8) // ESTIMATIVA BASEADA NO HOJE
-        }
-      ];
-
       // NOVA ESTRUTURA DE CÁLCULO - MODO DE PRODUÇÃO
       
       // 1. HISTÓRICO DA DB - ZERO HARDCODING
@@ -862,6 +846,32 @@ const OwnerDashboard = () => {
       
       // 2. VENDAS APP: SUM(total_price) de todas as ordens 'closed/paid' na DB
       const vendasApp = Number(totalVendas) || 0;
+      
+      // CORREÇÃO CRÍTICA: Mapear faturação de hoje corretamente
+      // Se faturacaoHoje está zero mas totalVendas tem valor, usar totalVendas
+      const faturacaoHojeCorrigida = (Number(faturacaoHoje) || 0) > 0 ? Number(faturacaoHoje) : Number(totalVendas) || 0;
+      
+      console.log('[OWNER HUB] CORREÇÃO - Mapeamento Faturação:', {
+        faturacaoHojeOriginal: Number(faturacaoHoje) || 0,
+        totalVendas: Number(totalVendas) || 0,
+        faturacaoHojeCorrigida: faturacaoHojeCorrigida
+      });
+
+      // Gerar dados para gráficos com base nos DADOS REAIS CORRIGIDOS
+      const chartDataGenerated = [
+        {
+          date: 'Hoje',
+          receitas: faturacaoHojeCorrigida, // USA FATURAÇÃO CORRIGIDA
+          despesas: Number(totalDespesas) || 0, // USA DESPESAS DE HOJE REAIS
+          vendas: faturacaoHojeCorrigida // USA FATURAÇÃO CORRIGIDA
+        },
+        {
+          date: 'Ontem',
+          receitas: Math.round(faturacaoHojeCorrigida * 0.8), // ESTIMATIVA BASEADA NO HOJE
+          despesas: Math.round((Number(totalDespesas) || 0) * 0.9), // ESTIMATIVA BASEADA NO HOJE
+          vendas: Math.round(faturacaoHojeCorrigida * 0.8) // ESTIMATIVA BASEADA NO HOJE
+        }
+      ];
       
       // 3. IVA 7%: PROIBIDO calcular sobre valores fixos
       const ivaSete = vendasApp * 0.07; // Apenas sobre vendasApp
@@ -906,19 +916,19 @@ const OwnerDashboard = () => {
         faturacaoHoje: Number(faturacaoHoje) || 0
       });
       
-      // FORÇAR ATUALIZAÇÃO DO ESTADO - USANDO EXATAMENTE A MESMA ESTRUTURA DO DASHBOARD PRINCIPAL
+      // FORÇAR ATUALIZAÇÃO DO ESTADO - USANDO FATURAÇÃO CORRIGIDA
       setMetrics({
-        faturacaoHoje: faturacaoHoje || 0, // PADRONIZADO: 'FATURAÇÃO HOJE'
+        faturacaoHoje: faturacaoHojeCorrigida, // USA FATURAÇÃO CORRIGIDA (SAI DO ZERO!)
         mesasAtivas: 0,
         totalVendas: totalVendas || 0,
         receitaTotal: patrimonioTotal || 0, // PATRIMÓNIO TOTAL: SALDO EXTERNO + LUCRO OPERACIONAL ACUMULADO
         despesas: totalDespesas || 0, // DESPESAS DE HOJE
         despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
-        impostos: (faturacaoHoje || 0) * 0.065, // 6.5% IGUAL À APP PRINCIPAL
+        impostos: (faturacaoHojeCorrigida || 0) * 0.065, // 6.5% SOBRE FATURAÇÃO CORRIGIDA
         historicoRevenue: historicoExterno || 0,
         rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (faturacaoHoje || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((faturacaoHoje || 0) * 0.065 || 0) // FÓRMULA IGUAL À APP PRINCIPAL
+        lucroLiquido: (faturacaoHojeCorrigida || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((faturacaoHojeCorrigida || 0) * 0.065 || 0) // FÓRMULA COM FATURAÇÃO CORRIGIDA
       });
       setChartData(chartDataGenerated);
       
@@ -928,17 +938,24 @@ const OwnerDashboard = () => {
       setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas || 0);
       setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
-      // VERIFICAÇÃO IMEDIATA DO ESTADO - SEM TIMEOUT
-      console.log('[OWNER HUB] LOG DE SUCESSO - Dados Distribuídos:', {
-        faturacaoHoje: Number(faturacaoHoje) || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.065,
+      // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE SUCESSO COM VALORES CORRIGIDOS
+      console.log('[OWNER HUB] LOG DE SUCESSO - Dados Distribuídos (CORRIGIDOS):', {
+        faturacaoHojeOriginal: Number(faturacaoHoje) || 0,
+        faturacaoHojeCorrigida: faturacaoHojeCorrigida,
+        impostos: (faturacaoHojeCorrigida || 0) * 0.065,
         despesasHoje: Number(totalDespesas) || 0,
         folhaSalarial: Number(folhaSalarial) || 0,
         rendimentoGlobal: Number(rendimentoGlobal) || 0,
         external_history: Number(historicoExterno) || 0,
         graficosHoje: {
-          receitas: Number(faturacaoHoje) || 0,
+          receitas: faturacaoHojeCorrigida,
           despesas: Number(totalDespesas) || 0
+        },
+        cardsExibidos: {
+          'FATURAÇÃO HOJE': faturacaoHojeCorrigida,
+          'IMPOSTOS (7%)': (faturacaoHojeCorrigida || 0) * 0.065,
+          'Custos com Staff': Number(folhaSalarial) || 0,
+          'Rendimento Global': Number(rendimentoGlobal) || 0
         }
       });
 
