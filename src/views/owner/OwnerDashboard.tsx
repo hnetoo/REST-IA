@@ -663,48 +663,49 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar faturação de hoje USANDO EXATAMENTE A MESMA LÓGICA DO PAINEL DE COMANDO
+      // Buscar faturação de hoje USANDO APENAS ORDENS FINALIZADAS (INTEGRIDADE DE DADOS)
       let faturacaoHoje = 0;
       try {
-        // DATA DE HOJE - MESMA LÓGICA DO PAINEL DE COMANDO
+        // DATA DE HOJE - FILTRO EXATO PARA INTEGRIDADE
         const today = new Date().toISOString().split('T')[0];
         
-        console.log('[OWNER HUB] PAINEL DE COMANDO - Faturação Hoje:', {
+        console.log('[OWNER HUB] INTEGRIDADE DE DADOS - Faturação Hoje:', {
           today: today,
-          filtro: "status = 'closed'",
-          logica: 'Mesma lógica do Painel de Comando'
+          filtro: "status = 'finalized' (APENAS ORDENS FINALIZADAS)",
+          correcao: 'Erro grave: estava a usar faturação bruta (202.000 Kz)'
         });
         
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'closed'); // EXATAMENTE IGUAL AO PAINEL DE COMANDO
+          .eq('status', 'finalized'); // APENAS ORDENS FINALIZADAS - CORREÇÃO CRÍTICA
 
-        console.log('[OWNER HUB] PAINEL DE COMANDO - Orders Data:', {
+        console.log('[OWNER HUB] INTEGRIDADE - Orders Data (finalized apenas):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0
         });
 
         if (!ordersError && ordersData) {
-          // FILTRAR POR DATA NO FRONT-END - EXATAMENTE IGUAL AO PAINEL DE COMANDO
+          // FILTRAR POR DATA NO FRONT-END - APENAS ORDENS FINALIZADAS DE HOJE
           faturacaoHoje = ordersData
             .filter(order => String(order.created_at || '').split('T')[0] === today)
             .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           
-          console.log('[OWNER HUB] FATURAÇÃO HOJE (Painel de Comando):', {
+          console.log('[OWNER HUB] FATURAÇÃO REAL (apenas finalized):', {
             total: faturacaoHoje,
             today: today,
             totalOrders: ordersData.length,
             filteredOrders: ordersData.filter(order => String(order.created_at || '').split('T')[0] === today).length,
-            status: 'closed',
-            valorEsperado: '73.500 Kz (relatório)'
+            status: 'finalized',
+            valorEsperado: '73.500 Kz (verificação obrigatória)',
+            erroAnterior: '202.000 Kz (faturação bruta incorreta)'
           });
         } else {
-          console.error('[OWNER HUB] Erro Query Painel de Comando:', ordersError);
+          console.error('[OWNER HUB] Erro Query Faturação Finalizada:', ordersError);
         }
       } catch (queryError) {
-        console.error('[OWNER HUB] Erro crítico Query Painel de Comando:', queryError);
+        console.error('[OWNER HUB] Erro crítico Query Faturação Finalizada:', queryError);
       }
 
       // FORÇAR LEITURA DE EXTERNAL_HISTORY PARA SALDO DE TRANSIÇÃO (8.700.000,00 Kz)
@@ -872,8 +873,8 @@ const OwnerDashboard = () => {
         }
       ];
       
-      // 3. IVA CORRIGIDO: 7% SOBRE FATURAÇÃO REAL (FATURAS EMITIDAS)
-      const ivaSete = Number(faturacaoHoje) * 0.07; // 7% SOBRE VALOR REAL DAS FATURAS
+      // 3. IVA CORRIGIDO: 14% SOBRE FATURAÇÃO REAL (PAINEL DE COMANDO)
+      const ivaSete = Number(faturacaoHoje) * 0.14; // 14% SOBRE VALOR REAL DAS FATURAS FINALIZADAS
       
       // 4. DESPESAS TOTAIS: SUM(expenses) + SUM(staff_salaries)
       let despesasTotais = (Number(totalDespesas) || 0) + (Number(folhaSalarial) || 0);
@@ -915,19 +916,19 @@ const OwnerDashboard = () => {
         faturacaoHoje: Number(faturacaoHoje) || 0
       });
       
-      // FORÇAR ATUALIZAÇÃO DO ESTADO - USA FATURAÇÃO REAL DO PAINEL DE COMANDO
+      // FORÇAR ATUALIZAÇÃO DO ESTADO - FATURAÇÃO REAL APENAS ORDENS FINALIZADAS
       setMetrics({
-        faturacaoHoje: Number(faturacaoHoje) || 0, // FATURAÇÃO REAL DAS FATURAS EMITIDAS (73.500 Kz)
+        faturacaoHoje: Number(faturacaoHoje) || 0, // FATURAÇÃO REAL DAS ORDENS FINALIZADAS (73.500 Kz)
         mesasAtivas: 0,
         totalVendas: totalVendas || 0,
         receitaTotal: patrimonioTotal || 0, // PATRIMÓNIO TOTAL: SALDO EXTERNO + LUCRO OPERACIONAL ACUMULADO
         despesas: totalDespesas || 0, // DESPESAS DE HOJE
         despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.07, // 7% SOBRE FATURAÇÃO REAL (5.145 Kz)
+        impostos: (Number(faturacaoHoje) || 0) * 0.14, // 14% SOBRE FATURAÇÃO REAL (10.290 Kz)
         historicoRevenue: historicoExterno || 0,
         rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.07 || 0) // FÓRMULA COM 7%
+        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.14 || 0) // FÓRMULA COM 14%
       });
       setChartData(chartDataGenerated);
       
@@ -937,11 +938,11 @@ const OwnerDashboard = () => {
       setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas || 0);
       setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
-      // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE CORREÇÃO IVA 7%
-      console.log('[OWNER HUB] CORREÇÃO IVA 7% - Valores Finais:', {
-        faturacaoHojePainelComando: Number(faturacaoHoje) || 0,
+      // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE INTEGRIDADE DE DADOS
+      console.log('[OWNER HUB] INTEGRIDADE DE DADOS - Valores Corrigidos:', {
+        faturacaoHojeFinalizada: Number(faturacaoHoje) || 0,
         totalVendasBruto: Number(totalVendas) || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.07,
+        impostos: (Number(faturacaoHoje) || 0) * 0.14,
         despesasHoje: Number(totalDespesas) || 0,
         folhaSalarial: Number(folhaSalarial) || 0,
         rendimentoGlobal: Number(rendimentoGlobal) || 0,
@@ -952,14 +953,15 @@ const OwnerDashboard = () => {
         },
         cardsExibidos: {
           'FATURAÇÃO HOJE': Number(faturacaoHoje) || 0,
-          'IMPOSTOS (7%)': (Number(faturacaoHoje) || 0) * 0.07,
+          'IMPOSTOS (14%)': (Number(faturacaoHoje) || 0) * 0.14,
           'Custos com Staff': Number(folhaSalarial) || 0,
           'Rendimento Global': Number(rendimentoGlobal) || 0
         },
-        correcao: 'IVA corrigido para 7% | Taxa padrão do sistema',
+        correcao: 'Faturação apenas finalized | IVA 14% | Removida faturação bruta',
         valoresEsperados: {
-          faturacao: '73.500 Kz',
-          impostos: '5.145 Kz (7% de 73.500)'
+          faturacao: '73.500 Kz (obrigatório)',
+          impostos: '10.290 Kz (14% de 73.500)',
+          erroCorrigido: '202.000 Kz (faturação bruta) → 73.500 Kz (finalizada)'
         }
       });
 
@@ -1238,13 +1240,13 @@ const OwnerDashboard = () => {
             <div className="text-xs text-white/60">Soma de todas as despesas</div>
           </div>
 
-          {/* Card 6: Impostos (7%) */}
+          {/* Card 6: Impostos (14%) */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
                 <Receipt className="w-6 h-6 text-purple-400" />
               </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">Impostos (7%)</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Impostos (14%)</span>
             </div>
             <div className="text-3xl font-black text-purple-400 mb-2">
               {formatAKZ(metrics?.impostos || 0)}
