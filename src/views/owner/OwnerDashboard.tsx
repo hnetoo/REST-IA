@@ -665,13 +665,10 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar faturação de hoje USANDO EXATAMENTE A MESMA QUERY DO DASHBOARD PRINCIPAL COM FUSO DE ANGOLA
+      // Buscar faturação de hoje USANDO EXATAMENTE A MESMA QUERY DO DASHBOARD PRINCIPAL
       let faturacaoHoje = 0;
       try {
-        // FUSO DE ANGOLA (GMT+1) - DEFINIÇÃO EXATA DE 'HOJE'
-        const todayAngola = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
-        const today = todayAngola.toISOString().split('T')[0];
-        
+        const today = new Date().toISOString().split('T')[0];
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
@@ -683,9 +680,8 @@ const OwnerDashboard = () => {
             .filter(order => String(order.created_at || '').split('T')[0] === today)
             .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           
-          console.log('[OWNER HUB] Faturação Hoje (Query IDÊNTICA + Fuso Angola):', {
+          console.log('[OWNER HUB] Faturação Hoje (Query IDÊNTICA Dashboard Principal):', {
             total: faturacaoHoje,
-            todayAngola: todayAngola.toLocaleString('pt-AO'),
             today,
             totalOrders: ordersData.length,
             todayOrders: ordersData.filter(order => String(order.created_at || '').split('T')[0] === today).length

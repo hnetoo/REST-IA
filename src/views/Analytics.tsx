@@ -25,12 +25,11 @@ const Analytics = () => {
 
   // Calcular métricas reais
   const realMetrics = useMemo(() => {
-    const todayAngola = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
-    const today = todayAngola.toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
     
-    // Faturação Hoje: filtrar pedidos fechados de hoje (incluindo todos os status de venda)
+    // Faturação Hoje: filtrar pedidos fechados de hoje (MESMA QUERY DO DASHBOARD PRINCIPAL)
     const todayOrders = activeOrders.filter(order => 
-      ['FECHADO', 'closed', 'paid'].includes(order.status) && 
+      ['closed', 'FECHADO', 'paid'].includes(order.status) && 
       String(order.timestamp || '').split('T')[0] === today
     );
     
