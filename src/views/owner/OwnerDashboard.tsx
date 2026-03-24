@@ -663,42 +663,40 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar faturação de hoje USANDO STATUS 'finalized' E FUSO DE ANGOLA
+      // Buscar faturação de hoje USANDO EXATAMENTE O MESMO FILTRO DA APP PRINCIPAL
       let faturacaoHoje = 0;
       try {
-        // DATA DE HOJE EM ANGOLA (GMT+1)
-        const todayAngola = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
-        const today = todayAngola.toISOString().split('T')[0];
+        // DATA DE HOJE EM ANGOLA (GMT+1) - IGUAL À APP PRINCIPAL
+        const today = new Date().toISOString().split('T')[0];
         
-        console.log('[OWNER HUB] DEBUG - Faturação Hoje:', {
-          todayAngola: todayAngola.toLocaleString('pt-AO'),
+        console.log('[OWNER HUB] DEBUG - Faturação Hoje (FILTRO APP PRINCIPAL):', {
           today: today,
-          timezone: 'Africa/Luanda'
+          timezone: 'Africa/Luanda',
+          filtro: "['closed', 'paid', 'FECHADO']"
         });
         
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at, status')
-          .eq('status', 'finalized'); // STATUS CORRETO: 'finalized'
+          .in('status', ['closed', 'paid', 'FECHADO']) // FILTRO IDÊNTICO À APP PRINCIPAL
+          .gte('created_at', `${today}T00:00:00`) // MESMO FILTRO DE DATA DA APP PRINCIPAL
+          .lte('created_at', `${today}T23:59:59`); // MESMO FILTRO DE DATA DA APP PRINCIPAL
 
-        console.log('[OWNER HUB] DEBUG - Orders Data:', {
+        console.log('[OWNER HUB] DEBUG - Orders Data (App Principal Filter):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0
         });
 
         if (!ordersError && ordersData) {
-          // Filtrar por data no front-end (mesmo dia em Angola)
-          const todayOrders = ordersData.filter(order => String(order.created_at || '').split('T')[0] === today);
-          faturacaoHoje = todayOrders.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+          // SOMAR DIRETAMENTE (JÁ FILTRADO POR DATA NA QUERY)
+          faturacaoHoje = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           
-          console.log('[OWNER HUB] Faturação Hoje (Status: finalized + Fuso Angola):', {
+          console.log('[OWNER HUB] Faturação Hoje (Filtro App Principal):', {
             total: faturacaoHoje,
-            todayAngola: todayAngola.toLocaleString('pt-AO'),
-            today,
+            today: today,
             totalOrders: ordersData.length,
-            todayOrders: todayOrders.length,
-            todayOrdersData: todayOrders
+            filtroStatus: ['closed', 'paid', 'FECHADO']
           });
         } else {
           console.error('[OWNER HUB] Erro Query Faturação Hoje:', ordersError);
@@ -847,34 +845,33 @@ const OwnerDashboard = () => {
       // 2. VENDAS APP: SUM(total_price) de todas as ordens 'closed/paid' na DB
       const vendasApp = Number(totalVendas) || 0;
       
-      // CORREÇÃO CRÍTICA: Mapear faturação de hoje corretamente
-      // Se faturacaoHoje está zero mas totalVendas tem valor, usar totalVendas
-      const faturacaoHojeCorrigida = (Number(faturacaoHoje) || 0) > 0 ? Number(faturacaoHoje) : Number(totalVendas) || 0;
-      
-      console.log('[OWNER HUB] CORREÇÃO - Mapeamento Faturação:', {
-        faturacaoHojeOriginal: Number(faturacaoHoje) || 0,
+      // USA DIRETAMENTE O VALOR DA QUERY (JÁ FILTRADO COMO APP PRINCIPAL)
+      // Sem correção - usar exatamente o que a query retornou
+      console.log('[OWNER HUB] UNIFICAÇÃO - Faturação vs App Principal:', {
+        faturacaoHojeQuery: Number(faturacaoHoje) || 0,
         totalVendas: Number(totalVendas) || 0,
-        faturacaoHojeCorrigida: faturacaoHojeCorrigida
+        valorFinal: Number(faturacaoHoje) || 0, // USA DIRETAMENTE O VALOR DA QUERY
+        observacao: 'Usando valor exato da query (filtro App Principal)'
       });
 
-      // Gerar dados para gráficos com base nos DADOS REAIS CORRIGIDOS
+      // Gerar dados para gráficos com base nos DADOS REAIS DA QUERY
       const chartDataGenerated = [
         {
           date: 'Hoje',
-          receitas: faturacaoHojeCorrigida, // USA FATURAÇÃO CORRIGIDA
+          receitas: Number(faturacaoHoje) || 0, // USA FATURAÇÃO DA QUERY
           despesas: Number(totalDespesas) || 0, // USA DESPESAS DE HOJE REAIS
-          vendas: faturacaoHojeCorrigida // USA FATURAÇÃO CORRIGIDA
+          vendas: Number(faturacaoHoje) || 0 // USA FATURAÇÃO DA QUERY
         },
         {
           date: 'Ontem',
-          receitas: Math.round(faturacaoHojeCorrigida * 0.8), // ESTIMATIVA BASEADA NO HOJE
+          receitas: Math.round((Number(faturacaoHoje) || 0) * 0.8), // ESTIMATIVA BASEADA NO HOJE
           despesas: Math.round((Number(totalDespesas) || 0) * 0.9), // ESTIMATIVA BASEADA NO HOJE
-          vendas: Math.round(faturacaoHojeCorrigida * 0.8) // ESTIMATIVA BASEADA NO HOJE
+          vendas: Math.round((Number(faturacaoHoje) || 0) * 0.8) // ESTIMATIVA BASEADA NO HOJE
         }
       ];
       
-      // 3. IVA 7%: PROIBIDO calcular sobre valores fixos
-      const ivaSete = vendasApp * 0.07; // Apenas sobre vendasApp
+      // 3. IVA UNIFICADO: 6.5% IGUAL À APP PRINCIPAL
+      const ivaSete = vendasApp * 0.065; // TAXA IDÊNTICA À APP PRINCIPAL
       
       // 4. DESPESAS TOTAIS: SUM(expenses) + SUM(staff_salaries)
       let despesasTotais = (Number(totalDespesas) || 0) + (Number(folhaSalarial) || 0);
@@ -916,19 +913,19 @@ const OwnerDashboard = () => {
         faturacaoHoje: Number(faturacaoHoje) || 0
       });
       
-      // FORÇAR ATUALIZAÇÃO DO ESTADO - USANDO FATURAÇÃO CORRIGIDA
+      // FORÇAR ATUALIZAÇÃO DO ESTADO - USA VALOR EXATO DA QUERY
       setMetrics({
-        faturacaoHoje: faturacaoHojeCorrigida, // USA FATURAÇÃO CORRIGIDA (SAI DO ZERO!)
+        faturacaoHoje: Number(faturacaoHoje) || 0, // USA VALOR EXATO DA QUERY (APP PRINCIPAL)
         mesasAtivas: 0,
         totalVendas: totalVendas || 0,
         receitaTotal: patrimonioTotal || 0, // PATRIMÓNIO TOTAL: SALDO EXTERNO + LUCRO OPERACIONAL ACUMULADO
         despesas: totalDespesas || 0, // DESPESAS DE HOJE
         despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
-        impostos: (faturacaoHojeCorrigida || 0) * 0.065, // 6.5% SOBRE FATURAÇÃO CORRIGIDA
+        impostos: (Number(faturacaoHoje) || 0) * 0.065, // 6.5% SOBRE FATURAÇÃO DA QUERY
         historicoRevenue: historicoExterno || 0,
         rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (faturacaoHojeCorrigida || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((faturacaoHojeCorrigida || 0) * 0.065 || 0) // FÓRMULA COM FATURAÇÃO CORRIGIDA
+        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.065 || 0) // FÓRMULA COM VALOR DA QUERY
       });
       setChartData(chartDataGenerated);
       
@@ -938,25 +935,26 @@ const OwnerDashboard = () => {
       setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas || 0);
       setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
-      // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE SUCESSO COM VALORES CORRIGIDOS
-      console.log('[OWNER HUB] LOG DE SUCESSO - Dados Distribuídos (CORRIGIDOS):', {
-        faturacaoHojeOriginal: Number(faturacaoHoje) || 0,
-        faturacaoHojeCorrigida: faturacaoHojeCorrigida,
-        impostos: (faturacaoHojeCorrigida || 0) * 0.065,
+      // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE UNIFICAÇÃO COM APP PRINCIPAL
+      console.log('[OWNER HUB] UNIFICAÇÃO COM APP PRINCIPAL - Valores Finais:', {
+        faturacaoHojeQuery: Number(faturacaoHoje) || 0,
+        totalVendas: Number(totalVendas) || 0,
+        impostos: (Number(faturacaoHoje) || 0) * 0.065,
         despesasHoje: Number(totalDespesas) || 0,
         folhaSalarial: Number(folhaSalarial) || 0,
         rendimentoGlobal: Number(rendimentoGlobal) || 0,
         external_history: Number(historicoExterno) || 0,
         graficosHoje: {
-          receitas: faturacaoHojeCorrigida,
+          receitas: Number(faturacaoHoje) || 0,
           despesas: Number(totalDespesas) || 0
         },
         cardsExibidos: {
-          'FATURAÇÃO HOJE': faturacaoHojeCorrigida,
-          'IMPOSTOS (7%)': (faturacaoHojeCorrigida || 0) * 0.065,
+          'FATURAÇÃO HOJE': Number(faturacaoHoje) || 0,
+          'IMPOSTOS (6.5%)': (Number(faturacaoHoje) || 0) * 0.065,
           'Custos com Staff': Number(folhaSalarial) || 0,
           'Rendimento Global': Number(rendimentoGlobal) || 0
-        }
+        },
+        unificacao: 'Filtro: [closed, paid, FECHADO] | Taxa: 6.5% | Query: App Principal'
       });
 
       setIsLoading(false);
