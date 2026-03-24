@@ -665,23 +665,27 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar faturação de hoje USANDO EXATAMENTE A MESMA QUERY DA APP PRINCIPAL
+      // Buscar faturação de hoje USANDO STATUS 'finalized' E FUSO DE ANGOLA
       let faturacaoHoje = 0;
       try {
-        const today = new Date().toISOString().split('T')[0];
+        // DATA DE HOJE EM ANGOLA (GMT+1)
+        const todayAngola = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
+        const today = todayAngola.toISOString().split('T')[0];
+        
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'closed'); // EXATAMENTE COMO NA APP PRINCIPAL
+          .eq('status', 'finalized'); // STATUS CORRETO: 'finalized'
 
         if (!ordersError && ordersData) {
-          // Filtrar por data no front-end (EXATAMENTE COMO NA APP PRINCIPAL)
+          // Filtrar por data no front-end (mesmo dia em Angola)
           faturacaoHoje = ordersData
             .filter(order => String(order.created_at || '').split('T')[0] === today)
             .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           
-          console.log('[OWNER HUB] Faturação Hoje (Query IDÊNTICA App Principal):', {
+          console.log('[OWNER HUB] Faturação Hoje (Status: finalized + Fuso Angola):', {
             total: faturacaoHoje,
+            todayAngola: todayAngola.toLocaleString('pt-AO'),
             today,
             totalOrders: ordersData.length,
             todayOrders: ordersData.filter(order => String(order.created_at || '').split('T')[0] === today).length
@@ -711,24 +715,10 @@ const OwnerDashboard = () => {
       }
       setHistoricoExterno(historicoExterno); // Atualizar estado
 
-      let totalBusinessStats = 0;
+      // PATRIMÓNIO TOTAL: SOMAR SALDO EXTERNO + LUCRO OPERACIONAL ACUMULADO
+      let patrimonioTotal = 0;
       try {
-        const { data: businessStatsData, error: businessStatsError } = await supabase
-          .from('business_stats')
-          .select('legacy_revenue_kz');
-
-        if (!businessStatsError && businessStatsData?.length) {
-          totalBusinessStats = businessStatsData.reduce((acc, row) => acc + Number(row.legacy_revenue_kz ?? 0), 0);
-        }
-      } catch (businessError) {
-        console.error('[DASHBOARD] Erro ao buscar business_stats:', businessError);
-      }
-
-      // RENDIMENTO GLOBAL: COPIADO DO DASHBOARD PRINCIPAL (FUNCIONANDO)
-      let rendimentoGlobal = 0;
-      
-      try {
-        // 1. Buscar external_history (histórico correto - 8.700.000,00 Kz)
+        // 1. Buscar external_history (saldo externo)
         let historicoExterno = 0;
         const { data: historyData, error: historyError } = await supabase
           .from('external_history')
@@ -736,10 +726,86 @@ const OwnerDashboard = () => {
 
         if (!historyError && historyData && historyData.length > 0) {
           historicoExterno = historyData.reduce((acc, row) => acc + (Number(row.total_revenue) || 0), 0);
-          console.log('[OWNER HUB] External History (8.700.000,00 Kz):', historicoExterno);
+          console.log('[OWNER HUB] External History para Património:', historicoExterno);
         }
 
-        // 2. Buscar SOMA TOTAL da tabela orders (vendas reais)
+        // 2. Calcular lucro operacional acumulado (vendas totais - despesas totais - folha total)
+        let lucroOperacionalAcumulado = 0;
+        try {
+          // Buscar todas as vendas
+          const { data: allOrdersData, error: allOrdersError } = await supabase
+            .from('orders')
+            .select('total_amount');
+
+          let totalVendasAcumulado = 0;
+          if (!allOrdersError && allOrdersData) {
+            totalVendasAcumulado = allOrdersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+          }
+
+          // Buscar todas as despesas (exceto pendentes)
+          const { data: allExpensesData, error: allExpensesError } = await supabase
+            .from('expenses')
+            .select('amount_kz');
+
+          let totalDespesasAcumulado = 0;
+          if (!allExpensesError && allExpensesData) {
+            totalDespesasAcumulado = allExpensesData
+              .filter(exp => exp.status !== 'PENDENTE')
+              .reduce((acc, exp) => acc + (Number(exp.amount_kz) || 0), 0);
+          }
+
+          // Buscar folha salarial total
+          const { data: employeesData, error: employeesError } = await supabase
+            .from('employees')
+            .select('salary');
+
+          let totalFolhaAcumulado = 0;
+          if (!employeesError && employeesData) {
+            totalFolhaAcumulado = employeesData.reduce((acc, emp) => acc + (Number(emp.salary) || 0), 0);
+          }
+
+          // Calcular lucro operacional acumulado
+          lucroOperacionalAcumulado = totalVendasAcumulado - totalDespesasAcumulado - totalFolhaAcumulado;
+
+          console.log('[OWNER HUB] Lucro Operacional Acumulado:', {
+            totalVendas: totalVendasAcumulado,
+            totalDespesas: totalDespesasAcumulado,
+            totalFolha: totalFolhaAcumulado,
+            lucroOperacional: lucroOperacionalAcumulado
+          });
+        } catch (lucroError) {
+          console.error('[OWNER HUB] Erro ao calcular lucro operacional:', lucroError);
+          lucroOperacionalAcumulado = 0;
+        }
+
+        // 3. Calcular Património Total
+        patrimonioTotal = historicoExterno + lucroOperacionalAcumulado;
+
+        console.log('[OWNER HUB] Património Total:', {
+          historicoExterno,
+          lucroOperacionalAcumulado,
+          patrimonioTotal
+        });
+      } catch (error) {
+        console.error('[OWNER HUB] Erro crítico ao calcular Património:', error);
+        patrimonioTotal = 0;
+      }
+
+      // RENDIMENTO GLOBAL: SOMAR TODO O HISTÓRICO DE VENDAS SEM FILTRO DE DATA
+      let rendimentoGlobal = 0;
+      try {
+        // 1. External History (histórico de transição)
+        let historicoExterno = 0;
+        const { data: historyData, error: historyError } = await supabase
+          .from('external_history')
+          .select('total_revenue');
+
+        if (!historyError && historyData && historyData.length > 0) {
+          historicoExterno = historyData.reduce((acc, row) => acc + (Number(row.total_revenue) || 0), 0);
+          console.log('[OWNER HUB] External History para Rendimento Global:', historicoExterno);
+        }
+
+        // 2. Soma total da tabela orders (vendas reais)
         let somaOrders = 0;
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
@@ -747,19 +813,19 @@ const OwnerDashboard = () => {
 
         if (!ordersError && ordersData && ordersData.length > 0) {
           somaOrders = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
-          console.log('[OWNER HUB] Soma Orders (vendas reais):', somaOrders);
+          console.log('[OWNER HUB] Soma Orders para Rendimento Global:', somaOrders);
         }
 
-        // 3. Calcular Rendimento Global (fórmula limpa)
+        // 3. Calcular Rendimento Global (fórmula completa)
         rendimentoGlobal = historicoExterno + somaOrders;
         
-        console.log('[OWNER HUB] Rendimento Global (fórmula limpa):', {
+        console.log('[OWNER HUB] Rendimento Global (Histórico Completo):', {
           external_history: historicoExterno,
           orders: somaOrders,
           total: rendimentoGlobal
         });
       } catch (error) {
-        console.error('[OWNER HUB] Erro crítico ao calcular rendimento global:', error);
+        console.error('[OWNER HUB] Erro crítico ao calcular Rendimento Global:', error);
         rendimentoGlobal = 0;
       }
 
@@ -835,7 +901,7 @@ const OwnerDashboard = () => {
         faturacaoHoje: faturacaoHoje || 0, // PADRONIZADO: 'FATURAÇÃO HOJE'
         mesasAtivas: 0,
         totalVendas: totalVendas || 0,
-        receitaTotal: rendimentoGlobal || 0,
+        receitaTotal: patrimonioTotal || 0, // PATRIMÓNIO TOTAL: SALDO EXTERNO + LUCRO OPERACIONAL ACUMULADO
         despesas: totalDespesas || 0, // DESPESAS DE HOJE
         despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
