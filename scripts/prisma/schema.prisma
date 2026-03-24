@@ -549,14 +549,14 @@ model expenses {
   id            String    @id @default(dbgenerated("gen_random_uuid()"))
   description   String
   amount_kz     Decimal   @db.Decimal(15, 2)
-  category      String
+  category      String    // CATEGORIA OBRIGATÓRIA - NOT NULL
   is_recurring  Boolean?  @default(false)
   period_start  DateTime? @db.Date
   period_end    DateTime? @db.Date
   created_at    DateTime? @default(now()) @db.Timestamptz(6)
   updated_at    DateTime? @default(now()) @db.Timestamptz(6)
   status        String?   @default("pago")
-  category_name String?
+  category_name String?   // Remover campo duplicado
 
   @@index([category], map: "idx_expenses_category")
   @@index([created_at], map: "idx_expenses_created_at")
@@ -622,7 +622,7 @@ model orders {
   created_at       DateTime?     @default(now()) @db.Timestamptz(6)
   updated_at       DateTime?     @default(now()) @db.Timestamptz(6)
   cost_amount      Decimal?      @default(0) @db.Decimal(15, 2)
-  payment_method   String?       @default("NUMERARIO")
+  payment_method   String    // NOT NULL - OBRIGATÓRIO NO POS
   invoice_number   String?
   table_id         String?       @db.Uuid
   customer_id      String?       @db.Uuid
@@ -631,6 +631,7 @@ model orders {
 
   @@index([created_at(sort: Desc)], map: "idx_orders_created_at")
   @@index([status], map: "idx_orders_status")
+  @@index([payment_method], map: "idx_orders_payment_method")
   @@schema("public")
 }
 
@@ -719,7 +720,6 @@ model salary_payments {
   @@schema("public")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model staff {
   id              String            @id @default(dbgenerated("gen_random_uuid()"))
   full_name       String
@@ -822,4 +822,28 @@ enum one_time_token_type {
   phone_change_token
 
   @@schema("auth")
+}
+
+model cash_flow {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  amount      Decimal    @db.Decimal(15, 2)
+  type        String     @default("entrada") // entrada ou saida
+  category    String
+  description String?
+  created_at  DateTime?  @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime?  @default(now()) @db.Timestamptz(6)
+
+  @@index([created_at(sort: Desc)], map: "idx_cash_flow_created_at")
+  @@index([type], map: "idx_cash_flow_type")
+  @@index([category], map: "idx_cash_flow_category")
+  @@schema("public")
+}
+
+enum PaymentMethod {
+  NUMERARIO
+  TPA
+  QRCODE
+  TRANSFERENCIA
+
+  @@schema("public")
 }

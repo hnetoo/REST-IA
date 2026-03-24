@@ -1,10 +1,8 @@
-const config = {
+export default {
   datasources: {
     db: {
       provider: 'postgresql',
-      url: process.env.DATABASE_URL!,
+      url: process.env.DATABASE_URL,
     },
   },
 }
-
-export default config

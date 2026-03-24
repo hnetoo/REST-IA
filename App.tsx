@@ -5,7 +5,7 @@ import Sidebar from './src/components/Sidebar';
 import Login from './src/views/Login';
 import OwnerLogin from './src/views/owner/OwnerLogin';
 import OwnerDashboard from './src/views/owner/OwnerDashboard';
-import Dashboard from './src/views/Dashboard';
+import DashboardV2 from './src/views/DashboardV2';
 import POS from './src/views/POS';
 import PrinterConfig from './src/views/PrinterConfig';
 import AGTControl from './src/views/AGTControl';
@@ -77,8 +77,8 @@ const App = () => {
                 <Sidebar />
                 <main className="flex-1 h-full overflow-hidden relative">
                   <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/" element={<DashboardV2 />} />
+                    <Route path="/dashboard" element={<DashboardV2 />} />
                     <Route path="/pos" element={<POS />} />
                     <Route path="/printer-config" element={<PrinterConfig />} />
                     <Route path="/agt" element={<AGTControl />} />

@@ -513,7 +513,7 @@ export const useStore = create<StoreState>()(
         const customerName = customerId
           ? (customers.find(c => c.id === customerId)?.name || order.subAccountName || 'CLIENTE_PADRAO')
           : (order.subAccountName || 'CLIENTE_PADRAO');
-        const pm = paymentMethod || 'NUMERARIO';
+        const pm = paymentMethod; // 🚫 REMOVIDO: || 'NUMERARIO' - Agora usa o valor dinâmico
         const tableId = order.tableId; // 🛡️ Extrair tableId do order
 
         // Estrutura com EXATAMENTE os nomes de coluna do Supabase (schema real)

@@ -34,11 +34,12 @@ const Analytics = () => {
       String(order.timestamp || '').split('T')[0] === today
     );
     
-    const totalSalesToday = todayOrders.reduce((acc, order) => acc + (order.total_amount || 0), 0);
+    // CORRIGIR: USAR CAMPO CORRETO 'total' em vez de 'total_amount'
+    const totalSalesToday = todayOrders.reduce((acc, order) => acc + (order.total || 0), 0);
     const totalOrdersToday = todayOrders.length;
     const ticketMedio = totalOrdersToday > 0 ? totalSalesToday / totalOrdersToday : 0;
     
-    // Custo de Compras: expenses de hoje
+    // Custo de Compras: expenses de hoje - CORRIGIR CAMPO
     const todayExpenses = expenses.filter(expense => 
       String(expense.createdAt || '').split('T')[0] === today
     );
@@ -46,6 +47,15 @@ const Analytics = () => {
     
     // Lucro Bruto
     const lucroBruto = (totalSalesToday || 0) - (totalExpensesToday || 0);
+    
+    console.log('[ANALYTICS] Métricas do dia:', {
+      today,
+      totalSalesToday,
+      totalOrdersToday,
+      ticketMedio,
+      totalExpensesToday,
+      lucroBruto
+    });
     
     return {
       totalSalesToday,
@@ -57,7 +67,7 @@ const Analytics = () => {
   }, [activeOrders, expenses]);
 
   // Dados para gráfico dos últimos 7 dias
-  const chartData = useMemo(() => {
+  const weekChartData = useMemo(() => {
     const today = new Date();
     const data = [];
     
@@ -67,14 +77,14 @@ const Analytics = () => {
       const dateStr = date.toISOString().split('T')[0];
       const dayName = date.toLocaleDateString('pt-AO', { weekday: 'short', day: 'numeric' });
       
-      // Vendas do dia (incluindo todos os status de venda)
+      // Vendas do dia (incluindo todos os status de venda) - CORRIGIR CAMPO
       const dayOrders = activeOrders.filter(order => 
         ['FECHADO', 'closed', 'paid'].includes(order.status) && 
         String(order.timestamp || '').split('T')[0] === dateStr
       );
-      const sales = dayOrders.reduce((acc, order) => acc + (order.total_amount || 0), 0);
+      const sales = dayOrders.reduce((acc, order) => acc + (order.total || 0), 0);
       
-      // Compras do dia
+      // Compras do dia - CORRIGIR CAMPO
       const dayExpenses = expenses.filter(expense => 
         String(expense.createdAt || '').split('T')[0] === dateStr
       );
@@ -152,21 +162,44 @@ const Analytics = () => {
   //   ...
   // ];
 
-  // Dados para gráfico de pizza das despesas - CORRIGIR MAPEAMENTO E CAMPOS
+  // Dados para gráfico de pizza das despesas - ACEITAR TODAS AS CATEGORIAS
   const expensePieData = useMemo(() => {
     const grouped: Record<string, number> = {};
+    
+    // MAPEAMENTO OFICIAL DE CATEGORIAS ANGOLA
+    const categoryMapping: Record<string, string> = {
+      'ALIMENTACAO': 'ALIMENTAÇÃO',
+      'ALIMENTAÇÃO': 'ALIMENTAÇÃO',
+      'STAFF': 'STAFF',
+      'COMPRAS': 'MERCADORIA',
+      'MERCADORIA': 'MERCADORIA', 
+      'RENDAS': 'RENDAS',
+      'IMPOSTOS': 'IMPOSTOS',
+      'MANUTENCAO': 'MANUTENÇÃO',
+      'MANUTENÇÃO': 'MANUTENÇÃO',
+      'BEBIDAS': 'MERCADORIA',
+      'MATERIAL_LIMPEZA': 'MANUTENÇÃO',
+      'UTILIDADES': 'UTILIDADES',
+      'REPARACOES': 'MANUTENÇÃO',
+      'REPARAÇÕES': 'MANUTENÇÃO',
+      'MARKETING': 'MARKETING',
+      'OUTROS': 'OUTROS'
+    };
     
     expenses.forEach(expense => {
       // USAR CAMPO CORRETO amount (conforme tipo Expense)
       const valor = Number(expense.amount || 0);
       
-      // USAR CATEGORIA REAL - SEM FILTRO DE STATUS (mostrar tudo)
-      let categoryName = String(expense.category || 'OUTROS');
+      // ACEITAR TODAS AS CATEGORIAS - MAPEAR SE NECESSÁRIO
+      let rawCategory = String(expense.category || '').toUpperCase().trim();
       
-      // ÚLTIMO RESGUARDO - NUNCA undefined
-      if (!categoryName || categoryName === 'undefined' || categoryName === '') {
-        categoryName = 'OUTROS';
+      if (!rawCategory || rawCategory === 'undefined' || rawCategory === '') {
+        console.warn('[ANALYTICS] Despesa sem categoria:', expense.id);
+        return; // PULAR APENAS SE REALMENTE NÃO TIVER CATEGORIA
       }
+      
+      // USAR CATEGORIA MAPEADA OU ORIGINAL SE NÃO EXISTER NO MAPA
+      let categoryName = categoryMapping[rawCategory] || rawCategory;
       
       if (!grouped[categoryName]) {
         grouped[categoryName] = 0;
@@ -184,6 +217,7 @@ const Analytics = () => {
       percentage: total > 0 ? (amount / total) * 100 : 0
     }));
     
+    console.log('[ANALYTICS] Categorias reais encontradas:', chartData);
     return chartData;
   }, [expenses]);
 
@@ -214,7 +248,20 @@ const Analytics = () => {
     }));
   }, [expenses]);
 
-  // Cores para gráficos
+  // Cores para gráficos - CORES FIXAS POR CATEGORIA
+  const CATEGORY_COLORS: Record<string, string> = {
+    'STAFF': '#06b6d4',        // Cyan
+    'MERCADORIA': '#10b981',   // Green  
+    'RENDAS': '#f59e0b',       // Yellow
+    'IMPOSTOS': '#ef4444',     // Red
+    'MANUTENÇÃO': '#8b5cf6',   // Purple
+    'ALIMENTAÇÃO': '#ec4899',  // Pink
+    'UTILIDADES': '#14b8a6',   // Teal
+    'MARKETING': '#f97316',    // Orange
+    'OUTROS': '#64748b'        // Slate
+  };
+
+  // Cores genéricas para fallback
   const COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
   // FUNÇÃO DE EXPORTAÇÃO CSV
@@ -358,7 +405,10 @@ const Analytics = () => {
                   dataKey="value"
                 >
                   {expensePieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={CATEGORY_COLORS[entry.name] || COLORS[index % COLORS.length]} 
+                    />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -374,9 +424,12 @@ const Analytics = () => {
                 />
                 <Legend 
                   wrapperStyle={{ color: '#9ca3af' }}
-                  formatter={(value: number, entry: any) => 
-                    `${entry.name}: ${entry.payload.percentage.toFixed(1)}%`
-                  }
+                  formatter={(value: string, entry: any) => {
+                    // CORREÇÃO: Usar o valor correto da entrada
+                    const categoryName = entry.payload?.name || value || 'OUTROS';
+                    const percentage = entry.payload?.percentage || 0;
+                    return `${categoryName}: ${percentage.toFixed(1)}%`;
+                  }}
                 />
               </RePieChart>
             </ResponsiveContainer>

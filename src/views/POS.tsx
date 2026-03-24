@@ -196,9 +196,15 @@ const POS = () => {
 
       console.log('[FECHO] Encontrados pedidos:', todayOrders.length, 'registros');
 
-      // Agrupar por payment_method (Cash, Multicaixa, etc.)
+      // Agrupar por payment_method (apenas métodos válidos - SEM FALLBACK)
       const groupedByPayment = todayOrders.reduce((acc: any, order: any) => {
-        const method = order.payment_method || 'OUTRO';
+        const method = order.payment_method;
+        
+        // SE NÃO TIVER MÉTODO, IGNORAR (NÃO MOSTRAR NO GRÁFICO)
+        if (!method) {
+          return acc;
+        }
+        
         const total = parseFloat(order.total_amount ?? order.total ?? 0) || 0;
         
         if (!acc[method]) {
@@ -222,7 +228,7 @@ const POS = () => {
         invoiceNumber: order.invoice_number || `INV-${order.id?.slice(-6)}`,
         tableId: order.table_id,
         total: parseFloat(order.total_amount ?? order.total ?? 0) || 0,
-        paymentMethod: order.payment_method || 'OUTRO',
+        paymentMethod: order.payment_method,
         timestamp: order.created_at,
         items: [] // Não precisamos dos itens para o relatório de fecho
       }));
@@ -1063,6 +1069,7 @@ const POS = () => {
       isOpen={isPaymentModalOpen}
       onClose={() => {
         setIsPaymentModalOpen(false);
+        setIsFinalizing(false); // Resetar estado de finalização
         setSelectedSubAccount(null);
       }}
       onConfirm={async (paymentMethod: string, customerNif?: string) => {
@@ -1105,12 +1112,18 @@ const POS = () => {
               }
             
           } else {
-            // 🛡️ FECHAMENTO DE PEDIDO NORMAL (EXISTENTE)
+            // 🛡️ FECHAMENTO DE PEDIDO NORMAL (EXISTENTE) - VALIDAÇÃO OBRIGATÓRIA
             if (currentOrder) {
+              // VALIDAÇÃO: Método de pagamento é OBRIGATÓRIO (vem do PaymentModal)
+              if (!paymentMethod) {
+                addNotification('error', 'Selecione um método de pagamento antes de finalizar!');
+                return;
+              }
+              
               const { error } = await supabase
                 .from('orders')
                 .update({ 
-                  payment_method: paymentMethod,
+                  payment_method: paymentMethod, // NUNCA NULL - sempre definido
                   status: 'FECHADO'
                 })
                 .eq('id', currentOrder.id);
@@ -1122,14 +1135,14 @@ const POS = () => {
             }
             
             // Chamar função de impressão existente
-            await handleCheckoutFinal(selectedPaymentMethod!, selectedCustomerId, customerNif);
+            await handleCheckoutFinal(paymentMethod as any, selectedCustomerId, customerNif);
           }
           
         } catch (error) {
           console.error('Erro ao finalizar pedido:', error);
-          setIsFinalizing(false);
-          alert('Erro ao finalizar pedido. Tente novamente.');
+          addNotification('error', 'Erro ao finalizar pedido. Tente novamente.');
         } finally {
+          setIsFinalizing(false);
           setSelectedSubAccount(null);
         }
       }}

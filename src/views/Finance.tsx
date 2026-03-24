@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { printThermalInvoice, printFinanceReport } from '../lib/printService';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
-import { PaymentMethodConfig, Expense, ExpenseCategory, ExpenseStatus } from '../../types';
+import { PaymentMethodConfig, Expense, ExpenseCategory, ExpenseStatus } from '../types';
 
 // Tipo Order baseado no schema Supabase
 interface Order {
@@ -42,6 +42,23 @@ const Finance = () => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SALES' | 'AUDIT' | 'LEGAL' | 'CONFIG' | 'EXPENSES'>('OVERVIEW');
   const [saftLoading, setSaftLoading] = useState(false);
   const [isAddingPayment, setIsAddingPayment] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [ordersData, setOrdersData] = useState<any[]>([]); // DADOS REAIS DO SUPABASE
+  const [expensesFromDB, setExpensesFromDB] = useState<any[]>([]); // DADOS DAS DESPESAS DO SUPABASE
+  const [totalExpensesFromDB, setTotalExpensesFromDB] = useState<number>(0); // TOTAL DAS DESPESAS
+  
+  // Estados para despesas - RESTAURADOS
+  const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newExpense, setNewExpense] = useState<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>({
+    description: '',
+    amount: 0,
+    category: 'OUTROS' as ExpenseCategory,
+    status: 'PENDENTE',
+    date: new Date().toISOString().split('T')[0]
+  });
+  
   const [newPayment, setNewPayment] = useState<Omit<PaymentMethodConfig, 'id'>>({
     name: '',
     type: 'NUMERARIO',
@@ -49,178 +66,155 @@ const Finance = () => {
     isActive: true
   });
   
-  // Estados para despesas
-  const [isAddingExpense, setIsAddingExpense] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false); // ESTADO DE CARREGAMENTO
-  const [loading, setLoading] = useState(false); // ESTADO DE BLOQUEIO TOTAL
-  const [totalExpensesFromDB, setTotalExpensesFromDB] = useState(0); // TOTAL DA DB
-  const [expensesFromDB, setExpensesFromDB] = useState<any[]>([]); // DADOS DA DB PARA TABELA
-  const [newExpense, setNewExpense] = useState<Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>>({
-    description: '',
-    amount: 0,
-    category: 'OUTROS' as ExpenseCategory,
-    status: 'PENDENTE',
-    date: new Date().toISOString().split('T')[0]
-    // REMOVIDO: paymentMethod (NÃO EXISTE NA TABELA)
-  });
-
-  // BUSCAR TOTAL DE DESPESAS DA DB (SEM USAR VARIÁVEIS GLOBAIS)
+  // Função para buscar despesas do Supabase
   const fetchTotalExpensesFromDB = async () => {
     try {
-      // FORÇAR CACHE-BUSTING PARA GARANTIR DADOS ATUAIS
-      const cacheBuster = Date.now();
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('amount_kz, status, description, category, created_at')
-        .setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      // VALOR PADRÃO SEGURO - EVITAR TELA PRETA
+      setExpensesFromDB([]);
+      setTotalExpensesFromDB(0);
 
-      if (error) {
-        console.error('[FINANCE] Erro ao buscar total de despesas:', error);
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (expensesError) {
+        console.error('[FINANCE] Erro ao buscar despesas:', expensesError);
+        // MANTER VALORES PADRÃO - NÃO QUEBRAR A UI
         return;
       }
 
-      console.log('[FINANCE] Dados brutos da DB:', data); // DEBUG
-
-      // SOMAR TODOS OS REGISTOS (INCLUINDO PENDING) - SEM FILTRO
-      const allExpenses = data || [];
-      console.log('[FINANCE] Todas as despesas:', allExpenses); // DEBUG
-      
-      // ARMAZENAR DADOS DA DB PARA TABELA
-      setExpensesFromDB(allExpenses);
-      
-      // CONVERSÃO FORÇADA PARA NÚMERO COM LOG DETALHADO
-      const total = allExpenses.reduce((sum: number, exp: any) => {
-        const valor = Number(exp.amount_kz) || 0;
-        console.log(`[FINANCE] Despesa: ${exp.description} - amount_kz: ${exp.amount_kz} -> convertido: ${valor}`);
-        return sum + valor;
+      // TRATAMENTO SEGURO DE DADOS - EVITAR NULL/UNDEFINED
+      const expenses = Array.isArray(expensesData) ? expensesData : [];
+      const total = expenses.reduce((sum, exp) => {
+        const amount = exp?.amount_kz || exp?.amount || 0;
+        return sum + (Number(amount) || 0);
       }, 0);
       
+      // ATUALIZAR ESTADO APENAS COM DADOS VÁLIDOS
+      setExpensesFromDB(expenses);
       setTotalExpensesFromDB(total);
-      console.log('[FINANCE] Total de despesas da DB:', {
-        total,
-        registos: data?.length || 0,
-        todas: allExpenses.length,
-        cacheBuster,
-        valores: allExpenses.map(exp => ({ desc: exp.description, amount_kz: exp.amount_kz, converted: Number(exp.amount_kz) || 0 }))
+      
+      console.log('[FINANCE] Despesas carregadas com sucesso:', {
+        count: expenses.length,
+        total: total
       });
     } catch (error) {
-      console.error('[FINANCE] Erro crítico ao buscar total:', error);
-      setTotalExpensesFromDB(0); // Fallback seguro
+      console.error('[FINANCE] Erro crítico ao buscar despesas:', error);
+      // MANTER VALORES PADRÃO - NÃO DEIXAR TELA PRETA
+      setExpensesFromDB([]);
+      setTotalExpensesFromDB(0);
     }
   };
 
-  // Buscar total na montagem e após cada operação
+  // Carregar dados do Supabase - MESMA QUERY DO PROFIT CENTER
   useEffect(() => {
-    fetchTotalExpensesFromDB();
-  }, [expenses.length]); // Atualizar quando mudar lista de despesas
+    const loadFinanceData = async () => {
+      try {
+        setLoading(true);
+        
+        // Buscar ordens fechadas de hoje - MESMA QUERY DO PROFIT CENTER
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
 
-  // SUBSCRIÇÃO EM TEMPO REAL DO SUPABASE - ATUALIZAÇÃO AUTOMÁTICA
-  useEffect(() => {
-    // SUBSCRIÇÃO DE AUTENTICAÇÃO - DETECTAR MUDANÇAS DE SESSÃO
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[FINANCE] Auth state changed:', event, session);
-      
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // Recarregar dados quando usuário fizer login ou refresh
-        console.log('[FINANCE] Usuário autenticado, recarregando dados...');
-        fetchTotalExpensesFromDB();
-      }
-    });
+        const { data: orders, error } = await supabase
+          .from('orders')
+          .select('payment_method, total_amount, created_at')
+          .eq('status', 'closed')
+          .gte('created_at', today.toISOString())
+          .lt('created_at', tomorrow.toISOString())
+          .order('created_at', { ascending: true });
 
-    // SUBSCRIÇÃO DE MUDANÇAS NA TABELA ORDERS
-    const channel = supabase
-      .channel('finance-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders'
-        },
-        (payload) => {
-          console.log('[FINANCE] Mudança em tempo real detectada:', payload);
-          
-          // ATUALIZAR DADOS AUTOMATICAMENTE
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            // Forçar re-renderização com dados atualizados
-            console.log('[FINANCE] Nova venda detectada, atualizando interface...');
-            fetchTotalExpensesFromDB();
-          }
+        if (error) {
+          console.error('[FINANCEIRO] Erro ao buscar ordens:', error);
+          throw error;
         }
-      )
-      .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-      subscription?.unsubscribe();
+        console.log('[FINANCEIRO DEBUG] Total recuperado para o módulo Legal:', orders?.length || 0);
+        console.log('[FINANCEIRO DEBUG] Dados brutos:', orders);
+
+        setOrdersData(orders || []);
+
+        // Buscar despesas do Supabase
+        await fetchTotalExpensesFromDB();
+
+      } catch (error) {
+        console.error('[FINANCEIRO] Erro ao carregar dados:', error);
+        addNotification('error', 'Falha ao carregar dados financeiros');
+      } finally {
+        setLoading(false);
+      }
     };
-  }, []);
+
+    loadFinanceData();
+  }, [addNotification]);
 
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
   const today = new Date().toISOString().split('T')[0];
 
   const metrics = useMemo(() => {
-    const gross = closedOrders.reduce((acc, o) => acc + (o.total_amount || 0), 0);
-    const tax = closedOrders.reduce((acc, o) => acc + (o.total_amount * 0.065 || 0), 0);
-    const profit = closedOrders.reduce((acc, o) => acc + (o.total_amount * 0.935 || 0), 0);
+    // DADOS REAIS DO SUPABASE - IGUAL AO PROFIT CENTER
+    const todayOrders = ordersData; // Usar dados diretos do Supabase
+    const revenue = todayOrders.reduce((a, b) => a + (b.total_amount || 0), 0);
     
-    // VENDAS DE HOJE - mesmo filtro do Dashboard
-    const todayOrders = closedOrders.filter(o => String(o.created_at || '').split('T')[0] === today);
-    const todayGross = todayOrders.reduce((acc, o) => acc + (o.total_amount || 0), 0);
-    const todayProfit = todayOrders.reduce((acc, o) => acc + (o.total_amount * 0.935 || 0), 0);
-    
-    // DESPESAS DE HOJE - usar amount (coluna real)
+    // DESPESAS HOJE - Mesma lógica do Profit Center
+    const today = new Date().toISOString().split('T')[0];
     const todayExpenses = expenses.filter(expense => 
       String(expense.createdAt || '').split('T')[0] === today
     );
-    const todayExpensesTotal = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+    const variableCosts = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
     
-    // LUCRO LÍQUIDO REAL DE HOJE
-    const todayNetProfit = todayGross - todayExpensesTotal;
+    // IMPOSTOS: 14% como no Profit Center
+    const tax = revenue * 0.14;
     
-    // Agrupar pagamentos por método - APENAS DE HOJE com mapeamento correto
+    // LUCRO LÍQUIDO REAL - IGUAL AO PROFIT CENTER
+    const netProfit = revenue - variableCosts - tax;
+    
+    // FLUXO POR MODALIDADE - FORÇAR MAPEAMENTO CORRETO
     const payments = todayOrders.reduce((acc: any, o) => {
-      // LOG DE DEPURAÇÃO - VALOR REAL NA DB
-      console.log('[FINANCE] VALOR REAL NA DB:', o.payment_method);
-      
-      let methodId = o.payment_method || 'OUTRO';
-      
-      // GARANTIR QUE methodId NUNCA SEJA NULL
-      if (!methodId || methodId === 'null' || methodId === null) {
-        methodId = 'OUTRO';
-      }
-      
-      // DEBUG: Mostrar método original e mapeado
-      console.log('[FINANCE] Método Original:', o.payment_method, '→ Método Mapeado:', methodId);
-      
-      // MAPEAMENTO FLEXÍVEL - ACEITAR VARIAÇÕES COMUNS
-      const method = String(o.payment_method || '').toUpperCase();
-      
-      if (method.includes('CASH') || method.includes('NUMER')) {
-        methodId = 'NUMERÁRIO';
-      } else if (method.includes('TPA') || method.includes('MULTI')) {
-        methodId = 'TPA / MULTICAIXA';
-      } else if (method.includes('TRANS')) {
-        methodId = 'TRANSFERÊNCIA';
-      } else if (method.includes('MPESA') || method.includes('M-PESA')) {
-        methodId = 'M-PESA';
-      } else if (method.includes('EXPRESS')) {
-        methodId = 'EXPRESS';
-      } else {
-        methodId = 'OUTRO';
-      }
-      
-      // TOTALIZADOR - CONVERSÃO FORÇADA PARA NÚMERO
+      const method = (o.payment_method || '').trim().toUpperCase();
       const valor = Number(o.total_amount || 0);
       
-      console.log('[FINANCE] Método Final:', methodId, 'Valor:', valor, 'total_amount:', o.total_amount);
-      acc[methodId] = (acc[methodId] || 0) + valor;
+      // Mapeamento estrito de métodos de pagamento válidos
+      if (method.includes('NUMER') || method.includes('DINHE')) {
+        acc['NUMERÁRIO'] = (acc['NUMERÁRIO'] || 0) + valor;
+      } else if (method.includes('TPA') || method.includes('MULTICAIXA') || method.includes('CARTAO')) {
+        acc['TPA / MULTICAIXA'] = (acc['TPA / MULTICAIXA'] || 0) + valor;
+      } else if (method.includes('TRANSF') || method.includes('TRANSFERENCIA')) {
+        acc['TRANSFERENCIA'] = (acc['TRANSFERENCIA'] || 0) + valor;
+      } else if (method.includes('QR') || method.includes('QRCODE') || method === 'QR CODE') {
+        acc['QR CODE'] = (acc['QR CODE'] || 0) + valor;
+      } else {
+        // MÉTODO INVÁLIDO - IGNORAR
+        return acc;
+      }
+      
       return acc;
-    }, {});
+    }, {} as Record<string, number>);
 
-    return { gross, tax, profit, todayGross, todayProfit, todayNetProfit, todayExpensesTotal, payments };
-  }, [closedOrders, today, expenses]);
+    console.log('[FINANCEIRO DEBUG] Faturação Bruta Total:', revenue);
+    console.log('[FINANCEIRO DEBUG] Despesas Hoje:', variableCosts);
+    console.log('[FINANCEIRO DEBUG] Impostos (14%):', tax);
+    console.log('[FINANCEIRO DEBUG] Lucro Líquido Calculado:', netProfit);
+    
+    // Verificar soma total dos pagamentos
+    const totalPagamentos = Object.values(payments).reduce((sum: number, val: any) => sum + (val || 0), 0);
+    console.log('[FINANCEIRO DEBUG] Soma dos Pagamentos:', totalPagamentos);
+    console.log('[FINANCEIRO DEBUG] Detalhe dos Pagamentos:', payments);
+
+    return {
+      gross: revenue,
+      tax: tax,
+      profit: netProfit,
+      todayGross: revenue,
+      todayProfit: netProfit,
+      todayNetProfit: netProfit,
+      todayExpensesTotal: variableCosts,
+      payments
+    };
+  }, [ordersData, expenses]);
 
   const handleExportSAFT = async () => {
     setSaftLoading(true);
@@ -310,8 +304,8 @@ const Finance = () => {
 
   // Funções para despesas
   const handleAddExpense = async () => {
-    if (!newExpense.description || newExpense.amount <= 0) {
-      addNotification('error', 'Preencha todos os campos obrigatórios.');
+    if (!newExpense.description || newExpense.amount <= 0 || !newExpense.category) {
+      addNotification('error', 'Preencha todos os campos obrigatórios, incluindo a categoria.');
       return;
     }
     
@@ -469,6 +463,18 @@ const Finance = () => {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 h-full overflow-y-auto no-scrollbar bg-background">
+      {/* BLOQUEIO DE SEGURANÇA - EVITAR TELA PRETA */}
+      {!activeTab && (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <PiggyBank className="text-primary" size={32} />
+            </div>
+            <p className="text-white text-lg">Carregando módulo financeiro...</p>
+          </div>
+        </div>
+      )}
+
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-10 gap-6">
         <div>
           <div className="flex items-center gap-2 text-primary mb-1">
@@ -516,7 +522,14 @@ const Finance = () => {
                    <div className="absolute top-0 right-0 p-8 text-primary opacity-10 group-hover:scale-110 transition-transform"><TrendingUp size={80}/></div>
                    <div>
                         <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-3">Lucro Líquido Real (Hoje)</p>
-                        <h3 className="text-5xl font-mono font-bold text-white text-glow mb-4">{formatKz(metrics.todayNetProfit)}</h3>
+                        {loading ? (
+                          <div className="flex items-center justify-center h-16">
+                            <Loader2 className="animate-spin text-primary" size={24} />
+                            <span className="ml-2 text-primary text-sm">Carregando...</span>
+                          </div>
+                        ) : (
+                          <h3 className="text-5xl font-mono font-bold text-white text-glow mb-4">{formatKz(metrics.todayNetProfit)}</h3>
+                        )}
                         <div className="flex items-center gap-6 mt-6">
                             <div className="flex flex-col">
                                 <span className="text-[8px] font-black text-slate-500 uppercase">Faturação Bruta</span>
@@ -538,24 +551,40 @@ const Finance = () => {
                 <div className="glass-panel p-10 rounded-[3rem] border border-white/5 flex flex-col justify-center">
                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2"><PieChart size={16}/> Fluxo por Modalidade</h4>
                    <div className="space-y-4">
-                      {paymentConfigs.filter(c => c.isActive).map((config) => (
-                        <div key={config.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                           <div className="flex items-center gap-3">
-                              <span className="text-primary"><Banknote size={16}/></span>
-                              <span className="text-[10px] font-black text-slate-400 uppercase">{config.name}</span>
-                           </div>
-                           <span className="text-sm font-mono font-bold text-white">{formatKz(metrics.payments[config.id] || 0)}</span>
-                        </div>
-                      ))}
-                      {/* Mostrar outros se houverem */}
-                      {Object.entries(metrics.payments).filter(([id]) => !paymentConfigs.some(c => c.id === id)).map(([id, val]: any) => (
-                        <div key={id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                           <span className="text-[10px] font-black text-slate-400 uppercase">{id.replace('_', ' ')}</span>
-                           <span className="text-sm font-mono font-bold text-white">{formatKz(val)}</span>
-                        </div>
-                      ))}
+                   {/* CARDS ESPECÍFICOS COM ÍCONES - VALORES NORMALIZADOS */}
+                   <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <div className="flex items-center gap-3">
+                         <span className="text-primary"><Banknote size={16}/></span>
+                         <span className="text-[10px] font-black text-slate-400 uppercase">NUMERÁRIO</span>
+                      </div>
+                      <span className="text-sm font-mono font-bold text-white">{formatKz(metrics.payments['NUMERÁRIO'] || 0)}</span>
                    </div>
-                </div>
+                   
+                   <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <div className="flex items-center gap-3">
+                         <span className="text-primary"><CreditCard size={16}/></span>
+                         <span className="text-[10px] font-black text-slate-400 uppercase">TPA / MULTICAIXA</span>
+                      </div>
+                      <span className="text-sm font-mono font-bold text-white">{formatKz(metrics.payments['TPA / MULTICAIXA'] || 0)}</span>
+                   </div>
+                   
+                   <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <div className="flex items-center gap-3">
+                         <span className="text-primary"><ArrowRightLeft size={16}/></span>
+                         <span className="text-[10px] font-black text-slate-400 uppercase">TRANSFERENCIA</span>
+                      </div>
+                      <span className="text-sm font-mono font-bold text-white">{formatKz(metrics.payments['TRANSFERENCIA'] || 0)}</span>
+                   </div>
+                   
+                   <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <div className="flex items-center gap-3">
+                         <span className="text-primary"><QrCode size={16}/></span>
+                         <span className="text-[10px] font-black text-slate-400 uppercase">QR CODE</span>
+                      </div>
+                      <span className="text-sm font-mono font-bold text-white">{formatKz(metrics.payments['QR CODE'] || 0)}</span>
+                   </div>
+                 </div>
+               </div>
              </div>
           </div>
         )}
@@ -745,27 +774,27 @@ const Finance = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {(expensesFromDB || []).slice(-20).map(expense => (
-                    <tr key={expense.id || expense.description} className="hover:bg-white/5 transition-colors">
+                  {(expensesFromDB || []).slice(-20).map((expense, index) => (
+                    <tr key={expense?.id || `expense-${index}`} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4">
                         <div>
-                          <div className="font-bold text-white text-sm">{expense.description}</div>
+                          <div className="font-bold text-white text-sm">{expense?.description || 'Sem descrição'}</div>
                           {/* REMOVIDO: expense.notes (NÃO EXISTE NA TABELA) */}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`text-[8px] font-black uppercase ${getCategoryColor(expense.category)}`}>
-                          {expense.category?.replace('_', ' ') || 'OUTROS'}
+                        <span className={`text-[8px] font-black uppercase ${getCategoryColor(expense?.category)}`}>
+                          {expense?.category?.replace('_', ' ') || 'OUTROS'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense.amount_kz || 0)}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-white">{formatKz(expense?.amount_kz || 0)}</td>
                       <td className="px-6 py-4">
-                        <span className={`text-[8px] font-black uppercase ${getStatusColor(expense.status)}`}>
-                          {expense.status?.replace('_', ' ') || 'PENDENTE'}
+                        <span className={`text-[8px] font-black uppercase ${getStatusColor(expense?.status)}`}>
+                          {expense?.status?.replace('_', ' ') || 'PENDENTE'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs text-slate-500 font-mono">
-                        {new Date(expense.created_at || new Date()).toLocaleDateString('pt-AO')}
+                        {new Date(expense?.created_at || new Date()).toLocaleDateString('pt-AO')}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex gap-2 justify-end">
@@ -773,13 +802,15 @@ const Finance = () => {
                             onClick={() => handleEditExpense(expense)}
                             className="p-2 bg-white/5 text-slate-400 hover:text-primary rounded-lg transition-all"
                             title="Editar despesa"
+                            aria-label="Editar despesa"
                           >
                             <Edit2 size={16} />
                           </button>
                           <button 
-                            onClick={() => handleDeleteExpense(expense.id)}
+                            onClick={() => handleDeleteExpense(expense?.id || `temp-${index}`)}
                             className="p-2 bg-white/5 text-slate-400 hover:text-red-500 rounded-lg transition-all"
                             title="Apagar despesa"
+                            aria-label="Apagar despesa"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -787,6 +818,13 @@ const Finance = () => {
                       </td>
                     </tr>
                   ))}
+                  {(!expensesFromDB || expensesFromDB.length === 0) && (
+                    <tr>
+                      <td colSpan={6} className="px-8 py-12 text-center text-slate-500">
+                        Nenhuma despesa encontrada
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -855,14 +893,25 @@ const Finance = () => {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Categoria</label>
-                <input 
-                  type="text"
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Categoria *</label>
+                <select 
                   className="w-full p-4 bg-slate-900 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary"
-                  placeholder="Ex: REPARACOES, ALIMENTACAO, etc."
                   value={newExpense.category}
-                  onChange={e => setNewExpense({...newExpense, category: e.target.value.toUpperCase()})}
-                />
+                  onChange={e => setNewExpense({...newExpense, category: e.target.value})}
+                  required
+                  aria-label="Selecionar categoria da despesa"
+                >
+                  <option value="">Selecione uma categoria...</option>
+                  <option value="STAFF">STAFF - Salários e Pessoal</option>
+                  <option value="MERCADORIA">MERCADORIA - Compras e Stock</option>
+                  <option value="UTILIDADES">UTILIDADES - Luz, Água, Internet</option>
+                  <option value="RENDAS">RENDAS - Aluguer</option>
+                  <option value="IMPOSTOS">IMPOSTOS - Taxas e Tributos</option>
+                  <option value="MANUTENÇÃO">MANUTENÇÃO - Reparos e Conservação</option>
+                  <option value="ALIMENTAÇÃO">ALIMENTAÇÃO - Refeições</option>
+                  <option value="MARKETING">MARKETING - Publicidade</option>
+                  <option value="OUTROS">OUTROS - Despesas Diversas</option>
+                </select>
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Valor (Kz)</label>

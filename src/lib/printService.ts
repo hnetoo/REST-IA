@@ -257,7 +257,7 @@ export const printThermalInvoice = (
 export const printCashClosing = (closedToday: Order[], settings: SystemSettings, user: string) => {
   const total = closedToday.reduce((acc, o) => acc + o.total, 0);
   const byMethod = closedToday.reduce((acc: any, o) => {
-    const method = o.paymentMethod || 'OUTRO';
+    const method = o.paymentMethod || 'A CLASSIFICAR';
     acc[method] = (acc[method] || 0) + o.total;
     return acc;
   }, {});

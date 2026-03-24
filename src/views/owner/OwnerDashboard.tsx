@@ -395,7 +395,7 @@ const OwnerDashboard = () => {
       // BUSCAR DESPESAS AGRUPADAS POR CATEGORIA
       const { data: expensesData, error: expensesError } = await supabase
         .from('expenses')
-        .select('amount, category, status')
+        .select('amount_kz, category, status')
         .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
 
       if (expensesError) {
@@ -410,7 +410,7 @@ const OwnerDashboard = () => {
       if (expensesData && expensesData.length > 0) {
         expensesData.forEach(exp => {
           const category = exp.category || 'OUTROS';
-          const amount = Number(exp.amount) || 0;
+          const amount = Number(exp.amount_kz) || 0; // CORRIGIDO: amount_kz
           
           if (categoryMap.has(category)) {
             categoryMap.set(category, categoryMap.get(category)! + amount);
@@ -554,14 +554,14 @@ const OwnerDashboard = () => {
         // QUERY COM FILTRO DE DATA BASEADO NO PERÍODO
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
-          .select('amount, created_at, category, status')
+          .select('amount_kz, created_at, category, status')
           .neq('status', 'PENDENTE') // APENAS DESPESAS APROVADAS
           .gte('created_at', startDate)
           .lte('created_at', endDate);
 
         if (!expensesError && expensesData && expensesData.length > 0) {
           // SOMAR APENAS DESPESAS DO PERÍODO SELECIONADO
-          totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+          totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0); // CORRIGIDO: amount_kz
         } else {
           console.log('[DASHBOARD] Nenhuma despesa encontrada para o período');
           totalDespesas = 0;
@@ -570,12 +570,12 @@ const OwnerDashboard = () => {
         // NOVA QUERY PARA DESPESAS TOTAIS (SEM FILTRO DE DATA)
         const { data: allExpensesData, error: allExpensesError } = await supabase
           .from('expenses')
-          .select('amount, created_at, category, status')
+          .select('amount_kz, created_at, category, status')
           .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
 
         if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
           // SOMAR TODAS AS DESPESAS REGISTADAS
-          totalExpensesAllTime = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+          totalExpensesAllTime = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0); // CORRIGIDO: amount_kz
         } else {
           console.log('[DASHBOARD] Nenhuma despesa acumulada encontrada');
           totalExpensesAllTime = 0;
