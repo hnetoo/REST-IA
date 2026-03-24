@@ -872,8 +872,8 @@ const OwnerDashboard = () => {
         }
       ];
       
-      // 3. IVA CORRIGIDO: 14% SOBRE FATURAÇÃO REAL (FATURAS EMITIDAS)
-      const ivaSete = Number(faturacaoHoje) * 0.14; // 14% SOBRE VALOR REAL DAS FATURAS
+      // 3. IVA CORRIGIDO: 7% SOBRE FATURAÇÃO REAL (FATURAS EMITIDAS)
+      const ivaSete = Number(faturacaoHoje) * 0.07; // 7% SOBRE VALOR REAL DAS FATURAS
       
       // 4. DESPESAS TOTAIS: SUM(expenses) + SUM(staff_salaries)
       let despesasTotais = (Number(totalDespesas) || 0) + (Number(folhaSalarial) || 0);
@@ -924,10 +924,10 @@ const OwnerDashboard = () => {
         despesas: totalDespesas || 0, // DESPESAS DE HOJE
         despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.14, // 14% SOBRE FATURAÇÃO REAL (10.290 Kz)
+        impostos: (Number(faturacaoHoje) || 0) * 0.07, // 7% SOBRE FATURAÇÃO REAL (5.145 Kz)
         historicoRevenue: historicoExterno || 0,
         rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.14 || 0) // FÓRMULA COM 14%
+        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.07 || 0) // FÓRMULA COM 7%
       });
       setChartData(chartDataGenerated);
       
@@ -937,11 +937,11 @@ const OwnerDashboard = () => {
       setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas || 0);
       setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
-      // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE CORREÇÃO FATURAÇÃO REAL
-      console.log('[OWNER HUB] CORREÇÃO FATURAÇÃO REAL - Valores Finais:', {
+      // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE CORREÇÃO IVA 7%
+      console.log('[OWNER HUB] CORREÇÃO IVA 7% - Valores Finais:', {
         faturacaoHojePainelComando: Number(faturacaoHoje) || 0,
         totalVendasBruto: Number(totalVendas) || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.14,
+        impostos: (Number(faturacaoHoje) || 0) * 0.07,
         despesasHoje: Number(totalDespesas) || 0,
         folhaSalarial: Number(folhaSalarial) || 0,
         rendimentoGlobal: Number(rendimentoGlobal) || 0,
@@ -952,14 +952,14 @@ const OwnerDashboard = () => {
         },
         cardsExibidos: {
           'FATURAÇÃO HOJE': Number(faturacaoHoje) || 0,
-          'IMPOSTOS (14%)': (Number(faturacaoHoje) || 0) * 0.14,
+          'IMPOSTOS (7%)': (Number(faturacaoHoje) || 0) * 0.07,
           'Custos com Staff': Number(folhaSalarial) || 0,
           'Rendimento Global': Number(rendimentoGlobal) || 0
         },
-        correcao: 'Faturação real das faturas emitidas | Taxa: 14% | Lógica: Painel de Comando',
+        correcao: 'IVA corrigido para 7% | Taxa padrão do sistema',
         valoresEsperados: {
           faturacao: '73.500 Kz',
-          impostos: '10.290 Kz (14% de 73.500)'
+          impostos: '5.145 Kz (7% de 73.500)'
         }
       });
 

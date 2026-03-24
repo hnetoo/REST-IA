@@ -310,7 +310,7 @@ const DashboardV2 = () => {
           despesas: totalExpenses,
           despesasAcumuladas: monthExpensesTotal,
           folhaSalarial: totalPayroll,
-          lucroLiquido: (totalSales || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((totalSales || 0) * 0.065 || 0),
+          lucroLiquido: (totalSales || 0) - (totalExpenses || 0) - (totalPayroll || 0) - ((totalSales || 0) * 0.07 || 0),
           rendimentoGlobal: rendimentoGlobal,
           faturacaoAnual: faturacaoAnual // NOVO: Faturação acumulada anual
         };

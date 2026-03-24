@@ -166,8 +166,8 @@ const Finance = () => {
     );
     const variableCosts = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
     
-    // IMPOSTOS: 14% como no Profit Center
-    const tax = revenue * 0.14;
+    // IMPOSTOS: 7% como no Owner Hub
+    const tax = revenue * 0.07;
     
     // LUCRO LÍQUIDO REAL - IGUAL AO PROFIT CENTER
     const netProfit = revenue - variableCosts - tax;
@@ -196,7 +196,7 @@ const Finance = () => {
 
     console.log('[FINANCEIRO DEBUG] Faturação Bruta Total:', revenue);
     console.log('[FINANCEIRO DEBUG] Despesas Hoje:', variableCosts);
-    console.log('[FINANCEIRO DEBUG] Impostos (14%):', tax);
+    console.log('[FINANCEIRO DEBUG] Impostos (7%):', tax);
     console.log('[FINANCEIRO DEBUG] Lucro Líquido Calculado:', netProfit);
     
     // Verificar soma total dos pagamentos
