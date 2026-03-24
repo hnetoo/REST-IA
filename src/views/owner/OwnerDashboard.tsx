@@ -547,42 +547,59 @@ const OwnerDashboard = () => {
       // Obter range de datas para o período selecionado
       const { startDate, endDate } = getDateRange(period);
       
-      // Buscar despesas reais do Supabase
+      // Buscar despesas reais do Supabase - USANDO EXATAMENTE A MESMA LÓGICA DO DASHBOARD PRINCIPAL
       let totalDespesas = 0;
       let totalExpensesAllTime = 0; // NOVO: Para despesas acumuladas totais
+      let allExpenses = []; // Array para armazenar todas as despesas
+      
       try {
-        // QUERY COM FILTRO DE DATA BASEADO NO PERÍODO
+        // CARREGAR DESPESAS EXATAMENTE COMO O DASHBOARD PRINCIPAL
         const { data: expensesData, error: expensesError } = await supabase
           .from('expenses')
-          .select('amount_kz, created_at, category, status')
-          .neq('status', 'PENDENTE') // APENAS DESPESAS APROVADAS
-          .gte('created_at', startDate)
-          .lte('created_at', endDate);
+          .select('*')
+          .order('created_at', { ascending: false });
 
-        if (!expensesError && expensesData && expensesData.length > 0) {
-          // SOMAR APENAS DESPESAS DO PERÍODO SELECIONADO
-          totalDespesas = expensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0); // CORRIGIDO: amount_kz
-        } else {
-          console.log('[DASHBOARD] Nenhuma despesa encontrada para o período');
+        if (expensesError) {
+          console.error('[OWNER HUB] Erro ao carregar despesas:', expensesError);
           totalDespesas = 0;
-        }
-
-        // NOVA QUERY PARA DESPESAS TOTAIS (SEM FILTRO DE DATA)
-        const { data: allExpensesData, error: allExpensesError } = await supabase
-          .from('expenses')
-          .select('amount_kz, created_at, category, status')
-          .neq('status', 'PENDENTE'); // APENAS DESPESAS APROVADAS
-
-        if (!allExpensesError && allExpensesData && allExpensesData.length > 0) {
-          // SOMAR TODAS AS DESPESAS REGISTADAS
-          totalExpensesAllTime = allExpensesData.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0); // CORRIGIDO: amount_kz
-        } else {
-          console.log('[DASHBOARD] Nenhuma despesa acumulada encontrada');
           totalExpensesAllTime = 0;
+        } else {
+          // CONVERTER PARA O FORMATO LOCAL EXATAMENTE COMO O DASHBOARD PRINCIPAL
+          const formattedExpenses = expensesData?.map(exp => ({
+            id: exp.id,
+            description: exp.description || '',
+            amount: Number(exp.amount_kz || 0), // CONVERSÃO IGUAL AO DASHBOARD
+            category: exp.category || 'OUTROS',
+            status: exp.status || 'PENDENTE',
+            date: exp.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+            createdAt: exp.created_at || new Date().toISOString(),
+            updatedAt: exp.updated_at || new Date().toISOString()
+          })) || [];
+          
+          allExpenses = formattedExpenses;
+          console.log('[OWNER HUB] Despesas carregadas (mesmo formato):', formattedExpenses.length);
         }
+
+        // Calcular despesas do dia usando EXATAMENTE a mesma lógica do Dashboard principal
+        const today = new Date().toISOString().split('T')[0]; // Data atual para despesas
+        const todayExpenses = allExpenses.filter(exp => String(exp.createdAt || '').split('T')[0] === today);
+        totalDespesas = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+
+        // Despesas acumuladas (todas) - SOMAR DESPESAS APROVADAS APENAS
+        totalExpensesAllTime = allExpenses
+          .filter(exp => exp.status !== 'PENDENTE')
+          .reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
+
+        console.log('[OWNER HUB] Despesas calculadas (mesma lógica):', {
+          today,
+          totalDespesas,
+          totalExpensesAllTime,
+          totalExpenses: allExpenses.length,
+          todayExpenses: todayExpenses.length
+        });
 
       } catch (expError) {
-        console.error('[DASHBOARD] Erro ao buscar despesas:', expError);
+        console.error('[OWNER HUB] Erro ao buscar despesas:', expError);
         totalDespesas = 0;
         totalExpensesAllTime = 0;
       }
@@ -646,14 +663,14 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar vendas de hoje USANDO QUERY DO DASHBOARD PRINCIPAL (FUNCIONANDO)
+      // Buscar vendas de hoje USANDO EXATAMENTE A MESMA QUERY DO DASHBOARD PRINCIPAL (FUNCIONANDO)
       let vendasHoje = 0;
       try {
         const today = new Date().toISOString().split('T')[0];
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'closed');
+          .eq('status', 'closed'); // EXATAMENTE COMO NO DASHBOARD PRINCIPAL
 
         if (!ordersError && ordersData) {
           // Filtrar por data no front-end (mesma lógica do dashboard principal)
@@ -661,7 +678,7 @@ const OwnerDashboard = () => {
             .filter(order => String(order.created_at || '').split('T')[0] === today)
             .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           
-          console.log('[OWNER HUB] Vendas Hoje (Query Copiada):', {
+          console.log('[OWNER HUB] Vendas Hoje (Query IDÊNTICA):', {
             total: vendasHoje,
             today,
             totalOrders: ordersData.length,
@@ -811,19 +828,19 @@ const OwnerDashboard = () => {
         vendasHoje: Number(vendasHoje) || 0
       });
       
-      // FORÇAR ATUALIZAÇÃO DO ESTADO
+      // FORÇAR ATUALIZAÇÃO DO ESTADO - USANDO EXATAMENTE A MESMA ESTRUTURA DO DASHBOARD PRINCIPAL
       setMetrics({
-        vendasHoje: vendasHoje || 0,
+        vendasHoje: vendasHoje || 0, // ESPELHO EXATO DA APP PRINCIPAL
         mesasAtivas: 0,
         totalVendas: totalVendas || 0,
         receitaTotal: rendimentoGlobal || 0,
-        despesas: totalDespesas || 0,
-        despesasAcumuladas: totalExpensesAllTime || 0, // CORRIGIDO: usar variável correta
+        despesas: totalDespesas || 0, // DESPESAS DE HOJE
+        despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
-        impostos: (totalVendas || 0) * 0.07,
+        impostos: (vendasHoje || 0) * 0.065, // 6.5% IGUAL AO DASHBOARD PRINCIPAL
         historicoRevenue: historicoExterno || 0,
         rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (totalVendas || 0) - ((totalVendas || 0) * 0.07) - (totalDespesas || 0) - (folhaSalarial || 0)
+        lucroLiquido: (vendasHoje || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((vendasHoje || 0) * 0.065 || 0) // FÓRMULA IDÊNTICA
       });
       setChartData(chartDataGenerated);
       
