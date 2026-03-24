@@ -670,23 +670,35 @@ const OwnerDashboard = () => {
         const todayAngola = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
         const today = todayAngola.toISOString().split('T')[0];
         
+        console.log('[OWNER HUB] DEBUG - Faturação Hoje:', {
+          todayAngola: todayAngola.toLocaleString('pt-AO'),
+          today: today,
+          timezone: 'Africa/Luanda'
+        });
+        
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
-          .select('total_amount, created_at')
+          .select('total_amount, created_at, status')
           .eq('status', 'finalized'); // STATUS CORRETO: 'finalized'
+
+        console.log('[OWNER HUB] DEBUG - Orders Data:', {
+          data: ordersData,
+          error: ordersError,
+          totalOrders: ordersData?.length || 0
+        });
 
         if (!ordersError && ordersData) {
           // Filtrar por data no front-end (mesmo dia em Angola)
-          faturacaoHoje = ordersData
-            .filter(order => String(order.created_at || '').split('T')[0] === today)
-            .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+          const todayOrders = ordersData.filter(order => String(order.created_at || '').split('T')[0] === today);
+          faturacaoHoje = todayOrders.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           
           console.log('[OWNER HUB] Faturação Hoje (Status: finalized + Fuso Angola):', {
             total: faturacaoHoje,
             todayAngola: todayAngola.toLocaleString('pt-AO'),
             today,
             totalOrders: ordersData.length,
-            todayOrders: ordersData.filter(order => String(order.created_at || '').split('T')[0] === today).length
+            todayOrders: todayOrders.length,
+            todayOrdersData: todayOrders
           });
         } else {
           console.error('[OWNER HUB] Erro Query Faturação Hoje:', ordersError);
@@ -827,19 +839,19 @@ const OwnerDashboard = () => {
         rendimentoGlobal = 0;
       }
 
-      // Gerar dados para gráficos com base nas vendas
+      // Gerar dados para gráficos com base nos DADOS REAIS DO SUPABASE
       const chartDataGenerated = [
         {
           date: 'Hoje',
-          receitas: totalVendas || 0,
-          despesas: totalDespesas || 0,
-          vendas: totalVendas || 0
+          receitas: Number(faturacaoHoje) || 0, // USA FATURAÇÃO DE HOJE REAL
+          despesas: Number(totalDespesas) || 0, // USA DESPESAS DE HOJE REAIS
+          vendas: Number(faturacaoHoje) || 0 // USA FATURAÇÃO DE HOJE REAL
         },
         {
           date: 'Ontem',
-          receitas: Math.round((totalVendas || 0) * 0.8),
-          despesas: Math.round((totalDespesas || 0) * 0.9),
-          vendas: Math.round((totalVendas || 0) * 0.8)
+          receitas: Math.round((Number(faturacaoHoje) || 0) * 0.8), // ESTIMATIVA BASEADA NO HOJE
+          despesas: Math.round((Number(totalDespesas) || 0) * 0.9), // ESTIMATIVA BASEADA NO HOJE
+          vendas: Math.round((Number(faturacaoHoje) || 0) * 0.8) // ESTIMATIVA BASEADA NO HOJE
         }
       ];
 
