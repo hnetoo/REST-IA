@@ -766,7 +766,7 @@ const OwnerDashboard = () => {
 
           // Buscar folha salarial total
           const { data: employeesData, error: employeesError } = await supabase
-            .from('employees')
+            .from('staff')
             .select('salary');
 
           let totalFolhaAcumulado = 0;
@@ -929,12 +929,17 @@ const OwnerDashboard = () => {
       setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
       // VERIFICAÇÃO IMEDIATA DO ESTADO - SEM TIMEOUT
-      console.log('[DASHBOARD] Estado ATUALIZADO (verificação):', {
-        metricsState: metricsResult,
-        totalVendasNoState: totalVendasNoState,
-        despesasNoState: despesasNoState,
-        despesasAcumuladasNoState: despesasAcumuladasNoState,
-        folhaSalarialNoState: folhaSalarialNoState
+      console.log('[OWNER HUB] LOG DE SUCESSO - Dados Distribuídos:', {
+        faturacaoHoje: Number(faturacaoHoje) || 0,
+        impostos: (Number(faturacaoHoje) || 0) * 0.065,
+        despesasHoje: Number(totalDespesas) || 0,
+        folhaSalarial: Number(folhaSalarial) || 0,
+        rendimentoGlobal: Number(rendimentoGlobal) || 0,
+        external_history: Number(historicoExterno) || 0,
+        graficosHoje: {
+          receitas: Number(faturacaoHoje) || 0,
+          despesas: Number(totalDespesas) || 0
+        }
       });
 
       setIsLoading(false);
