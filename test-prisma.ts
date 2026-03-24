@@ -1,7 +1,7 @@
 import { getTodaySales } from './src/services/salesService'
 
 async function testConnection() {
-  console.log('🔗 Testando conexão com Prisma/Supabase...')
+  console.log('🔗 Testando conexão com Supabase SDK...')
   
   try {
     const sales = await getTodaySales()

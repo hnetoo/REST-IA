@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma'
+import { supabase } from '../lib/supabaseService'
 
 export interface SalesMetrics {
   total: number
@@ -9,22 +9,22 @@ export interface SalesMetrics {
 
 async function getTaxRate(): Promise<number> {
   const tableName = 'app_settings'
-  console.log('[PRISMA] Query executada em: ' + tableName)
+  console.log('[SUPABASE] Query executada em: ' + tableName)
   
   try {
     // Nota: app_settings não tem campo de taxa no schema atual
     // Retornando 14% como fallback até que o campo seja adicionado
-    console.log('[PRISMA] Usando taxa de imposto fallback (14%) - campo não encontrado em app_settings')
+    console.log('[SUPABASE] Usando taxa de imposto fallback (14%) - campo não encontrado em app_settings')
     return 0.14
   } catch (error) {
-    console.error('[PRISMA] Erro ao buscar taxa de imposto:', error)
+    console.error('[SUPABASE] Erro ao buscar taxa de imposto:', error)
     return 0.14 // Fallback
   }
 }
 
 export async function getTodaySales(): Promise<SalesMetrics> {
   const tableName = 'orders'
-  console.log('[PRISMA] Query executada em: ' + tableName)
+  console.log('[SUPABASE] Query executada em: ' + tableName)
   
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -32,24 +32,22 @@ export async function getTodaySales(): Promise<SalesMetrics> {
   tomorrow.setDate(tomorrow.getDate() + 1)
   
   try {
-    const orders = await (prisma as any).orders.findMany({
-      where: {
-        status: 'closed',
-        created_at: {
-          gte: today,
-          lt: tomorrow
-        }
-      },
-      select: {
-        total_amount: true,
-        cost_amount: true
-      }
-    })
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('total_amount, cost_amount')
+      .eq('status', 'closed')
+      .gte('created_at', today.toISOString())
+      .lt('created_at', tomorrow.toISOString())
     
-    console.log(`[PRISMA] Encontradas ${orders.length} ordens fechadas hoje`)
+    if (error) {
+      console.error('[SUPABASE] Erro na query:', error)
+      throw error
+    }
     
-    const total = orders.reduce((sum: number, order: any) => sum + Number(order.total_amount || 0), 0)
-    const cost = orders.reduce((sum: number, order: any) => sum + Number(order.cost_amount || 0), 0)
+    console.log(`[SUPABASE] Encontradas ${orders?.length || 0} ordens fechadas hoje`)
+    
+    const total = orders?.reduce((sum: number, order: any) => sum + Number(order.total_amount || 0), 0) || 0
+    const cost = orders?.reduce((sum: number, order: any) => sum + Number(order.cost_amount || 0), 0) || 0
     
     // Cálculo de impostos usando taxa dinâmica
     const taxRate = await getTaxRate()
@@ -62,37 +60,35 @@ export async function getTodaySales(): Promise<SalesMetrics> {
       total,
       taxes,
       profit,
-      orderCount: orders.length
+      orderCount: orders?.length || 0
     }
   } catch (error) {
-    console.error('[PRISMA] Erro ao buscar vendas do dia:', error)
+    console.error('[SUPABASE] Erro ao buscar vendas do dia:', error)
     throw error
   }
 }
 
 export async function getSalesByDateRange(startDate: Date, endDate: Date): Promise<SalesMetrics> {
   const tableName = 'orders'
-  console.log('[PRISMA] Query executada em: ' + tableName)
+  console.log('[SUPABASE] Query executada em: ' + tableName)
   
   try {
-    const orders = await (prisma as any).orders.findMany({
-      where: {
-        status: 'closed',
-        created_at: {
-          gte: startDate,
-          lte: endDate
-        }
-      },
-      select: {
-        total_amount: true,
-        cost_amount: true
-      }
-    })
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('total_amount, cost_amount')
+      .eq('status', 'closed')
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString())
     
-    console.log(`[PRISMA] Encontradas ${orders.length} ordens no período`)
+    if (error) {
+      console.error('[SUPABASE] Erro na query:', error)
+      throw error
+    }
     
-    const total = orders.reduce((sum: number, order: any) => sum + Number(order.total_amount || 0), 0)
-    const cost = orders.reduce((sum: number, order: any) => sum + Number(order.cost_amount || 0), 0)
+    console.log(`[SUPABASE] Encontradas ${orders?.length || 0} ordens no período`)
+    
+    const total = orders?.reduce((sum: number, order: any) => sum + Number(order.total_amount || 0), 0) || 0
+    const cost = orders?.reduce((sum: number, order: any) => sum + Number(order.cost_amount || 0), 0) || 0
     
     // Cálculo de impostos usando taxa dinâmica
     const taxRate = await getTaxRate()
@@ -103,10 +99,10 @@ export async function getSalesByDateRange(startDate: Date, endDate: Date): Promi
       total,
       taxes,
       profit,
-      orderCount: orders.length
+      orderCount: orders?.length || 0
     }
   } catch (error) {
-    console.error('[PRISMA] Erro ao buscar vendas por período:', error)
+    console.error('[SUPABASE] Erro ao buscar vendas por período:', error)
     throw error
   }
 }

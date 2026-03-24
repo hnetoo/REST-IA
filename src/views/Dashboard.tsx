@@ -6,15 +6,12 @@ import { DollarSign, ShoppingBag, Users, TrendingUp, Sparkles, Loader2, Activity
 import { AIAnalysisResult, Order } from '../../types';
 import { supabase } from '../lib/supabaseService';
 import { printFinanceReport, printThermalInvoice } from '../lib/printService';
-import { getTodaySales, SalesMetrics } from '../services/salesService';
 
 const Dashboard = () => {
   const { activeOrders, customers, menu, settings, addNotification, expenses, loadExpenses, employees, loadEmployees } = useStore();
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
-  const [prismaSales, setPrismaSales] = useState<SalesMetrics | null>(null);
-  const [loadingPrisma, setLoadingPrisma] = useState(true);
 
   // LIMPEZA DE LOCALSTORAGE - CONFIAR APENAS NA DB
   useEffect(() => {
@@ -38,25 +35,6 @@ const Dashboard = () => {
     
     console.log('[DASHBOARD PRINCIPAL] Limpeza de cache local concluída:', keysToRemove.length, 'itens removidos');
   }, []); // Executar apenas na montagem
-
-  // HOOK DE DADOS PRISMA - Carregar vendas do dia
-  useEffect(() => {
-    const loadPrismaSales = async () => {
-      try {
-        setLoadingPrisma(true);
-        const salesData = await getTodaySales();
-        setPrismaSales(salesData);
-        console.log('[DASHBOARD] ✅ Dados Prisma carregados:', salesData);
-      } catch (error) {
-        console.error('[DASHBOARD] ❌ Erro ao carregar dados Prisma:', error);
-        addNotification('error', 'Falha ao carregar dados de vendas');
-      } finally {
-        setLoadingPrisma(false);
-      }
-    };
-
-    loadPrismaSales();
-  }, [addNotification]); // Executar apenas na montagem
 
   // SUBSCRIÇÃO EM TEMPO REAL DO SUPABASE - ATUALIZAÇÃO AUTOMÁTICA DO DASHBOARD
   useEffect(() => {
@@ -517,19 +495,10 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mb-4 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
             Lucro Hoje
           </div>
-          {loadingPrisma ? (
-            <div className="flex items-center justify-center h-8">
-              <Loader2 className="animate-spin text-primary" size={20} />
-              <span className="ml-2 text-primary text-sm">Carregando...</span>
-            </div>
-          ) : (
-            <>
-              <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz(prismaSales?.profit || 0)}</p>
-              <div className="mt-2 text-[10px] text-primary/80 font-bold">
-                 Margem: {prismaSales && prismaSales.total > 0 ? ((prismaSales.profit / prismaSales.total) * 100).toFixed(1) : '0'}%
-              </div>
-            </>
-          )}
+          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz(todayMetrics.profit)}</p>
+          <div className="mt-2 text-[10px] text-primary/80 font-bold">
+             Margem: {todayMetrics.revenue > 0 ? ((todayMetrics.profit / todayMetrics.revenue) * 100).toFixed(1) : '0'}%
+          </div>
         </div>
 
         <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
@@ -537,21 +506,12 @@ const Dashboard = () => {
              <DollarSign size={64} />
           </div>
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Vendas Totais
+            Faturação Hoje
           </div>
-          {loadingPrisma ? (
-            <div className="flex items-center justify-center h-8">
-              <Loader2 className="animate-spin text-slate-400" size={20} />
-              <span className="ml-2 text-slate-400 text-sm">Carregando...</span>
-            </div>
-          ) : (
-            <>
-              <p className="text-2xl font-mono font-bold text-white">{formatKz(prismaSales?.total || 0)}</p>
-              <div className="mt-2 text-[10px] text-slate-500 font-bold">
-                 {prismaSales?.orderCount || 0} Vendas Fechadas
-              </div>
-            </>
-          )}
+          <p className="text-2xl font-mono font-bold text-white">{formatKz(todayMetrics.revenue)}</p>
+          <div className="mt-2 text-[10px] text-slate-500 font-bold">
+             {todayMetrics.count} Faturas Emitidas
+          </div>
         </div>
 
         <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
@@ -559,21 +519,12 @@ const Dashboard = () => {
              <ShoppingBag size={64} />
           </div>
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Impostos
+            Despesas Hoje
           </div>
-          {loadingPrisma ? (
-            <div className="flex items-center justify-center h-8">
-              <Loader2 className="animate-spin text-slate-400" size={20} />
-              <span className="ml-2 text-slate-400 text-sm">Carregando...</span>
-            </div>
-          ) : (
-            <>
-              <p className="text-2xl font-mono font-bold text-white">{formatKz(prismaSales?.taxes || 0)}</p>
-              <div className="mt-2 text-[10px] text-orange-500 font-bold">
-                 Taxa Dinâmica Aplicada
-              </div>
-            </>
-          )}
+          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
+          <div className="mt-2 text-[10px] text-orange-500 font-bold">
+             {expenses.length} Registros
+          </div>
         </div>
 
         <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
