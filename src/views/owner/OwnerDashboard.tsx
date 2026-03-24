@@ -665,22 +665,22 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar faturação de hoje USANDO EXATAMENTE A MESMA QUERY DO DASHBOARD PRINCIPAL
+      // Buscar faturação de hoje USANDO EXATAMENTE A MESMA QUERY DA APP PRINCIPAL
       let faturacaoHoje = 0;
       try {
         const today = new Date().toISOString().split('T')[0];
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'closed'); // EXATAMENTE COMO NO DASHBOARD PRINCIPAL
+          .eq('status', 'closed'); // EXATAMENTE COMO NA APP PRINCIPAL
 
         if (!ordersError && ordersData) {
-          // Filtrar por data no front-end (mesma lógica do dashboard principal)
+          // Filtrar por data no front-end (EXATAMENTE COMO NA APP PRINCIPAL)
           faturacaoHoje = ordersData
             .filter(order => String(order.created_at || '').split('T')[0] === today)
             .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           
-          console.log('[OWNER HUB] Faturação Hoje (Query IDÊNTICA Dashboard Principal):', {
+          console.log('[OWNER HUB] Faturação Hoje (Query IDÊNTICA App Principal):', {
             total: faturacaoHoje,
             today,
             totalOrders: ordersData.length,
@@ -839,10 +839,10 @@ const OwnerDashboard = () => {
         despesas: totalDespesas || 0, // DESPESAS DE HOJE
         despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
-        impostos: (faturacaoHoje || 0) * 0.065, // 6.5% IGUAL AO DASHBOARD PRINCIPAL
+        impostos: (faturacaoHoje || 0) * 0.065, // 6.5% IGUAL À APP PRINCIPAL
         historicoRevenue: historicoExterno || 0,
         rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (faturacaoHoje || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((faturacaoHoje || 0) * 0.065 || 0) // FÓRMULA IDÊNTICA
+        lucroLiquido: (faturacaoHoje || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((faturacaoHoje || 0) * 0.065 || 0) // FÓRMULA IGUAL À APP PRINCIPAL
       });
       setChartData(chartDataGenerated);
       
