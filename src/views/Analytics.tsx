@@ -18,7 +18,6 @@ const Analytics = () => {
     maximumFractionDigits: 2 
   }).format(val);
 
-  // Garanti que o Analytics usa dados reais do Supabase (evita category undefined em cache persistido)
   useEffect(() => {
     if (!navigator.onLine) return;
     loadExpenses().catch(() => {});
@@ -26,7 +25,8 @@ const Analytics = () => {
 
   // Calcular métricas reais
   const realMetrics = useMemo(() => {
-    const today = String(new Date().toISOString().split('T')[0] || '');
+    const todayAngola = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
+    const today = todayAngola.toISOString().split('T')[0];
     
     // Faturação Hoje: filtrar pedidos fechados de hoje (incluindo todos os status de venda)
     const todayOrders = activeOrders.filter(order => 
