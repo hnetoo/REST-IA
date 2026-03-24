@@ -663,46 +663,48 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar faturação de hoje USANDO EXATAMENTE O MESMO FILTRO DA APP PRINCIPAL
+      // Buscar faturação de hoje USANDO EXATAMENTE A MESMA LÓGICA DO PAINEL DE COMANDO
       let faturacaoHoje = 0;
       try {
-        // DATA DE HOJE EM ANGOLA (GMT+1) - IGUAL À APP PRINCIPAL
+        // DATA DE HOJE - MESMA LÓGICA DO PAINEL DE COMANDO
         const today = new Date().toISOString().split('T')[0];
         
-        console.log('[OWNER HUB] DEBUG - Faturação Hoje (FILTRO APP PRINCIPAL):', {
+        console.log('[OWNER HUB] PAINEL DE COMANDO - Faturação Hoje:', {
           today: today,
-          timezone: 'Africa/Luanda',
-          filtro: "['closed', 'paid', 'FECHADO']"
+          filtro: "status = 'closed'",
+          logica: 'Mesma lógica do Painel de Comando'
         });
         
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
-          .select('total_amount, created_at, status')
-          .in('status', ['closed', 'paid', 'FECHADO']) // FILTRO IDÊNTICO À APP PRINCIPAL
-          .gte('created_at', `${today}T00:00:00`) // MESMO FILTRO DE DATA DA APP PRINCIPAL
-          .lte('created_at', `${today}T23:59:59`); // MESMO FILTRO DE DATA DA APP PRINCIPAL
+          .select('total_amount, created_at')
+          .eq('status', 'closed'); // EXATAMENTE IGUAL AO PAINEL DE COMANDO
 
-        console.log('[OWNER HUB] DEBUG - Orders Data (App Principal Filter):', {
+        console.log('[OWNER HUB] PAINEL DE COMANDO - Orders Data:', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0
         });
 
         if (!ordersError && ordersData) {
-          // SOMAR DIRETAMENTE (JÁ FILTRADO POR DATA NA QUERY)
-          faturacaoHoje = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+          // FILTRAR POR DATA NO FRONT-END - EXATAMENTE IGUAL AO PAINEL DE COMANDO
+          faturacaoHoje = ordersData
+            .filter(order => String(order.created_at || '').split('T')[0] === today)
+            .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           
-          console.log('[OWNER HUB] Faturação Hoje (Filtro App Principal):', {
+          console.log('[OWNER HUB] FATURAÇÃO HOJE (Painel de Comando):', {
             total: faturacaoHoje,
             today: today,
             totalOrders: ordersData.length,
-            filtroStatus: ['closed', 'paid', 'FECHADO']
+            filteredOrders: ordersData.filter(order => String(order.created_at || '').split('T')[0] === today).length,
+            status: 'closed',
+            valorEsperado: '73.500 Kz (relatório)'
           });
         } else {
-          console.error('[OWNER HUB] Erro Query Faturação Hoje:', ordersError);
+          console.error('[OWNER HUB] Erro Query Painel de Comando:', ordersError);
         }
       } catch (queryError) {
-        console.error('[OWNER HUB] Erro crítico Query Faturação:', queryError);
+        console.error('[OWNER HUB] Erro crítico Query Painel de Comando:', queryError);
       }
 
       // FORÇAR LEITURA DE EXTERNAL_HISTORY PARA SALDO DE TRANSIÇÃO (8.700.000,00 Kz)
@@ -870,8 +872,8 @@ const OwnerDashboard = () => {
         }
       ];
       
-      // 3. IVA UNIFICADO: 6.5% IGUAL À APP PRINCIPAL
-      const ivaSete = vendasApp * 0.065; // TAXA IDÊNTICA À APP PRINCIPAL
+      // 3. IVA CORRIGIDO: 14% SOBRE FATURAÇÃO REAL (FATURAS EMITIDAS)
+      const ivaSete = Number(faturacaoHoje) * 0.14; // 14% SOBRE VALOR REAL DAS FATURAS
       
       // 4. DESPESAS TOTAIS: SUM(expenses) + SUM(staff_salaries)
       let despesasTotais = (Number(totalDespesas) || 0) + (Number(folhaSalarial) || 0);
@@ -913,19 +915,19 @@ const OwnerDashboard = () => {
         faturacaoHoje: Number(faturacaoHoje) || 0
       });
       
-      // FORÇAR ATUALIZAÇÃO DO ESTADO - USA VALOR EXATO DA QUERY
+      // FORÇAR ATUALIZAÇÃO DO ESTADO - USA FATURAÇÃO REAL DO PAINEL DE COMANDO
       setMetrics({
-        faturacaoHoje: Number(faturacaoHoje) || 0, // USA VALOR EXATO DA QUERY (APP PRINCIPAL)
+        faturacaoHoje: Number(faturacaoHoje) || 0, // FATURAÇÃO REAL DAS FATURAS EMITIDAS (73.500 Kz)
         mesasAtivas: 0,
         totalVendas: totalVendas || 0,
         receitaTotal: patrimonioTotal || 0, // PATRIMÓNIO TOTAL: SALDO EXTERNO + LUCRO OPERACIONAL ACUMULADO
         despesas: totalDespesas || 0, // DESPESAS DE HOJE
         despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.065, // 6.5% SOBRE FATURAÇÃO DA QUERY
+        impostos: (Number(faturacaoHoje) || 0) * 0.14, // 14% SOBRE FATURAÇÃO REAL (10.290 Kz)
         historicoRevenue: historicoExterno || 0,
         rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.065 || 0) // FÓRMULA COM VALOR DA QUERY
+        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.14 || 0) // FÓRMULA COM 14%
       });
       setChartData(chartDataGenerated);
       
@@ -935,11 +937,11 @@ const OwnerDashboard = () => {
       setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas || 0);
       setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
-      // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE UNIFICAÇÃO COM APP PRINCIPAL
-      console.log('[OWNER HUB] UNIFICAÇÃO COM APP PRINCIPAL - Valores Finais:', {
-        faturacaoHojeQuery: Number(faturacaoHoje) || 0,
-        totalVendas: Number(totalVendas) || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.065,
+      // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE CORREÇÃO FATURAÇÃO REAL
+      console.log('[OWNER HUB] CORREÇÃO FATURAÇÃO REAL - Valores Finais:', {
+        faturacaoHojePainelComando: Number(faturacaoHoje) || 0,
+        totalVendasBruto: Number(totalVendas) || 0,
+        impostos: (Number(faturacaoHoje) || 0) * 0.14,
         despesasHoje: Number(totalDespesas) || 0,
         folhaSalarial: Number(folhaSalarial) || 0,
         rendimentoGlobal: Number(rendimentoGlobal) || 0,
@@ -950,11 +952,15 @@ const OwnerDashboard = () => {
         },
         cardsExibidos: {
           'FATURAÇÃO HOJE': Number(faturacaoHoje) || 0,
-          'IMPOSTOS (6.5%)': (Number(faturacaoHoje) || 0) * 0.065,
+          'IMPOSTOS (14%)': (Number(faturacaoHoje) || 0) * 0.14,
           'Custos com Staff': Number(folhaSalarial) || 0,
           'Rendimento Global': Number(rendimentoGlobal) || 0
         },
-        unificacao: 'Filtro: [closed, paid, FECHADO] | Taxa: 6.5% | Query: App Principal'
+        correcao: 'Faturação real das faturas emitidas | Taxa: 14% | Lógica: Painel de Comando',
+        valoresEsperados: {
+          faturacao: '73.500 Kz',
+          impostos: '10.290 Kz (14% de 73.500)'
+        }
       });
 
       setIsLoading(false);
