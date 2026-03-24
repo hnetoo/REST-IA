@@ -28,14 +28,13 @@ const Analytics = () => {
   const realMetrics = useMemo(() => {
     const today = String(new Date().toISOString().split('T')[0] || '');
     
-    // Vendas Hoje: filtrar pedidos fechados de hoje (incluindo todos os status de venda)
+    // Faturação Hoje: filtrar pedidos fechados de hoje (incluindo todos os status de venda)
     const todayOrders = activeOrders.filter(order => 
       ['FECHADO', 'closed', 'paid'].includes(order.status) && 
       String(order.timestamp || '').split('T')[0] === today
     );
     
-    // CORRIGIR: USAR CAMPO CORRETO 'total' em vez de 'total_amount'
-    const totalSalesToday = todayOrders.reduce((acc, order) => acc + (order.total || 0), 0);
+    const totalSalesToday = todayOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
     const totalOrdersToday = todayOrders.length;
     const ticketMedio = totalOrdersToday > 0 ? totalSalesToday / totalOrdersToday : 0;
     
@@ -103,7 +102,7 @@ const Analytics = () => {
   // KPIs com dados reais
   const kpis = [
     {
-      title: 'Vendas Hoje',
+      title: 'FATURAÇÃO HOJE',
       value: realMetrics.totalSalesToday.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' }),
       change: '+0%',
       trend: 'up' as const,
@@ -274,7 +273,7 @@ const Analytics = () => {
       [],
       ['MÉTRICAS DO DIA'],
       ['Métrica', 'Valor'],
-      ['Vendas Hoje', realMetrics.totalSalesToday.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })],
+      ['FATURAÇÃO HOJE', realMetrics.totalSalesToday.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })],
       ['Ticket Médio', realMetrics.ticketMedio.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })],
       ['Custo de Compras', realMetrics.totalExpensesToday.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })],
       ['Lucro Bruto', realMetrics.lucroBruto.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })],

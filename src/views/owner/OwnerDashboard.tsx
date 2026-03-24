@@ -9,7 +9,7 @@ import { fetchVendasHoje, fetchHistoricoExterno } from '../../lib/sharedMetrics'
 export const revalidate = 0;
 
 interface Metrics {
-  vendasHoje: number;
+  faturacaoHoje: number;  // PADRONIZADO: 'FATURAÇÃO HOJE'
   mesasAtivas: number;
   totalVendas: number;
   receitaTotal: number;
@@ -61,7 +61,7 @@ const OwnerDashboard = () => {
   const navigate = useNavigate();
   // ESTADO INICIAL 100% DB-DEPENDENTE - SEM VALORES FIXOS
   const [metrics, setMetrics] = useState<Metrics>({
-    vendasHoje: 0,        // Será lido da DB
+    faturacaoHoje: 0,     // PADRONIZADO: 'FATURAÇÃO HOJE'
     mesasAtivas: 0,        // Será lido da DB
     totalVendas: 0,        // Será lido da DB
     receitaTotal: 0,        // Será lido da DB
@@ -69,7 +69,9 @@ const OwnerDashboard = () => {
     despesasAcumuladas: 0,  // Será lido da DB
     folhaSalarial: 0,       // Será lido da DB
     impostos: 0,            // Será lido da DB
-    historicoRevenue: 0      // Será lido da DB
+    historicoRevenue: 0,     // Será lido da DB
+    rendimentoGlobal: 0,     // Será lido da DB
+    lucroLiquido: 0         // Será lido da DB
   });
   const [period, setPeriod] = useState<'HOJE' | 'SEMANA' | 'MÊS' | 'ANO'>('HOJE');
   const [isOnline, setIsOnline] = useState(true);
@@ -663,8 +665,8 @@ const OwnerDashboard = () => {
         console.error('[DASHBOARD] Erro ao buscar vendas:', ordersError);
       }
 
-      // Buscar vendas de hoje USANDO EXATAMENTE A MESMA QUERY DO DASHBOARD PRINCIPAL (FUNCIONANDO)
-      let vendasHoje = 0;
+      // Buscar faturação de hoje USANDO EXATAMENTE A MESMA QUERY DO DASHBOARD PRINCIPAL (FUNCIONANDO)
+      let faturacaoHoje = 0;
       try {
         const today = new Date().toISOString().split('T')[0];
         const { data: ordersData, error: ordersError } = await supabase
@@ -674,21 +676,21 @@ const OwnerDashboard = () => {
 
         if (!ordersError && ordersData) {
           // Filtrar por data no front-end (mesma lógica do dashboard principal)
-          vendasHoje = ordersData
+          faturacaoHoje = ordersData
             .filter(order => String(order.created_at || '').split('T')[0] === today)
             .reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           
-          console.log('[OWNER HUB] Vendas Hoje (Query IDÊNTICA):', {
-            total: vendasHoje,
+          console.log('[OWNER HUB] Faturação Hoje (Query IDÊNTICA):', {
+            total: faturacaoHoje,
             today,
             totalOrders: ordersData.length,
             todayOrders: ordersData.filter(order => String(order.created_at || '').split('T')[0] === today).length
           });
         } else {
-          console.error('[OWNER HUB] Erro Query Vendas Hoje:', ordersError);
+          console.error('[OWNER HUB] Erro Query Faturação Hoje:', ordersError);
         }
       } catch (queryError) {
-        console.error('[OWNER HUB] Erro crítico Query Vendas:', queryError);
+        console.error('[OWNER HUB] Erro crítico Query Faturação:', queryError);
       }
 
       // FORÇAR LEITURA DE EXTERNAL_HISTORY PARA SALDO DE TRANSIÇÃO (8.700.000,00 Kz)
@@ -802,7 +804,7 @@ const OwnerDashboard = () => {
       const lucroTotalConsolidado = historicoFixo + lucroOperacional;
 
       const metricsResult = {
-        vendasHoje: Number(vendasHoje) || 0, // ESPELHO EXATO DA APP PRINCIPAL
+        faturacaoHoje: Number(faturacaoHoje) || 0, // PADRONIZADO: 'FATURAÇÃO HOJE'
         mesasAtivas: 0, // Calcular depois se necessário
         totalVendas: Number(totalVendas) || 0,
         receitaTotal: lucroTotalConsolidado, // LUCRO TOTAL CONSOLIDADO
@@ -825,22 +827,22 @@ const OwnerDashboard = () => {
         despesasTotais,
         lucroOperacional,
         lucroTotalConsolidado,
-        vendasHoje: Number(vendasHoje) || 0
+        faturacaoHoje: Number(faturacaoHoje) || 0
       });
       
       // FORÇAR ATUALIZAÇÃO DO ESTADO - USANDO EXATAMENTE A MESMA ESTRUTURA DO DASHBOARD PRINCIPAL
       setMetrics({
-        vendasHoje: vendasHoje || 0, // ESPELHO EXATO DA APP PRINCIPAL
+        faturacaoHoje: faturacaoHoje || 0, // PADRONIZADO: 'FATURAÇÃO HOJE'
         mesasAtivas: 0,
         totalVendas: totalVendas || 0,
         receitaTotal: rendimentoGlobal || 0,
         despesas: totalDespesas || 0, // DESPESAS DE HOJE
         despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
-        impostos: (vendasHoje || 0) * 0.065, // 6.5% IGUAL AO DASHBOARD PRINCIPAL
+        impostos: (faturacaoHoje || 0) * 0.065, // 6.5% IGUAL AO DASHBOARD PRINCIPAL
         historicoRevenue: historicoExterno || 0,
         rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (vendasHoje || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((vendasHoje || 0) * 0.065 || 0) // FÓRMULA IDÊNTICA
+        lucroLiquido: (faturacaoHoje || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((faturacaoHoje || 0) * 0.065 || 0) // FÓRMULA IDÊNTICA
       });
       setChartData(chartDataGenerated);
       
@@ -868,7 +870,7 @@ const OwnerDashboard = () => {
       
       // Em caso de erro, definir valores padrão
       setMetrics({
-        vendasHoje: 0,
+        faturacaoHoje: 0,
         mesasAtivas: 0,
         totalVendas: 0,
         receitaTotal: 0,
@@ -981,7 +983,7 @@ const OwnerDashboard = () => {
   }, [period]); // Removido fetchMetrics das dependências para evitar loops
 
   // Calcular ticket médio
-  const ticketMedio = metrics.totalVendas > 0 ? metrics.totalVendas / (metrics.vendasHoje > 0 ? metrics.vendasHoje : 1) : 0;
+  const ticketMedio = metrics.totalVendas > 0 ? metrics.totalVendas / (metrics.faturacaoHoje > 0 ? metrics.faturacaoHoje : 1) : 0;
 
   // Calcular lucro líquido
   const lucroLiquido = metrics.totalVendas - metrics.despesas - metrics.folhaSalarial - metrics.impostos;
@@ -1057,18 +1059,18 @@ const OwnerDashboard = () => {
 
         {/* GRID DE INDICADORES - 3 LINHAS ORGANIZADAS */}
         
-        {/* LINHA 1 (OPERACIONAL): Vendas Hoje | Despesas Hoje | Rendimento Global */}
+        {/* LINHA 1 (OPERACIONAL): FATURAÇÃO HOJE | Despesas Hoje | Rendimento Global */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6">
-          {/* Card 1: Vendas Hoje */}
+          {/* Card 1: FATURAÇÃO HOJE */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-amber-400" />
               </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">Vendas Hoje</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">FATURAÇÃO HOJE</span>
             </div>
             <div className="text-3xl font-black text-amber-400 mb-2">
-              {formatAKZ(metrics?.vendasHoje || 0)}
+              {formatAKZ(metrics?.faturacaoHoje || 0)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
