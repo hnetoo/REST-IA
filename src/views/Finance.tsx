@@ -155,9 +155,28 @@ const Finance = () => {
   const today = new Date().toISOString().split('T')[0];
 
   const metrics = useMemo(() => {
-    // DADOS REAIS DO SUPABASE - IGUAL AO PROFIT CENTER
-    const todayOrders = ordersData; // Usar dados diretos do Supabase
+    // DADOS REAIS DO SUPABASE - IGUAL À APP PRINCIPAL (51.000 Kz)
+    const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
+    const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
+    
+    // FILTRAR ORDENS COMO A APP PRINCIPAL - STATUS E DATA DE HOJE
+    const todayOrders = ordersData.filter(order => {
+      const orderDate = new Date(order.created_at || '');
+      const isInStatus = ['FECHADO', 'closed', 'paid'].includes(order.status || '');
+      const isToday = orderDate >= startOfDay && orderDate <= endOfDay;
+      return isInStatus && isToday;
+    });
+    
     const revenue = todayOrders.reduce((a, b) => a + (b.total_amount || 0), 0);
+    
+    console.log('[FINANCEIRO ALINHADO] Query igual App Principal:', {
+      totalOrders: ordersData.length,
+      todayOrders: todayOrders.length,
+      revenue: revenue,
+      filtro: "status IN (FECHADO, closed, paid) + hoje Luanda",
+      valorEsperado: '51.000 Kz'
+    });
     
     // DESPESAS HOJE - Mesma lógica do Profit Center
     const today = new Date().toISOString().split('T')[0];
@@ -194,7 +213,7 @@ const Finance = () => {
       return acc;
     }, {} as Record<string, number>);
 
-    console.log('[FINANCEIRO DEBUG] Faturação Bruta Total:', revenue);
+    console.log('[FINANCEIRO DEBUG] Faturação Alinhada (51.000 Kz):', revenue);
     console.log('[FINANCEIRO DEBUG] Despesas Hoje:', variableCosts);
     console.log('[FINANCEIRO DEBUG] Impostos (7%):', tax);
     console.log('[FINANCEIRO DEBUG] Lucro Líquido Calculado:', netProfit);
@@ -532,7 +551,7 @@ const Finance = () => {
                         )}
                         <div className="flex items-center gap-6 mt-6">
                             <div className="flex flex-col">
-                                <span className="text-[8px] font-black text-slate-500 uppercase">Faturação Bruta</span>
+                                <span className="text-[8px] font-black text-slate-500 uppercase">Faturação Hoje</span>
                                 <span className="text-lg font-mono font-bold text-white">{formatKz(metrics.todayGross)}</span>
                             </div>
                             <div className="w-px h-8 bg-white/10"></div>
