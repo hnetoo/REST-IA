@@ -465,7 +465,7 @@ const OwnerDashboard = () => {
       
       const { data: orderItemsData, error: orderItemsError } = await supabase
         .from('order_items')
-        .select('product_id, product_name, quantity, unit_price, order_id')
+        .select('product_id, quantity, unit_price, order_id')
         .in('order_id', orderIds);
 
       if (orderItemsError) {
@@ -484,7 +484,7 @@ const OwnerDashboard = () => {
       const productMap = new Map();
       
       orderItemsData.forEach(item => {
-        const productId = item.product_id || item.product_name || 'Produto Sem Nome';
+        const productId = item.product_id || 'Produto Sem Nome';
         const quantity = Number(item.quantity || 0);
         const unitPrice = Number(item.unit_price || 0);
         const revenue = quantity * unitPrice;
@@ -499,7 +499,7 @@ const OwnerDashboard = () => {
         } else {
           productMap.set(productId, {
             id: productId,
-            name: item.product_name || productId,
+            name: productId, // Usando product_id como nome já que product_name não existe
             quantity: quantity,
             revenue: revenue
           });
@@ -519,6 +519,14 @@ const OwnerDashboard = () => {
     }
   };
 
+  // Função helper para unificar timezone em toda a app
+  const isTodayInAppTimezone = (dateString: string | null) => {
+    if (!dateString) return false;
+    const today = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+    const orderDate = new Date(dateString).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+    return orderDate === today;
+  };
+
   // Função principal para buscar métricas
   const fetchMetrics = async () => {
     setIsLoading(true);
@@ -536,31 +544,47 @@ const OwnerDashboard = () => {
       } else {
         console.log('[OWNER HUB] Orders encontradas:', ordersData?.length || 0);
         
-        // Calcular faturação de hoje com timezone Africa/Luanda
-        const today = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+        // Calcular faturação de hoje com timezone Africa/Luanda (FUNÇÃO UNIFICADA)
         const todayOrders = ordersData?.filter(order => {
-          const orderDate = new Date(order.created_at || order.timestamp).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
-          return orderDate === today && Number(order.total_amount || order.total || 0) > 0;
+          return isTodayInAppTimezone(order.created_at || order.timestamp) && 
+                 Number(order.total_amount || order.total || 0) > 0;
         }) || [];
 
         const faturacaoHoje = todayOrders.reduce((sum, order) => sum + Number(order.total_amount || order.total || 0), 0);
         
-        console.log('[OWNER HUB] Faturação Hoje (Africa/Luanda):', {
-          today,
+        console.log('[OWNER HUB] Faturação Hoje (Africa/Luanda - UNIFICADO):', {
+          today: new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' }),
           todayOrders: todayOrders.length,
           faturacaoHoje,
-          formatKz: formatKz(faturacaoHoje)
+          formatKz: formatKz(faturacaoHoje),
+          timezone: 'Africa/Luanda'
         });
 
         // Buscar despesas
         const totalDespesas = await fetchTodayExpenses();
 
-        // Buscar folha salarial
-        const { data: staffData } = await supabase
-          .from('staff')
-          .select('salario_base, base_salary_kz');
+        // Buscar folha salarial (STAFF FIX - garantir leitura antes do render)
+        let folhaSalarial = 0;
+        try {
+          const { data: staffData, error: staffError } = await supabase
+            .from('staff')
+            .select('salario_base, base_salary_kz');
 
-        const folhaSalarial = staffData?.reduce((sum, staff) => sum + Number(staff.salario_base || staff.base_salary_kz || 0), 0) || 0;
+          if (staffError) {
+            console.error('[OWNER HUB] Erro ao buscar staff:', staffError);
+          } else if (staffData && staffData.length > 0) {
+            folhaSalarial = staffData.reduce((sum, staff) => sum + Number(staff.salario_base || staff.base_salary_kz || 0), 0);
+            console.log('[OWNER HUB] Staff carregado com sucesso:', {
+              totalFuncionarios: staffData.length,
+              folhaSalarial,
+              formatKz: formatKz(folhaSalarial)
+            });
+          } else {
+            console.log('[OWNER HUB] Nenhum funcionário encontrado na tabela staff');
+          }
+        } catch (error) {
+          console.error('[OWNER HUB] Erro crítico ao carregar staff:', error);
+        }
 
         // Buscar histórico externo
         const historicoExternoData = await fetchHistoricoRevenue();
