@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { TrendingUp, DollarSign, Users, Receipt, LogOut, RefreshCw, Settings } from 'lucide-react';
+import { TrendingUp, Receipt, LogOut, RefreshCw, Settings } from 'lucide-react';
 import { formatKz } from '../../lib/dateUtils';
 import { supabase } from '../../lib/supabase';
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
-  const { currentUser, activeOrders, getTodayRevenue } = useStore();
+  const { activeOrders } = useStore();
   const [isLoading, setIsLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     faturacaoHoje: 0,
@@ -31,7 +31,15 @@ const OwnerDashboard = () => {
       return;
     }
     
-    // Carregar dados reais do Supabase
+    // LIMPEZA DE CACHE E FORÇAR REFRESH DE DADOS
+    console.log('[OWNER DASHBOARD] Iniciando, limpando cache...');
+    
+    // Limpar cache de dados antigos
+    localStorage.removeItem('owner_dashboard_cache');
+    localStorage.removeItem('orders_cache');
+    localStorage.removeItem('metrics_cache');
+    
+    // Carregar dados frescos do Supabase
     fetchMetrics();
   }, [navigate]);
 

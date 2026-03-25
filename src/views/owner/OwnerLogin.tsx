@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, Lock, Eye, EyeOff, LogOut } from 'lucide-react';
+import { Smartphone, Eye, EyeOff } from 'lucide-react';
 
 const OwnerLogin = () => {
   const navigate = useNavigate();
@@ -22,18 +22,24 @@ const OwnerLogin = () => {
     setIsLoading(true);
 
     try {
-      // Simular delay de autenticação
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+      // LIMPEZA DE SESSÃO - remover qualquer sessão antiga do Supabase
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('supabase.auth.refreshToken');
+      localStorage.removeItem('ownerSession');
+      
+      // VALIDAÇÃO SIMPLES - apenas verificar PIN
       if (pin === OWNER_CREDENTIALS.pin) {
-        // Login independente - REDIRECIONAMENTO IMEDIATO
-        console.log('[OWNER LOGIN] PIN correto, redirecionando...');
+        console.log('[OWNER LOGIN] PIN correto, guardando estado...');
+        
+        // Guardar estado de login
         localStorage.setItem('owner_logged_in', 'true');
         localStorage.setItem('owner_login_time', new Date().toISOString());
         
-        // FORÇAR REDIRECIONAMENTO IMEDIATO
-        window.location.href = '/owner/dashboard';
-        // Fallback: navigate('/owner/dashboard');
+        // FORÇAR NAVEGAÇÃO DIRETA com router.replace
+        setTimeout(() => {
+          console.log('[OWNER LOGIN] Navegando para dashboard...');
+          navigate('/owner/dashboard', { replace: true });
+        }, 100);
       } else {
         setError('PIN incorreto. Tente novamente.');
         setPin('');
