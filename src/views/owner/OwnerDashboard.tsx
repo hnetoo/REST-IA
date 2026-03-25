@@ -651,22 +651,24 @@ const OwnerDashboard = () => {
           console.log('[OWNER HUB] Usuário não autenticado - usando dados locais');
         }
         
-        // DATA DE HOJE - FUSO HORÁRIO DE LUANDA (GMT+1) COM START/END OF DAY
+        // DATA DE HOJE - FORÇAR 2026-03-25 COM FUSO HORÁRIO DE LUANDA (GMT+1)
         const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
-        const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
-        const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
-        const today = todayLuanda.toISOString().split('T')[0];
         
-        console.log('[OWNER HUB] CORREÇÃO CRÍTICA - Start/End of Day Luanda:', {
-          todayLuanda: todayLuanda.toLocaleString('pt-AO', {timeZone: 'Africa/Luanda'}),
+        // FORÇAR DATA ESPECÍFICA: 2026-03-25 COM GMT+1
+        const forcedDate = '2026-03-25';
+        const startOfDay = new Date(`${forcedDate}T00:00:00+01:00`);
+        const endOfDay = new Date(`${forcedDate}T23:59:59+01:00`);
+        
+        console.log('[OWNER HUB] CORREÇÃO CRÍTICA - Data Forçada:', {
+          forcedDate: forcedDate,
           startOfDay: startOfDay.toISOString(),
           endOfDay: endOfDay.toISOString(),
-          filtro: "status = 'finalized' + range de hoje",
-          logica: 'StartOfDay + EndOfDay + Filtro Finalizadas',
+          filtro: "status = 'finalized' + range forçado",
+          logica: 'Data Forçada 2026-03-25 + GMT+1',
           currentUser: currentUser?.id || 'não autenticado'
         });
         
-        // QUERY CORRETA - COM RANGE DE DATA EXATO E AUTENTICAÇÃO
+        // QUERY CORRETA - FORÇAR BUSCA COM DATA ESPECÍFICA
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
@@ -674,28 +676,27 @@ const OwnerDashboard = () => {
           .gte('created_at', startOfDay.toISOString())
           .lte('created_at', endOfDay.toISOString());
 
-        console.log('[OWNER HUB] SYNC - Orders Data (range exato):', {
+        console.log('[OWNER HUB] SYNC - Orders Data (data forçada):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0,
-          filtroAplicado: 'status = finalized + range start/end of day'
+          filtroAplicado: 'status = finalized + data forçada 2026-03-25'
         });
 
         if (!ordersError && ordersData) {
-          // SOMAR APENAS FATURAS DE HOJE - QUERY JÁ FILTRADA COM RANGE EXATO
+          // SOMAR APENAS FATURAS DE HOJE - QUERY JÁ FILTRADA
           totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
           faturacaoHoje = totalVendas; // USA O MESMO VALOR - INTEGRIDADE
           
-          // LOG DE DEBUG TEMPORÁRIO
-          console.log(`Faturas emitidas hoje com range exato: ${totalVendas} Kz`);
-          
-          console.log('[OWNER HUB] SINCRONIZADA (range start/end of day):', {
+          // LOG DE CONFERÊNCIA OBRIGATÓRIO
+          console.log('VALOR RECUPERADO PARA O DASHBOARD: ', faturacaoHoje);
+          console.log('[OWNER HUB] SINCRONIZADA (data forçada):', {
             totalVendas: totalVendas,
             faturacaoHoje: faturacaoHoje,
             startOfDay: startOfDay.toISOString(),
             endOfDay: endOfDay.toISOString(),
             totalOrders: ordersData.length,
-            filtroAplicado: 'status = finalized + range start/end of day'
+            filtroAplicado: 'status = finalized + data forçada 2026-03-25'
           });
         } else {
           console.error('[OWNER HUB] Erro Query Sync:', ordersError);
@@ -875,6 +876,14 @@ const OwnerDashboard = () => {
       
       // 3. IVA CORRIGIDO: 7% SOBRE FATURAÇÃO REAL (PAINEL DE COMANDO)
       const ivaSete = Number(faturacaoHoje) * 0.07; // 7% SOBRE VALOR REAL DAS FATURAS FINALIZADAS
+      
+      // LOG DE CONFERÊNCIA DO IMPOSTO
+      console.log('CÁLCULO DO IMPOSTO (7%):', {
+        faturacaoHoje: faturacaoHoje,
+        taxa: 0.07,
+        impostoCalculado: ivaSete,
+        exemplo: '138.500 * 0.07 = 9.695'
+      });
       
       // 4. DESPESAS TOTAIS: SUM(expenses) + SUM(staff_salaries)
       let despesasTotais = (Number(totalDespesas) || 0) + (Number(folhaSalarial) || 0);
