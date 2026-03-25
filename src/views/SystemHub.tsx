@@ -554,10 +554,13 @@ const SystemHub = () => {
       e.preventDefault();
       setIsSaving(true);
       try {
-        // Salvar apenas as configurações que existem no tipo SystemSettings
+        // Salvar TODAS as configurações incluindo as fiscais
         const settingsToSave = {
           restaurantName: localSettings.restaurantName,
-          appLogoUrl: localSettings.appLogoUrl
+          appLogoUrl: localSettings.appLogoUrl,
+          nif: localSettings.nif,
+          capitalSocial: localSettings.capitalSocial,
+          taxRegime: localSettings.taxRegime
         };
         await updateSettings(settingsToSave);
         setTimeout(() => setIsSaving(false), 1000);
