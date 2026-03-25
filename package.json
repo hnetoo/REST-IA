@@ -13,6 +13,7 @@
     "build:app": "tauri build",
     "build:windows": "npm run build && tauri build",
     "build:msi": "tauri build --target x86_64-pc-windows-msvc",
+    "build:windows-fixed": "powershell -ExecutionPolicy Bypass -File build-windows.ps1",
     "test": "vitest run",
     "supabase:init": "./scripts/supabase-setup.ps1 init",
     "supabase:start": "./scripts/supabase-setup.ps1 start",

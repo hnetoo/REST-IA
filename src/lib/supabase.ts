@@ -1,11 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Tentar obter variáveis de ambiente
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://tboiuiwlqfzcvakxrsmj.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_fBMKbbzNYBe8d1rzdWyerg_4We8tZEm';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('[SUPABASE] Erro: Variáveis de ambiente não encontradas');
-  console.error('[SUPABASE] Verifique VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY');
+// Verificar se estamos em ambiente Tauri/Windows
+const isTauri = !!(window as any).__TAURI_INTERNALS__;
+
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn('[SUPABASE] Variáveis de ambiente não encontradas, usando fallback para Windows/Tauri');
+  console.log('[SUPABASE] URL:', supabaseUrl);
+  console.log('[SUPABASE] Ambiente:', isTauri ? 'Tauri/Windows' : 'Web');
 }
 
 export const supabase = createClient(
