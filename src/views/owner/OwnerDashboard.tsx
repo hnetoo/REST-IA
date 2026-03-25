@@ -643,17 +643,18 @@ const OwnerDashboard = () => {
         folhaSalarial = 0;
       }
 
-      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR EXATAMENTE O STORE COMO O POS
+      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR STORE FORA DO ASYNC
       let totalVendas = 0;
       let faturacaoHoje = 0;
+      
+      // PEGAR activeOrders ANTES do async - FORA DO TRY/CATCH
+      const { activeOrders } = useStore(); // PEGAR DO STORE COMO O POS
+      
       try {
         // VERIFICAR AUTENTICAÇÃO - Usar currentUser da Store
         if (!currentUser) {
           console.log('[OWNER HUB] Usuário não autenticado - usando dados locais');
         }
-        
-        // USAR EXATAMENTE A MESMA LÓGICA DO POS - closedOrders DO STORE
-        const { activeOrders } = useStore(); // PEGAR DO STORE COMO O POS
         
         // DATA DE HOJE - EXATAMENTE COMO NO POS
         const today = new Date().toISOString().split('T')[0]; // Data atual para despesas
