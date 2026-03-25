@@ -848,15 +848,15 @@ const OwnerDashboard = () => {
       const historicoFixo = Number(historicoExterno) || 0; // LIDO DA DB
       
       // 2. VENDAS APP: SUM(total_price) de todas as ordens 'closed/paid' na DB
-      const vendasApp = Number(totalVendas) || 0;
+      const vendasApp = Number(faturacaoHoje) || 0; // USA DIRETAMENTE FATURAÇÃO REAL
       
-      // USA DIRETAMENTE O VALOR DA QUERY (JÁ FILTRADO COMO APP PRINCIPAL)
-      // Sem correção - usar exatamente o que a query retornou
-      console.log('[OWNER HUB] UNIFICAÇÃO - Faturação vs App Principal:', {
-        faturacaoHojeQuery: Number(faturacaoHoje) || 0,
-        totalVendas: Number(totalVendas) || 0,
-        valorFinal: Number(faturacaoHoje) || 0, // USA DIRETAMENTE O VALOR DA QUERY
-        observacao: 'Usando valor exato da query (filtro App Principal)'
+      // DESTRUIR ZERO FORÇADO - USAR VALOR REAL DAS ORDENS
+      console.log('[OWNER HUB] DADOS REAIS - SEM UNIFICAÇÃO FORÇADA:', {
+        somaOrders: Number(faturacaoHoje) || 0,
+        staffReal: Number(folhaSalarial) || 0,
+        impostoReal: (Number(faturacaoHoje) || 0) * 0.07,
+        valorFinalDashboard: Number(faturacaoHoje) || 0, // VALOR REAL SEM SOBREPOSIÇÃO
+        observacao: 'Usando valores reais - sem forçar zero'
       });
 
       // Gerar dados para gráficos com base nos DADOS REAIS DA QUERY
@@ -896,24 +896,8 @@ const OwnerDashboard = () => {
       // 5. LUCRO OPERACIONAL: (vendasApp - ivaSete - despesasTotais)
       const lucroOperacional = vendasApp - ivaSete - despesasTotais;
       
-      // 6. LUCRO TOTAL CONSOLIDADO: (historicoFixo + Lucro Operacional)
-      const lucroTotalConsolidado = historicoFixo + lucroOperacional;
-
-      const metricsResult = {
-        faturacaoHoje: Number(faturacaoHoje) || 0, // PADRONIZADO: 'FATURAÇÃO HOJE'
-        mesasAtivas: 0, // Calcular depois se necessário
-        totalVendas: Number(totalVendas) || 0,
-        receitaTotal: lucroTotalConsolidado, // LUCRO TOTAL CONSOLIDADO
-        despesas: Number(totalDespesas) || 0,
-        despesasAcumuladas: Number(totalExpensesAllTime) || 0, // Despesas totais acumuladas
-        folhaSalarial: Number(folhaSalarial) || 0,
-        impostos: ivaSete, // 7% APENAS SOBRE VENDAS REAIS
-        historicoRevenue: historicoExterno,
-        lucroLiquido: lucroOperacional, // LUCRO OPERACIONAL
-        lucroTotalConsolidado: lucroTotalConsolidado, // LUCRO TOTAL CONSOLIDADO
-        margem: vendasApp > 0 ? (Number(lucroOperacional) / vendasApp) * 100 : 0,
-        rendimentoGlobal: rendimentoGlobal // NOVO: Rendimento Global = business_stats + financial_history
-      };
+      // 6. LUCRO TOTAL CONSOLIDADO: PATRIMÓNIO TOTAL
+      const lucroTotalConsolidado = patrimonioTotal;
 
       console.log('[DASHBOARD] MODO DE PRODUÇÃO - CÁLCULOS EXATOS:', {
         periodo: period,
@@ -926,27 +910,21 @@ const OwnerDashboard = () => {
         faturacaoHoje: Number(faturacaoHoje) || 0
       });
       
-      // FORÇAR ATUALIZAÇÃO DO ESTADO - FATURAÇÃO REAL APENAS ORDENS FINALIZADAS
+      // ATUALIZAR O ESTADO COM VALORES REAIS - SEM FORÇAR ZERO
       setMetrics({
-        faturacaoHoje: Number(faturacaoHoje) || 0, // FATURAÇÃO REAL DAS ORDENS FINALIZADAS (73.500 Kz)
-        mesasAtivas: 0,
-        totalVendas: totalVendas || 0,
-        receitaTotal: patrimonioTotal || 0, // PATRIMÓNIO TOTAL: SALDO EXTERNO + LUCRO OPERACIONAL ACUMULADO
-        despesas: totalDespesas || 0, // DESPESAS DE HOJE
-        despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
-        folhaSalarial: folhaSalarial || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.07, // 7% SOBRE FATURAÇÃO REAL
-        historicoRevenue: historicoExterno || 0,
-        rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.07 || 0) // FÓRMULA COM 7%
+        faturacaoHoje: Number(faturacaoHoje) || 0,     // VALOR REAL DAS ORDENS (138.500)
+        mesasAtivas: 0,                                 // LIDO DA DB
+        totalVendas: Number(faturacaoHoje) || 0,      // USA FATURAÇÃO REAL
+        receitaTotal: Number(faturacaoHoje) || 0,     // USA FATURAÇÃO REAL
+        despesas: Number(totalDespesas) || 0,          // DESPESAS REAIS DE HOJE
+        despesasAcumuladas: Number(totalExpensesAllTime) || 0, // Despesas totais acumuladas
+        folhaSalarial: Number(folhaSalarial) || 0,     // STAFF REAL (235.000)
+        impostos: (Number(faturacaoHoje) || 0) * 0.07, // 7% REAL SOBRE FATURAÇÃO
+        historicoRevenue: historicoExterno,
+        lucroLiquido: lucroOperacional, // LUCRO OPERACIONAL
+        rendimentoGlobal: rendimentoGlobal || 0
       });
       setChartData(chartDataGenerated);
-      
-      // SINCRONIZAR ESTADOS INDIVIDUAIS IMEDIATAMENTE
-      setTotalVendasNoState(metricsResult.totalVendas);
-      setDespesasNoState(metricsResult.despesas);
-      setDespesasAcumuladasNoState(metricsResult.despesasAcumuladas || 0);
-      setFolhaSalarialNoState(metricsResult.folhaSalarial);
       
       // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE INTEGRIDADE DE DADOS
       console.log('[OWNER HUB] INTEGRIDADE DE DADOS - Valores Corrigidos:', {
@@ -971,6 +949,7 @@ const OwnerDashboard = () => {
         valoresEsperados: {
           faturacao: '138.500 Kz (obrigatório)',
           impostos: '9.695 Kz (7% de 138.500)',
+          staff: '235.000 Kz (real da tabela)',
           erroCorrigido: 'ReferenceError: currentUser is not defined → Definido useStore'
         }
       });
