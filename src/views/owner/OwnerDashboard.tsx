@@ -643,7 +643,7 @@ const OwnerDashboard = () => {
         folhaSalarial = 0;
       }
 
-      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR EXATAMENTE A MESMA LÓGICA DO POS
+      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR EXATAMENTE O STORE COMO O POS
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
@@ -652,49 +652,29 @@ const OwnerDashboard = () => {
           console.log('[OWNER HUB] Usuário não autenticado - usando dados locais');
         }
         
+        // USAR EXATAMENTE A MESMA LÓGICA DO POS - closedOrders DO STORE
+        const { activeOrders } = useStore(); // PEGAR DO STORE COMO O POS
+        
         // DATA DE HOJE - EXATAMENTE COMO NO POS
         const today = new Date().toISOString().split('T')[0]; // Data atual para despesas
         
-        console.log('[OWNER HUB] COPIANDO LÓGICA EXATA DO POS:', {
-          today: today,
-          filtro: "status IN ('FECHADO', 'closed', 'paid') + timestamp filter",
-          logica: 'Igual ao DashboardV2.tsx linha 387',
-          currentUser: currentUser?.id || 'não autenticado'
-        });
+        // FILTRAR EXATAMENTE COMO O POS FAZ - LINHA 423 DO DashboardV2.tsx
+        const closedOrders = activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status || ''));
+        const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
         
-        // QUERY EXATAMENTE IGUAL AO POS - USAR timestamp EM VEZ DE created_at
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select('total_amount, timestamp, status')
-          .in('status', ['FECHADO', 'closed', 'paid']) // IGUAL AO POS
-          .eq('timestamp', today); // IGUAL AO POS - filtro por data
-
-        console.log('[OWNER HUB] SYNC - Orders Data (igual POS):', {
-          data: ordersData,
-          error: ordersError,
-          totalOrders: ordersData?.length || 0,
-          filtroAplicado: 'status IN (FECHADO, closed, paid) + timestamp = hoje'
+        // SOMAR EXATAMENTE COMO O POS FAZ - LINHA 424 DO DashboardV2.tsx
+        totalVendas = orders.reduce((acc, o) => acc + Number(o.total || 0), 0);
+        faturacaoHoje = totalVendas;
+        
+        console.log('[OWNER HUB] USANDO STORE COMO POS:', {
+          activeOrders: activeOrders.length,
+          closedOrders: closedOrders.length,
+          orders: orders.length,
+          faturacaoHoje: faturacaoHoje,
+          filtro: "closedOrders.filter + timestamp filter = hoje",
+          logica: 'EXATAMENTE DashboardV2.tsx linha 423-424',
+          valorEsperado: '51.000 Kz (igual ao POS)'
         });
-
-        if (!ordersError && ordersData && ordersData.length > 0) {
-          // SOMAR EXATAMENTE COMO O POS FAZ
-          totalVendas = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
-          faturacaoHoje = totalVendas; // USA O MESMO VALOR
-          
-          // LOG DE CONFERÊNCIA OBRIGATÓRIO
-          console.log('VALOR COPIADO DO POS (51.000 Kz): ', faturacaoHoje);
-          console.log('[OWNER HUB] COPIADO DO POS:', {
-            totalVendas: totalVendas,
-            faturacaoHoje: faturacaoHoje,
-            totalOrders: ordersData.length,
-            filtroAplicado: 'status IN (FECHADO, closed, paid) + timestamp = hoje',
-            valorEsperado: '51.000 Kz (igual ao POS)'
-          });
-        } else {
-          console.error('[OWNER HUB] Erro Query Sync:', ordersError);
-          totalVendas = 0;
-          faturacaoHoje = 0;
-        }
       } catch (ordersError) {
         console.error('[OWNER HUB] Erro crítico Query Finalizada:', ordersError);
         totalVendas = 0;
