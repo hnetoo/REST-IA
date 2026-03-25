@@ -522,7 +522,7 @@ const Reports = () => {
       }
       doc.text(`Emitido em: ${dataLuanda} às ${new Date().toLocaleTimeString('pt-AO', { timeZone: 'Africa/Luanda' })}`, 14, lastY + 10);
       
-      doc.save('vendas-por-mesa.pdf');
+      doc.save('vendas-por-artigo.pdf');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       addNotification('error', 'Erro ao gerar PDF. Tente novamente.');
