@@ -458,7 +458,7 @@ const Reports = () => {
       
       // Cabeçalho
       doc.setFontSize(16);
-      doc.text('Tasca do Vereda - Relatório de Vendas por Mesa', 14, 15);
+      doc.text('Tasca do Vereda - Relatório de Vendas por Artigo', 14, 15);
       
       // Data de Luanda
       doc.setFontSize(10);
@@ -483,15 +483,15 @@ const Reports = () => {
       } else {
         // Tabela
         const tableData = data.map((item: any) => [
-          item.mesa || 'Mesa',
-          item.quantidadeVendas || 0,
-          formatKz(item.receitaTotal || 0)
+          item.produto || 'Produto',
+          item.quantidade || 0,
+          formatKz(item.valorTotal || 0)
         ]);
         
         // Tabela com tratamento de erro
         try {
           autoTable(doc, {
-            head: [['Mesa', 'Quantidade de Vendas', 'Receita Total']],
+            head: [['Produto', 'Quantidade', 'Valor Total']],
             body: tableData,
             startY: 45,
             theme: 'grid',
