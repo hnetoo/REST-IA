@@ -60,7 +60,7 @@ interface Staff {
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
-  const { currentUser } = useStore(); // CORRIGIDO: Definir currentUser ANTES de usar
+  const { currentUser, activeOrders } = useStore(); // PEGAR activeOrders AQUI NO TOPO!
   // ESTADO INICIAL 100% DB-DEPENDENTE - SEM VALORES FIXOS
   const [metrics, setMetrics] = useState<Metrics>({
     faturacaoHoje: 0,     // PADRONIZADO: 'FATURAÇÃO HOJE'
@@ -643,12 +643,9 @@ const OwnerDashboard = () => {
         folhaSalarial = 0;
       }
 
-      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR STORE FORA DO ASYNC
+      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR activeOrders DO TOPO
       let totalVendas = 0;
       let faturacaoHoje = 0;
-      
-      // PEGAR activeOrders ANTES do async - FORA DO TRY/CATCH
-      const { activeOrders } = useStore(); // PEGAR DO STORE COMO O POS
       
       try {
         // VERIFICAR AUTENTICAÇÃO - Usar currentUser da Store
@@ -667,7 +664,7 @@ const OwnerDashboard = () => {
         totalVendas = orders.reduce((acc, o) => acc + Number(o.total || 0), 0);
         faturacaoHoje = totalVendas;
         
-        console.log('[OWNER HUB] USANDO STORE COMO POS:', {
+        console.log('[OWNER HUB] USANDO STORE DO TOPO:', {
           activeOrders: activeOrders.length,
           closedOrders: closedOrders.length,
           orders: orders.length,
