@@ -93,6 +93,9 @@ const Reports = () => {
         throw new Error(`Erro de Conexão: ${error.message}`);
       }
 
+      console.log('[DEBUG VENDAS POR MESA] Orders Data:', ordersData);
+      console.log('[DEBUG VENDAS POR MESA] Orders Count:', ordersData?.length || 0);
+
       // Agrupar vendas por mesa (table_id)
       const vendasMap = new Map();
       
