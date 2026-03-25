@@ -128,10 +128,11 @@ const Reports = () => {
     try {
       const { start, end } = dateRange;
       
-      // Buscar receitas (orders) - remover filtro de status que pode não existir
+      // Buscar receitas (orders) - COM STATUS CORRETO
       let ordersQuery = supabase
         .from('orders')
-        .select('total_amount, created_at');
+        .select('total_amount, created_at')
+        .in('status', ['FECHADO', 'closed', 'paid']); // STATUS CORRETO
 
       if (start && end) {
         ordersQuery = ordersQuery
@@ -342,10 +343,11 @@ const Reports = () => {
     try {
       const { start, end } = dateRange;
       
-      // Buscar orders sem filtro de status que pode não existir
+      // Buscar orders COM STATUS CORRETO - IGUAL AO DASHBOARD
       let query = supabase
         .from('orders')
-        .select('total_amount, created_at');
+        .select('total_amount, created_at')
+        .in('status', ['FECHADO', 'closed', 'paid']); // STATUS CORRETO
 
       if (start && end) {
         query = query
