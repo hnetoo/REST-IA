@@ -641,18 +641,19 @@ const OwnerDashboard = () => {
         folhaSalarial = 0;
       }
 
-      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - APENAS ORDENS FINALIZADAS (FATURAS EMITIDAS)
+      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - APENAS ORDENS FINALIZADAS (FUSO LUANDA)
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
-        // DATA DE HOJE - EXATAMENTE COMO APP PRINCIPAL
-        const today = new Date().toISOString().split('T')[0];
+        // DATA DE HOJE - FUSO HORÁRIO DE LUANDA (GMT+1)
+        const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
+        const today = todayLuanda.toISOString().split('T')[0];
         
-        console.log('[OWNER HUB] CORREÇÃO CRÍTICA - Buscando apenas FATURAS EMITIDAS:', {
-          today: today,
+        console.log('[OWNER HUB] CORREÇÃO CRÍTICA - Fuso Luanda:', {
+          todayLuanda: todayLuanda.toLocaleString('pt-AO', {timeZone: 'Africa/Luanda'}),
+          todayISO: today,
           filtro: "status = 'finalized' (apenas faturas emitidas)",
-          valorAlvo: '13.000 Kz (faturas de hoje)',
-          logica: 'Mesma data e filtro da App Principal'
+          logica: 'Fuso Angola + Filtro Finalizadas'
         });
         
         // QUERY CORRETA - APENAS FATURAS FINALIZADAS
@@ -865,8 +866,8 @@ const OwnerDashboard = () => {
         }
       ];
       
-      // 3. IVA CORRIGIDO: 14% SOBRE FATURAÇÃO REAL (PAINEL DE COMANDO)
-      const ivaSete = Number(faturacaoHoje) * 0.14; // 14% SOBRE VALOR REAL DAS FATURAS FINALIZADAS
+      // 3. IVA CORRIGIDO: 7% SOBRE FATURAÇÃO REAL (PAINEL DE COMANDO)
+      const ivaSete = Number(faturacaoHoje) * 0.07; // 7% SOBRE VALOR REAL DAS FATURAS FINALIZADAS
       
       // 4. DESPESAS TOTAIS: SUM(expenses) + SUM(staff_salaries)
       let despesasTotais = (Number(totalDespesas) || 0) + (Number(folhaSalarial) || 0);
@@ -917,10 +918,10 @@ const OwnerDashboard = () => {
         despesas: totalDespesas || 0, // DESPESAS DE HOJE
         despesasAcumuladas: totalExpensesAllTime || 0, // DESPESAS ACUMULADAS
         folhaSalarial: folhaSalarial || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.14, // 14% SOBRE FATURAÇÃO REAL (10.290 Kz)
+        impostos: (Number(faturacaoHoje) || 0) * 0.07, // 7% SOBRE FATURAÇÃO REAL
         historicoRevenue: historicoExterno || 0,
         rendimentoGlobal: rendimentoGlobal || 0,
-        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.14 || 0) // FÓRMULA COM 14%
+        lucroLiquido: (Number(faturacaoHoje) || 0) - (totalDespesas || 0) - (folhaSalarial || 0) - ((Number(faturacaoHoje) || 0) * 0.07 || 0) // FÓRMULA COM 7%
       });
       setChartData(chartDataGenerated);
       
@@ -934,7 +935,7 @@ const OwnerDashboard = () => {
       console.log('[OWNER HUB] INTEGRIDADE DE DADOS - Valores Corrigidos:', {
         faturacaoHojeFinalizada: Number(faturacaoHoje) || 0,
         totalVendasBruto: Number(totalVendas) || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.14,
+        impostos: (Number(faturacaoHoje) || 0) * 0.07,
         despesasHoje: Number(totalDespesas) || 0,
         folhaSalarial: Number(folhaSalarial) || 0,
         rendimentoGlobal: Number(rendimentoGlobal) || 0,
@@ -945,7 +946,7 @@ const OwnerDashboard = () => {
         },
         cardsExibidos: {
           'FATURAÇÃO HOJE': Number(faturacaoHoje) || 0,
-          'IMPOSTOS (14%)': (Number(faturacaoHoje) || 0) * 0.14,
+          'IMPOSTOS (7%)': (Number(faturacaoHoje) || 0) * 0.07,
           'Custos com Staff': Number(folhaSalarial) || 0,
           'Rendimento Global': Number(rendimentoGlobal) || 0
         },
