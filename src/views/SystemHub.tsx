@@ -1120,16 +1120,16 @@ const SystemHub = () => {
 
       setIsResetting(true);
       try {
-        // APENAS DADOS FINANCEIROS - Reset completo em ambiente Windows
-        console.log('Iniciando reset de dados financeiros...');
+        // RESET ESPECÍFICO: Financeiros + Despesas + Staff (preserva categorias e produtos)
+        console.log('Iniciando reset de dados financeiros, despesas e staff...');
         
-        // 1. Limpar cache local (financeiro) - localStorage
+        // 1. Limpar cache local - localStorage (financeiros, despesas, staff)
         if (typeof window !== 'undefined' && window.localStorage) {
-          // Limpar apenas dados financeiros do localStorage
           const keysToRemove = [];
           for (let i = 0; i < window.localStorage.length; i++) {
             const key = window.localStorage.key(i);
             if (key && (
+              // Financeiros
               key.includes('revenue') || 
               key.includes('expense') || 
               key.includes('financial') ||
@@ -1137,60 +1137,79 @@ const SystemHub = () => {
               key.includes('sale') ||
               key.includes('profit') ||
               key.includes('activeOrders') ||
-              key.includes('total')
+              key.includes('total') ||
+              // Despesas
+              key.includes('expenses') ||
+              key.includes('despesa') ||
+              // Staff
+              key.includes('staff') ||
+              key.includes('funcionario') ||
+              key.includes('employee') ||
+              key.includes('salario') ||
+              key.includes('rh')
             )) {
               keysToRemove.push(key);
             }
           }
           keysToRemove.forEach(key => window.localStorage.removeItem(key));
-          console.log(`🧹 Removidos ${keysToRemove.length} itens financeiros do localStorage`);
+          console.log(`🧹 Removidos ${keysToRemove.length} itens (financeiros, despesas, staff) do localStorage`);
         }
         
-        // 2. Limpar sessionStorage (financeiro)
+        // 2. Limpar sessionStorage (financeiros, despesas, staff)
         if (typeof window !== 'undefined' && window.sessionStorage) {
           const keysToRemove = [];
           for (let i = 0; i < window.sessionStorage.length; i++) {
             const key = window.sessionStorage.key(i);
             if (key && (
+              // Financeiros
               key.includes('revenue') || 
               key.includes('expense') || 
               key.includes('financial') ||
               key.includes('order') ||
               key.includes('sale') ||
-              key.includes('profit')
+              key.includes('profit') ||
+              // Despesas
+              key.includes('expenses') ||
+              key.includes('despesa') ||
+              // Staff
+              key.includes('staff') ||
+              key.includes('funcionario') ||
+              key.includes('employee') ||
+              key.includes('salario') ||
+              key.includes('rh')
             )) {
               keysToRemove.push(key);
             }
           }
           keysToRemove.forEach(key => window.sessionStorage.removeItem(key));
-          console.log(`🧹 Removidos ${keysToRemove.length} itens financeiros do sessionStorage`);
+          console.log(`🧹 Removidos ${keysToRemove.length} itens (financeiros, despesas, staff) do sessionStorage`);
         }
         
-        // 3. Limpar store (financeiro) - Reiniciar estado
+        // 3. Salvar dados que DEVEM ser preservados
         const store = useStore.getState();
         
-        // Forçar reload da página para limpar estado em memória (Windows compatible)
         if (typeof window !== 'undefined') {
-          // Salvar dados não-financeiros antes do reset
-          const nonFinancialData = {
+          // Preservar: CATEGORIAS e PRODUTOS + Configurações básicas
+          const dataToPreserve = {
             settings: store.settings,
-            user: store.user,
-            menu: store.menu
+            menu: store.menu, // Preserva categorias e produtos
+            customers: store.customers || [],
+            tables: store.tables || []
           };
           
-          // Salvar temporariamente
-          window.sessionStorage.setItem('nonFinancialBackup', JSON.stringify(nonFinancialData));
+          // Salvar backup temporário
+          window.sessionStorage.setItem('essentialDataBackup', JSON.stringify(dataToPreserve));
           
-          console.log('💾 Dados não-financeiros backup guardados');
+          console.log('💾 Dados essenciais preservados (categorias, produtos, configurações)');
           
           // Reset completo e reload
           setTimeout(() => {
-            console.log('🔄 Reiniciando sistema...');
+            console.log('🔄 Reiniciando sistema com dados essenciais preservados...');
             window.location.reload();
           }, 2000);
         }
         
-        // 4. Resetar estado local (apenas financeiro)
+        // 4. Resetar estado local
         setProductionData({
           ordersToday: 0,
           revenueToday: 0,
@@ -1204,18 +1223,19 @@ const SystemHub = () => {
         setResetReason('');
         setIsConfirming(false);
         
-        console.log('✅ Reset financeiro iniciado com sucesso. Motivo:', resetReason);
-        console.log('✅ Sistema reiniciará em 2 segundos com dados limpos');
+        console.log('✅ Reset específico iniciado: Financeiros + Despesas + Staff');
+        console.log('✅ CATEGORIAS e PRODUTOS preservados');
+        console.log('✅ Sistema reiniciará em 2 segundos');
         
         // Notificar sucesso
         if (typeof window !== 'undefined') {
-          alert('✅ Dados financeiros resetados com sucesso!\nO sistema reiniciará em 2 segundos.');
+          alert('✅ Reset concluído com sucesso!\n\n🗑️ Apagados: Dados financeiros, despesas e staff\n💾 Preservados: Categorias, produtos e configurações\n\nO sistema reiniciará em 2 segundos.');
         }
         
       } catch (error) {
-        console.error('❌ Erro ao resetar dados financeiros:', error);
+        console.error('❌ Erro ao resetar dados:', error);
         if (typeof window !== 'undefined') {
-          alert('❌ Erro ao resetar dados financeiros. Tente novamente.');
+          alert('❌ Erro ao resetar dados. Tente novamente.');
         }
         setIsResetting(false);
       }
