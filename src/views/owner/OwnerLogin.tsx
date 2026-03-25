@@ -23,17 +23,23 @@ const OwnerLogin = () => {
 
     try {
       // Simular delay de autenticação
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       if (pin === OWNER_CREDENTIALS.pin) {
-        // Login independente - REDIRECIONAMENTO EXPLÍCITO
+        // Login independente - REDIRECIONAMENTO IMEDIATO
+        console.log('[OWNER LOGIN] PIN correto, redirecionando...');
         localStorage.setItem('owner_logged_in', 'true');
-        navigate('/owner/dashboard'); // EXPLÍCITO: apenas /owner/dashboard
+        localStorage.setItem('owner_login_time', new Date().toISOString());
+        
+        // FORÇAR REDIRECIONAMENTO IMEDIATO
+        window.location.href = '/owner/dashboard';
+        // Fallback: navigate('/owner/dashboard');
       } else {
         setError('PIN incorreto. Tente novamente.');
         setPin('');
       }
     } catch (error) {
+      console.error('[OWNER LOGIN] Erro:', error);
       setError('Erro de autenticação. Tente novamente.');
     } finally {
       setIsLoading(false);
