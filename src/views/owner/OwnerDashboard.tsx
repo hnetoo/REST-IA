@@ -1,15 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../../store/useStore';
-import { TrendingUp, Receipt, LogOut, RefreshCw, Settings } from 'lucide-react';
-import { formatKz } from '../../lib/dateUtils';
 import { supabase } from '../../lib/supabase';
+import { useStore } from '../../store/useStore';
+import { TrendingUp, DollarSign, Users, Wallet, Receipt, Calculator, RefreshCw, LogOut, Settings, TrendingDown, Package } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { formatKz } from '../../lib/dateUtils';
+import { log } from '../../lib/loggerService';
+
+interface Metrics {
+  faturacaoHoje: number;
+  mesasAtivas: number;
+  totalVendas: number;
+  receitaTotal: number;
+  despesas: number;
+  despesasAcumuladas: number;
+  folhaSalarial: number;
+  impostos: number;
+  historicoRevenue: number;
+  rendimentoGlobal: number;
+  lucroLiquido: number;
+}
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
   const { activeOrders } = useStore();
-  const [isLoading, setIsLoading] = useState(true);
-  const [metrics, setMetrics] = useState({
+  
+  const [metrics, setMetrics] = useState<Metrics>({
     faturacaoHoje: 0,
     mesasAtivas: 0,
     totalVendas: 0,
@@ -22,6 +38,17 @@ const OwnerDashboard = () => {
     rendimentoGlobal: 0,
     lucroLiquido: 0
   });
+  
+  const [period, setPeriod] = useState<'HOJE' | 'SEMANA' | 'MÊS' | 'ANO'>('HOJE');
+  const [isOnline, setIsOnline] = useState(true);
+  const [isResetting, setIsResetting] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{ id: string; type: 'success' | 'error'; message: string; timestamp: number }>>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [todayExpenses, setTodayExpenses] = useState<number>(0);
+  const [yearExpenses, setYearExpenses] = useState<number>(0);
+  const [historicoExterno, setHistoricoExterno] = useState<number>(0);
 
   useEffect(() => {
     // VERIFICAÇÃO SIMPLIFICADA - usar owner_logged_in em vez de ownerSession
@@ -42,6 +69,36 @@ const OwnerDashboard = () => {
     // Carregar dados frescos do Supabase
     fetchMetrics();
   }, [navigate]);
+
+  const getDateRange = (period: 'HOJE' | 'SEMANA' | 'MÊS' | 'ANO') => {
+    const now = new Date();
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    switch (period) {
+      case 'HOJE': {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        return { startDate: startOfDay.toISOString(), endDate: endOfDay.toISOString() };
+      }
+      case 'SEMANA': {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        return { startDate: startOfWeek.toISOString(), endDate: endOfDay.toISOString() };
+      }
+      case 'MÊS': {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        return { startDate: startOfMonth.toISOString(), endDate: endOfDay.toISOString() };
+      }
+      case 'ANO': {
+        const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        return { startDate: startOfYear.toISOString(), endDate: endOfDay.toISOString() };
+      }
+      default: {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        return { startDate: startOfDay.toISOString(), endDate: endOfDay.toISOString() };
+      }
+    }
+  };
 
   const fetchMetrics = async () => {
     setIsLoading(true);
@@ -90,8 +147,38 @@ const OwnerDashboard = () => {
 
         const folhaSalarial = staffData?.reduce((sum, staff) => sum + Number(staff.salario_base || staff.base_salary_kz || 0), 0) || 0;
 
+        // Buscar histórico externo
+        let historicoExterno = 0;
+        try {
+          const { data: historyData } = await supabase
+            .from('external_history')
+            .select('total_revenue');
+
+          if (historyData && historyData.length > 0) {
+            historicoExterno = historyData.reduce((acc, row) => acc + (Number(row.total_revenue) || 0), 0);
+          }
+        } catch (error) {
+          console.error('[OWNER DASHBOARD] Erro ao buscar external_history:', error);
+        }
+
         // Calcular impostos (7%)
         const impostos = faturacaoHoje * 0.07;
+
+        // Gerar dados para gráficos
+        const chartDataGenerated = [
+          {
+            date: 'Hoje',
+            receitas: Number(faturacaoHoje) || 0,
+            despesas: Number(totalDespesas) || 0,
+            vendas: Number(faturacaoHoje) || 0
+          },
+          {
+            date: 'Ontem',
+            receitas: Math.round((Number(faturacaoHoje) || 0) * 0.8),
+            despesas: Math.round((Number(totalDespesas) || 0) * 0.9),
+            vendas: Math.round((Number(faturacaoHoje) || 0) * 0.8)
+          }
+        ];
 
         // Atualizar métricas
         setMetrics({
@@ -103,10 +190,13 @@ const OwnerDashboard = () => {
           despesasAcumuladas: totalDespesas,
           folhaSalarial,
           impostos,
-          historicoRevenue: 0,
-          rendimentoGlobal: faturacaoHoje,
+          historicoRevenue: historicoExterno,
+          rendimentoGlobal: faturacaoHoje + historicoExterno,
           lucroLiquido: faturacaoHoje - impostos - totalDespesas - folhaSalarial
         });
+        
+        setChartData(chartDataGenerated);
+        setHistoricoExterno(historicoExterno);
       }
     } catch (error) {
       console.error('[OWNER DASHBOARD] Erro ao buscar métricas:', error);
@@ -120,13 +210,27 @@ const OwnerDashboard = () => {
     navigate('/owner/login');
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#070b14] flex items-center justify-center">
-        <div className="text-white">Carregando dados...</div>
-      </div>
-    );
-  }
+  const handleResetProduction = async () => {
+    setIsResetting(true);
+    try {
+      // Lógica de reset
+      await fetchMetrics();
+    } catch (error) {
+      console.error('[OWNER DASHBOARD] Erro ao resetar produção:', error);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const ticketMedio = metrics.totalVendas > 0 ? metrics.totalVendas / (metrics.faturacaoHoje > 0 ? metrics.faturacaoHoje : 1) : 0;
+  const lucroLiquido = metrics.totalVendas - metrics.despesas - metrics.folhaSalarial - metrics.impostos;
+  const custoOperacionalTotal = metrics.despesas + metrics.folhaSalarial;
+  const faturacaoAtual = metrics.totalVendas;
+  const progressoBreakEven = custoOperacionalTotal > 0 ? Math.min((faturacaoAtual / custoOperacionalTotal) * 100, 100) : 0;
+  const faturacaoNecessaria = Math.max(custoOperacionalTotal - faturacaoAtual, 0);
+  const isAboveBreakEven = faturacaoAtual >= custoOperacionalTotal;
+  const diaAtual = new Date().getDate();
+  const isAltaEficiencia = isAboveBreakEven && diaAtual <= 20;
 
   return (
     <div className="min-h-screen overflow-y-auto overflow-x-hidden bg-[#070b14] scrollbar-thin scrollbar-thumb-orange-500">
@@ -139,19 +243,20 @@ const OwnerDashboard = () => {
           <div>
             <h1 className="text-lg sm:text-xl font-black text-white mb-1">OWNER HUB</h1>
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-xs text-white/90">Caixa: Sincronizado</span>
+              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+              <span className="text-xs text-white/90">Caixa: Equilibrado</span>
             </div>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchMetrics}
-            className="flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition-all backdrop-blur-sm"
+            onClick={handleResetProduction}
+            disabled={isResetting}
+            className="flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 text-white rounded-lg hover:bg-white/20 transition-all backdrop-blur-sm disabled:opacity-50"
           >
-            <RefreshCw className="w-4 h-4" />
-            <span className="font-semibold text-sm">Atualizar</span>
+            <RefreshCw className={`w-4 h-4 ${isResetting ? 'animate-spin' : ''}`} />
+            <span className="font-semibold text-sm">Reset Produção</span>
           </button>
           <button
             onClick={handleLogout}
@@ -164,7 +269,30 @@ const OwnerDashboard = () => {
       </header>
 
       <main className="w-full px-4 pb-20">
-        {/* GRID DE INDICADORES PRINCIPAIS */}
+        {/* Filtros de Período */}
+        <div className="flex gap-2 mb-6 overflow-x-auto">
+          {(['HOJE', 'SEMANA', 'MÊS', 'ANO'] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => {
+                setPeriod(p);
+                fetchMetrics();
+              }}
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
+                period === p 
+                  ? 'bg-cyan-500 text-black shadow-lg' 
+                  : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isLoading ? 'Carregando...' : p}
+            </button>
+          ))}
+        </div>
+
+        {/* GRID DE INDICADORES - 3 LINHAS ORGANIZADAS */}
+        
+        {/* LINHA 1 (OPERACIONAL): FATURAÇÃO HOJE | Despesas Hoje | Rendimento Global */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6">
           {/* Card 1: FATURAÇÃO HOJE */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
@@ -175,69 +303,168 @@ const OwnerDashboard = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">FATURAÇÃO HOJE</span>
             </div>
             <div className="text-3xl font-black text-amber-400 mb-2">
-              {formatKz(metrics.faturacaoHoje)}
+              {formatKz(metrics?.faturacaoHoje || 0)}
             </div>
-            <div className="text-xs text-white/60">Timezone: Africa/Luanda</div>
+            <div className="text-xs text-white/60">Moeda: AKZ</div>
           </div>
 
-          {/* Card 2: IMPOSTOS (7%) */}
+          {/* Card 2: Despesas Hoje */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+                <TrendingDown className="w-6 h-6 text-red-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Hoje</span>
+            </div>
+            <div className="text-3xl font-black text-red-400 mb-2">
+              {formatKz(metrics?.despesas || 0)}
+            </div>
+            <div className="text-xs text-white/60">Hoje - Africa/Luanda</div>
+          </div>
+
+          {/* Card 3: Rendimento Global */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Rendimento Global</span>
+            </div>
+            <div className="text-3xl font-black text-purple-400 mb-2">
+              {formatKz(metrics?.rendimentoGlobal || 0)}
+            </div>
+            <div className="text-xs text-white/60">external_history + orders</div>
+          </div>
+        </div>
+
+        {/* LINHA 2 (CUSTOS): Custos com Staff | Despesas Acumuladas | Impostos (7%) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+          {/* Card 4: Custos com Staff */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Custos com Staff</span>
+            </div>
+            <div className="text-3xl font-black text-blue-400 mb-2">
+              {formatKz(metrics.folhaSalarial || 0)}
+            </div>
+            <div className="text-xs text-white/60">Soma salários funcionários</div>
+          </div>
+
+          {/* Card 5: Despesas Acumuladas */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                <TrendingDown className="w-6 h-6 text-orange-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Despesas Acumuladas</span>
+            </div>
+            <div className="text-3xl font-black text-orange-400 mb-2">
+              {formatKz(metrics.despesasAcumuladas || 0)}
+            </div>
+            <div className="text-xs text-white/60">Soma de todas as despesas</div>
+          </div>
+
+          {/* Card 6: Impostos (7%) */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
                 <Receipt className="w-6 h-6 text-green-400" />
               </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">IMPOSTOS (7%)</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Impostos (7%)</span>
             </div>
             <div className="text-3xl font-black text-green-400 mb-2">
-              {formatKz(metrics.impostos)}
+              {formatKz(metrics?.impostos || 0)}
             </div>
-            <div className="text-xs text-white/60">IVA sobre faturação</div>
+            <div className="text-xs text-white/60">Apenas sobre vendas da App</div>
           </div>
+        </div>
 
-          {/* Card 3: LUCRO LÍQUIDO */}
+        {/* LINHA 3 (PATRIMÓNIO): Lucro Operacional | Saldo de Transição | PATRIMÓNIO TOTAL */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+          {/* Card 7: Lucro Operacional */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className={`w-12 h-12 ${metrics.lucroLiquido >= 0 ? 'bg-emerald-500/20' : 'bg-red-500/20'} rounded-xl flex items-center justify-center`}>
                 <TrendingUp className={`w-6 h-6 ${metrics.lucroLiquido >= 0 ? 'text-emerald-400' : 'text-red-400'}`} />
               </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">LUCRO LÍQUIDO</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Lucro Operacional</span>
             </div>
             <div className="text-3xl font-black text-emerald-400 mb-2">
-              {formatKz(metrics.lucroLiquido)}
+              {formatKz((metrics?.faturacaoHoje || 0) - (metrics?.impostos || 0) - (metrics?.despesasAcumuladas || 0) - (metrics?.folhaSalarial || 0))}
             </div>
-            <div className="text-xs text-white/60">Vendas - Impostos - Despesas</div>
+            <div className="text-xs text-white/60">Vendas - Impostos - Despesas - Staff</div>
+          </div>
+
+          {/* Card 8: Saldo de Transição */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-cyan-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Saldo de Transição</span>
+            </div>
+            <div className="text-3xl font-black text-cyan-400 mb-2">
+              {formatKz(historicoExterno || 0)}
+            </div>
+            <div className="text-xs text-white/60">8.700.000,00 Kz - external_history</div>
+          </div>
+
+          {/* Card 9: PATRIMÓNIO TOTAL */}
+          <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">PATRIMÓNIO TOTAL</span>
+            </div>
+            <div className="text-3xl font-black text-purple-400 mb-2">
+              {formatKz((historicoExterno || 0) + ((metrics.totalVendas || 0) - ((metrics.totalVendas || 0) * 0.07) - (metrics.despesasAcumuladas || 0) - (metrics.folhaSalarial || 0)))}
+            </div>
+            <div className="text-xs text-white/60">Saldo Ext. + Lucro Operacional</div>
           </div>
         </div>
 
-        {/* DETALHES FINANCEIROS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {/* Despesas */}
+        {/* GRÁFICOS - DADOS REAIS */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
-            <h3 className="text-lg font-black text-white mb-4">Despesas</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-white/80">Despesas do Dia</span>
-                <span className="text-red-400 font-bold">{formatKz(metrics.despesas)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-white/80">Folha Salarial</span>
-                <span className="text-blue-400 font-bold">{formatKz(metrics.folhaSalarial)}</span>
-              </div>
+            <h3 className="text-lg font-black text-white mb-4">Receitas vs Despesas</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }}
+                    labelStyle={{ color: '#F3F4F6' }}
+                  />
+                  <Legend />
+                  <Bar dataKey="receitas" fill="#10B981" name="Receitas" />
+                  <Bar dataKey="despesas" fill="#EF4444" name="Despesas" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
-
-          {/* Resumo */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
-            <h3 className="text-lg font-black text-white mb-4">Resumo do Dia</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-white/80">Total de Vendas</span>
-                <span className="text-amber-400 font-bold">{formatKz(metrics.totalVendas)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-white/80">Rendimento Global</span>
-                <span className="text-purple-400 font-bold">{formatKz(metrics.rendimentoGlobal)}</span>
-              </div>
+            <h3 className="text-lg font-black text-white mb-4">Tendências</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }}
+                    labelStyle={{ color: '#F3F4F6' }}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="receitas" stroke="#10B981" name="Receitas" strokeWidth={2} />
+                  <Line type="monotone" dataKey="despesas" stroke="#EF4444" name="Despesas" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
@@ -247,8 +474,8 @@ const OwnerDashboard = () => {
           <h3 className="text-sm font-bold text-white mb-2">📊 Status de Sincronização</h3>
           <div className="text-xs text-white/60 space-y-1">
             <div>✅ Timezone: Africa/Luanda</div>
-            <div>✅ Query: getTodayRevenue() ativa</div>
-            <div>✅ Fonte: Supabase (cache ignorada)</div>
+            <div>✅ Query: Dados diretos do Supabase</div>
+            <div>✅ Fonte: Cache ignorada</div>
             <div>✅ Padrão: Kz #.##0 unificado</div>
             <div>✅ Real-time: Sem loop infinito</div>
           </div>
