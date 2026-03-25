@@ -1259,18 +1259,44 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
-        {/* GRÁFICOS - MANTIDOS CONFORME SOLICITAÇÃO */}
+        {/* GRÁFICOS - DADOS REAIS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
             <h3 className="text-lg font-black text-white mb-4">Receitas vs Despesas</h3>
-            <div className="h-64 flex items-center justify-center">
-              <p className="text-white/60">Gráficos preservados</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }}
+                    labelStyle={{ color: '#F3F4F6' }}
+                  />
+                  <Legend />
+                  <Bar dataKey="receitas" fill="#10B981" name="Receitas" />
+                  <Bar dataKey="despesas" fill="#EF4444" name="Despesas" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
             <h3 className="text-lg font-black text-white mb-4">Tendências</h3>
-            <div className="h-64 flex items-center justify-center">
-              <p className="text-white/60">Gráficos preservados</p>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" />
+                  <YAxis stroke="#9CA3AF" />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }}
+                    labelStyle={{ color: '#F3F4F6' }}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="receitas" stroke="#10B981" name="Receitas" strokeWidth={2} />
+                  <Line type="monotone" dataKey="despesas" stroke="#EF4444" name="Despesas" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
