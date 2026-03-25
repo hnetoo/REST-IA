@@ -4,11 +4,13 @@ import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 
 const Reports = () => {
   const { settings } = useStore();
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState<string | null>(null);
 
   // Estados para os 7 Cards
   const [vendasPorArtigo, setVendasPorArtigo] = useState({ data: [] as any[], loading: false });
@@ -414,51 +416,83 @@ const Reports = () => {
   };
 
   // Funções de exportação PDF
-  const generateVendasPorArtigoPDF = () => {
-    const doc = new jsPDF();
-    const data = vendasPorArtigo.data;
-    
-    // Cabeçalho
-    doc.setFontSize(16);
-    doc.text('Tasca do Vereda - Relatório de Vendas por Artigo', 14, 15);
-    
-    // Período
-    doc.setFontSize(10);
-    doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 25);
-    
-    // Tabela
-    const tableData = data.map((item: any) => [
-      item.nome || 'Produto',
-      item.quantidade || 0,
-      item.categoria || 'Sem Categoria'
-    ]);
-    
-    (doc as any).autoTable({
-      head: [['Produto', 'Quantidade', 'Categoria']],
-      body: tableData,
-      startY: 35,
-      theme: 'grid'
-    });
-    
-    // Rodapé
-    doc.setFontSize(8);
-    const lastY = (doc as any).lastAutoTable?.finalY || 45;
-    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
-    
-    doc.save('vendas-por-artigo.pdf');
+  const generateVendasPorArtigoPDF = async () => {
+    setPdfLoading('vendas');
+    try {
+      const doc = new jsPDF();
+      const data = vendasPorArtigo.data;
+      
+      // Cabeçalho
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Relatório de Vendas por Artigo', 14, 15);
+      
+      // Data de Luanda
+      doc.setFontSize(10);
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
+      
+      // Período
+      doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 32);
+      
+      // Tabela
+      const tableData = data.map((item: any) => [
+        item.nome || 'Produto',
+        item.quantidade || 0,
+        item.categoria || 'Sem Categoria'
+      ]);
+      
+      (doc as any).autoTable({
+        head: [['Produto', 'Quantidade', 'Categoria']],
+        body: tableData,
+        startY: 42,
+        theme: 'grid',
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        }
+      });
+      
+      // Rodapé
+      doc.setFontSize(8);
+      const lastY = (doc as any).lastAutoTable?.finalY || 45;
+      doc.text(`Emitido em: ${dataLuanda} às ${new Date().toLocaleTimeString('pt-AO', { timeZone: 'Africa/Luanda' })}`, 14, lastY + 10);
+      
+      doc.save('vendas-por-artigo.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
   };
 
-  const generateFinancasDetalhadasPDF = () => {
-    const doc = new jsPDF();
-    const data = financasDetalhadas.data[0];
-    
-    // Cabeçalho
-    doc.setFontSize(16);
-    doc.text('Tasca do Vereda - Relatório Financeiro Detalhado', 14, 15);
-    
-    // Período
-    doc.setFontSize(10);
-    doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 25);
+  const generateFinancasDetalhadasPDF = async () => {
+    setPdfLoading('financas');
+    try {
+      const doc = new jsPDF();
+      const data = financasDetalhadas.data[0];
+      
+      // Cabeçalho
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Relatório Financeiro Detalhado', 14, 15);
+      
+      // Data de Luanda
+      doc.setFontSize(10);
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
+      
+      // Período
+      doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 32);
     
     // Resumo
     doc.setFontSize(12);
@@ -488,16 +522,34 @@ const Reports = () => {
     const lastY = (doc as any).lastAutoTable?.finalY || 90;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
-    doc.save('financas-detalhadas.pdf');
+      doc.save('financas-detalhadas.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
   };
 
-  const generateRhEFaltasPDF = () => {
-    const doc = new jsPDF();
-    const data = rhEFaltas.data;
-    
-    // Cabeçalho
-    doc.setFontSize(16);
-    doc.text('Tasca do Vereda - Relatório de RH e Faltas', 14, 15);
+  const generateRhEFaltasPDF = async () => {
+    setPdfLoading('rh');
+    try {
+      const doc = new jsPDF();
+      const data = rhEFaltas.data;
+      
+      // Cabeçalho
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Relatório de RH e Faltas', 14, 15);
+      
+      // Data de Luanda
+      doc.setFontSize(10);
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
     
     // Período
     doc.setFontSize(10);
@@ -530,16 +582,34 @@ const Reports = () => {
     const lastY = (doc as any).lastAutoTable?.finalY || 50;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
-    doc.save('rh-e-faltas.pdf');
+      doc.save('rh-e-faltas.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
   };
 
-  const generateMapaDespesasPDF = () => {
-    const doc = new jsPDF();
-    const data = mapaDespesas.data;
-    
-    // Cabeçalho
-    doc.setFontSize(16);
-    doc.text('Tasca do Vereda - Mapa de Despesas', 14, 15);
+  const generateMapaDespesasPDF = async () => {
+    setPdfLoading('despesas');
+    try {
+      const doc = new jsPDF();
+      const data = mapaDespesas.data;
+      
+      // Cabeçalho
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Mapa de Despesas', 14, 15);
+      
+      // Data de Luanda
+      doc.setFontSize(10);
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
     
     // Período
     doc.setFontSize(10);
@@ -563,16 +633,34 @@ const Reports = () => {
     const lastY = (doc as any).lastAutoTable?.finalY || 45;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
-    doc.save('mapa-despesas.pdf');
+      doc.save('mapa-despesas.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
   };
 
-  const generateTopRentabilidadePDF = () => {
-    const doc = new jsPDF();
-    const data = topRentabilidade.data;
-    
-    // Cabeçalho
-    doc.setFontSize(16);
-    doc.text('Tasca do Vereda - Top Rentabilidade', 14, 15);
+  const generateTopRentabilidadePDF = async () => {
+    setPdfLoading('rentabilidade');
+    try {
+      const doc = new jsPDF();
+      const data = topRentabilidade.data;
+      
+      // Cabeçalho
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Top Rentabilidade', 14, 15);
+      
+      // Data de Luanda
+      doc.setFontSize(10);
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
     
     // Período
     doc.setFontSize(10);
@@ -599,16 +687,34 @@ const Reports = () => {
     const lastY = (doc as any).lastAutoTable?.finalY || 45;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
-    doc.save('top-rentabilidade.pdf');
+      doc.save('top-rentabilidade.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
   };
 
-  const generateFluxoPorTurnoPDF = () => {
-    const doc = new jsPDF();
-    const data = fluxoPorTurno.data;
-    
-    // Cabeçalho
-    doc.setFontSize(16);
-    doc.text('Tasca do Vereda - Fluxo por Turno', 14, 15);
+  const generateFluxoPorTurnoPDF = async () => {
+    setPdfLoading('fluxo');
+    try {
+      const doc = new jsPDF();
+      const data = fluxoPorTurno.data;
+      
+      // Cabeçalho
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Fluxo por Turno', 14, 15);
+      
+      // Data de Luanda
+      doc.setFontSize(10);
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
     
     // Período
     doc.setFontSize(10);
@@ -633,16 +739,34 @@ const Reports = () => {
     const lastY = (doc as any).lastAutoTable?.finalY || 45;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
-    doc.save('fluxo-por-turno.pdf');
+      doc.save('fluxo-por-turno.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
   };
 
-  const generateAlertasStockPDF = () => {
-    const doc = new jsPDF();
-    const data = alertasStock.data;
-    
-    // Cabeçalho
-    doc.setFontSize(16);
-    doc.text('Tasca do Vereda - Alertas de Stock', 14, 15);
+  const generateAlertasStockPDF = async () => {
+    setPdfLoading('stock');
+    try {
+      const doc = new jsPDF();
+      const data = alertasStock.data;
+      
+      // Cabeçalho
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Alertas de Stock', 14, 15);
+      
+      // Data de Luanda
+      doc.setFontSize(10);
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
     
     // Período
     doc.setFontSize(10);
@@ -668,7 +792,13 @@ const Reports = () => {
     const lastY = (doc as any).lastAutoTable?.finalY || 45;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
-    doc.save('alertas-stock.pdf');
+      doc.save('alertas-stock.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
   };
   const loadAllCards = async () => {
     setLoading(true);
@@ -732,10 +862,27 @@ const Reports = () => {
             
             <button
               onClick={onGeneratePDF}
-              className="py-2 px-3 bg-white/10 border border-white/20 text-white rounded-xl text-sm font-black uppercase hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+              disabled={pdfLoading !== null}
+              className="py-2 px-3 bg-white/10 border border-white/20 text-white rounded-xl text-sm font-black uppercase hover:bg-white/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Exportar PDF"
             >
-              <FileDown size={16} />
+              {pdfLoading === (title.toLowerCase().includes('vendas') ? 'vendas' : 
+                           title.toLowerCase().includes('financeir') ? 'financas' :
+                           title.toLowerCase().includes('rh') ? 'rh' :
+                           title.toLowerCase().includes('despesa') ? 'despesas' :
+                           title.toLowerCase().includes('rentabilidade') ? 'rentabilidade' :
+                           title.toLowerCase().includes('fluxo') ? 'fluxo' :
+                           title.toLowerCase().includes('stock') ? 'stock' : '') ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <span>A gerar PDF...</span>
+                </>
+              ) : (
+                <>
+                  <FileDown size={16} />
+                  Exportar PDF
+                </>
+              )}
             </button>
           </div>
         </div>
