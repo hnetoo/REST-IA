@@ -641,31 +641,31 @@ const OwnerDashboard = () => {
         folhaSalarial = 0;
       }
 
-      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - APENAS ORDENS FINALIZADAS (INTEGRIDADE CRÍTICA)
+      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - APENAS ORDENS FINALIZADAS (FATURAS EMITIDAS)
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
         // DATA DE HOJE - EXATAMENTE COMO APP PRINCIPAL
         const today = new Date().toISOString().split('T')[0];
         
-        console.log('[OWNER HUB] SINCRONIA COM PAINEL DE COMANDO:', {
+        console.log('[OWNER HUB] CORREÇÃO CRÍTICA - Buscando apenas FATURAS EMITIDAS:', {
           today: today,
-          filtro: "status = 'closed' (exatamente como App Principal)",
-          valorAlvo: '73.500 Kz (obrigatório)',
+          filtro: "status = 'finalized' (apenas faturas emitidas)",
+          valorAlvo: '13.000 Kz (faturas de hoje)',
           logica: 'Mesma data e filtro da App Principal'
         });
         
-        // QUERY EXATAMENTE COMO APP PRINCIPAL
+        // QUERY CORRETA - APENAS FATURAS FINALIZADAS
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'closed'); // EXATAMENTE COMO APP PRINCIPAL
+          .eq('status', 'finalized'); // APENAS FATURAS EMITIDAS
 
-        console.log('[OWNER HUB] SYNC - Orders Data (status = closed):', {
+        console.log('[OWNER HUB] SYNC - Orders Data (status = finalized):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0,
-          filtroAplicado: 'status = closed (mesmo da App Principal)'
+          filtroAplicado: 'status = finalized (apenas faturas emitidas)'
         });
 
         if (!ordersError && ordersData) {
@@ -673,22 +673,21 @@ const OwnerDashboard = () => {
           const todayOrders = ordersData
             .filter(order => String(order.created_at || '').split('T')[0] === today);
           
-          // SOMAR APENAS ORDENS DE HOJE - EXATAMENTE COMO APP PRINCIPAL
+          // SOMAR APENAS FATURAS DE HOJE - EXATAMENTE COMO APP PRINCIPAL
           totalVendas = todayOrders.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
           faturacaoHoje = totalVendas; // USA O MESMO VALOR - INTEGRIDADE
           
           // LOG DE DEBUG TEMPORÁRIO
-          console.log(`Vendas encontradas hoje com status closed: ${totalVendas} Kz`);
+          console.log(`Faturas emitidas hoje com status finalized: ${totalVendas} Kz`);
           
-          console.log('[OWNER HUB] SINCRONIZADA (exatamente como App Principal):', {
+          console.log('[OWNER HUB] SINCRONIZADA (apenas faturas emitidas):', {
             totalVendas: totalVendas,
             faturacaoHoje: faturacaoHoje,
             today: today,
             totalOrders: ordersData.length,
             todayOrders: todayOrders.length,
-            status: 'closed',
-            valorAlvo: '73.500 Kz',
-            erroCorrigido: 'ZERO → 73.500 Kz (sincronia com App Principal)'
+            status: 'finalized',
+            observacao: 'Agora mostra apenas faturas emitidas (13.000 Kz), não movimento bruto (51.500 Kz)'
           });
         } else {
           console.error('[OWNER HUB] Erro Query Sync:', ordersError);
