@@ -11,6 +11,7 @@
     "tauri": "tauri",
     "desktop": "tauri dev",
     "build:app": "tauri build",
+    "build:windows": "npm run build && tauri build",
     "build:msi": "tauri build --target x86_64-pc-windows-msvc",
     "test": "vitest run",
     "supabase:init": "./scripts/supabase-setup.ps1 init",
@@ -27,7 +28,7 @@
     "@google/genai": "^1.40.0",
     "@prisma/client": "^5.22.0",
     "@supabase/supabase-js": "^2.95.3",
-    "@tauri-apps/api": "^2.1.1",
+    "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-dialog": "^2.1.0",
     "@tauri-apps/plugin-fs": "^2.1.0",
     "@tauri-apps/plugin-shell": "^2.1.0",
@@ -51,7 +52,7 @@
     "zustand": "^4.5.5"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.1.0",
+    "@tauri-apps/cli": "^2.10.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.5.0",

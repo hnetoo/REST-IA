@@ -9,5 +9,11 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: false,
     minify: 'esbuild',
-  }
+  },
+  server: {
+    strictPort: true,
+    port: 5173,
+    clearScreen: false
+  },
+  clearScreen: false
 })

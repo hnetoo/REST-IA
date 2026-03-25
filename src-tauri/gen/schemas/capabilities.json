@@ -1,1 +1,0 @@
-{"default":{"identifier":"default","description":"Permissões padrão para a Tasca do Vereda","local":true,"windows":["main"],"permissions":["core:default","sql:default","shell:allow-open","dialog:default"]}}

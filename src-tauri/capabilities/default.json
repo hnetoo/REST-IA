@@ -1,12 +1,17 @@
 {
-  "$schema": "../gen/schemas/capability.json",
+  "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permissões padrão para a Tasca do Vereda",
-  "windows": ["main"],
+  "description": "enables the default permissions for Tasca do Vereda POS",
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
-    "sql:default",
     "shell:allow-open",
-    "dialog:default"
+    "shell:allow-execute",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-exists",
+    "serialport:default"
   ]
 }
