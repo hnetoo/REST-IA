@@ -3,7 +3,7 @@ import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, Shop
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 
 // Extender jsPDF para incluir autoTable
@@ -375,14 +375,14 @@ const Reports = () => {
     }
   };
 
-  // CARD 7: ALERTAS DE STOCK - Filtro de stock_quantity < min_stock (sem is_active filter)
+  // CARD 7: ALERTAS DE STOCK - Filtro de stock < min_stock (sem is_active filter)
   const fetchAlertasStock = async () => {
     setAlertasStock(prev => ({ ...prev, loading: true }));
     try {
       // Buscar products sem filtro is_active que pode não existir
       const { data: productsData, error } = await supabase
         .from('products')
-        .select('name, stock_quantity, cost_price');
+        .select('name, stock, cost_price'); // CORRIGIDO: stock em vez de stock_quantity
 
       if (error) {
         throw new Error(`Erro de Conexão: ${error.message}`);
@@ -394,7 +394,7 @@ const Reports = () => {
         const alerts: string[] = [];
         
         // Verificar stock baixo
-        if (!product.stock_quantity || product.stock_quantity < 10) {
+        if (!product.stock || product.stock < 10) {
           alerts.push('Quantidade crítica');
         }
         
@@ -406,7 +406,7 @@ const Reports = () => {
         if (alerts.length > 0) {
           alertas.push({
             nome: product.name || 'Produto Sem Nome',
-            quantidade: product.stock_quantity || 0,
+            quantidade: product.stock || 0, // CORRIGIDO: stock em vez de stock_quantity
             precoCusto: product.cost_price || 0,
             alertas
           });
@@ -427,7 +427,25 @@ const Reports = () => {
   const generateVendasPorArtigoPDF = async () => {
     setPdfLoading('vendas');
     try {
-      const doc = new jsPDF();
+      // Verificar se há dados válidos antes de gerar o PDF
+      if (!vendasPorArtigo.data || vendasPorArtigo.data.length === 0) {
+        addNotification('error', 'Não há dados de vendas para gerar o PDF');
+        setPdfLoading(null);
+        return;
+      }
+
+      // Validar dados antes de processar
+      const validData = vendasPorArtigo.data.filter(item => 
+        item && item.nome && item.quantidadeVendida > 0 && item.receitaTotal > 0
+      );
+
+      if (validData.length === 0) {
+        addNotification('error', 'Dados inválidos para gerar o PDF');
+        setPdfLoading(null);
+        return;
+      }
+
+      const doc = new jsPDF('p', 'pt', 'a4');
       const data = vendasPorArtigo.data;
       
       // Cabeçalho
