@@ -3,7 +3,7 @@ import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, Shop
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 
 // Extender jsPDF para incluir autoTable
@@ -13,6 +13,27 @@ declare module 'jspdf' {
     lastAutoTable: { finalY: number };
   }
 }
+
+// Função local de notificação para evitar erros de referência
+const addNotification = (type: 'success' | 'error', message: string) => {
+  console.log(`[${type.toUpperCase()}] ${message}`);
+  // Criar notificação visual simples
+  const notification = document.createElement('div');
+  notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg text-white font-medium text-sm shadow-lg transform transition-all duration-300 ${
+    type === 'success' ? 'bg-green-500' : 'bg-red-500'
+  }`;
+  notification.textContent = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+};
 
 const Reports = () => {
   const { settings } = useStore();
@@ -483,9 +504,12 @@ const Reports = () => {
         }
       });
       
-      // Rodapé
+      // Rodapé - Garantir que a tabela foi gerada antes de acessar finalY
       doc.setFontSize(8);
-      const lastY = doc.lastAutoTable.finalY || 45;
+      let lastY = 45; // Posição padrão
+      if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
+        lastY = doc.lastAutoTable.finalY;
+      }
       doc.text(`Emitido em: ${dataLuanda} às ${new Date().toLocaleTimeString('pt-AO', { timeZone: 'Africa/Luanda' })}`, 14, lastY + 10);
       
       doc.save('vendas-por-artigo.pdf');
@@ -543,9 +567,12 @@ const Reports = () => {
       });
     }
     
-    // Rodapé
+    // Rodapé - Garantir que a tabela foi gerada antes de acessar finalY
     doc.setFontSize(8);
-    const lastY = doc.lastAutoTable.finalY || 90;
+    let lastY = 90; // Posição padrão
+    if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
+      lastY = doc.lastAutoTable.finalY;
+    }
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('financas-detalhadas.pdf');
@@ -607,9 +634,12 @@ const Reports = () => {
       });
     }
     
-    // Rodapé
+    // Rodapé - Garantir que a tabela foi gerada antes de acessar finalY
     doc.setFontSize(8);
-    const lastY = doc.lastAutoTable.finalY || 50;
+    let lastY = 50; // Posição padrão
+    if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
+      lastY = doc.lastAutoTable.finalY;
+    }
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('rh-e-faltas.pdf');
@@ -662,9 +692,12 @@ const Reports = () => {
       }
     });
     
-    // Rodapé
+    // Rodapé - Garantir que a tabela foi gerada antes de acessar finalY
     doc.setFontSize(8);
-    const lastY = doc.lastAutoTable.finalY || 45;
+    let lastY = 45; // Posição padrão
+    if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
+      lastY = doc.lastAutoTable.finalY;
+    }
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('mapa-despesas.pdf');
@@ -720,9 +753,12 @@ const Reports = () => {
       }
     });
     
-    // Rodapé
+    // Rodapé - Garantir que a tabela foi gerada antes de acessar finalY
     doc.setFontSize(8);
-    const lastY = doc.lastAutoTable.finalY || 45;
+    let lastY = 45; // Posição padrão
+    if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
+      lastY = doc.lastAutoTable.finalY;
+    }
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('top-rentabilidade.pdf');
@@ -776,9 +812,12 @@ const Reports = () => {
       }
     });
     
-    // Rodapé
+    // Rodapé - Garantir que a tabela foi gerada antes de acessar finalY
     doc.setFontSize(8);
-    const lastY = doc.lastAutoTable.finalY || 45;
+    let lastY = 45; // Posição padrão
+    if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
+      lastY = doc.lastAutoTable.finalY;
+    }
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('fluxo-por-turno.pdf');
