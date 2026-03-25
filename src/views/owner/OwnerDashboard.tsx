@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useStore } from '../../store/useStore';
 import { TrendingUp, DollarSign, Users, Wallet, Receipt, Calculator, RefreshCw, LogOut, Settings, TrendingDown, Package } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { formatKz } from '../../lib/dateUtils';
+import { formatKz, formatDateInAppTimezone } from '../../lib/dateUtils';
 import { log } from '../../lib/loggerService';
 
 // Cache busting e revalidação forçada
@@ -544,21 +544,32 @@ const OwnerDashboard = () => {
       } else {
         console.log('[OWNER HUB] Orders encontradas:', ordersData?.length || 0);
         
-        // Calcular faturação de hoje com timezone Africa/Luanda (FUNÇÃO UNIFICADA)
-        const todayOrders = ordersData?.filter(order => {
-          return isTodayInAppTimezone(order.created_at || order.timestamp) && 
-                 Number(order.total_amount || order.total || 0) > 0;
-        }) || [];
-
-        const faturacaoHoje = todayOrders.reduce((sum, order) => sum + Number(order.total_amount || order.total || 0), 0);
-        
-        console.log('[OWNER HUB] Faturação Hoje (Africa/Luanda - UNIFICADO):', {
-          today: new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' }),
-          todayOrders: todayOrders.length,
-          faturacaoHoje,
-          formatKz: formatKz(faturacaoHoje),
-          timezone: 'Africa/Luanda'
-        });
+        // Calcular faturação de hoje com getTodayRevenue() UNIFICADA
+        let faturacaoHoje = 0;
+        try {
+          // 🔄 USAR QUERY UNIFICADA - Fonte da Verdade
+          const revenueData = useStore.getState().getTodayRevenue();
+          faturacaoHoje = revenueData.total;
+          
+          console.log('[OWNER HUB] Faturação Hoje (getTodayRevenue UNIFICADO):', {
+            today: revenueData.orders.length > 0 ? formatDateInAppTimezone() : 'N/A',
+            todayOrders: revenueData.orders.length,
+            faturacaoHoje,
+            formatted: revenueData.formatted,
+            orders: revenueData.count,
+            timezone: 'Africa/Luanda',
+            logica: 'getTodayRevenue() unificada - mesma em toda app'
+          });
+        } catch (revenueError) {
+          console.error('[OWNER HUB] Erro na query unificada, usando fallback:', revenueError);
+          // Fallback: calcular com dados diretos do Supabase
+          const today = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+          const todayOrders = ordersData?.filter(order => {
+            const orderDate = new Date(order.created_at || order.timestamp).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
+            return orderDate === today && Number(order.total_amount || order.total || 0) > 0;
+          }) || [];
+          faturacaoHoje = todayOrders.reduce((sum, order) => sum + Number(order.total_amount || order.total || 0), 0);
+        }
 
         // Buscar despesas
         const totalDespesas = await fetchTodayExpenses();
@@ -984,10 +995,11 @@ const OwnerDashboard = () => {
           <h3 className="text-sm font-bold text-white mb-2">📊 Status de Sincronização</h3>
           <div className="text-xs text-white/60 space-y-1">
             <div>✅ Timezone: Africa/Luanda</div>
-            <div>✅ Query: Dados diretos do Supabase</div>
-            <div>✅ Fonte: Cache ignorada</div>
+            <div>✅ Query: getTodayRevenue() unificada</div>
+            <div>✅ Fonte: useStore (Fonte da Verdade)</div>
             <div>✅ Padrão: Kz #.##0 unificado</div>
             <div>✅ Real-time: Sem loop infinito</div>
+            <div>✅ Sincronia: Windows/PC/Mobile</div>
           </div>
         </div>
       </main>
