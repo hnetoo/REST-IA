@@ -1,4 +1,4 @@
-// Sistema de Logs Visíveis como Navegador
+// Sistema de Logs Silencioso - Background Only
 
 export enum LogLevel {
   DEBUG = 0,
@@ -23,74 +23,12 @@ class LoggerService {
   private subscribers: ((logs: LogEntry[]) => void)[] = [];
 
   constructor() {
-    // Criar container de logs visível na página
-    this.createLogContainer();
-    
-    // Log inicial
-    this.info('SYSTEM', 'Logger Service inicializado', {
+    // Log inicial - apenas em console
+    this.info('SYSTEM', 'Logger Service inicializado (modo silencioso)', {
       timestamp: new Date().toISOString(),
-      maxLogs: this.maxLogs
+      maxLogs: this.maxLogs,
+      mode: 'silent-background'
     });
-  }
-
-  private createLogContainer() {
-    // Verificar se já existe
-    if (document.getElementById('app-logger')) return;
-
-    const container = document.createElement('div');
-    container.id = 'app-logger';
-    container.innerHTML = `
-      <div style="
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        width: 400px;
-        max-height: 300px;
-        background: rgba(0, 0, 0, 0.9);
-        border: 1px solid #333;
-        border-radius: 8px;
-        font-family: monospace;
-        font-size: 11px;
-        z-index: 9999;
-        overflow: hidden;
-      ">
-        <div style="
-          background: #333;
-          color: white;
-          padding: 8px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        ">
-          <span>🔍 App Logs</span>
-          <div>
-            <button onclick="toggleLogger()" style="background: #555; border: none; color: white; padding: 2px 8px; margin: 0 2px; cursor: pointer;">−</button>
-            <button onclick="clearLogger()" style="background: #555; border: none; color: white; padding: 2px 8px; margin: 0 2px; cursor: pointer;">Clear</button>
-          </div>
-        </div>
-        <div id="logger-content" style="
-          max-height: 250px;
-          overflow-y: auto;
-          padding: 8px;
-          color: #fff;
-        ">
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(container);
-
-    // Adicionar funções globais
-    (window as any).toggleLogger = () => {
-      const content = document.getElementById('logger-content');
-      if (content) {
-        content.style.display = content.style.display === 'none' ? 'block' : 'none';
-      }
-    };
-
-    (window as any).clearLogger = () => {
-      this.clearLogs();
-    };
   }
 
   private addLog(level: LogLevel, category: string, message: string, data?: any, source?: string) {
@@ -111,16 +49,13 @@ class LoggerService {
       this.logs = this.logs.slice(-this.maxLogs);
     }
 
-    // Atualizar UI
-    this.updateLogUI(logEntry);
-
-    // Notificar subscribers
-    this.subscribers.forEach(callback => callback(this.logs));
-
-    // Console também
+    // Apenas console e inspector - sem UI visual
     const consoleMethod = this.getConsoleMethod(level);
     const prefix = `[${category}] ${message}`;
     consoleMethod(prefix, data || '');
+
+    // Notificar subscribers (se houver)
+    this.subscribers.forEach(callback => callback(this.logs));
   }
 
   private getConsoleMethod(level: LogLevel) {
@@ -131,52 +66,6 @@ class LoggerService {
       case LogLevel.ERROR: return console.error;
       case LogLevel.CRITICAL: return console.error;
       default: return console.log;
-    }
-  }
-
-  private updateLogUI(logEntry: LogEntry) {
-    const content = document.getElementById('logger-content');
-    if (!content) return;
-
-    const levelColors = {
-      [LogLevel.DEBUG]: '#888',
-      [LogLevel.INFO]: '#4CAF50',
-      [LogLevel.WARN]: '#FF9800',
-      [LogLevel.ERROR]: '#F44336',
-      [LogLevel.CRITICAL]: '#E91E63'
-    };
-
-    const levelIcons = {
-      [LogLevel.DEBUG]: '🔍',
-      [LogLevel.INFO]: 'ℹ️',
-      [LogLevel.WARN]: '⚠️',
-      [LogLevel.ERROR]: '❌',
-      [LogLevel.CRITICAL]: '🚨'
-    };
-
-    const logElement = document.createElement('div');
-    logElement.style.cssText = `
-      margin-bottom: 4px;
-      padding: 4px;
-      border-left: 3px solid ${levelColors[logEntry.level]};
-      background: rgba(255,255,255,0.05);
-    `;
-
-    const time = new Date(logEntry.timestamp).toLocaleTimeString();
-    const dataStr = logEntry.data ? ` | ${JSON.stringify(logEntry.data)}` : '';
-    
-    logElement.innerHTML = `
-      <div style="color: ${levelColors[logEntry.level]}">
-        ${levelIcons[logEntry.level]} [${time}] [${logEntry.category}] ${logEntry.message}${dataStr}
-      </div>
-    `;
-
-    content.appendChild(logElement);
-    content.scrollTop = content.scrollHeight;
-
-    // Limitar elementos no DOM
-    while (content.children.length > 100) {
-      content.removeChild(content.firstChild!);
     }
   }
 
@@ -204,11 +93,7 @@ class LoggerService {
   // Métodos utilitários
   clearLogs() {
     this.logs = [];
-    const content = document.getElementById('logger-content');
-    if (content) {
-      content.innerHTML = '';
-    }
-    this.info('SYSTEM', 'Logs limpos');
+    console.info('[SYSTEM] Logs limpos');
   }
 
   getLogs(): LogEntry[] {

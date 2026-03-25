@@ -6,21 +6,28 @@ import {
   PieChart, Activity
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { formatKz } from '../lib/dateUtils';
 
 const Analytics = () => {
   const { settings, activeOrders, menu, expenses, loadExpenses } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
-  const [loading, setLoading] = useState(false);
-
-  const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
-    style: 'currency', 
-    currency: 'AOA', 
-    maximumFractionDigits: 2 
-  }).format(val);
 
   useEffect(() => {
     if (!navigator.onLine) return;
+    
+    // Forçar carregamento de dados do Supabase
+    console.log('[ANALYTICS] Carregando dados do Supabase...');
     loadExpenses().catch(() => {});
+    
+    // Recarregar periodicamente para garantir dados frescos
+    const interval = setInterval(() => {
+      if (navigator.onLine) {
+        console.log('[ANALYTICS] Recarregando dados...');
+        loadExpenses().catch(() => {});
+      }
+    }, 30000); // 30 segundos
+    
+    return () => clearInterval(interval);
   }, [loadExpenses]);
 
   // Calcular métricas reais

@@ -155,8 +155,8 @@ const Finance = () => {
   const today = new Date().toISOString().split('T')[0];
 
   const metrics = useMemo(() => {
-    // DADOS REAIS DO SUPABASE - EXATAMENTE IGUAL AO POS (51.000 Kz)
-    const today = new Date().toISOString().split('T')[0]; // Data atual para despesas - IGUAL AO POS
+    // DADOS REAIS DO SUPABASE - SEM VALORES FIXOS
+    const today = new Date().toISOString().split('T')[0]; // Data atual para despesas
     
     // FILTRAR ORDENS EXATAMENTE COMO O POS FAZ - USAR activeOrders
     const todayOrders = activeOrders.filter(order => {
@@ -210,7 +210,7 @@ const Finance = () => {
       return acc;
     }, {} as Record<string, number>);
 
-    console.log('[FINANCEIRO DEBUG] Faturação Alinhada (51.000 Kz):', revenue);
+    console.log('[FINANCEIRO DEBUG] Faturação Alinhada:', revenue);
     console.log('[FINANCEIRO DEBUG] Despesas Hoje:', variableCosts);
     console.log('[FINANCEIRO DEBUG] Impostos (7%):', tax);
     console.log('[FINANCEIRO DEBUG] Lucro Líquido Calculado:', netProfit);

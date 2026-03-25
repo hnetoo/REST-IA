@@ -36,6 +36,7 @@
     "@tauri-apps/plugin-sql": "^2.1.0",
     "@types/uuid": "^10.0.0",
     "better-sqlite3": "^12.6.2",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.4",
     "html2canvas": "^1.4.1",
     "i18next": "^23.11.5",

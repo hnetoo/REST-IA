@@ -15,5 +15,9 @@ export default defineConfig({
     port: 5173,
     clearScreen: false
   },
-  clearScreen: false
+  clearScreen: false,
+  define: {
+    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify('https://tboiuiwlqfzcvakxrsmj.supabase.co'),
+    'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify('sb_publishable_fBMKbbzNYBe8d1rzdWyerg_4We8tZEm')
+  }
 })

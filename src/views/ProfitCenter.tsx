@@ -1,7 +1,9 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { printFinanceReport } from '../lib/printService';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { 
   Target, TrendingUp, DollarSign, Zap, Sparkles, 
   PieChart as PieIcon, BarChart3, ArrowUpRight, 
@@ -13,6 +15,14 @@ import {
   BarChart, Bar, Cell, PieChart, Pie, CartesianGrid
 } from 'recharts';
 
+// Extender jsPDF para incluir autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => void;
+    lastAutoTable: { finalY: number };
+  }
+}
+
 const formatKz = (val: number) => 
   new Intl.NumberFormat('pt-AO', { 
     style: 'currency', 
@@ -21,7 +31,27 @@ const formatKz = (val: number) =>
   }).format(val);
 
 const ProfitCenter = () => {
-  const { activeOrders, menu, settings, addNotification, expenses, employees } = useStore();
+  const { activeOrders, menu, settings, addNotification, expenses, employees, loadExpenses, loadEmployees } = useStore();
+
+  useEffect(() => {
+    if (!navigator.onLine) return;
+    
+    // Forçar carregamento de dados do Supabase
+    console.log('[PROFIT_CENTER] Carregando dados do Supabase...');
+    loadExpenses().catch(() => {});
+    loadEmployees().catch(() => {});
+    
+    // Recarregar periodicamente para garantir dados frescos
+    const interval = setInterval(() => {
+      if (navigator.onLine) {
+        console.log('[PROFIT_CENTER] Recarregando dados...');
+        loadExpenses().catch(() => {});
+        loadEmployees().catch(() => {});
+      }
+    }, 30000); // 30 segundos
+    
+    return () => clearInterval(interval);
+  }, [loadExpenses, loadEmployees]);
 
   const closedOrders = useMemo(() => activeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
   
@@ -67,7 +97,7 @@ const ProfitCenter = () => {
         }
         // CÁLCULO DA MARGEM: (price - cost_price) * unidades_vendidas
         const dish = menu.find(d => d.id === i.dishId);
-        const itemProfit = (dish?.price || 0 - dish?.cost_price || 0) * i.quantity;
+        const itemProfit = (dish?.price || 0 - dish?.costPrice || 0) * i.quantity;
         productProfit[i.dishId].profit += itemProfit;
         productProfit[i.dishId].qty += i.quantity;
     });

@@ -10,6 +10,7 @@ import { Table, Order, Dish, Customer, PaymentMethod, User, SystemSettings, Noti
 import { addPendingSyncOrder, type PendingSyncOrder } from '../lib/pendingSyncOrders';
 import { MOCK_TABLES, MOCK_USERS, MOCK_STOCK, MOCK_RESERVATIONS } from '../../constants';
 import defaultLogo from '/logo.png';
+import { formatDateInAppTimezone, isTodayInAppTimezone, formatKz } from '../lib/dateUtils';
 
 const syncChannel = new BroadcastChannel('vereda_state_sync');
 
@@ -579,6 +580,34 @@ export const useStore = create<StoreState>()(
           console.log('[CHECKOUT] OrderData:', orderData);
           console.log('[CHECKOUT] OrderItems:', orderItems);
           
+          // 🔥 VALIDAÇÃO PRÉ-ENVIO CRÍTICA - ANTI-CORRUPÇÃO
+          if (!orderData.total_amount || orderData.total_amount <= 0) {
+            console.error('[CHECKOUT] ❌ ERRO: total_amount é inválido:', orderData.total_amount);
+            throw new Error('Valor total inválido. Verifique os itens do pedido.');
+          }
+          
+          if (!orderData.payment_method) {
+            console.error('[CHECKOUT] ❌ ERRO: payment_method é inválido:', orderData.payment_method);
+            throw new Error('Método de pagamento inválido.');
+          }
+          
+          if (!orderItems || orderItems.length === 0) {
+            console.error('[CHECKOUT] ❌ ERRO: orderItems está vazio:', orderItems);
+            throw new Error('Lista de itens vazia. Não é possível finalizar pedido.');
+          }
+          
+          // Validar que cada item tem os campos obrigatórios
+          const invalidItems = orderItems.filter(item => 
+            !item.product_id || !item.quantity || !item.unit_price || item.unit_price <= 0
+          );
+          
+          if (invalidItems.length > 0) {
+            console.error('[CHECKOUT] ❌ ERRO: Itens inválidos encontrados:', invalidItems);
+            throw new Error('Itens inválidos no pedido. Verifique todos os produtos.');
+          }
+          
+          console.log('[CHECKOUT] ✅ Validação passou. Enviando para Supabase...');
+          
           const { error: orderError, data: orderResult } = await supabase.from('orders').insert(orderData).select();
           if (orderError) {
             console.error('[CHECKOUT] Erro ao inserir order:', orderError);
@@ -967,24 +996,24 @@ export const useStore = create<StoreState>()(
         }
       },
 
-restoreFromSupabase: async () => {
-  get().addNotification('info', 'Restaurando integridade...');
-  try {
-    const { data, error } = await supabase
-      .from('restaurant_state')
-      .select('state_data')
-      .eq('id', 'main')
-      .single();
-    
-    if (data?.state_data) {
-      set(JSON.parse(data.state_data));
-      get().addNotification('success', 'Dados restaurados da nuvem com sucesso!');
-    }
-  } catch (error) {
-    get().addNotification('error', 'Falha ao restaurar da nuvem');
-  }
-},
-
+      restoreFromSupabase: async () => {
+        get().addNotification('info', 'Restaurando integridade...');
+        try {
+          const { data, error } = await supabase
+            .from('restaurant_state')
+            .select('state_data')
+            .eq('id', 'main')
+            .single();
+          
+          if (data?.state_data) {
+            set(JSON.parse(data.state_data));
+            get().addNotification('success', 'Dados restaurados da nuvem com sucesso!');
+          }
+        } catch (error) {
+          get().addNotification('error', 'Falha ao restaurar da nuvem');
+        }
+      },
+      
       addExpense: (expense) => set(state => {
         const newExpense = {
           ...expense,
@@ -1320,6 +1349,50 @@ restoreFromSupabase: async () => {
           activeOrderId: null,
           tables: state.tables.map(t => ({ ...t, status: 'LIVRE' as const }))
         }));
+      },
+      
+      // 🔄 QUERY UNIFICADA - Fonte da Verdade para Faturação de Hoje
+      getTodayRevenue: () => {
+        const today = formatDateInAppTimezone();
+        const orders = get().activeOrders;
+        
+        // Filtrar ordens de hoje com timezone unificado
+        const todayOrders = orders.filter(order => {
+          // Usar timestamp normalizado para timezone Africa/Luanda
+          const orderDate = order.timestamp ? 
+            formatDateInAppTimezone(new Date(order.timestamp)) : null;
+          
+          // Status válidos para faturação
+          const validStatus = ['closed', 'FECHADO', 'paid', 'finalized'].includes(order.status);
+          
+          // Valor válido (não NULL ou zero)
+          const hasValidTotal = Number(order.total || 0) > 0;
+          
+          // Verificar se é hoje no timezone da aplicação
+          const isToday = orderDate === today;
+          
+          return isToday && validStatus && hasValidTotal;
+        });
+        
+        // Calcular total
+        const totalRevenue = todayOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+        
+        console.log('[GET_TODAY_REVENUE] Fonte da Verdade:', {
+          today,
+          timezone: 'Africa/Luanda',
+          totalOrders: orders.length,
+          todayOrders: todayOrders.length,
+          totalRevenue,
+          formatKz: formatKz(totalRevenue),
+          orderIds: todayOrders.map(o => o.id)
+        });
+        
+        return {
+          total: totalRevenue,
+          formatted: formatKz(totalRevenue),
+          orders: todayOrders,
+          count: todayOrders.length
+        };
       }
     }),
     {

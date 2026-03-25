@@ -16,10 +16,11 @@
         "width": 1920,
         "height": 1080,
         "resizable": true,
-        "fullscreen": true,
+        "fullscreen": false,
         "alwaysOnTop": false,
         "decorations": false,
-        "transparent": false
+        "transparent": false,
+        "devtools": true
       }
     ],
     "security": {

@@ -26,6 +26,23 @@ import Settings from './src/views/Settings';
 import { X } from 'lucide-react';
 import { useStore } from './src/store/useStore';
 
+// Log de boot da aplicação
+console.log('🚀 [APP BOOT] Tasca do Vereda iniciando...');
+console.log('🔧 [APP BOOT] Ambiente:', typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__ ? 'Tauri/Windows' : 'Web/Browser');
+console.log('📡 [APP BOOT] Tentando conectar ao Supabase...');
+
+// Atalho F12 para abrir DevTools no Windows
+if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12') {
+      e.preventDefault();
+      console.log('🔧 [DEVTOOLS] Abrindo Inspector via F12...');
+      // Tentar abrir DevTools via API do Tauri
+      (window as any).__TAURI_INTERNALS__?.invoke('show_devtools');
+    }
+  });
+}
+
 const GlobalNotificationCenter = () => {
   const { notifications, removeNotification } = useStore();
   if (notifications.length === 0) return null;

@@ -9,8 +9,7 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 95%; /* Reduz zoom global para interface mais compacta */
     height: 100vh;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden; /* Layout Tauri: body sem scroll */
     display: flex;
     flex-direction: column;
   }

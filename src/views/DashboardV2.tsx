@@ -36,6 +36,62 @@ const DashboardV2 = () => {
     console.log('[DASHBOARD PRINCIPAL] Limpeza de cache local concluída:', keysToRemove.length, 'itens removidos');
   }, []); // Executar apenas na montagem
 
+  // CARREGAR DADOS INICIAIS QUANDO CONEXÃO FOR RESTABELECIDA
+  useEffect(() => {
+    const initializeDashboard = async () => {
+      console.log('[DASHBOARD] Inicializando dados...');
+      
+      // Verificar se temos produtos e categorias carregados
+      const store = useStore.getState();
+      const hasProducts = store.menu && store.menu.length > 0;
+      const hasCategories = store.categories && store.categories.length > 0;
+      
+      if (!hasProducts || !hasCategories) {
+        console.log('[DASHBOARD] Carregando dados iniciais...');
+        
+        try {
+          // Carregar categorias
+          const { data: categoriesData, error: categoriesError } = await supabase
+            .from('categories')
+            .select('*');
+            
+          if (!categoriesError && categoriesData) {
+            console.log('[DASHBOARD] Categorias carregadas:', categoriesData.length);
+            useStore.getState().setCategories(categoriesData);
+          }
+          
+          // Carregar produtos
+          const { data: productsData, error: productsError } = await supabase
+            .from('menu_items')
+            .select('*');
+            
+          if (!productsError && productsData) {
+            console.log('[DASHBOARD] Produtos carregados:', productsData.length);
+            useStore.getState().setMenu(productsData);
+          }
+          
+          // Carregar despesas
+          await loadExpenses();
+          
+          // Carregar funcionários  
+          await loadEmployees();
+          
+          console.log('[DASHBOARD] Dados iniciais carregados com sucesso!');
+          
+        } catch (error) {
+          console.error('[DASHBOARD] Erro ao carregar dados iniciais:', error);
+        }
+      } else {
+        console.log('[DASHBOARD] Dados já carregados, ignorando inicialização');
+      }
+    };
+    
+    // Executar inicialização após 2 segundos
+    const timer = setTimeout(initializeDashboard, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   // SUBSCRIÇÃO EM TEMPO REAL DO SUPABASE - ATUALIZAÇÃO AUTOMÁTICA DO DASHBOARD
   useEffect(() => {
     const channel = supabase

@@ -168,35 +168,35 @@ const SystemHub = () => {
     };
 
     return (
-      <div className="glass-panel rounded-2xl p-8">
-        <h2 className="text-2xl font-bold text-white mb-6">Identidade Geral</h2>
-        <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-10">
-          <div className="grid grid-cols-1 gap-8">
+      <div className="glass-panel rounded-2xl p-6">
+        <h2 className="text-xl font-bold text-white mb-4">Identidade Geral</h2>
+        <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-6">
+          <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Nome do Restaurante</label>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nome do Restaurante</label>
               <input 
                 type="text" 
-                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
                 value={localSettings.restaurantName} 
                 onChange={e => setLocalSettings({...localSettings, restaurantName: e.target.value})}
                 aria-label="Nome do restaurante"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">NIF (Número de Identificação Fiscal)</label>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">NIF (Número de Identificação Fiscal)</label>
               <input 
                 type="text" 
-                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
                 value={localSettings.nif} 
                 onChange={e => setLocalSettings({...localSettings, nif: e.target.value})}
                 aria-label="NIF do restaurante"
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Telefone</label>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Telefone</label>
               <input 
                 type="tel" 
-                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
                 value={localSettings.phone || ''} 
                 onChange={e => setLocalSettings({...localSettings, phone: e.target.value})}
                 aria-label="Telefone do restaurante"
@@ -215,10 +215,10 @@ const SystemHub = () => {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Email</label>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Email</label>
               <input 
                 type="email" 
-                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
                 value={localSettings.email || ''} 
                 onChange={e => setLocalSettings({...localSettings, email: e.target.value})}
                 aria-label="Email do restaurante"
@@ -226,22 +226,22 @@ const SystemHub = () => {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Website</label>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Website</label>
               <input 
                 type="url" 
-                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
+                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
                 value={localSettings.website || ''} 
                 onChange={e => setLocalSettings({...localSettings, website: e.target.value})}
                 aria-label="Website do restaurante"
                 placeholder="https://www.restaurante.com"
               />
             </div>
-            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
-              <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative group">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
+              <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative group">
                 {localSettings.appLogoUrl ? (
                   <img src={localSettings.appLogoUrl} className="w-full h-full object-contain p-2" alt="Logo" />
                 ) : (
-                  <Building size={48} className="text-[#06b6d4]"/>
+                  <Building size={40} className="text-[#06b6d4]"/>
                 )}
                 {/* Overlay para upload */}
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl flex items-center justify-center">
@@ -263,22 +263,22 @@ const SystemHub = () => {
               </div>
               <div className="flex-1 space-y-4 w-full">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Identidade Visual (Logo)</p>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   <button 
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-6 py-3 bg-[#06b6d4]/10 border border-[#06b6d4]/20 text-[#06b6d4] rounded-xl text-[10px] font-black uppercase hover:bg-[#06b6d4]/20 transition-all flex items-center gap-2"
+                    className="px-4 py-2 bg-[#06b6d4]/10 border border-[#06b6d4]/20 text-[#06b6d4] rounded-lg text-[10px] font-black uppercase hover:bg-[#06b6d4]/20 transition-all flex items-center gap-2"
                   >
-                    <Upload size={16} />
+                    <Upload size={14} />
                     Carregar Novo Logo
                   </button>
                   {localSettings.appLogoUrl && (
                     <button 
                       type="button"
                       onClick={handleRemoveLogo}
-                      className="px-6 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase hover:bg-red-500/20 transition-all flex items-center gap-2"
+                      className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-[10px] font-black uppercase hover:bg-red-500/20 transition-all flex items-center gap-2"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                       Remover Logo
                     </button>
                   )}
@@ -289,10 +289,10 @@ const SystemHub = () => {
               </div>
             </div>
           </div>
-          <div className="pt-6">
+          <div className="pt-4">
             <button 
               type="submit" 
-              className="w-full py-5 bg-[#06b6d4] text-black rounded-[2rem] font-black uppercase text-xs shadow-glow flex items-center justify-center gap-3 transition-all hover:brightness-110"
+              className="w-full py-3 bg-[#06b6d4] text-black rounded-xl font-black uppercase text-xs shadow-glow flex items-center justify-center gap-2 transition-all hover:brightness-110"
               disabled={isSaving}
             >
               {isSaving ? 'Guardando...' : 'Guardar Alterações'}
@@ -817,11 +817,6 @@ const SystemHub = () => {
     const { settings, updateSettings, addNotification } = useStore();
     const [localSettings, setLocalSettings] = useState(settings);
     const [isSaving, setIsSaving] = useState(false);
-    const [logs, setLogs] = useState([
-      { id: crypto.randomUUID(), timestamp: new Date().toISOString(), level: 'INFO', message: 'Sistema inicializado com sucesso' },
-      { id: crypto.randomUUID(), timestamp: new Date(Date.now() - 3600000).toISOString(), level: 'WARNING', message: 'Conexao com banco de dados instavel' },
-      { id: crypto.randomUUID(), timestamp: new Date(Date.now() - 7200000).toISOString(), level: 'ERROR', message: 'Falha ao processar pagamento #1234' }
-    ]);
 
     const handleSaveSettings = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -834,31 +829,6 @@ const SystemHub = () => {
       }
     };
 
-    const handleClearLogs = () => {
-      setLogs([]);
-      addNotification('success', 'Logs do sistema limpos com sucesso!');
-    };
-
-    const handleExportLogs = () => {
-      const logText = logs.map(log => '[' + log.timestamp + '] ' + log.level + ': ' + log.message).join('\n');
-      const blob = new Blob([logText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'system-logs-' + new Date().toISOString().split('T')[0] + '.txt';
-      a.click();
-      URL.revokeObjectURL(url);
-      addNotification('success', 'Logs exportados com sucesso!');
-    };
-
-    const getLevelColor = (level: string) => {
-      switch (level) {
-        case 'ERROR': return 'text-red-500';
-        case 'WARNING': return 'text-yellow-500';
-        case 'INFO': return 'text-green-500';
-        default: return 'text-gray-500';
-      }
-    };
 
     return (
       <div className="space-y-12">
@@ -875,52 +845,6 @@ const SystemHub = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
-              Logs do Sistema
-            </h4>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center gap-3">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total de Logs</span>
-                <span className="text-lg font-mono font-bold text-white">{logs.length}</span>
-              </div>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {logs.map(log => (
-                  <div key={log.id} className="p-3 bg-white/5 border border-white/10 rounded-lg">
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={'text-[8px] font-black uppercase ' + getLevelColor(log.level)}>
-                            {log.level}
-                          </span>
-                          <span className="text-[8px] text-slate-400">
-                            {new Date(log.timestamp).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-sm text-white">{log.message}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2 pt-4 border-t border-white/5">
-                <button 
-                  onClick={handleClearLogs}
-                  className="flex-1 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-[9px] font-black uppercase hover:bg-red-500/20 transition-all"
-                >
-                  Limpar Logs
-                </button>
-                <button 
-                  onClick={handleExportLogs}
-                  className="flex-1 py-3 bg-white/5 border border-white/10 text-slate-300 rounded-xl text-[9px] font-black uppercase hover:bg-white/10 transition-all"
-                >
-                  Exportar Logs
-                </button>
-              </div>
-            </div>
-          </div>
-
           <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
             <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
               <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
@@ -2312,7 +2236,7 @@ const SystemHub = () => {
   const activeComponent = systemCards.find(card => card.id === activeCard)?.component;
 
   return (
-    <div className="min-h-screen bg-[#070b14] p-6">
+    <div className="h-screen bg-[#070b14] p-6 overflow-hidden">
       {!activeCard ? (
         <>
           {/* Header */}
@@ -2326,8 +2250,8 @@ const SystemHub = () => {
             </p>
           </div>
 
-          {/* Grid de Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[calc(100vh-80px)] overflow-y-auto pb-12">
+          {/* Grid de Cards com scroll interno */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[calc(100vh-120px)] overflow-y-auto pb-12 pr-2">
             {systemCards.map((card) => (
               <div
                 key={card.id}
@@ -2384,7 +2308,7 @@ const SystemHub = () => {
                       <>
                         <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Usuários</span>
                         <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Permissões</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Logs</span>
+                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Sistema</span>
                       </>
                     )}
                     {card.id === 'agt-compliance' && (
@@ -2435,7 +2359,7 @@ const SystemHub = () => {
           </div>
         </>
       ) : (
-        <div>
+        <div className="h-full overflow-y-auto pb-12 pr-2">
           {/* Botão Voltar */}
           <button
             onClick={() => setActiveCard(null)}
@@ -2448,7 +2372,9 @@ const SystemHub = () => {
           <DataStatus />
           
           {/* Componente Ativo */}
-          {activeComponent}
+          <div className="max-w-full">
+            {activeComponent}
+          </div>
         </div>
       )}
     </div>

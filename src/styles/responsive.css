@@ -274,21 +274,3 @@
 .responsive-header {
   transition: height 0.3s ease;
 }
-
-/* Debug visual (remover em produção) */
-.responsive-debug {
-  position: fixed;
-  bottom: 10px;
-  left: 10px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  z-index: 9999;
-  font-family: monospace;
-}
-
-.responsive-debug::before {
-  content: "Screen: " attr(data-screen) " | Config: " attr(data-config);
-}
