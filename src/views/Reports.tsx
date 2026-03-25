@@ -395,14 +395,14 @@ const Reports = () => {
     }
   };
 
-  // CARD 7: ALERTAS DE STOCK - Filtro de stock < min_stock (sem is_active filter)
+  // CARD 7: ALERTAS DE STOCK - Verificar produtos sem preço de custo (não existe campo stock)
   const fetchAlertasStock = async () => {
     setAlertasStock(prev => ({ ...prev, loading: true }));
     try {
-      // Buscar products sem filtro is_active que pode não existir
+      // Buscar products - SEM CAMPO DE STOCK POIS NÃO EXISTE NA TABELA
       const { data: productsData, error } = await supabase
         .from('products')
-        .select('name, stock_quantity, cost_price'); // CORRIGIDO: stock_quantity em vez de quantity
+        .select('name, price, cost_price, is_active'); // CAMPOS REAIS
 
       if (error) {
         throw new Error(`Erro de Conexão: ${error.message}`);
@@ -413,21 +413,27 @@ const Reports = () => {
       productsData?.forEach((product: any) => {
         const alerts: string[] = [];
         
-        // Verificar stock baixo
-        if (!product.stock_quantity || product.stock_quantity < 10) {
-          alerts.push('Quantidade crítica');
+        // Verificar se produto está inativo
+        if (!product.is_active) {
+          alerts.push('Produto inativo');
         }
         
-        // Verificar preço de custo ausente
+        // Verificar preço de custo ausente ou zero
         if (!product.cost_price || product.cost_price <= 0) {
-          alerts.push('Preço de custo ausente');
+          alerts.push('Preço de custo ausente ou zerado');
+        }
+        
+        // Verificar preço de venda ausente ou zero
+        if (!product.price || product.price <= 0) {
+          alerts.push('Preço de venda ausente ou zerado');
         }
         
         if (alerts.length > 0) {
           alertas.push({
             nome: product.name || 'Produto Sem Nome',
-            quantidade: product.stock_quantity || 0, // CORRIGIDO: stock_quantity em vez de quantity
+            precoVenda: product.price || 0,
             precoCusto: product.cost_price || 0,
+            status: product.is_active ? 'Ativo' : 'Inativo',
             alertas
           });
         }
