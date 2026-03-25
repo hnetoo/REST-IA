@@ -70,22 +70,13 @@ const Reports = () => {
       const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
       const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
       
-      // QUERY SIMPLES - BUSCAR ORDERS COM STATUS CORRETO
+      // QUERY SIMPLES - BUSCAR ORDERS COM STATUS CORRETO - SEM FILTRO DE DATA
       let query = supabase
         .from('orders')
         .select('total_amount, created_at, table_id')
         .in('status', ['FECHADO', 'closed', 'paid']); // STATUS CORRETO
 
-      if (start && end) {
-        query = query
-          .gte('created_at', new Date(start).toISOString())
-          .lte('created_at', new Date(end).toISOString());
-      } else {
-        // Se não houver filtro, usar hoje (mesma lógica do Dashboard)
-        query = query
-          .gte('created_at', startOfDay.toISOString())
-          .lte('created_at', endOfDay.toISOString());
-      }
+      // REMOVIDO FILTRO DE DATA PARA TESTAR
 
       const { data: ordersData, error } = await query;
 
@@ -149,6 +140,9 @@ const Reports = () => {
         throw new Error(`Erro de Conexão: ${ordersError.message}`);
       }
 
+      console.log('[DEBUG FINANCAS] Orders Data:', ordersData);
+      console.log('[DEBUG FINANCAS] Orders Count:', ordersData?.length || 0);
+
       // Buscar despesas (expenses)
       let expensesQuery = supabase
         .from('expenses')
@@ -165,6 +159,9 @@ const Reports = () => {
       if (expensesError) {
         throw new Error(`Erro de Conexão: ${expensesError.message}`);
       }
+
+      console.log('[DEBUG FINANCAS] Expenses Data:', expensesData);
+      console.log('[DEBUG FINANCAS] Expenses Count:', expensesData?.length || 0);
 
       const totalReceita = ordersData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
       const totalDespesas = expensesData?.reduce((sum, expense) => sum + (expense.amount_kz || 0), 0) || 0;
