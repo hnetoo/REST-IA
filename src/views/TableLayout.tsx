@@ -40,9 +40,9 @@ const TableLayout = () => {
         status: 'LIVRE'
       };
       
-      // Adicionar no Supabase - TENTAR 'mesas' PRIMEIRO, DEPOIS 'tables'
+      // Adicionar no Supabase - USANDO TABELA CORRETA pos_tables
       let success = false;
-      let tableName = 'mesas'; // TENTAR 'mesas' PRIMEIRO
+      let tableName = 'pos_tables'; // TABELA CORRETA
       
       try {
         const result = await supabase
@@ -51,34 +51,13 @@ const TableLayout = () => {
           .select();
         
         if (result.error) {
-          // Se der erro 404, tentar com 'tables'
-          if (result.error.message && result.error.message.includes('404')) {
-            console.log('[MAPA DE MESAS] Tabela "mesas" não encontrada, tentando "tables"');
-            tableName = 'tables';
-            const result2 = await supabase
-              .from('tables')
-              .insert([newTable])
-              .select();
-            
-            if (result2.error) {
-              console.error('Erro ao adicionar mesa em "tables":', result2.error);
-              addNotification('error', 'Erro ao adicionar mesa. Tente novamente.');
-              return;
-            }
-            
-            if (result2.data) {
-              console.log('Mesa adicionada com sucesso em "tables":', newTable);
-              addTable(newTable);
-              addNotification('success', `Mesa ${newTableNumber} adicionada com sucesso!`);
-              success = true;
-            }
-          } else {
-            console.error('Erro ao adicionar mesa em "mesas":', result.error);
-            addNotification('error', 'Erro ao adicionar mesa. Tente novamente.');
-            return;
-          }
-        } else {
-          console.log('Mesa adicionada com sucesso em "mesas":', newTable);
+          console.error('Erro ao adicionar mesa em pos_tables:', result.error);
+          addNotification('error', 'Erro ao adicionar mesa. Tente novamente.');
+          return;
+        }
+        
+        if (result.data) {
+          console.log('Mesa adicionada com sucesso em pos_tables:', newTable);
           addTable(newTable);
           addNotification('success', `Mesa ${newTableNumber} adicionada com sucesso!`);
           success = true;
@@ -127,10 +106,10 @@ const TableLayout = () => {
       
       console.log('[MAPA DE MESAS] Posições calculadas:', organizedTables.map(t => ({ name: t.name, x: t.x, y: t.y })));
       
-      // Atualizar posições no Supabase - USAR A MESMA TABELA DO ADICIONAR
+      // Atualizar posições no Supabase - USANDO TABELA CORRETA pos_tables
       const updatePromises = organizedTables.map(table => 
         supabase
-          .from(tableName) // USAR 'mesas' ou 'tables' dinamicamente
+          .from('pos_tables') // TABELA CORRETA
           .update({ x: table.x, y: table.y })
           .eq('id', table.id)
       );
@@ -226,24 +205,20 @@ const TableLayout = () => {
     try {
       const table = tables.find(t => t.id === draggedTable.id);
       if (table) {
-        // TENTAR 'mesas' PRIMEIRO, DEPOIS 'tables'
-        let tableName = 'mesas';
+        // TENTAR SALVAR POSIÇÃO - USANDO TABELA CORRETA pos_tables
         try {
           const result = await supabase
-            .from('mesas')
+            .from('pos_tables')
             .update({ x: table.x, y: table.y })
             .eq('id', draggedTable.id);
           
           if (result.error) {
-            // Se der erro, tentar com 'tables'
-            tableName = 'tables';
-            await supabase
-              .from('tables')
-              .update({ x: table.x, y: table.y })
-              .eq('id', draggedTable.id);
+            console.error('Erro ao salvar posição em pos_tables:', result.error);
+          } else {
+            console.log('Posição salva com sucesso em pos_tables');
           }
         } catch (error) {
-          console.error('Erro ao salvar posição:', error);
+          console.error('Erro crítico ao salvar posição:', error);
         }
       }
     } catch (error) {
@@ -271,7 +246,14 @@ const TableLayout = () => {
   };
 
   // FILTRAGEM POR ZONA - MOSTRAR APENAS MESAS DA ZONA SELECIONADA
-  const filteredTables = tables.filter(table => table.zone === activeZone);
+  const filteredTables = tables
+    .filter(table => table.zone === activeZone)
+    .sort((a, b) => {
+      // ORDENAÇÃO NUMÉRICA CRESCENTE (1, 2, 3...)
+      const numA = parseInt(a.name.replace(/\D/g, '')) || 0;
+      const numB = parseInt(b.name.replace(/\D/g, '')) || 0;
+      return numA - numB;
+    });
 
   return (
     <div className="p-8 h-full bg-background flex flex-col overflow-hidden animate-in fade-in duration-700">
