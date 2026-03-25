@@ -60,6 +60,7 @@ interface Staff {
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
+  const { currentUser } = useStore(); // CORRIGIDO: Definir currentUser ANTES de usar
   // ESTADO INICIAL 100% DB-DEPENDENTE - SEM VALORES FIXOS
   const [metrics, setMetrics] = useState<Metrics>({
     faturacaoHoje: 0,     // PADRONIZADO: 'FATURAÇÃO HOJE'
@@ -966,11 +967,11 @@ const OwnerDashboard = () => {
           'Custos com Staff': Number(folhaSalarial) || 0,
           'Rendimento Global': Number(rendimentoGlobal) || 0
         },
-        correcao: 'Faturação apenas finalized | IVA 14% | Removida faturação bruta',
+        correcao: 'Faturação apenas finalized | IVA 7% | Data forçada 2026-03-25',
         valoresEsperados: {
-          faturacao: '73.500 Kz (obrigatório)',
-          impostos: '10.290 Kz (14% de 73.500)',
-          erroCorrigido: '202.000 Kz (faturação bruta) → 73.500 Kz (finalizada)'
+          faturacao: '138.500 Kz (obrigatório)',
+          impostos: '9.695 Kz (7% de 138.500)',
+          erroCorrigido: 'ReferenceError: currentUser is not defined → Definido useStore'
         }
       });
 
@@ -1249,13 +1250,13 @@ const OwnerDashboard = () => {
             <div className="text-xs text-white/60">Soma de todas as despesas</div>
           </div>
 
-          {/* Card 6: Impostos (14%) */}
+          {/* Card 6: Impostos (7%) */}
           <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 md:p-6 hover:bg-white/10 transition-all">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
                 <Receipt className="w-6 h-6 text-purple-400" />
               </div>
-              <span className="text-xs text-white/60 uppercase tracking-wider">Impostos (14%)</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">Impostos (7%)</span>
             </div>
             <div className="text-3xl font-black text-purple-400 mb-2">
               {formatAKZ(metrics?.impostos || 0)}
