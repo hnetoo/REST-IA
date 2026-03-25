@@ -59,50 +59,54 @@ const Reports = () => {
     }).format(value);
   };
 
-  // CARD 1: VENDAS POR ARTIGO - Relatório de PRODUTOS vendidos (usando orders)
+  // CARD 1: VENDAS POR ARTIGO - Relatório de PRODUTOS vendidos (usando order_items)
   const fetchVendasPorArtigo = async () => {
     setVendasPorArtigo(prev => ({ ...prev, loading: true }));
     try {
       const { start, end } = dateRange;
       
-      // DATA DE HOJE - FUSO HORÁRIO DE LUANDA (GMT+1) COM START/END OF DAY
-      const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
-      const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
-      const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
-      
-      // QUERY SIMPLES - BUSCAR ORDERS COM STATUS CORRETO - SEM FILTRO DE DATA
+      // QUERY CORRETA - BUSCAR ORDER ITEMS COM PRODUTOS
       let query = supabase
-        .from('orders')
-        .select('total_amount, created_at, table_id')
-        .in('status', ['FECHADO', 'closed', 'paid']); // STATUS CORRETO
+        .from('order_items')
+        .select(`
+          quantity,
+          unit_price,
+          products!inner(name),
+          orders!inner(created_at, status)
+        `)
+        .in('orders.status', ['FECHADO', 'closed', 'paid']); // STATUS CORRETO
 
-      // REMOVIDO FILTRO DE DATA PARA TESTAR
+      if (start && end) {
+        query = query
+          .gte('orders.created_at', new Date(start).toISOString())
+          .lte('orders.created_at', new Date(end).toISOString());
+      }
 
-      const { data: ordersData, error } = await query;
+      const { data: itemsData, error } = await query;
 
       if (error) {
         throw new Error(`Erro de Conexão: ${error.message}`);
       }
 
-      console.log('[DEBUG VENDAS POR ARTIGO] Orders Data:', ordersData);
-      console.log('[DEBUG VENDAS POR ARTIGO] Orders Count:', ordersData?.length || 0);
+      console.log('[DEBUG VENDAS POR ARTIGO] Items Data:', itemsData);
+      console.log('[DEBUG VENDAS POR ARTIGO] Items Count:', itemsData?.length || 0);
 
-      // Agrupar por mesa (table_id) - TEMPORÁRIO ATÉ CORRIGIR ORDER_ITEMS
-      const vendasMap = new Map();
+      // Agrupar vendas por produto
+      const produtosMap = new Map();
       
-      ordersData?.forEach((order: any) => {
-        const mesaId = order.table_id || 'Sem Mesa';
-        const existing = vendasMap.get(mesaId) || { 
-          produto: `Mesa ${mesaId}`, // TEMPORÁRIO
-          quantidade: 1, 
+      itemsData?.forEach((item: any) => {
+        const produtoNome = item.products?.name || 'Produto Sem Nome';
+        const existing = produtosMap.get(produtoNome) || { 
+          produto: produtoNome, 
+          quantidade: 0, 
           valorTotal: 0 
         };
-        existing.quantidade += 1;
-        existing.valorTotal += Number(order.total_amount) || 0;
-        vendasMap.set(mesaId, existing);
+        existing.quantidade += item.quantity || 0;
+        existing.valorTotal += (item.quantity || 0) * (item.unit_price || 0);
+        produtosMap.set(produtoNome, existing);
       });
 
-      const result = Array.from(vendasMap.values())
+      const result = Array.from(produtosMap.values())
         .sort((a, b) => b.valorTotal - a.valorTotal)
         .slice(0, 10) || [];
 
