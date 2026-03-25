@@ -1120,10 +1120,77 @@ const SystemHub = () => {
 
       setIsResetting(true);
       try {
-        // Simulação de reset de dados
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // APENAS DADOS FINANCEIROS - Reset completo em ambiente Windows
+        console.log('Iniciando reset de dados financeiros...');
         
-        // Resetar todos os valores para zero
+        // 1. Limpar cache local (financeiro) - localStorage
+        if (typeof window !== 'undefined' && window.localStorage) {
+          // Limpar apenas dados financeiros do localStorage
+          const keysToRemove = [];
+          for (let i = 0; i < window.localStorage.length; i++) {
+            const key = window.localStorage.key(i);
+            if (key && (
+              key.includes('revenue') || 
+              key.includes('expense') || 
+              key.includes('financial') ||
+              key.includes('order') ||
+              key.includes('sale') ||
+              key.includes('profit') ||
+              key.includes('activeOrders') ||
+              key.includes('total')
+            )) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => window.localStorage.removeItem(key));
+          console.log(`🧹 Removidos ${keysToRemove.length} itens financeiros do localStorage`);
+        }
+        
+        // 2. Limpar sessionStorage (financeiro)
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          const keysToRemove = [];
+          for (let i = 0; i < window.sessionStorage.length; i++) {
+            const key = window.sessionStorage.key(i);
+            if (key && (
+              key.includes('revenue') || 
+              key.includes('expense') || 
+              key.includes('financial') ||
+              key.includes('order') ||
+              key.includes('sale') ||
+              key.includes('profit')
+            )) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => window.sessionStorage.removeItem(key));
+          console.log(`🧹 Removidos ${keysToRemove.length} itens financeiros do sessionStorage`);
+        }
+        
+        // 3. Limpar store (financeiro) - Reiniciar estado
+        const store = useStore.getState();
+        
+        // Forçar reload da página para limpar estado em memória (Windows compatible)
+        if (typeof window !== 'undefined') {
+          // Salvar dados não-financeiros antes do reset
+          const nonFinancialData = {
+            settings: store.settings,
+            user: store.user,
+            menu: store.menu
+          };
+          
+          // Salvar temporariamente
+          window.sessionStorage.setItem('nonFinancialBackup', JSON.stringify(nonFinancialData));
+          
+          console.log('💾 Dados não-financeiros backup guardados');
+          
+          // Reset completo e reload
+          setTimeout(() => {
+            console.log('🔄 Reiniciando sistema...');
+            window.location.reload();
+          }, 2000);
+        }
+        
+        // 4. Resetar estado local (apenas financeiro)
         setProductionData({
           ordersToday: 0,
           revenueToday: 0,
@@ -1137,10 +1204,19 @@ const SystemHub = () => {
         setResetReason('');
         setIsConfirming(false);
         
-        console.log('Produção resetada com sucesso. Motivo:', resetReason);
+        console.log('✅ Reset financeiro iniciado com sucesso. Motivo:', resetReason);
+        console.log('✅ Sistema reiniciará em 2 segundos com dados limpos');
+        
+        // Notificar sucesso
+        if (typeof window !== 'undefined') {
+          alert('✅ Dados financeiros resetados com sucesso!\nO sistema reiniciará em 2 segundos.');
+        }
+        
       } catch (error) {
-        console.error('Erro ao resetar produção:', error);
-      } finally {
+        console.error('❌ Erro ao resetar dados financeiros:', error);
+        if (typeof window !== 'undefined') {
+          alert('❌ Erro ao resetar dados financeiros. Tente novamente.');
+        }
         setIsResetting(false);
       }
     };
