@@ -480,16 +480,30 @@ const Reports = () => {
           formatKz(item.receitaTotal || 0)
         ]);
         
-        doc.autoTable({
-          head: [['Mesa', 'Quantidade de Vendas', 'Receita Total']],
-          body: tableData,
-          startY: 45,
-          theme: 'grid',
-          styles: {
-            fontSize: 9,
-            cellPadding: 3
-          }
-        });
+        // Tabela com tratamento de erro
+        try {
+          doc.autoTable({
+            head: [['Mesa', 'Quantidade de Vendas', 'Receita Total']],
+            body: tableData,
+            startY: 45,
+            theme: 'grid',
+            styles: {
+              fontSize: 9,
+              cellPadding: 3
+            }
+          });
+        } catch (autoTableError) {
+          console.error('Erro no autoTable:', autoTableError);
+          // Fallback: escrever dados como texto se autoTable falhar
+          doc.setFontSize(10);
+          let yPosition = 45;
+          doc.text('Mesa | Quantidade | Receita', 14, yPosition);
+          yPosition += 10;
+          tableData.forEach(row => {
+            doc.text(`${row[0]} | ${row[1]} | ${row[2]}`, 14, yPosition);
+            yPosition += 8;
+          });
+        }
       }
       
       // Rodapé - Garantir que a tabela foi gerada antes de acessar finalY

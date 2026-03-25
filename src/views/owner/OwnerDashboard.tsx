@@ -643,7 +643,7 @@ const OwnerDashboard = () => {
         folhaSalarial = 0;
       }
 
-      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR EXATAMENTE A MESMA LÓGICA DE SOMA ORDERS
+      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR EXATAMENTE A MESMA LÓGICA DA APP PRINCIPAL
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
@@ -652,36 +652,49 @@ const OwnerDashboard = () => {
           console.log('[OWNER HUB] Usuário não autenticado - usando dados locais');
         }
         
-        console.log('[OWNER HUB] CORREÇÃO FINAL - Usando mesma lógica de Soma Orders:', {
-          filtro: "EXATAMENTE a mesma query que funciona para Rendimento Global",
-          logica: 'Sem filtro de data - pegar tudo como Soma Orders faz',
+        // DATA DE HOJE - FUSO HORÁRIO DE LUANDA (GMT+1)
+        const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
+        const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
+        const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
+        const today = todayLuanda.toISOString().split('T')[0];
+        
+        console.log('[OWNER HUB] UNIFICAR COM APP PRINCIPAL:', {
+          todayLuanda: todayLuanda.toLocaleString('pt-AO', {timeZone: 'Africa/Luanda'}),
+          startOfDay: startOfDay.toISOString(),
+          endOfDay: endOfDay.toISOString(),
+          filtro: "status IN ('FECHADO', 'closed', 'paid') + data de hoje",
+          logica: 'Igual à App Principal - closedOrders',
           currentUser: currentUser?.id || 'não autenticado'
         });
         
-        // QUERY EXATAMENTE IGUAL À SOMA ORDERS (QUE FUNCIONA)
+        // QUERY EXATAMENTE IGUAL À APP PRINCIPAL
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
-          .select('total_amount'); // EXATAMENTE IGUAL
+          .select('total_amount, created_at, status')
+          .in('status', ['FECHADO', 'closed', 'paid']) // IGUAL À APP PRINCIPAL
+          .gte('created_at', startOfDay.toISOString())
+          .lte('created_at', endOfDay.toISOString());
 
-        console.log('[OWNER HUB] SYNC - Orders Data (mesma lógica Soma Orders):', {
+        console.log('[OWNER HUB] SYNC - Orders Data (igual App Principal):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0,
-          filtroAplicado: 'EXATAMENTE igual Soma Orders - sem filtro'
+          filtroAplicado: 'status IN (FECHADO, closed, paid) + hoje'
         });
 
         if (!ordersError && ordersData && ordersData.length > 0) {
-          // SOMAR EXATAMENTE COMO SOMA ORDERS FAZ
+          // SOMAR EXATAMENTE COMO A APP PRINCIPAL FAZ
           totalVendas = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           faturacaoHoje = totalVendas; // USA O MESMO VALOR
           
           // LOG DE CONFERÊNCIA OBRIGATÓRIO
-          console.log('VALOR RECUPERADO PARA O DASHBOARD (mesma lógica): ', faturacaoHoje);
-          console.log('[OWNER HUB] SINCRONIZADA (igual Soma Orders):', {
+          console.log('VALOR UNIFICADO APP PRINCIPAL/OWNER: ', faturacaoHoje);
+          console.log('[OWNER HUB] UNIFICADO (igual App Principal):', {
             totalVendas: totalVendas,
             faturacaoHoje: faturacaoHoje,
             totalOrders: ordersData.length,
-            filtroAplicado: 'EXATAMENTE igual Soma Orders'
+            filtroAplicado: 'status IN (FECHADO, closed, paid) + hoje',
+            valorEsperado: '51.000 Kz (igual App Principal)'
           });
         } else {
           console.error('[OWNER HUB] Erro Query Sync:', ordersError);
@@ -912,12 +925,12 @@ const OwnerDashboard = () => {
       setChartData(chartDataGenerated);
       
       // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE INTEGRIDADE DE DADOS
-      console.log('[OWNER HUB] INTEGRIDADE DE DADOS - Valores Corrigidos:', {
+      console.log('[OWNER HUB] INTEGRIDADE DE DADOS - Valores Unificados:', {
         faturacaoHojeFinalizada: Number(faturacaoHoje) || 0,
         totalVendasBruto: Number(totalVendas) || 0,
-        impostos: ivaSete, // VALOR REAL CALCULADO
+        impostos: ivaSete, // VALOR REAL CALCULADO (7% de 51.000 = 3.570)
         despesasHoje: Number(totalDespesas) || 0,
-        folhaSalarial: Number(folhaSalarial) || 0, // STAFF REAL (235.000)
+        folhaSalarial: Number(folhaSalarial) || 0, // STAFF REAL (235.000) - MANTIDO
         rendimentoGlobal: Number(rendimentoGlobal) || 0,
         external_history: Number(historicoExterno) || 0,
         graficosHoje: {
@@ -925,17 +938,17 @@ const OwnerDashboard = () => {
           despesas: Number(totalDespesas) || 0
         },
         cardsExibidos: {
-          'FATURAÇÃO HOJE': Number(faturacaoHoje) || 0, // DEVE SER 138.500
-          'IMPOSTOS (7%)': ivaSete, // DEVE SER 9.695
-          'Custos com Staff': Number(folhaSalarial) || 0, // DEVE SER 235.000
+          'FATURAÇÃO HOJE': Number(faturacaoHoje) || 0, // UNIFICADO: 51.000 Kz
+          'IMPOSTOS (7%)': ivaSete, // UNIFICADO: 3.570 Kz (7% de 51.000)
+          'Custos com Staff': Number(folhaSalarial) || 0, // MANTIDO: 235.000 Kz
           'Rendimento Global': Number(rendimentoGlobal) || 0
         },
-        correcao: 'Query igual Soma Orders | Imposto real | Staff real',
+        correcao: 'Query unificada App Principal/Owner | Imposto recalculado | Staff mantido',
         valoresEsperados: {
-          faturacao: '138.500 Kz (igual Soma Orders)',
-          impostos: `${ivaSete} Kz (7% real)`,
-          staff: `${Number(folhaSalarial)} Kz (real da tabela)`,
-          erroCorrigido: 'Query de Hoje igual à Soma Orders que funciona'
+          faturacao: '51.000 Kz (unificado App Principal)',
+          impostos: `${ivaSete} Kz (7% de 51.000 = ${ivaSete})`,
+          staff: `${Number(folhaSalarial)} Kz (mantido real)`,
+          erroCorrigido: 'Query Owner igual à App Principal (closedOrders)'
         }
       });
 
