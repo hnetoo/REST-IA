@@ -402,7 +402,7 @@ const Reports = () => {
       // Buscar products sem filtro is_active que pode não existir
       const { data: productsData, error } = await supabase
         .from('products')
-        .select('name, quantity, cost_price'); // CORRIGIDO: quantity em vez de stock
+        .select('name, stock_quantity, cost_price'); // CORRIGIDO: stock_quantity em vez de quantity
 
       if (error) {
         throw new Error(`Erro de Conexão: ${error.message}`);
@@ -414,7 +414,7 @@ const Reports = () => {
         const alerts: string[] = [];
         
         // Verificar stock baixo
-        if (!product.quantity || product.quantity < 10) {
+        if (!product.stock_quantity || product.stock_quantity < 10) {
           alerts.push('Quantidade crítica');
         }
         
@@ -426,7 +426,7 @@ const Reports = () => {
         if (alerts.length > 0) {
           alertas.push({
             nome: product.name || 'Produto Sem Nome',
-            quantidade: product.quantity || 0, // CORRIGIDO: quantity em vez de stock
+            quantidade: product.stock_quantity || 0, // CORRIGIDO: stock_quantity em vez de quantity
             precoCusto: product.cost_price || 0,
             alertas
           });
