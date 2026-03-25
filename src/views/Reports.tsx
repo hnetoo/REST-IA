@@ -59,7 +59,7 @@ const Reports = () => {
     }).format(value);
   };
 
-  // CARD 1: VENDAS POR ARTIGO - Query com orders (mesma lógica do Dashboard)
+  // CARD 1: VENDAS POR ARTIGO - Relatório de PRODUTOS vendidos (não mesas)
   const fetchVendasPorArtigo = async () => {
     setVendasPorArtigo(prev => ({ ...prev, loading: true }));
     try {
@@ -70,49 +70,53 @@ const Reports = () => {
       const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
       const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
       
-      // QUERY CORRETA - USANDO ORDERS (MESMA TABELA DO DASHBOARD)
+      // QUERY CORRETA - BUSCAR ORDER ITEMS PARA VER PRODUTOS VENDIDOS
       let query = supabase
-        .from('orders')
-        .select('total_amount, created_at, table_id')
-        .eq('status', 'finalized'); // MESMO STATUS DO DASHBOARD
+        .from('order_items')
+        .select(`
+          quantity,
+          unit_price,
+          products!inner(name, price)
+        `)
+        .in('orders.status', ['FECHADO', 'closed', 'paid']); // STATUS CORRETO
 
       if (start && end) {
         query = query
-          .gte('created_at', new Date(start).toISOString())
-          .lte('created_at', new Date(end).toISOString());
+          .gte('orders.created_at', new Date(start).toISOString())
+          .lte('orders.created_at', new Date(end).toISOString());
       } else {
         // Se não houver filtro, usar hoje (mesma lógica do Dashboard)
         query = query
-          .gte('created_at', startOfDay.toISOString())
-          .lte('created_at', endOfDay.toISOString());
+          .gte('orders.created_at', startOfDay.toISOString())
+          .lte('orders.created_at', endOfDay.toISOString());
       }
 
-      const { data: ordersData, error } = await query;
+      const { data: itemsData, error } = await query;
 
       if (error) {
         throw new Error(`Erro de Conexão: ${error.message}`);
       }
 
-      console.log('[DEBUG VENDAS POR MESA] Orders Data:', ordersData);
-      console.log('[DEBUG VENDAS POR MESA] Orders Count:', ordersData?.length || 0);
+      console.log('[DEBUG VENDAS POR ARTIGO] Items Data:', itemsData);
+      console.log('[DEBUG VENDAS POR ARTIGO] Items Count:', itemsData?.length || 0);
 
-      // Agrupar vendas por mesa (table_id)
-      const vendasMap = new Map();
+      // Agrupar vendas por produto
+      const produtosMap = new Map();
       
-      ordersData?.forEach((order: any) => {
-        const mesaId = order.table_id || 'Sem Mesa';
-        const existing = vendasMap.get(mesaId) || { 
-          mesa: `Mesa ${mesaId}`, 
-          quantidadeVendas: 0, 
-          receitaTotal: 0 
+      itemsData?.forEach((item: any) => {
+        const produtoNome = item.products?.name || 'Produto Sem Nome';
+        const existing = produtosMap.get(produtoNome) || { 
+          produto: produtoNome, 
+          quantidade: 0, 
+          valorTotal: 0 
         };
-        existing.quantidadeVendas += 1;
-        existing.receitaTotal += Number(order.total_amount) || 0;
-        vendasMap.set(mesaId, existing);
+        existing.quantidade += item.quantity || 0;
+        existing.valorTotal += (item.quantity || 0) * (item.unit_price || 0);
+        produtosMap.set(produtoNome, existing);
       });
 
-      const result = Array.from(vendasMap.values())
-        .sort((a, b) => b.receitaTotal - a.receitaTotal)
+      const result = Array.from(produtosMap.values())
+        .sort((a, b) => b.valorTotal - a.valorTotal)
         .slice(0, 10) || [];
 
       setVendasPorArtigo({ data: result, loading: false });
@@ -405,7 +409,7 @@ const Reports = () => {
       // Buscar products sem filtro is_active que pode não existir
       const { data: productsData, error } = await supabase
         .from('products')
-        .select('name, stock, cost_price'); // CORRIGIDO: stock em vez de stock_quantity
+        .select('name, quantity, cost_price'); // CORRIGIDO: quantity em vez de stock
 
       if (error) {
         throw new Error(`Erro de Conexão: ${error.message}`);
@@ -417,7 +421,7 @@ const Reports = () => {
         const alerts: string[] = [];
         
         // Verificar stock baixo
-        if (!product.stock || product.stock < 10) {
+        if (!product.quantity || product.quantity < 10) {
           alerts.push('Quantidade crítica');
         }
         
@@ -429,7 +433,7 @@ const Reports = () => {
         if (alerts.length > 0) {
           alertas.push({
             nome: product.name || 'Produto Sem Nome',
-            quantidade: product.stock || 0, // CORRIGIDO: stock em vez de stock_quantity
+            quantidade: product.quantity || 0, // CORRIGIDO: quantity em vez de stock
             precoCusto: product.cost_price || 0,
             alertas
           });
