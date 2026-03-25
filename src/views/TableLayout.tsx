@@ -37,10 +37,7 @@ const TableLayout = () => {
         x: 50 + (newTableNumber - 1) * 30, // Posição automática
         y: 50 + ((newTableNumber - 1) % 3) * 30, // Posição automática
         seats: 4,
-        status: 'LIVRE',
-        minCapacity: 1,
-        maxCapacity: 8,
-        mergedWith: null
+        status: 'LIVRE'
       };
       
       // Adicionar no Supabase
@@ -70,8 +67,17 @@ const TableLayout = () => {
   // Função para organizar mesas automaticamente
   const handleOrganizeTables = async () => {
     try {
-      // Organizar mesas em grid 3x3
-      const organizedTables = tables.map((table, index) => {
+      // ORDENAR MESAS POR NÚMERO CRESCENTE PRIMEIRO
+      const sortedTables = [...tables].sort((a, b) => {
+        const numA = parseInt(a.name.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.name.replace(/\D/g, '')) || 0;
+        return numA - numB;
+      });
+      
+      console.log('[MAPA DE MESAS] Organizando mesas em ordem numérica:', sortedTables.map(t => t.name));
+      
+      // Organizar mesas em grid 3x3 após ordenação
+      const organizedTables = sortedTables.map((table, index) => {
         const row = Math.floor(index / 3);
         const col = index % 3;
         
@@ -81,6 +87,8 @@ const TableLayout = () => {
           y: 50 + row * 100, // Espaçamento vertical
         };
       });
+      
+      console.log('[MAPA DE MESAS] Posições calculadas:', organizedTables.map(t => ({ name: t.name, x: t.x, y: t.y })));
       
       // Atualizar posições no Supabase
       const updatePromises = organizedTables.map(table => 
