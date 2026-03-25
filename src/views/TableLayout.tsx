@@ -40,23 +40,60 @@ const TableLayout = () => {
         status: 'LIVRE'
       };
       
-      // Adicionar no Supabase
-      const { data, error } = await supabase
-        .from('tables')
-        .insert([newTable])
-        .select();
+      // Adicionar no Supabase - TENTAR 'mesas' PRIMEIRO, DEPOIS 'tables'
+      let success = false;
+      let tableName = 'mesas'; // TENTAR 'mesas' PRIMEIRO
       
-      if (error) {
-        console.error('Erro ao adicionar mesa:', error);
-        addNotification('error', 'Erro ao adicionar mesa. Tente novamente.');
+      try {
+        const result = await supabase
+          .from(tableName)
+          .insert([newTable])
+          .select();
+        
+        if (result.error) {
+          // Se der erro 404, tentar com 'tables'
+          if (result.error.message && result.error.message.includes('404')) {
+            console.log('[MAPA DE MESAS] Tabela "mesas" não encontrada, tentando "tables"');
+            tableName = 'tables';
+            const result2 = await supabase
+              .from('tables')
+              .insert([newTable])
+              .select();
+            
+            if (result2.error) {
+              console.error('Erro ao adicionar mesa em "tables":', result2.error);
+              addNotification('error', 'Erro ao adicionar mesa. Tente novamente.');
+              return;
+            }
+            
+            if (result2.data) {
+              console.log('Mesa adicionada com sucesso em "tables":', newTable);
+              addTable(newTable);
+              addNotification('success', `Mesa ${newTableNumber} adicionada com sucesso!`);
+              success = true;
+            }
+          } else {
+            console.error('Erro ao adicionar mesa em "mesas":', result.error);
+            addNotification('error', 'Erro ao adicionar mesa. Tente novamente.');
+            return;
+          }
+        } else {
+          console.log('Mesa adicionada com sucesso em "mesas":', newTable);
+          addTable(newTable);
+          addNotification('success', `Mesa ${newTableNumber} adicionada com sucesso!`);
+          success = true;
+        }
+      } catch (error) {
+        console.error('Erro crítico ao adicionar mesa:', error);
+        addNotification('error', 'Erro crítico ao adicionar mesa. Contacte suporte.');
         return;
       }
       
       // Adicionar no estado local
-      addTable(newTable);
+      // addTable(newTable);
       
       console.log('Mesa adicionada com sucesso:', newTable);
-      addNotification('success', `Mesa ${newTableNumber} adicionada com sucesso!`);
+      // addNotification('success', `Mesa ${newTableNumber} adicionada com sucesso!`);
       
     } catch (error) {
       console.error('Erro crítico ao adicionar mesa:', error);
@@ -90,10 +127,10 @@ const TableLayout = () => {
       
       console.log('[MAPA DE MESAS] Posições calculadas:', organizedTables.map(t => ({ name: t.name, x: t.x, y: t.y })));
       
-      // Atualizar posições no Supabase
+      // Atualizar posições no Supabase - USAR A MESMA TABELA DO ADICIONAR
       const updatePromises = organizedTables.map(table => 
         supabase
-          .from('tables')
+          .from(tableName) // USAR 'mesas' ou 'tables' dinamicamente
           .update({ x: table.x, y: table.y })
           .eq('id', table.id)
       );
@@ -189,10 +226,25 @@ const TableLayout = () => {
     try {
       const table = tables.find(t => t.id === draggedTable.id);
       if (table) {
-        await supabase
-          .from('tables')
-          .update({ x: table.x, y: table.y })
-          .eq('id', draggedTable.id);
+        // TENTAR 'mesas' PRIMEIRO, DEPOIS 'tables'
+        let tableName = 'mesas';
+        try {
+          const result = await supabase
+            .from('mesas')
+            .update({ x: table.x, y: table.y })
+            .eq('id', draggedTable.id);
+          
+          if (result.error) {
+            // Se der erro, tentar com 'tables'
+            tableName = 'tables';
+            await supabase
+              .from('tables')
+              .update({ x: table.x, y: table.y })
+              .eq('id', draggedTable.id);
+          }
+        } catch (error) {
+          console.error('Erro ao salvar posição:', error);
+        }
       }
     } catch (error) {
       console.error('Erro ao salvar posição:', error);
@@ -218,8 +270,8 @@ const TableLayout = () => {
     }
   };
 
-  // REMOVER FILTRAGEM - MOSTRAR TODAS AS MESAS SEM ZONAS
-  const filteredTables = tables;
+  // FILTRAGEM POR ZONA - MOSTRAR APENAS MESAS DA ZONA SELECIONADA
+  const filteredTables = tables.filter(table => table.zone === activeZone);
 
   return (
     <div className="p-8 h-full bg-background flex flex-col overflow-hidden animate-in fade-in duration-700">
