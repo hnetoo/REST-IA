@@ -70,12 +70,56 @@ interface SystemHubUser {
 
 const SystemHub = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
-  const { settings, updateSettings } = useStore();
+  const { settings, updateSettings, menu, categories, syncProductsToCloud, syncCategoriesToCloud } = useStore();
 
   // Log de compatibilidade Windows ao montar
   useEffect(() => {
     logWindowsCompatibility();
   }, []);
+
+  // Carregar dados essenciais (categorias e produtos) ao montar
+  useEffect(() => {
+    const loadEssentialData = async () => {
+      try {
+        console.log('[SystemHub] Carregando dados essenciais...');
+        await Promise.all([
+          syncCategoriesToCloud(),
+          syncProductsToCloud()
+        ]);
+        console.log('[SystemHub] Dados essenciais sincronizados com sucesso');
+      } catch (error) {
+        console.error('[SystemHub] Erro ao carregar dados essenciais:', error);
+      }
+    };
+
+    loadEssentialData();
+  }, [syncCategoriesToCloud, syncProductsToCloud]);
+
+  // Componente de Status de Dados
+  const DataStatus = () => {
+    return (
+      <div className="glass-panel rounded-2xl p-6 mb-6">
+        <h3 className="text-lg font-bold text-white mb-4">Status dos Dados</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${categories.length > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <div className="text-xs text-slate-400">Categorias</div>
+            <div className="text-sm font-bold text-white">{categories.length}</div>
+          </div>
+          <div className="text-center">
+            <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${menu.length > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <div className="text-xs text-slate-400">Produtos</div>
+            <div className="text-sm font-bold text-white">{menu.length}</div>
+          </div>
+          <div className="text-center">
+            <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${menu.length > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <div className="text-xs text-slate-400">Menu</div>
+            <div className="text-sm font-bold text-white">{menu.length}</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Componente Identidade usando formulário existente
   const IdentitySettings = () => {
@@ -2399,6 +2443,9 @@ const SystemHub = () => {
           >
             ← Voltar para Sistema
           </button>
+          
+          {/* Status dos Dados */}
+          <DataStatus />
           
           {/* Componente Ativo */}
           {activeComponent}
