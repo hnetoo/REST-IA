@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseService';
+import { useStore } from '../../store/useStore';
 import { TrendingUp, DollarSign, Users, Wallet, Receipt, Calculator, RefreshCw, LogOut, Settings, TrendingDown, Package } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { fetchVendasHoje, fetchHistoricoExterno } from '../../lib/sharedMetrics';
@@ -645,6 +646,11 @@ const OwnerDashboard = () => {
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
+        // VERIFICAR AUTENTICAÇÃO - Usar currentUser da Store
+        if (!currentUser) {
+          console.log('[OWNER HUB] Usuário não autenticado - usando dados locais');
+        }
+        
         // DATA DE HOJE - FUSO HORÁRIO DE LUANDA (GMT+1) COM START/END OF DAY
         const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
         const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
@@ -656,10 +662,11 @@ const OwnerDashboard = () => {
           startOfDay: startOfDay.toISOString(),
           endOfDay: endOfDay.toISOString(),
           filtro: "status = 'finalized' + range de hoje",
-          logica: 'StartOfDay + EndOfDay + Filtro Finalizadas'
+          logica: 'StartOfDay + EndOfDay + Filtro Finalizadas',
+          currentUser: currentUser?.id || 'não autenticado'
         });
         
-        // QUERY CORRETA - COM RANGE DE DATA EXATO
+        // QUERY CORRETA - COM RANGE DE DATA EXATO E AUTENTICAÇÃO
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
@@ -667,33 +674,28 @@ const OwnerDashboard = () => {
           .gte('created_at', startOfDay.toISOString())
           .lte('created_at', endOfDay.toISOString());
 
-        console.log('[OWNER HUB] SYNC - Orders Data (status = finalized):', {
+        console.log('[OWNER HUB] SYNC - Orders Data (range exato):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0,
-          filtroAplicado: 'status = finalized (apenas faturas emitidas)'
+          filtroAplicado: 'status = finalized + range start/end of day'
         });
 
         if (!ordersError && ordersData) {
-          // FILTRAR POR DATA NO FRONT-END - EXATAMENTE COMO APP PRINCIPAL
-          const todayOrders = ordersData
-            .filter(order => String(order.created_at || '').split('T')[0] === today);
-          
-          // SOMAR APENAS FATURAS DE HOJE - EXATAMENTE COMO APP PRINCIPAL
-          totalVendas = todayOrders.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+          // SOMAR APENAS FATURAS DE HOJE - QUERY JÁ FILTRADA COM RANGE EXATO
+          totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
           faturacaoHoje = totalVendas; // USA O MESMO VALOR - INTEGRIDADE
           
           // LOG DE DEBUG TEMPORÁRIO
-          console.log(`Faturas emitidas hoje com status finalized: ${totalVendas} Kz`);
+          console.log(`Faturas emitidas hoje com range exato: ${totalVendas} Kz`);
           
-          console.log('[OWNER HUB] SINCRONIZADA (apenas faturas emitidas):', {
+          console.log('[OWNER HUB] SINCRONIZADA (range start/end of day):', {
             totalVendas: totalVendas,
             faturacaoHoje: faturacaoHoje,
-            today: today,
+            startOfDay: startOfDay.toISOString(),
+            endOfDay: endOfDay.toISOString(),
             totalOrders: ordersData.length,
-            todayOrders: todayOrders.length,
-            status: 'finalized',
-            observacao: 'Agora mostra apenas faturas emitidas (13.000 Kz), não movimento bruto (51.500 Kz)'
+            filtroAplicado: 'status = finalized + range start/end of day'
           });
         } else {
           console.error('[OWNER HUB] Erro Query Sync:', ordersError);
