@@ -65,22 +65,16 @@ const Reports = () => {
     try {
       const { start, end } = dateRange;
       
-      // QUERY CORRETA - BUSCAR ORDER ITEMS COM PRODUTOS
+      // QUERY CORRETA - BUSCAR ORDER ITEMS COM PRODUTOS (SEM JOIN ORDERS)
       let query = supabase
         .from('order_items')
         .select(`
           quantity,
           unit_price,
-          products!inner(name),
-          orders!inner(created_at, status)
-        `)
-        .in('orders.status', ['FECHADO', 'closed', 'paid']); // STATUS CORRETO
+          products!inner(name)
+        `);
 
-      if (start && end) {
-        query = query
-          .gte('orders.created_at', new Date(start).toISOString())
-          .lte('orders.created_at', new Date(end).toISOString());
-      }
+      // REMOVIDO FILTRO DE DATA - SEM JOIN ORDERS
 
       const { data: itemsData, error } = await query;
 
