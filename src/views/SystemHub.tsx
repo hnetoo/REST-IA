@@ -27,7 +27,18 @@ import {
   TrendingDown,
   PieChart,
   LineChart,
-  FileDown
+  FileDown,
+  Building,
+  Upload,
+  Plus,
+  Edit,
+  X,
+  Cloud,
+  FileBadge,
+  Info,
+  Terminal,
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
@@ -317,7 +328,7 @@ const SystemHub = () => {
                       className="p-3 text-slate-500 hover:text-white"
                       title="Editar utilizador"
                     >
-                      <Edit2 size={16}/>
+                      <Edit size={16}/>
                     </button>
                     <button 
                       onClick={() => removeUser(u.id)} 
@@ -1900,7 +1911,7 @@ const SystemHub = () => {
                           className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
                           title="Editar Registro"
                         >
-                          <Edit2 size={16}/>
+                          <Edit size={16}/>
                         </button>
                         <button 
                           onClick={async () => {
