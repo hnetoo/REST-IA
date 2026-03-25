@@ -18,6 +18,11 @@ const TableLayout = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [tableToDelete, setTableToDelete] = useState<Table | null>(null);
   
+  // Estados para drag and drop fluido
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedTable, setDraggedTable] = useState<Table | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  
   // Função para adicionar nova mesa
   const handleAddTable = async () => {
     try {
@@ -122,7 +127,7 @@ const TableLayout = () => {
     if (!table) return;
     
     let { x, y } = table;
-    const step = 0.5; // Passo menor para o novo tamanho de card
+    const step = 2.0; // Aumentar velocidade de movimento
     if (direction === 'up') y = Math.max(0, y - step);
     if (direction === 'down') y = y + step;
     if (direction === 'left') x = Math.max(0, x - step);
@@ -130,6 +135,73 @@ const TableLayout = () => {
     
     updateTablePosition(id, x, y);
   };
+
+  const handleMouseDown = (e: React.MouseEvent, table: Table) => {
+    if (!isDesignMode) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    
+    if (containerRect) {
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+      setDraggedTable(table);
+      setIsDragging(true);
+      document.body.style.cursor = 'grabbing';
+      e.preventDefault();
+    }
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging || !draggedTable || !containerRef.current) return;
+    
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newX = e.clientX - containerRect.left - dragOffset.x;
+    const newY = e.clientY - containerRect.top - dragOffset.y;
+    
+    const maxX = containerRect.width - 120;
+    const maxY = containerRect.height - 80;
+    
+    const constrainedX = Math.max(0, Math.min(newX, maxX));
+    const constrainedY = Math.max(0, Math.min(newY, maxY));
+    
+    updateTablePosition(draggedTable.id, constrainedX, constrainedY);
+  };
+
+  const handleMouseUp = async () => {
+    if (!isDragging || !draggedTable) return;
+    
+    setIsDragging(false);
+    setDraggedTable(null);
+    setDragOffset({ x: 0, y: 0 });
+    document.body.style.cursor = 'default';
+    
+    try {
+      const table = tables.find(t => t.id === draggedTable.id);
+      if (table) {
+        await supabase
+          .from('tables')
+          .update({ x: table.x, y: table.y })
+          .eq('id', draggedTable.id);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar posição:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (isDesignMode) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDesignMode, isDragging, draggedTable, dragOffset]);
 
   const confirmDeleteTable = () => {
     if (tableToDelete) {
@@ -223,17 +295,21 @@ const TableLayout = () => {
             position: 'absolute',
             left: `${table.x}px`,
             top: `${table.y}px`,
-            transition: isDesignMode ? 'none' : 'all 0.5s ease'
+            transition: isDragging && draggedTable?.id === table.id ? 'none' : 'all 0.075s ease',
+            transform: isDragging && draggedTable?.id === table.id ? 'scale(1.05)' : 'scale(1)',
+            zIndex: isDragging && draggedTable?.id === table.id ? 1000 : 1,
+            cursor: isDesignMode ? 'grab' : 'pointer'
           };
 
           return (
             <div
               key={table.id}
               style={style}
+              onMouseDown={(e) => handleMouseDown(e, table)}
               className={`
                 w-28 h-28 rounded-[1.5rem] border-2 flex flex-col items-center justify-center group relative
-                ${isDesignMode ? 'border-orange-500/50 bg-orange-500/5 cursor-move' : 
-                  !isOccupied ? 'border-white/10 bg-white/5 hover:border-primary/50' : 
+                ${isDesignMode ? 'border-orange-500/50 bg-orange-500/5 hover:scale-105 hover:shadow-lg' : 
+                  !isOccupied ? 'border-white/10 bg-white/5 hover:border-primary/50 hover:scale-105' : 
                     'border-red-500 bg-red-500/10 animate-pulse shadow-red-500/20'
                 }
               `}
