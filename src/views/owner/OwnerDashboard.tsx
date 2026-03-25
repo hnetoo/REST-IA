@@ -643,7 +643,7 @@ const OwnerDashboard = () => {
         folhaSalarial = 0;
       }
 
-      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR EXATAMENTE A MESMA LÓGICA DA APP PRINCIPAL
+      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR EXATAMENTE A MESMA LÓGICA DO POS
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
@@ -652,49 +652,43 @@ const OwnerDashboard = () => {
           console.log('[OWNER HUB] Usuário não autenticado - usando dados locais');
         }
         
-        // DATA DE HOJE - FUSO HORÁRIO DE LUANDA (GMT+1)
-        const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
-        const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
-        const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
-        const today = todayLuanda.toISOString().split('T')[0];
+        // DATA DE HOJE - EXATAMENTE COMO NO POS
+        const today = new Date().toISOString().split('T')[0]; // Data atual para despesas
         
-        console.log('[OWNER HUB] UNIFICAR COM APP PRINCIPAL:', {
-          todayLuanda: todayLuanda.toLocaleString('pt-AO', {timeZone: 'Africa/Luanda'}),
-          startOfDay: startOfDay.toISOString(),
-          endOfDay: endOfDay.toISOString(),
-          filtro: "status IN ('FECHADO', 'closed', 'paid') + data de hoje",
-          logica: 'Igual à App Principal - closedOrders',
+        console.log('[OWNER HUB] COPIANDO LÓGICA EXATA DO POS:', {
+          today: today,
+          filtro: "status IN ('FECHADO', 'closed', 'paid') + timestamp filter",
+          logica: 'Igual ao DashboardV2.tsx linha 387',
           currentUser: currentUser?.id || 'não autenticado'
         });
         
-        // QUERY EXATAMENTE IGUAL À APP PRINCIPAL
+        // QUERY EXATAMENTE IGUAL AO POS - USAR timestamp EM VEZ DE created_at
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
-          .select('total_amount, created_at, status')
-          .in('status', ['FECHADO', 'closed', 'paid']) // IGUAL À APP PRINCIPAL
-          .gte('created_at', startOfDay.toISOString())
-          .lte('created_at', endOfDay.toISOString());
+          .select('total_amount, timestamp, status')
+          .in('status', ['FECHADO', 'closed', 'paid']) // IGUAL AO POS
+          .eq('timestamp', today); // IGUAL AO POS - filtro por data
 
-        console.log('[OWNER HUB] SYNC - Orders Data (igual App Principal):', {
+        console.log('[OWNER HUB] SYNC - Orders Data (igual POS):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0,
-          filtroAplicado: 'status IN (FECHADO, closed, paid) + hoje'
+          filtroAplicado: 'status IN (FECHADO, closed, paid) + timestamp = hoje'
         });
 
         if (!ordersError && ordersData && ordersData.length > 0) {
-          // SOMAR EXATAMENTE COMO A APP PRINCIPAL FAZ
+          // SOMAR EXATAMENTE COMO O POS FAZ
           totalVendas = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
           faturacaoHoje = totalVendas; // USA O MESMO VALOR
           
           // LOG DE CONFERÊNCIA OBRIGATÓRIO
-          console.log('VALOR UNIFICADO APP PRINCIPAL/OWNER: ', faturacaoHoje);
-          console.log('[OWNER HUB] UNIFICADO (igual App Principal):', {
+          console.log('VALOR COPIADO DO POS (51.000 Kz): ', faturacaoHoje);
+          console.log('[OWNER HUB] COPIADO DO POS:', {
             totalVendas: totalVendas,
             faturacaoHoje: faturacaoHoje,
             totalOrders: ordersData.length,
-            filtroAplicado: 'status IN (FECHADO, closed, paid) + hoje',
-            valorEsperado: '51.000 Kz (igual App Principal)'
+            filtroAplicado: 'status IN (FECHADO, closed, paid) + timestamp = hoje',
+            valorEsperado: '51.000 Kz (igual ao POS)'
           });
         } else {
           console.error('[OWNER HUB] Erro Query Sync:', ordersError);

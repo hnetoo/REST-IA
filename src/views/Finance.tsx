@@ -155,31 +155,28 @@ const Finance = () => {
   const today = new Date().toISOString().split('T')[0];
 
   const metrics = useMemo(() => {
-    // DADOS REAIS DO SUPABASE - IGUAL À APP PRINCIPAL (51.000 Kz)
-    const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
-    const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
-    const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
+    // DADOS REAIS DO SUPABASE - EXATAMENTE IGUAL AO POS (51.000 Kz)
+    const today = new Date().toISOString().split('T')[0]; // Data atual para despesas - IGUAL AO POS
     
-    // FILTRAR ORDENS COMO A APP PRINCIPAL - STATUS E DATA DE HOJE
-    const todayOrders = ordersData.filter(order => {
-      const orderDate = new Date(order.created_at || '');
-      const isInStatus = ['FECHADO', 'closed', 'paid'].includes(order.status || '');
-      const isToday = orderDate >= startOfDay && orderDate <= endOfDay;
+    // FILTRAR ORDENS EXATAMENTE COMO O POS FAZ - USAR activeOrders
+    const todayOrders = activeOrders.filter(order => {
+      const isInStatus = ['FECHADO', 'closed', 'paid'].includes(order.status || ''); // IGUAL AO POS
+      const isToday = new Date(order.timestamp || '').toISOString().split('T')[0] === today; // IGUAL AO POS
       return isInStatus && isToday;
     });
     
-    const revenue = todayOrders.reduce((a, b) => a + (b.total_amount || 0), 0);
+    const revenue = todayOrders.reduce((a, b) => a + (b.total || 0), 0); // IGUAL AO POS - usa 'total'
     
-    console.log('[FINANCEIRO ALINHADO] Query igual App Principal:', {
-      totalOrders: ordersData.length,
+    console.log('[FINANCEIRO COPIADO DO POS] Query exata:', {
+      totalOrders: activeOrders.length,
       todayOrders: todayOrders.length,
       revenue: revenue,
-      filtro: "status IN (FECHADO, closed, paid) + hoje Luanda",
-      valorEsperado: '51.000 Kz'
+      filtro: "status IN (FECHADO, closed, paid) + timestamp filter = hoje",
+      logica: 'Igual ao DashboardV2.tsx linha 387/423',
+      valorEsperado: '51.000 Kz (igual ao POS)'
     });
     
     // DESPESAS HOJE - Mesma lógica do Profit Center
-    const today = new Date().toISOString().split('T')[0];
     const todayExpenses = expenses.filter(expense => 
       String(expense.createdAt || '').split('T')[0] === today
     );
@@ -193,8 +190,8 @@ const Finance = () => {
     
     // FLUXO POR MODALIDADE - FORÇAR MAPEAMENTO CORRETO
     const payments = todayOrders.reduce((acc: any, o) => {
-      const method = (o.payment_method || '').trim().toUpperCase();
-      const valor = Number(o.total_amount || 0);
+      const method = (o.paymentMethod || '').trim().toUpperCase(); // CORRIGIDO: paymentMethod
+      const valor = Number(o.total || 0); // CORRIGIDO: total
       
       // Mapeamento estrito de métodos de pagamento válidos
       if (method.includes('NUMER') || method.includes('DINHE')) {
@@ -314,7 +311,7 @@ const Finance = () => {
       new Date(o.timestamp).toLocaleString('pt-AO'),
       formatKz(o.total),
       formatKz(o.taxTotal),
-      o.payment_method || 'N/A'
+      o.paymentMethod || 'N/A'
     ]);
 
     printFinanceReport(title, data, columns, settings);
@@ -622,15 +619,15 @@ const Finance = () => {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                    {metrics.payments && Object.entries(metrics.payments).length > 0 ? (
-                      Object.entries(metrics.payments).map(([payment_method, total]: any, index) => (
+                      Object.entries(metrics.payments).map(([paymentMethod, total]: any, index) => (
                         <tr key={index} className="hover:bg-white/5 transition-colors">
-                           <td className="px-8 py-6 font-bold text-white text-xs">{payment_method}</td>
+                           <td className="px-8 py-6 font-bold text-white text-xs">{paymentMethod}</td>
                            <td className="px-8 py-6 text-xs text-slate-500 font-mono">{new Date().toLocaleDateString('pt-AO')}</td>
                            <td className="px-8 py-6 font-mono font-bold text-white">{formatKz(total)}</td>
                            <td className="px-8 py-6 font-mono text-orange-500">{formatKz(total * 0.065)}</td>
                            <td className="px-8 py-6 text-right">
                               <button 
-                                onClick={() => handlePrintSale(payment_method, total)}
+                                onClick={() => handlePrintSale(paymentMethod, total)}
                                 className="p-3 bg-white/5 text-slate-400 hover:text-primary rounded-xl transition-all"
                                 title="Imprimir recibo"
                               >
