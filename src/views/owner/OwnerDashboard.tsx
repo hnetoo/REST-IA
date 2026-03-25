@@ -645,22 +645,27 @@ const OwnerDashboard = () => {
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
-        // DATA DE HOJE - FUSO HORÁRIO DE LUANDA (GMT+1)
+        // DATA DE HOJE - FUSO HORÁRIO DE LUANDA (GMT+1) COM START/END OF DAY
         const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
+        const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
+        const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
         const today = todayLuanda.toISOString().split('T')[0];
         
-        console.log('[OWNER HUB] CORREÇÃO CRÍTICA - Fuso Luanda:', {
+        console.log('[OWNER HUB] CORREÇÃO CRÍTICA - Start/End of Day Luanda:', {
           todayLuanda: todayLuanda.toLocaleString('pt-AO', {timeZone: 'Africa/Luanda'}),
-          todayISO: today,
-          filtro: "status = 'finalized' (apenas faturas emitidas)",
-          logica: 'Fuso Angola + Filtro Finalizadas'
+          startOfDay: startOfDay.toISOString(),
+          endOfDay: endOfDay.toISOString(),
+          filtro: "status = 'finalized' + range de hoje",
+          logica: 'StartOfDay + EndOfDay + Filtro Finalizadas'
         });
         
-        // QUERY CORRETA - APENAS FATURAS FINALIZADAS
+        // QUERY CORRETA - COM RANGE DE DATA EXATO
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'finalized'); // APENAS FATURAS EMITIDAS
+          .eq('status', 'finalized')
+          .gte('created_at', startOfDay.toISOString())
+          .lte('created_at', endOfDay.toISOString());
 
         console.log('[OWNER HUB] SYNC - Orders Data (status = finalized):', {
           data: ordersData,
