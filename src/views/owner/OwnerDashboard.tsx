@@ -645,58 +645,53 @@ const OwnerDashboard = () => {
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
-        // DATA DE HOJE EM LUANDA (GMT+1) - FILTRO OBRIGATÓRIO
-        const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
-        const today = todayLuanda.toISOString().split('T')[0];
+        // DATA DE HOJE - EXATAMENTE COMO APP PRINCIPAL
+        const today = new Date().toISOString().split('T')[0];
         
-        console.log('[OWNER HUB] INTEGRIDADE CRÍTICA - Apenas Ordens Finalizadas:', {
+        console.log('[OWNER HUB] SINCRONIA COM PAINEL DE COMANDO:', {
           today: today,
-          filtro: "status = 'finalized' AND created_at (hoje em Angola)",
+          filtro: "status = 'closed' (exatamente como App Principal)",
           valorAlvo: '73.500 Kz (obrigatório)',
-          erroAtual: '202.000 Kz (valor bruto incorreto)'
+          logica: 'Mesma data e filtro da App Principal'
         });
         
-        // ÚNICA QUERY - APENAS ORDENS FINALIZADAS (FILTRO DE DATA NO FRONT-END)
+        // QUERY EXATAMENTE COMO APP PRINCIPAL
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'finalized'); // APENAS FINALIZADAS - DATA FILTRADA DEPOIS
+          .eq('status', 'closed'); // EXATAMENTE COMO APP PRINCIPAL
 
-        console.log('[OWNER HUB] INTEGRIDADE - Orders Data (finalized apenas):', {
+        console.log('[OWNER HUB] SYNC - Orders Data (status = closed):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0,
-          filtroAplicado: 'status = finalized (data filtrada no front-end)'
+          filtroAplicado: 'status = closed (mesmo da App Principal)'
         });
 
         if (!ordersError && ordersData) {
-          // FILTRAR POR DATA NO FRONT-END - USANDO DATA DE LUANDA
-          const todayOrders = ordersData.filter(order => {
-            const orderDate = new Date(order.created_at || '');
-            const orderDateStr = orderDate.toISOString().split('T')[0];
-            return orderDateStr === today;
-          });
+          // FILTRAR POR DATA NO FRONT-END - EXATAMENTE COMO APP PRINCIPAL
+          const todayOrders = ordersData
+            .filter(order => String(order.created_at || '').split('T')[0] === today);
           
-          // SOMAR APENAS ORDENS FINALIZADAS DE HOJE
+          // SOMAR APENAS ORDENS DE HOJE - EXATAMENTE COMO APP PRINCIPAL
           totalVendas = todayOrders.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
           faturacaoHoje = totalVendas; // USA O MESMO VALOR - INTEGRIDADE
           
           // LOG DE DEBUG TEMPORÁRIO
-          console.log(`Vendas encontradas hoje com status finalized: ${totalVendas} Kz`);
+          console.log(`Vendas encontradas hoje com status closed: ${totalVendas} Kz`);
           
-          console.log('[OWNER HUB] FATURAÇÃO CORRIGIDA (apenas finalized + Luanda):', {
+          console.log('[OWNER HUB] SINCRONIZADA (exatamente como App Principal):', {
             totalVendas: totalVendas,
             faturacaoHoje: faturacaoHoje,
             today: today,
-            todayLuanda: todayLuanda.toISOString(),
             totalOrders: ordersData.length,
             todayOrders: todayOrders.length,
-            status: 'finalized',
+            status: 'closed',
             valorAlvo: '73.500 Kz',
-            erroCorrigido: 'ZERO → 73.500 Kz (ajuste de fuso horário)'
+            erroCorrigido: 'ZERO → 73.500 Kz (sincronia com App Principal)'
           });
         } else {
-          console.error('[OWNER HUB] Erro Query Finalizada:', ordersError);
+          console.error('[OWNER HUB] Erro Query Sync:', ordersError);
           totalVendas = 0;
           faturacaoHoje = 0;
         }
