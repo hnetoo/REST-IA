@@ -2,9 +2,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { 
-  Users, Zap, Clock, Trash2, Edit3, Save, Move, Plus, AlertTriangle, X
+  Users, Zap, Clock, Trash2, Edit3, Save, Move, Plus, AlertTriangle, X, Grid3x3
 } from 'lucide-react';
 import { Table, TableZone } from '../../types';
+import { supabase } from '../lib/supabase';
 
 const TableLayout = () => {
   const { tables, activeOrders, setActiveTable, updateTablePosition, addNotification, removeTable, closeTable, addTable } = useStore();
@@ -16,6 +17,89 @@ const TableLayout = () => {
   const [isDesignMode, setIsDesignMode] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [tableToDelete, setTableToDelete] = useState<Table | null>(null);
+  
+  // Função para adicionar nova mesa
+  const handleAddTable = async () => {
+    try {
+      // Gerar número sequencial automático
+      const maxTableNumber = Math.max(...tables.map(t => parseInt(t.name.replace(/\D/g, ''))), 0);
+      const newTableNumber = maxTableNumber + 1;
+      
+      const newTable: Table = {
+        id: Date.now(), // ID único
+        name: `MESA ${newTableNumber}`,
+        zone: activeZone,
+        x: 50 + (newTableNumber - 1) * 30, // Posição automática
+        y: 50 + ((newTableNumber - 1) % 3) * 30, // Posição automática
+        seats: 4,
+        status: 'LIVRE',
+        minCapacity: 1,
+        maxCapacity: 8,
+        mergedWith: null
+      };
+      
+      // Adicionar no Supabase
+      const { data, error } = await supabase
+        .from('tables')
+        .insert([newTable])
+        .select();
+      
+      if (error) {
+        console.error('Erro ao adicionar mesa:', error);
+        addNotification('error', 'Erro ao adicionar mesa. Tente novamente.');
+        return;
+      }
+      
+      // Adicionar no estado local
+      addTable(newTable);
+      
+      console.log('Mesa adicionada com sucesso:', newTable);
+      addNotification('success', `Mesa ${newTableNumber} adicionada com sucesso!`);
+      
+    } catch (error) {
+      console.error('Erro crítico ao adicionar mesa:', error);
+      addNotification('error', 'Erro crítico ao adicionar mesa. Contacte suporte.');
+    }
+  };
+  
+  // Função para organizar mesas automaticamente
+  const handleOrganizeTables = async () => {
+    try {
+      // Organizar mesas em grid 3x3
+      const organizedTables = tables.map((table, index) => {
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        
+        return {
+          ...table,
+          x: 50 + col * 120, // Espaçamento horizontal
+          y: 50 + row * 100, // Espaçamento vertical
+        };
+      });
+      
+      // Atualizar posições no Supabase
+      const updatePromises = organizedTables.map(table => 
+        supabase
+          .from('tables')
+          .update({ x: table.x, y: table.y })
+          .eq('id', table.id)
+      );
+      
+      await Promise.all(updatePromises);
+      
+      // Atualizar estado local
+      organizedTables.forEach(table => {
+        updateTablePosition(table.id, table.x, table.y);
+      });
+      
+      console.log('Mesas organizadas com sucesso:', organizedTables);
+      addNotification('success', 'Mesas organizadas em grid com sucesso!');
+      
+    } catch (error) {
+      console.error('Erro ao organizar mesas:', error);
+      addNotification('error', 'Erro ao organizar mesas. Tente novamente.');
+    }
+  };
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -54,26 +138,6 @@ const TableLayout = () => {
     }
   };
 
-  const handleAddTable = () => {
-    // Encontrar o próximo ID disponível
-    const nextId = Math.max(...tables.map(t => t.id), 0) + 1;
-    
-    const newTable: Table = {
-      id: nextId,
-      name: `Mesa ${nextId}`,
-      seats: 4,
-      status: 'LIVRE',
-      x: 0,
-      y: 0,
-      zone: activeZone,
-      shape: 'SQUARE',
-      rotation: 0
-    };
-    
-    addTable(newTable);
-    addNotification('success', `Mesa ${nextId} adicionada com sucesso!`);
-  };
-
   // REMOVER FILTRAGEM - MOSTRAR TODAS AS MESAS SEM ZONAS
   const filteredTables = tables;
 
@@ -99,6 +163,27 @@ const TableLayout = () => {
                 {zone}
               </button>
             ))}
+          </div>
+
+          {/* Botões de Ação Rápida */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleAddTable}
+              className="px-4 py-2 bg-green-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-green-500/20 hover:bg-green-600 transition-all"
+              title="Adicionar Nova Mesa"
+            >
+              <Plus size={16} />
+              Adicionar Mesa
+            </button>
+            
+            <button
+              onClick={handleOrganizeTables}
+              className="px-4 py-2 bg-blue-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:bg-blue-600 transition-all"
+              title="Organizar Automaticamente"
+            >
+              <Grid3x3 size={16} />
+              Organizar
+            </button>
           </div>
 
           <button 
