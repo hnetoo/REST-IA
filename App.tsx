@@ -75,7 +75,7 @@ const App = () => {
             currentUser?.id ? (
               <div className="flex h-screen w-full overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 h-full overflow-hidden relative">
+                <main className="flex-1 h-full overflow-hidden relative max-w-7xl mx-auto px-6 w-full">
                   <Routes>
                     <Route path="/" element={<DashboardV2 />} />
                     <Route path="/dashboard" element={<DashboardV2 />} />
