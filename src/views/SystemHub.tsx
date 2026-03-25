@@ -1,14 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Settings, Users, Shield, FileText, Cloud, Terminal,
-  ChevronRight, Building, UserCheck, Lock, Database, Code,
-  Plus, Edit2, Trash2, X, Save, FileBadge, Landmark, Info, Download,
-  ChefHat, Upload, AlertCircle, Activity
+  Database, 
+  Server, 
+  Shield, 
+  Users, 
+  Settings, 
+  Activity, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock, 
+  FileText, 
+  Download, 
+  RefreshCw, 
+  Save, 
+  Trash2, 
+  Landmark, 
+  ChefHat, 
+  BarChart3, 
+  Code, 
+  Lock, 
+  UserCheck,
+  Search,
+  Filter,
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  PieChart,
+  LineChart,
+  FileDown
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { supabase } from '../lib/supabase';
+import { 
+  safeWindow, 
+  safeLocalStorage, 
+  safeSessionStorage, 
+  safeConfirm, 
+  safeAlert, 
+  safeReload,
+  logWindowsCompatibility 
+} from '../utils/windowsCompatibility';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
 import { UserRole } from '../../types';
-import { supabase } from '../lib/supabase';
 
 // Importar componentes existentes
 import Employees from './Employees';
@@ -27,6 +60,11 @@ interface SystemHubUser {
 const SystemHub = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const { settings, updateSettings } = useStore();
+
+  // Log de compatibilidade Windows ao montar
+  useEffect(() => {
+    logWindowsCompatibility();
+  }, []);
 
   // Componente Identidade usando formulário existente
   const IdentitySettings = () => {
@@ -1114,7 +1152,7 @@ const SystemHub = () => {
 
     const handleResetProduction = async () => {
       if (!resetReason.trim()) {
-        alert('Por favor, informe o motivo do reset de produção.');
+        safeAlert('Por favor, informe o motivo do reset de produção.');
         return;
       }
 
@@ -1124,10 +1162,11 @@ const SystemHub = () => {
         console.log('Iniciando reset de dados financeiros, despesas e staff...');
         
         // 1. Limpar cache local - localStorage (financeiros, despesas, staff)
-        if (typeof window !== 'undefined' && window.localStorage) {
+        const localStorage = safeLocalStorage();
+        if (localStorage) {
           const keysToRemove = [];
-          for (let i = 0; i < window.localStorage.length; i++) {
-            const key = window.localStorage.key(i);
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
             if (key && (
               // Financeiros
               key.includes('revenue') || 
@@ -1151,15 +1190,16 @@ const SystemHub = () => {
               keysToRemove.push(key);
             }
           }
-          keysToRemove.forEach(key => window.localStorage.removeItem(key));
+          keysToRemove.forEach(key => localStorage.removeItem(key));
           console.log(`🧹 Removidos ${keysToRemove.length} itens (financeiros, despesas, staff) do localStorage`);
         }
         
         // 2. Limpar sessionStorage (financeiros, despesas, staff)
-        if (typeof window !== 'undefined' && window.sessionStorage) {
+        const sessionStorage = safeSessionStorage();
+        if (sessionStorage) {
           const keysToRemove = [];
-          for (let i = 0; i < window.sessionStorage.length; i++) {
-            const key = window.sessionStorage.key(i);
+          for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
             if (key && (
               // Financeiros
               key.includes('revenue') || 
@@ -1181,14 +1221,15 @@ const SystemHub = () => {
               keysToRemove.push(key);
             }
           }
-          keysToRemove.forEach(key => window.sessionStorage.removeItem(key));
+          keysToRemove.forEach(key => sessionStorage.removeItem(key));
           console.log(`🧹 Removidos ${keysToRemove.length} itens (financeiros, despesas, staff) do sessionStorage`);
         }
         
         // 3. Salvar dados que DEVEM ser preservados
         const store = useStore.getState();
         
-        if (typeof window !== 'undefined') {
+        const window = safeWindow();
+        if (window) {
           // Preservar: CATEGORIAS e PRODUTOS + Configurações básicas
           const dataToPreserve = {
             settings: store.settings,
@@ -1198,14 +1239,14 @@ const SystemHub = () => {
           };
           
           // Salvar backup temporário
-          window.sessionStorage.setItem('essentialDataBackup', JSON.stringify(dataToPreserve));
+          sessionStorage?.setItem('essentialDataBackup', JSON.stringify(dataToPreserve));
           
           console.log('💾 Dados essenciais preservados (categorias, produtos, configurações)');
           
           // Reset completo e reload
           setTimeout(() => {
             console.log('🔄 Reiniciando sistema com dados essenciais preservados...');
-            window.location.reload();
+            safeReload();
           }, 2000);
         }
         
@@ -1228,15 +1269,11 @@ const SystemHub = () => {
         console.log('✅ Sistema reiniciará em 2 segundos');
         
         // Notificar sucesso
-        if (typeof window !== 'undefined') {
-          alert('✅ Reset concluído com sucesso!\n\n🗑️ Apagados: Dados financeiros, despesas e staff\n💾 Preservados: Categorias, produtos e configurações\n\nO sistema reiniciará em 2 segundos.');
-        }
+        safeAlert('✅ Reset concluído com sucesso!\n\n🗑️ Apagados: Dados financeiros, despesas e staff\n💾 Preservados: Categorias, produtos e configurações\n\nO sistema reiniciará em 2 segundos.');
         
       } catch (error) {
         console.error('❌ Erro ao resetar dados:', error);
-        if (typeof window !== 'undefined') {
-          alert('❌ Erro ao resetar dados. Tente novamente.');
-        }
+        safeAlert('❌ Erro ao resetar dados. Tente novamente.');
         setIsResetting(false);
       }
     };
