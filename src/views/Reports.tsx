@@ -6,6 +6,14 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 
+// Extender jsPDF para incluir autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => void;
+    lastAutoTable: { finalY: number };
+  }
+}
+
 const Reports = () => {
   const { settings } = useStore();
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -446,7 +454,7 @@ const Reports = () => {
         item.categoria || 'Sem Categoria'
       ]);
       
-      (doc as any).autoTable({
+      doc.autoTable({
         head: [['Produto', 'Quantidade', 'Categoria']],
         body: tableData,
         startY: 42,
@@ -459,7 +467,7 @@ const Reports = () => {
       
       // Rodapé
       doc.setFontSize(8);
-      const lastY = (doc as any).lastAutoTable?.finalY || 45;
+      const lastY = doc.lastAutoTable.finalY || 45;
       doc.text(`Emitido em: ${dataLuanda} às ${new Date().toLocaleTimeString('pt-AO', { timeZone: 'Africa/Luanda' })}`, 14, lastY + 10);
       
       doc.save('vendas-por-artigo.pdf');
@@ -509,7 +517,7 @@ const Reports = () => {
         formatKz(item.total || 0)
       ]);
       
-      (doc as any).autoTable({
+      doc.autoTable({
         head: [['Categoria', 'Total']],
         body: tableData,
         startY: 80,
@@ -519,7 +527,7 @@ const Reports = () => {
     
     // Rodapé
     doc.setFontSize(8);
-    const lastY = (doc as any).lastAutoTable?.finalY || 90;
+    const lastY = doc.lastAutoTable.finalY || 90;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('financas-detalhadas.pdf');
@@ -569,17 +577,21 @@ const Reports = () => {
         formatKz(item.salarioLiquido || 0)
       ]);
       
-      (doc as any).autoTable({
+      doc.autoTable({
         head: [['Funcionário', 'Salário Base', 'Dias Falta', 'Total Desconto', 'Salário Líquido']],
         body: tableData,
         startY: 35,
-        theme: 'grid'
+        theme: 'grid',
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        }
       });
     }
     
     // Rodapé
     doc.setFontSize(8);
-    const lastY = (doc as any).lastAutoTable?.finalY || 50;
+    const lastY = doc.lastAutoTable.finalY || 50;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('rh-e-faltas.pdf');
@@ -621,16 +633,20 @@ const Reports = () => {
       formatKz(item.total || 0)
     ]);
     
-    (doc as any).autoTable({
+    doc.autoTable({
       head: [['Tipo de Despesa', 'Total']],
       body: tableData,
       startY: 35,
-      theme: 'grid'
+      theme: 'grid',
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      }
     });
     
     // Rodapé
     doc.setFontSize(8);
-    const lastY = (doc as any).lastAutoTable?.finalY || 45;
+    const lastY = doc.lastAutoTable.finalY || 45;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('mapa-despesas.pdf');
@@ -675,16 +691,20 @@ const Reports = () => {
       `${(item.margemPercentual || 0).toFixed(1)}%`
     ]);
     
-    (doc as any).autoTable({
+    doc.autoTable({
       head: [['Produto', 'Preço Venda', 'Preço Custo', 'Margem', '% Margem']],
       body: tableData,
       startY: 35,
-      theme: 'grid'
+      theme: 'grid',
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      }
     });
     
     // Rodapé
     doc.setFontSize(8);
-    const lastY = (doc as any).lastAutoTable?.finalY || 45;
+    const lastY = doc.lastAutoTable.finalY || 45;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('top-rentabilidade.pdf');
@@ -727,16 +747,20 @@ const Reports = () => {
       item.pedidos || 0
     ]);
     
-    (doc as any).autoTable({
+    doc.autoTable({
       head: [['Turno', 'Total Faturado', 'Nº Pedidos']],
       body: tableData,
       startY: 35,
-      theme: 'grid'
+      theme: 'grid',
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      }
     });
     
     // Rodapé
     doc.setFontSize(8);
-    const lastY = (doc as any).lastAutoTable?.finalY || 45;
+    const lastY = doc.lastAutoTable.finalY || 45;
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-AO')}`, 14, lastY + 10);
     
       doc.save('fluxo-por-turno.pdf');
@@ -780,11 +804,15 @@ const Reports = () => {
       (item.alertas || []).join(', ')
     ]);
     
-    (doc as any).autoTable({
+    doc.autoTable({
       head: [['Produto', 'Quantidade', 'Preço Custo', 'Alertas']],
       body: tableData,
       startY: 35,
-      theme: 'grid'
+      theme: 'grid',
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      }
     });
     
     // Rodapé
