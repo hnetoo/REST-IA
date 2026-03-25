@@ -548,7 +548,14 @@ const OwnerDashboard = () => {
         let faturacaoHoje = 0;
         try {
           // 🔄 USAR QUERY UNIFICADA - Fonte da Verdade
-          const revenueData = useStore.getState().getTodayRevenue();
+          const storeState = useStore.getState() as any;
+          console.log('[OWNER HUB] Estado completo do store:', {
+            activeOrders: storeState.activeOrders?.length || 0,
+            currentUser: storeState.currentUser?.name || 'N/A',
+            hasActiveOrders: !!storeState.activeOrders
+          });
+          
+          const revenueData = storeState.getTodayRevenue();
           faturacaoHoje = revenueData.total;
           
           console.log('[OWNER HUB] Faturação Hoje (getTodayRevenue UNIFICADO):', {
@@ -558,7 +565,14 @@ const OwnerDashboard = () => {
             formatted: revenueData.formatted,
             orders: revenueData.count,
             timezone: 'Africa/Luanda',
-            logica: 'getTodayRevenue() unificada - mesma em toda app'
+            logica: 'getTodayRevenue() unificada - mesma em toda app',
+            debugOrders: revenueData.orders.map(o => ({
+              id: o.id,
+              status: o.status,
+              total: o.total,
+              timestamp: o.timestamp,
+              isToday: o.timestamp ? formatDateInAppTimezone(new Date(o.timestamp)) : 'NO_TIMESTAMP'
+            }))
           });
         } catch (revenueError) {
           console.error('[OWNER HUB] Erro na query unificada, usando fallback:', revenueError);
