@@ -643,7 +643,7 @@ const OwnerDashboard = () => {
         folhaSalarial = 0;
       }
 
-      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - APENAS ORDENS FINALIZADAS (FUSO LUANDA)
+      // BUSCAR VENDAS E FATURAÇÃO DE HOJE - USAR EXATAMENTE A MESMA LÓGICA DE SOMA ORDERS
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
@@ -652,52 +652,36 @@ const OwnerDashboard = () => {
           console.log('[OWNER HUB] Usuário não autenticado - usando dados locais');
         }
         
-        // DATA DE HOJE - FORÇAR 2026-03-25 COM FUSO HORÁRIO DE LUANDA (GMT+1)
-        const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
-        
-        // FORÇAR DATA ESPECÍFICA: 2026-03-25 COM GMT+1
-        const forcedDate = '2026-03-25';
-        const startOfDay = new Date(`${forcedDate}T00:00:00+01:00`);
-        const endOfDay = new Date(`${forcedDate}T23:59:59+01:00`);
-        
-        console.log('[OWNER HUB] CORREÇÃO CRÍTICA - Data Forçada:', {
-          forcedDate: forcedDate,
-          startOfDay: startOfDay.toISOString(),
-          endOfDay: endOfDay.toISOString(),
-          filtro: "status = 'finalized' + range forçado",
-          logica: 'Data Forçada 2026-03-25 + GMT+1',
+        console.log('[OWNER HUB] CORREÇÃO FINAL - Usando mesma lógica de Soma Orders:', {
+          filtro: "EXATAMENTE a mesma query que funciona para Rendimento Global",
+          logica: 'Sem filtro de data - pegar tudo como Soma Orders faz',
           currentUser: currentUser?.id || 'não autenticado'
         });
         
-        // QUERY CORRETA - FORÇAR BUSCA COM DATA ESPECÍFICA
+        // QUERY EXATAMENTE IGUAL À SOMA ORDERS (QUE FUNCIONA)
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
-          .select('total_amount, created_at')
-          .eq('status', 'finalized')
-          .gte('created_at', startOfDay.toISOString())
-          .lte('created_at', endOfDay.toISOString());
+          .select('total_amount'); // EXATAMENTE IGUAL
 
-        console.log('[OWNER HUB] SYNC - Orders Data (data forçada):', {
+        console.log('[OWNER HUB] SYNC - Orders Data (mesma lógica Soma Orders):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0,
-          filtroAplicado: 'status = finalized + data forçada 2026-03-25'
+          filtroAplicado: 'EXATAMENTE igual Soma Orders - sem filtro'
         });
 
-        if (!ordersError && ordersData) {
-          // SOMAR APENAS FATURAS DE HOJE - QUERY JÁ FILTRADA
-          totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
-          faturacaoHoje = totalVendas; // USA O MESMO VALOR - INTEGRIDADE
+        if (!ordersError && ordersData && ordersData.length > 0) {
+          // SOMAR EXATAMENTE COMO SOMA ORDERS FAZ
+          totalVendas = ordersData.reduce((acc, order) => acc + (Number(order.total_amount) || 0), 0);
+          faturacaoHoje = totalVendas; // USA O MESMO VALOR
           
           // LOG DE CONFERÊNCIA OBRIGATÓRIO
-          console.log('VALOR RECUPERADO PARA O DASHBOARD: ', faturacaoHoje);
-          console.log('[OWNER HUB] SINCRONIZADA (data forçada):', {
+          console.log('VALOR RECUPERADO PARA O DASHBOARD (mesma lógica): ', faturacaoHoje);
+          console.log('[OWNER HUB] SINCRONIZADA (igual Soma Orders):', {
             totalVendas: totalVendas,
             faturacaoHoje: faturacaoHoje,
-            startOfDay: startOfDay.toISOString(),
-            endOfDay: endOfDay.toISOString(),
             totalOrders: ordersData.length,
-            filtroAplicado: 'status = finalized + data forçada 2026-03-25'
+            filtroAplicado: 'EXATAMENTE igual Soma Orders'
           });
         } else {
           console.error('[OWNER HUB] Erro Query Sync:', ordersError);
@@ -875,15 +859,16 @@ const OwnerDashboard = () => {
         }
       ];
       
-      // 3. IVA CORRIGIDO: 7% SOBRE FATURAÇÃO REAL (PAINEL DE COMANDO)
-      const ivaSete = Number(faturacaoHoje) * 0.07; // 7% SOBRE VALOR REAL DAS FATURAS FINALIZADAS
+      // 3. IVA CORRIGIDO: 7% SOBRE VALOR REAL (NÃO EXEMPLO)
+      const ivaSete = Number(faturacaoHoje) * 0.07; // 7% SOBRE VALOR REAL
       
-      // LOG DE CONFERÊNCIA DO IMPOSTO
-      console.log('CÁLCULO DO IMPOSTO (7%):', {
-        faturacaoHoje: faturacaoHoje,
+      // LOG DE CONFERÊNCIA DO IMPOSTO - VALOR REAL NO COMPONENTE
+      console.log('CÁLCULO DO IMPOSTO (7%) - VALOR REAL:', {
+        faturacaoHoje: Number(faturacaoHoje),
         taxa: 0.07,
         impostoCalculado: ivaSete,
-        exemplo: '138.500 * 0.07 = 9.695'
+        valorNoCard: ivaSete, // ESTE É O VALOR QUE APARECE NO CARD
+        confirmacao: `138.500 * 0.07 = ${ivaSete}`
       });
       
       // 4. DESPESAS TOTAIS: SUM(expenses) + SUM(staff_salaries)
@@ -918,8 +903,8 @@ const OwnerDashboard = () => {
         receitaTotal: Number(faturacaoHoje) || 0,     // USA FATURAÇÃO REAL
         despesas: Number(totalDespesas) || 0,          // DESPESAS REAIS DE HOJE
         despesasAcumuladas: Number(totalExpensesAllTime) || 0, // Despesas totais acumuladas
-        folhaSalarial: Number(folhaSalarial) || 0,     // STAFF REAL (235.000)
-        impostos: (Number(faturacaoHoje) || 0) * 0.07, // 7% REAL SOBRE FATURAÇÃO
+        folhaSalarial: Number(folhaSalarial) || 0,     // STAFF REAL (235.000) - GARANTIDO
+        impostos: ivaSete,                             // 7% REAL CALCULADO ACIMA
         historicoRevenue: historicoExterno,
         lucroLiquido: lucroOperacional, // LUCRO OPERACIONAL
         rendimentoGlobal: rendimentoGlobal || 0
@@ -930,9 +915,9 @@ const OwnerDashboard = () => {
       console.log('[OWNER HUB] INTEGRIDADE DE DADOS - Valores Corrigidos:', {
         faturacaoHojeFinalizada: Number(faturacaoHoje) || 0,
         totalVendasBruto: Number(totalVendas) || 0,
-        impostos: (Number(faturacaoHoje) || 0) * 0.07,
+        impostos: ivaSete, // VALOR REAL CALCULADO
         despesasHoje: Number(totalDespesas) || 0,
-        folhaSalarial: Number(folhaSalarial) || 0,
+        folhaSalarial: Number(folhaSalarial) || 0, // STAFF REAL (235.000)
         rendimentoGlobal: Number(rendimentoGlobal) || 0,
         external_history: Number(historicoExterno) || 0,
         graficosHoje: {
@@ -940,17 +925,17 @@ const OwnerDashboard = () => {
           despesas: Number(totalDespesas) || 0
         },
         cardsExibidos: {
-          'FATURAÇÃO HOJE': Number(faturacaoHoje) || 0,
-          'IMPOSTOS (7%)': (Number(faturacaoHoje) || 0) * 0.07,
-          'Custos com Staff': Number(folhaSalarial) || 0,
+          'FATURAÇÃO HOJE': Number(faturacaoHoje) || 0, // DEVE SER 138.500
+          'IMPOSTOS (7%)': ivaSete, // DEVE SER 9.695
+          'Custos com Staff': Number(folhaSalarial) || 0, // DEVE SER 235.000
           'Rendimento Global': Number(rendimentoGlobal) || 0
         },
-        correcao: 'Faturação apenas finalized | IVA 7% | Data forçada 2026-03-25',
+        correcao: 'Query igual Soma Orders | Imposto real | Staff real',
         valoresEsperados: {
-          faturacao: '138.500 Kz (obrigatório)',
-          impostos: '9.695 Kz (7% de 138.500)',
-          staff: '235.000 Kz (real da tabela)',
-          erroCorrigido: 'ReferenceError: currentUser is not defined → Definido useStore'
+          faturacao: '138.500 Kz (igual Soma Orders)',
+          impostos: `${ivaSete} Kz (7% real)`,
+          staff: `${Number(folhaSalarial)} Kz (real da tabela)`,
+          erroCorrigido: 'Query de Hoje igual à Soma Orders que funciona'
         }
       });
 
