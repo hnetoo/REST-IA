@@ -196,35 +196,35 @@ const Kitchen = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-900 h-full overflow-y-auto flex flex-col">
-      <header className="mb-6 flex justify-between items-center">
+    <div className="p-4 bg-gray-900 h-full overflow-y-auto flex flex-col text-sm">
+      <header className="mb-4 flex justify-between items-center">
         <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-            <span className="bg-white/10 p-2 rounded-lg text-orange-500 animate-pulse"><Zap size={24} /></span>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <span className="bg-white/10 p-1.5 rounded-lg text-orange-500 animate-pulse"><Zap size={20} /></span>
             Monitor de Cozinha (KDS)
             </h2>
-            <p className="text-gray-400 text-sm mt-1 flex items-center gap-2">
-                <Timer size={14} />
-                Tempo Médio de Preparo: <span className="text-green-400 font-bold">12 min</span>
+            <p className="text-gray-400 text-xs mt-1 flex items-center gap-2">
+                <Timer size={12} />
+                Tempo Médio: <span className="text-green-400 font-bold">12 min</span>
             </p>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
             <button 
                 onClick={() => setIsMuted(!isMuted)}
-                className={`p-3 rounded-lg border transition-colors ${isMuted ? 'bg-red-900/30 border-red-800 text-red-400' : 'bg-gray-800 border-gray-700 text-green-400 hover:bg-gray-700'}`}
+                className={`p-2 rounded-lg border transition-colors ${isMuted ? 'bg-red-900/30 border-red-800 text-red-400' : 'bg-gray-800 border-gray-700 text-green-400 hover:bg-gray-700'}`}
                 title={isMuted ? "Ativar Som" : "Silenciar Notificações"}
             >
-                {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
             </button>
-            <div className="text-gray-400 font-mono text-xl bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 shadow-inner">
+            <div className="text-gray-400 font-mono text-lg bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-700 shadow-inner">
                 {currentTime.toLocaleTimeString()}
             </div>
         </div>
       </header>
 
       {/* Filter Bar */}
-      <div className="flex gap-3 mb-8 overflow-x-auto pb-2 no-scrollbar">
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
          <FilterButton label="Todos" status="TODOS" icon={Filter} count={kitchenOrders.length} colorClass="gray" />
          <FilterButton label="Pendentes" status="PENDENTE" icon={Bell} count={counts.PENDENTE} colorClass="yellow" />
          <FilterButton label="Preparando" status="PREPARANDO" icon={ChefHat} count={counts.PREPARANDO} colorClass="blue" />
@@ -232,7 +232,7 @@ const Kitchen = () => {
          <FilterButton label="Entregues" status="ENTREGUE" icon={CheckSquare} count={counts.ENTREGUE} colorClass="purple" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1 content-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-1 content-start">
         {kitchenOrders.length === 0 ? (
            <div className="col-span-full flex flex-col items-center justify-center h-[50vh] text-gray-600">
              <CheckCircle size={80} className="mb-6 opacity-20" />
@@ -249,20 +249,20 @@ const Kitchen = () => {
 
             return (
             <div key={order.id} className={`bg-gray-800 rounded-xl border-t-4 overflow-hidden shadow-lg flex flex-col animate-in fade-in duration-300 h-fit ${urgencyClass}`}>
-              <div className="p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-start">
+              <div className="p-3 bg-gray-800 border-b border-gray-700 flex justify-between items-start">
                 <div>
-                  <h3 className="text-xl font-bold text-white">Mesa {order.tableId}</h3>
+                  <h3 className="text-lg font-bold text-white">Mesa {order.tableId}</h3>
                   <p className="text-xs text-gray-400 mt-1 font-mono opacity-70">#{order.id.slice(-4)}</p>
                 </div>
-                <div className={`flex items-center gap-2 text-sm bg-gray-900 px-3 py-1.5 rounded-md border border-gray-700 ${timerColor}`}>
-                  <Clock size={16} />
-                  <span className="font-mono font-bold text-lg">
+                <div className={`flex items-center gap-1 text-sm bg-gray-900 px-2 py-1 rounded-md border border-gray-700 ${timerColor}`}>
+                  <Clock size={14} />
+                  <span className="font-mono font-bold text-sm">
                     {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
                   </span>
                 </div>
               </div>
               
-              <div className="p-4 space-y-3 flex-1 overflow-y-auto max-h-[400px]">
+              <div className="p-3 space-y-2 flex-1 overflow-y-auto max-h-[300px]">
                 {order.items.map((item, idx) => {
                     const isDone = item.status === 'ENTREGUE';
                     let statusColor = 'bg-gray-700 border-gray-600';
@@ -275,7 +275,7 @@ const Kitchen = () => {
                         <div 
                             key={`${item.dishId}-${idx}`} 
                             onClick={() => handleToggleItem(order.id, idx, item.status)}
-                            className={`flex items-center justify-between group cursor-pointer p-3 rounded-lg transition-all border select-none relative overflow-hidden
+                            className={`flex items-center justify-between group cursor-pointer p-2 rounded-lg transition-all border select-none relative overflow-hidden
                                 ${statusColor}
                                 hover:brightness-110
                             `}

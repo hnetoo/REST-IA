@@ -5,6 +5,7 @@ import { useStore } from '../../store/useStore';
 import { TrendingUp, DollarSign, Users, Wallet, Receipt, Calculator, RefreshCw, LogOut, Settings, TrendingDown, Package } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { fetchVendasHoje, fetchHistoricoExterno } from '../../lib/sharedMetrics';
+import { log } from '../../lib/loggerService';
 
 // Cache busting e revalidação forçada
 export const revalidate = 0;
@@ -897,7 +898,7 @@ const OwnerDashboard = () => {
       setChartData(chartDataGenerated);
       
       // VERIFICAÇÃO IMEDIATA DO ESTADO - LOG DE INTEGRIDADE DE DADOS
-      console.log('[OWNER HUB] INTEGRIDADE DE DADOS - Valores Unificados:', {
+      log.info('OWNER_DASHBOARD', 'INTEGRIDADE DE DADOS - Valores Unificados', {
         faturacaoHojeFinalizada: Number(faturacaoHoje) || 0,
         totalVendasBruto: Number(totalVendas) || 0,
         impostos: ivaSete, // VALOR REAL CALCULADO (7% de 51.000 = 3.570)
@@ -947,6 +948,57 @@ const OwnerDashboard = () => {
   };
 
   // Subscrição real-time do Supabase - SEM CACHE AGRESSIVO
+  useEffect(() => {
+    log.info('OWNER_DASHBOARD', 'Iniciando subscrição real-time');
+    
+    const channel = supabase
+      .channel('owner-dashboard-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          log.info('OWNER_DASHBOARD', 'Mudança detectada em orders', payload);
+          // Forçar refresh dos dados quando houver mudança
+          fetchMetrics();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'expenses'
+        },
+        (payload) => {
+          log.info('OWNER_DASHBOARD', 'Mudança detectada em expenses', payload);
+          // Forçar refresh dos dados quando houver mudança
+          fetchMetrics();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          log.info('OWNER_DASHBOARD', 'Subscrição real-time ativa');
+        } else if (status === 'CHANNEL_ERROR') {
+          log.error('OWNER_DASHBOARD', 'Erro na subscrição real-time');
+        }
+      });
+
+    // Refresh automático a cada 30 segundos
+    const refreshInterval = setInterval(() => {
+      log.debug('OWNER_DASHBOARD', 'Refresh automático');
+      fetchMetrics();
+    }, 30000);
+
+    return () => {
+      log.info('OWNER_DASHBOARD', 'Limpando subscrições');
+      supabase.removeChannel(channel);
+      clearInterval(refreshInterval);
+    };
+  }, [fetchMetrics]);
   const subscribeToChanges = () => {
     const ordersChannel = supabase
       .channel('realtime-orders')

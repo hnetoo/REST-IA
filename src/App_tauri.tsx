@@ -13,6 +13,8 @@ import ProfitCenter from './views/ProfitCenter';
 import Analytics from './views/Analytics';
 import SetupModal from './components/SetupModal';
 import { Loader2, Database, AlertTriangle } from 'lucide-react';
+import { runAutoDiagnostics } from './lib/supabaseDiagnostics';
+import { logger } from './lib/loggerService';
 
 const App = () => {
   const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
@@ -21,7 +23,10 @@ const App = () => {
   const [supabaseClient, setSupabaseClient] = useState<any>(null);
 
   useEffect(() => {
+    logger.info('APP', 'Iniciando aplicação Windows');
     checkConfiguration();
+    // Executar diagnóstico automático do Supabase
+    runAutoDiagnostics();
   }, []);
 
   const checkConfiguration = async () => {

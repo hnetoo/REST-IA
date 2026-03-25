@@ -482,17 +482,17 @@ const DashboardV2 = () => {
   };
 
   return (
-    <div className="p-6 h-full overflow-y-auto no-scrollbar bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-800/40 via-background to-background">
+    <div className="p-4 h-full overflow-y-auto no-scrollbar bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-800/40 via-background to-background text-sm">
       
-      <header className="flex justify-between items-end mb-8">
+      <header className="flex justify-between items-end mb-6">
         <div>
           <div className="flex items-center gap-2 text-primary mb-1">
              <Activity size={16} className="animate-pulse"/>
              <span className="text-xs font-mono font-bold tracking-widest uppercase">REST IA OS v1.0.5</span>
           </div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">Painel de Comando</h2>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Painel de Comando</h2>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button 
             onClick={handleExportTodayReport}
             className="px-4 py-2.5 bg-white/5 border border-white/10 text-white rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-white/10 transition-all"
@@ -517,85 +517,88 @@ const DashboardV2 = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group border-primary/20 bg-primary/5">
-          <div className="absolute top-0 right-0 p-4 text-primary opacity-10 group-hover:opacity-20 transition-opacity">
-             <PieChart size={64} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="glass-panel p-4 rounded-xl relative overflow-hidden group border-primary/20 bg-primary/5">
+          <div className="absolute top-0 right-0 p-2 text-primary opacity-10 group-hover:opacity-20 transition-opacity">
+             <PieChart size={48} />
           </div>
-          <div className="flex items-center gap-2 mb-4 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-2 mb-3 text-primary text-[9px] font-black uppercase tracking-[0.2em]">
             Lucro Hoje
           </div>
-          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz(todayMetrics.profit)}</p>
-          <div className="mt-2 text-[10px] text-primary/80 font-bold">
+          <p className="text-xl font-mono font-bold text-white text-glow">{formatKz(todayMetrics.profit)}</p>
+          <div className="mt-2 text-[9px] text-primary/80 font-bold">
              Margem: {todayMetrics.revenue > 0 ? ((todayMetrics.profit / todayMetrics.revenue) * 100).toFixed(1) : '0'}%
           </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-             <DollarSign size={64} />
+        <div className="glass-panel p-4 rounded-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+             <TrendingUp size={48} />
           </div>
-          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Faturação Hoje
-          </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKz(todayMetrics.revenue)}</p>
-          <div className="mt-2 text-[10px] text-slate-500 font-bold">
-             {todayMetrics.count} Faturas Emitidas
-          </div>
+          <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-amber-400" />
+              </div>
+              <span className="text-xs text-white/60 uppercase tracking-wider">FATURAÇÃO HOJE</span>
+            </div>
+            <div className="text-3xl font-black text-amber-400 mb-2">
+              {formatKz(todayMetrics.revenue)}
+            </div>
+            <div className="text-xs text-white/60">Moeda: AKZ</div>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-             <ShoppingBag size={64} />
+        <div className="glass-panel p-4 rounded-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+             <ShoppingBag size={48} />
           </div>
-          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-2 mb-3 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em]">
             Despesas Hoje
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
-          <div className="mt-2 text-[10px] text-orange-500 font-bold">
+          <p className="text-xl font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
+          <div className="mt-2 text-[9px] text-orange-500 font-bold">
              {expenses.length} Registros
           </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-             <Users size={64} />
+        <div className="glass-panel p-4 rounded-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+             <Users size={48} />
           </div>
-          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-2 mb-3 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em]">
             Custos Staff
           </div>
-          <p className="text-2xl font-mono font-bold text-white">{formatKz(metrics?.folhaSalarial || 0)}</p>
-          <div className="mt-2 text-[10px] text-blue-500 font-bold">
+          <p className="text-xl font-mono font-bold text-white">{formatKz(metrics?.folhaSalarial || 0)}</p>
+          <div className="mt-2 text-[9px] text-blue-500 font-bold">
              {employees.length} Funcionários
           </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-             <Target size={64} />
+        <div className="glass-panel p-4 rounded-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+             <Target size={48} />
           </div>
-          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-2 mb-3 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em]">
             Lucro Operacional
           </div>
-          <p className="text-2xl font-mono font-bold text-white text-glow">
+          <p className="text-xl font-mono font-bold text-white text-glow">
             {formatKz((todayMetrics.revenue || 0) - (metrics?.despesas || 0) - (metrics?.folhaSalarial || 0))}
           </p>
-          <div className="mt-2 text-[10px] text-emerald-500 font-bold">
+          <div className="mt-2 text-[9px] text-emerald-500 font-bold">
              Vendas - (Despesas + Staff)
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-             <TrendingUp size={64} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div className="glass-panel p-4 rounded-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+             <TrendingUp size={48} />
           </div>
-          <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-2 mb-3 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em]">
             Rendimento Global
           </div>
-          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKzWithSeparators(rendimentoGlobalDinamico)}</p>
-          <div className="mt-2 text-[10px] text-emerald-500 font-bold">
+          <p className="text-xl font-mono font-bold text-white text-glow">{formatKzWithSeparators(rendimentoGlobalDinamico)}</p>
+          <div className="mt-2 text-[9px] text-emerald-500 font-bold">
              Histórico + Vendas Atuais
           </div>
         </div>

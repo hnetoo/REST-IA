@@ -278,18 +278,18 @@ const Employees = () => {
   ];
 
   return (
-    <div className="p-8 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+    <div className="p-4 h-full overflow-y-auto bg-background text-slate-200 no-scrollbar text-sm">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
         <div>
           <div className="flex items-center gap-2 text-primary mb-2">
              <Fingerprint size={18} className="animate-pulse" />
              <span className="text-[10px] font-black uppercase tracking-[0.4em]">Gestão de Capital Humano</span>
           </div>
-          <h2 className="text-4xl font-black text-white italic uppercase tracking-tighter leading-none">Hub da Equipa</h2>
+          <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none">Hub da Equipa</h2>
         </div>
         
-        <div className="flex bg-white/5 p-2 rounded-2xl border border-white/5">
-          <div className="px-6 py-2 border-r border-white/5">
+        <div className="flex bg-white/5 p-1.5 rounded-xl border border-white/5">
+          <div className="px-4 py-1.5 border-r border-white/5">
              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Staff</p>
              <p className="text-lg font-mono font-bold text-white">{employees.length}</p>
           </div>

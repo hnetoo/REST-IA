@@ -322,7 +322,7 @@ const TableLayout = () => {
 
       <div 
         ref={containerRef}
-        className="flex-1 glass-panel rounded-[3rem] p-12 relative overflow-hidden shadow-2xl border border-white/5"
+        className="flex-1 glass-panel rounded-[3rem] p-12 relative overflow-hidden shadow-2xl border border-white/5 overflow-y-auto"
       >
         {/* Grid Visual de Fundo */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#06b6d4 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>

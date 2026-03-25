@@ -410,7 +410,7 @@ const POS = () => {
   }).format(val);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background font-sans select-none">
+    <div className="flex h-screen overflow-hidden bg-background font-sans select-none text-sm">
       
       {/* Botão de Toggle da Sidebar - SEMPRE VISÍVEL */}
       <button 
@@ -423,38 +423,38 @@ const POS = () => {
       </button>
       
       {/* Sidebar Categorias */}
-      <div className={`${isSidebarCollapsed ? 'w-0' : 'w-24'} bg-slate-950 border-r border-white/5 flex flex-col items-center py-10 gap-8 z-40 relative transition-all duration-300`}>
-         <div className="flex-1 flex flex-col items-center gap-6 overflow-y-auto no-scrollbar w-full">
+      <div className={`${isSidebarCollapsed ? 'w-0' : 'w-20'} bg-slate-950 border-r border-white/5 flex flex-col items-center py-6 gap-6 z-40 relative transition-all duration-300`}>
+         <div className="flex-1 flex flex-col items-center gap-4 overflow-y-auto no-scrollbar w-full">
            <button 
               onClick={() => setSelectedCategoryId('TODOS')} 
-              className={`w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center transition-all ${selectedCategoryId === 'TODOS' ? 'bg-primary text-black shadow-glow scale-105' : 'bg-white/5 text-slate-500 hover:text-slate-300'}`}
+              className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center transition-all ${selectedCategoryId === 'TODOS' ? 'bg-primary text-black shadow-glow scale-105' : 'bg-white/5 text-slate-500 hover:text-slate-300'}`}
               title="Ver todos os produtos"
               aria-label="Ver todos os produtos"
            >
-              <Grid3X3 size={24} />
+              <Grid3X3 size={18} />
            </button>
            {categories.map(cat => (
              <button 
                key={cat.id} 
                onClick={() => setSelectedCategoryId(cat.id)} 
-               className={`w-16 h-16 shrink-0 rounded-2xl flex flex-col items-center justify-center transition-all group ${selectedCategoryId === cat.id ? 'bg-primary text-black shadow-glow scale-105' : 'bg-white/5 text-slate-500 hover:text-slate-300'}`}
+               className={`w-12 h-12 shrink-0 rounded-xl flex flex-col items-center justify-center transition-all group ${selectedCategoryId === cat.id ? 'bg-primary text-black shadow-glow scale-105' : 'bg-white/5 text-slate-500 hover:text-slate-300'}`}
                title={`Categoria: ${cat.name}`}
                aria-label={`Categoria: ${cat.name}`}
              >
-                <Tag size={20} />
-                <span className="text-[7px] font-black uppercase mt-1 opacity-60 truncate w-full text-center px-1">{cat.name}</span>
+                <Tag size={16} />
+                <span className="text-[6px] font-black uppercase mt-1 opacity-60 truncate w-full text-center px-1">{cat.name}</span>
              </button>
            ))}
          </div>
 
          {/* Botões Administrativos na parte inferior da sidebar */}
-         <div className="flex flex-col gap-4 mt-auto pt-6 border-t border-white/5 w-full items-center">
+         <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-white/5 w-full items-center">
             <button 
               onClick={() => setIsHistoryOpen(true)} 
-              className="w-14 h-14 rounded-2xl bg-white/5 text-slate-500 hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center group"
+              className="w-10 h-10 rounded-xl bg-white/5 text-slate-500 hover:text-primary hover:bg-primary/10 transition-all flex items-center justify-center group"
               title="Histórico de Turno"
             >
-              <History size={22} className="group-hover:rotate-[-10deg] transition-transform" />
+              <History size={18} className="group-hover:rotate-[-10deg] transition-transform" />
             </button>
             
             {/* Botão de configuração removido - Impressão direta */}
@@ -494,27 +494,27 @@ const POS = () => {
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <header className="h-24 bg-slate-900/40 backdrop-blur-md border-b border-white/5 flex items-center px-10 justify-between shrink-0">
+        <header className="h-20 bg-slate-900/40 backdrop-blur-md border-b border-white/5 flex items-center px-6 justify-between shrink-0">
            <div className="flex items-center gap-6">
-              <button onClick={() => { setActiveTable(null); setActiveOrder(null); }} className="group flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all">
-                <Layout size={20} /> 
-                <span className="text-[11px] font-black uppercase tracking-[0.2em]">Mesas</span>
+              <button onClick={() => { setActiveTable(null); setActiveOrder(null); }} className="group flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:text-white transition-all">
+                <Layout size={16} /> 
+                <span className="text-[9px] font-black uppercase tracking-[0.2em]">Mesas</span>
               </button>
               {activeTableId && (
-                <div className="flex items-center gap-4">
-                   <div className="w-1 h-8 bg-primary rounded-full shadow-glow"></div>
-                   <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
+                   <div className="w-1 h-6 bg-primary rounded-full shadow-glow"></div>
+                   <div className="flex items-center gap-4">
                       <div>
-                        <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none">Mesa {activeTableId}</h2>
-                        <div className="flex items-center gap-3 mt-1">
-                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">{currentOrder?.subAccountName}</p>
+                        <h2 className="text-xl font-black text-white italic uppercase tracking-tighter leading-none">Mesa {activeTableId}</h2>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-[9px] font-black text-primary uppercase tracking-widest">{currentOrder?.subAccountName}</p>
                           {tableSubAccounts.length > 1 && (
                             <div className="flex gap-1">
                               {tableSubAccounts.map(sa => (
                                 <button 
                                   key={sa.id}
                                   onClick={() => setActiveOrder(sa.id)}
-                                  className={`w-2 h-2 rounded-full transition-all ${sa.id === activeOrderId ? 'bg-primary scale-125 shadow-glow' : 'bg-white/20 hover:bg-white/40'}`}
+                                  className={`w-1.5 h-1.5 rounded-full transition-all ${sa.id === activeOrderId ? 'bg-primary scale-125 shadow-glow' : 'bg-white/20 hover:bg-white/40'}`}
                                   title={sa.subAccountName}
                                 />
                               ))}
@@ -523,25 +523,25 @@ const POS = () => {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-3 ml-4">
-                        <div className="flex gap-2 p-1.5 bg-white/[0.02] border border-white/5 rounded-xl">
+                      <div className="flex items-center gap-2 ml-2">
+                        <div className="flex gap-1 p-1 bg-white/[0.02] border border-white/5 rounded-lg">
                           <button 
                             onClick={() => setIsSubaccountModalOpen(true)}
-                            className="p-2 bg-white/5 border border-white/5 rounded-lg text-slate-400 hover:text-primary transition-all"
+                            className="p-1.5 bg-white/5 border border-white/5 rounded text-slate-400 hover:text-primary transition-all"
                             title="Nova Subconta"
                           >
-                            <UserPlus size={16} />
+                            <UserPlus size={14} />
                           </button>
                           <button 
                             onClick={() => setIsTransferModalOpen(true)}
-                            className="p-2 bg-white/5 border border-white/5 rounded-lg text-slate-400 hover:text-orange-500 transition-all"
+                            className="p-1.5 bg-white/5 border border-white/5 rounded text-slate-400 hover:text-orange-500 transition-all"
                             title="Transferir Mesa"
                           >
-                            <ArrowRightLeft size={16} />
+                            <ArrowRightLeft size={14} />
                           </button>
                         </div>
                         
-                        <div className="h-8 w-px bg-white/10"></div>
+                        <div className="h-6 w-px bg-white/10"></div>
                         
                         <button 
                           onClick={() => {
@@ -597,22 +597,22 @@ const POS = () => {
            </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-12 no-scrollbar bg-slate-900/10">
-           <div className="flex items-center justify-between mb-10">
+        <div className="flex-1 overflow-y-auto p-8 no-scrollbar bg-slate-900/10">
+           <div className="flex items-center justify-between mb-6">
              <div>
-               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">Explorar Itens</p>
-               <h3 className="text-xl font-black text-white tracking-tight mt-1">Selecione produtos para adicionar ao pedido</h3>
+               <p className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-500">Explorar Itens</p>
+               <h3 className="text-lg font-black text-white tracking-tight mt-1">Selecione produtos para adicionar ao pedido</h3>
              </div>
              <div className="relative w-full max-w-xs md:max-w-sm lg:max-w-md group">
-               <div className="absolute inset-0 rounded-2xl bg-primary/20 opacity-0 group-hover:opacity-40 transition-opacity pointer-events-none"></div>
-               <div className="relative flex items-center gap-3 px-4 py-2.5 bg-white/[0.06] border border-primary/40 rounded-2xl shadow-glow">
-                 <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary text-black shrink-0">
-                   <Search size={16} />
+               <div className="absolute inset-0 rounded-xl bg-primary/20 opacity-0 group-hover:opacity-40 transition-opacity pointer-events-none"></div>
+               <div className="relative flex items-center gap-2 px-3 py-2 bg-white/[0.06] border border-primary/40 rounded-xl shadow-glow">
+                 <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-primary text-black shrink-0">
+                   <Search size={14} />
                  </div>
                  <input 
                    type="text" 
                    placeholder="Pesquisar item por nome…" 
-                   className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-400" 
+                   className="flex-1 bg-transparent border-none outline-none text-xs text-white placeholder:text-slate-400" 
                    value={searchTerm} 
                    onChange={e => setSearchTerm(e.target.value)} 
                  />
@@ -620,7 +620,7 @@ const POS = () => {
              </div>
            </div>
            {!activeTableId ? (
-              <div className="grid grid-cols-3 gap-3 w-full max-w-[500px] mx-auto p-4">
+              <div className="grid grid-cols-4 gap-2 w-full max-w-[600px] mx-auto p-2">
                  {tables.map((table) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (
@@ -630,7 +630,7 @@ const POS = () => {
                         className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 relative group border-2 ${!isOccupied ? 'border-white/5 bg-[#1a1a1a] text-white' : 'border-primary bg-primary/10 text-primary shadow-lg'}`}
                       >
                          <span className={`text-xs font-black uppercase tracking-widest ${!isOccupied ? 'text-slate-500' : 'text-primary/60'}`}>{table.name}</span>
-                         <span className={`text-6xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
+                         <span className={`text-4xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
                          
                          {isOccupied && (
                            <div className="absolute -top-3 -right-3 flex gap-1">
@@ -654,7 +654,7 @@ const POS = () => {
                  })}
               </div>
            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 md:gap-4 lg:gap-6 animate-in fade-in zoom-in duration-700">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2 md:gap-3 lg:gap-4 animate-in fade-in zoom-in duration-700">
                  {filteredBySearch.map((dish) => (
                     <button 
                       key={dish.id} 
@@ -689,19 +689,19 @@ const POS = () => {
       </div>
 
       {/* Painel Lateral do Pedido */}
-      <div className={`w-[480px] border-l border-white/5 bg-slate-950 flex flex-col h-full transition-all duration-500 shadow-2xl z-50 ${!activeOrderId ? 'translate-x-full' : ''}`}>
+      <div className={`w-[380px] border-l border-white/5 bg-slate-950 flex flex-col h-full transition-all duration-500 shadow-2xl z-50 ${!activeOrderId ? 'translate-x-full' : ''}`}>
          {activeOrderId && (
            <>
-             <div className="p-8 border-b border-white/5 bg-slate-900/20">
-                <div className="flex items-center gap-4 justify-between mb-8">
+             <div className="p-6 border-b border-white/5 bg-slate-900/20">
+                <div className="flex items-center gap-3 justify-between mb-6">
                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse shadow-glow"></div>
-                        <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter truncate">Pedido #{activeOrderId.slice(-4)}</h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-glow"></div>
+                        <h3 className="text-lg font-black text-white italic uppercase tracking-tighter truncate">Pedido #{activeOrderId.slice(-4)}</h3>
                       </div>
                       <div className="flex items-center gap-2">
-                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 truncate">
-                          <User size={12}/> {currentOrder?.subAccountName}
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1 truncate">
+                          <User size={10}/> {currentOrder?.subAccountName}
                         </p>
                         {currentOrder?.subAccountName !== 'Principal' && currentOrder?.items.length === 0 && (
                           <button 
@@ -720,18 +720,18 @@ const POS = () => {
                         onClick={() => {
                             printTableReview(currentOrder!, menu, settings);
                         }} 
-                        className="p-3 bg-white/5 text-slate-400 hover:text-primary rounded-xl border border-white/10 transition-all"
+                        className="p-2 bg-white/5 text-slate-400 hover:text-primary rounded-lg border border-white/10 transition-all"
                         title="Imprimir Consulta"
                      >
-                        <Printer size={20}/>
+                        <Printer size={16}/>
                      </button>
                     <button
                       onClick={() => { setActiveOrder(null); setActiveTable(null); }}
-                      className="p-3 bg-white/5 text-slate-400 hover:text-white rounded-xl border border-white/10 transition-all"
+                      className="p-2 bg-white/5 text-slate-400 hover:text-white rounded-lg border border-white/10 transition-all"
                       title="Voltar para Mesas"
                       aria-label="Voltar para Mesas"
                     >
-                      <X size={20}/>
+                      <X size={16}/>
                     </button>
                    </div>
                 </div>
@@ -950,7 +950,7 @@ const POS = () => {
                             className="p-4 bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all border border-white/5" 
                             title="Reimprimir"
                         >
-                            <Printer size={20}/>
+                            <Printer size={16}/>
                         </button>
                       </div>
                    </div>

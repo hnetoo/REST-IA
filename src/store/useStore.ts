@@ -575,16 +575,31 @@ export const useStore = create<StoreState>()(
         };
 
         try {
-          const { error: orderError } = await supabase.from('orders').insert(orderData).select();
-          if (orderError) throw orderError;
+          console.log('[CHECKOUT] Iniciando gravação no Supabase...');
+          console.log('[CHECKOUT] OrderData:', orderData);
+          console.log('[CHECKOUT] OrderItems:', orderItems);
+          
+          const { error: orderError, data: orderResult } = await supabase.from('orders').insert(orderData).select();
+          if (orderError) {
+            console.error('[CHECKOUT] Erro ao inserir order:', orderError);
+            throw orderError;
+          }
+          
+          console.log('[CHECKOUT] Order inserida com sucesso:', orderResult);
 
           if (orderItems.length > 0) {
             const validItems = orderItems.filter(
               i => typeof i.product_id === 'string' && /^[0-9a-f-]{36}$/i.test(i.product_id)
             );
+            console.log('[CHECKOUT] Items válidos para inserção:', validItems);
+            
             if (validItems.length > 0) {
-              const { error: itemsError } = await supabase.from('order_items').insert(validItems);
-              if (itemsError) console.warn('[checkout] order_items insert:', itemsError.message);
+              const { error: itemsError, data: itemsResult } = await supabase.from('order_items').insert(validItems);
+              if (itemsError) {
+                console.error('[CHECKOUT] Erro ao inserir order_items:', itemsError);
+              } else {
+                console.log('[CHECKOUT] OrderItems inseridos com sucesso:', itemsResult);
+              }
             }
           }
 

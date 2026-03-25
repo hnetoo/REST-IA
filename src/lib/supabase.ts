@@ -28,13 +28,29 @@ export const supabase = createClient(
     },
     realtime: {
       params: {
-        eventsPerSecond: 2
+        headers: {
+          'x-client-info': 'rest-ia-windows-app'
+        }
       }
     },
     global: {
       headers: {
-        'X-Client-Info': 'rest-ia-app/1.0.0'
+        'x-client-info': 'rest-ia-windows-app'
       }
     }
   }
 );
+
+// Adicionar logs para debugging
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('[SUPABASE] Auth state change:', event, session?.user?.id || 'no session');
+});
+
+// Verificar sessão atual
+supabase.auth.getSession().then(({ data: { session }, error }) => {
+  if (error) {
+    console.error('[SUPABASE] Erro ao obter sessão:', error);
+  } else {
+    console.log('[SUPABASE] Sessão atual:', session?.user?.id || 'no session');
+  }
+});

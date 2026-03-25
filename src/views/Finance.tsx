@@ -478,7 +478,7 @@ const Finance = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 h-full overflow-y-auto no-scrollbar bg-background">
+    <div className="p-3 md:p-4 lg:p-6 h-full overflow-y-auto no-scrollbar bg-background text-sm">
       {/* BLOQUEIO DE SEGURANÇA - EVITAR TELA PRETA */}
       {!activeTab && (
         <div className="flex items-center justify-center h-full">

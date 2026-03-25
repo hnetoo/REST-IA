@@ -5,7 +5,7 @@ import {
   LayoutDashboard, UtensilsCrossed, Package, Settings, 
   Banknote, Map as MapIcon, ChevronLeft, Menu, 
   LogOut, Target, Users as UsersIcon, TrendingUp, Terminal,
-  Database, Bell, ShoppingCart, BarChart3, FileText
+  Database, Bell, ShoppingCart, BarChart3, FileText, RefreshCw
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { PermissionKey } from '../../types';
@@ -17,6 +17,10 @@ const Sidebar = () => {
   const notificationCount = notifications.length;
 
   const toggleSidebar = () => updateSettings({ isSidebarCollapsed: !isCollapsed });
+
+  const refreshDashboard = () => {
+    window.location.reload();
+  };
 
   const navItems: { to: string; icon: React.ReactNode; label: string; permission?: PermissionKey }[] = [
     { to: "/", icon: <LayoutDashboard size={20} />, label: "Dashboard" },
@@ -62,6 +66,13 @@ const Sidebar = () => {
               <span className="text-[9px] font-black uppercase tracking-widest">{notificationCount}</span>
             </div>
           )}
+          <button 
+            onClick={refreshDashboard} 
+            className="text-slate-500 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5" 
+            title="Atualizar Dashboard"
+          >
+            <RefreshCw size={20} />
+          </button>
           <button onClick={toggleSidebar} className="text-slate-500 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5">
             {isCollapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
           </button>
