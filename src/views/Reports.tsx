@@ -59,61 +59,58 @@ const Reports = () => {
     }).format(value);
   };
 
-  // CARD 1: VENDAS POR ARTIGO - Query com order_items e products
+  // CARD 1: VENDAS POR ARTIGO - Query com orders (mesma lógica do Dashboard)
   const fetchVendasPorArtigo = async () => {
     setVendasPorArtigo(prev => ({ ...prev, loading: true }));
     try {
       const { start, end } = dateRange;
       
-      // Buscar dados de order_items fazendo join com products
+      // DATA DE HOJE - FUSO HORÁRIO DE LUANDA (GMT+1) COM START/END OF DAY
+      const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
+      const startOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 0, 0, 0, 0);
+      const endOfDay = new Date(todayLuanda.getFullYear(), todayLuanda.getMonth(), todayLuanda.getDate(), 23, 59, 59, 999);
+      
+      // QUERY CORRETA - USANDO ORDERS (MESMA TABELA DO DASHBOARD)
       let query = supabase
-        .from('order_items')
-        .select(`
-          quantity,
-          product_id,
-          created_at,
-          products(name, category_id)
-        `);
+        .from('orders')
+        .select('total_amount, created_at, table_id')
+        .eq('status', 'finalized'); // MESMO STATUS DO DASHBOARD
 
       if (start && end) {
         query = query
           .gte('created_at', new Date(start).toISOString())
           .lte('created_at', new Date(end).toISOString());
+      } else {
+        // Se não houver filtro, usar hoje (mesma lógica do Dashboard)
+        query = query
+          .gte('created_at', startOfDay.toISOString())
+          .lte('created_at', endOfDay.toISOString());
       }
 
-      const { data: orderItemsData, error } = await query;
+      const { data: ordersData, error } = await query;
 
       if (error) {
         throw new Error(`Erro de Conexão: ${error.message}`);
       }
 
-      // Buscar categorias
-      const { data: categoriesData } = await supabase
-        .from('categories')
-        .select('id, name');
-
-      // Processar vendas por artigo
+      // Agrupar vendas por mesa (table_id)
       const vendasMap = new Map();
       
-      orderItemsData?.forEach((item: any) => {
-        const productName = item.products?.name || 'Produto Sem Nome';
-        const key = productName;
-        const existing = vendasMap.get(key) || { 
-          nome: key, 
-          quantidade: 0, 
-          categoria: 'Sem Categoria' 
+      ordersData?.forEach((order: any) => {
+        const mesaId = order.table_id || 'Sem Mesa';
+        const existing = vendasMap.get(mesaId) || { 
+          mesa: `Mesa ${mesaId}`, 
+          quantidadeVendas: 0, 
+          receitaTotal: 0 
         };
-        existing.quantidade += item.quantity || 1;
-        existing.category_id = item.products?.category_id;
-        vendasMap.set(key, existing);
+        existing.quantidadeVendas += 1;
+        existing.receitaTotal += Number(order.total_amount) || 0;
+        vendasMap.set(mesaId, existing);
       });
 
-      // Adicionar categorias
-      const categoryMap = new Map(categoriesData?.map(c => [c.id, c.name]) || []);
-      const result = Array.from(vendasMap.values()).map(item => ({
-        ...item,
-        categoria: item.category_id ? categoryMap.get(item.category_id) || 'Sem Categoria' : 'Sem Categoria'
-      }));
+      const result = Array.from(vendasMap.values())
+        .sort((a, b) => b.receitaTotal - a.receitaTotal)
+        .slice(0, 10) || [];
 
       setVendasPorArtigo({ data: result, loading: false });
     } catch (error: any) {
@@ -448,30 +445,12 @@ const Reports = () => {
   const generateVendasPorArtigoPDF = async () => {
     setPdfLoading('vendas');
     try {
-      // Verificar se há dados válidos antes de gerar o PDF
-      if (!vendasPorArtigo.data || vendasPorArtigo.data.length === 0) {
-        addNotification('error', 'Não há dados de vendas para gerar o PDF');
-        setPdfLoading(null);
-        return;
-      }
-
-      // Validar dados antes de processar
-      const validData = vendasPorArtigo.data.filter(item => 
-        item && item.nome && item.quantidadeVendida > 0 && item.receitaTotal > 0
-      );
-
-      if (validData.length === 0) {
-        addNotification('error', 'Dados inválidos para gerar o PDF');
-        setPdfLoading(null);
-        return;
-      }
-
-      const doc = new jsPDF('p', 'pt', 'a4');
+      const doc = new jsPDF();
       const data = vendasPorArtigo.data;
       
       // Cabeçalho
       doc.setFontSize(16);
-      doc.text('Tasca do Vereda - Relatório de Vendas por Artigo', 14, 15);
+      doc.text('Tasca do Vereda - Relatório de Vendas por Mesa', 14, 15);
       
       // Data de Luanda
       doc.setFontSize(10);
@@ -486,23 +465,32 @@ const Reports = () => {
       // Período
       doc.text(`Período: ${dateRange.start || 'Início'} a ${dateRange.end || 'Fim'}`, 14, 32);
       
-      // Tabela
-      const tableData = data.map((item: any) => [
-        item.nome || 'Produto',
-        item.quantidade || 0,
-        item.categoria || 'Sem Categoria'
-      ]);
-      
-      doc.autoTable({
-        head: [['Produto', 'Quantidade', 'Categoria']],
-        body: tableData,
-        startY: 42,
-        theme: 'grid',
-        styles: {
-          fontSize: 9,
-          cellPadding: 3
-        }
-      });
+      // Verificar se há dados ou mensagem de erro
+      if (data.length === 1 && data[0].mensagem) {
+        doc.setFontSize(12);
+        doc.text(data[0].mensagem, 14, 45);
+      } else if (data.length === 0) {
+        doc.setFontSize(12);
+        doc.text('Sem dados para o período', 14, 45);
+      } else {
+        // Tabela
+        const tableData = data.map((item: any) => [
+          item.mesa || 'Mesa',
+          item.quantidadeVendas || 0,
+          formatKz(item.receitaTotal || 0)
+        ]);
+        
+        doc.autoTable({
+          head: [['Mesa', 'Quantidade de Vendas', 'Receita Total']],
+          body: tableData,
+          startY: 45,
+          theme: 'grid',
+          styles: {
+            fontSize: 9,
+            cellPadding: 3
+          }
+        });
+      }
       
       // Rodapé - Garantir que a tabela foi gerada antes de acessar finalY
       doc.setFontSize(8);
@@ -512,10 +500,10 @@ const Reports = () => {
       }
       doc.text(`Emitido em: ${dataLuanda} às ${new Date().toLocaleTimeString('pt-AO', { timeZone: 'Africa/Luanda' })}`, 14, lastY + 10);
       
-      doc.save('vendas-por-artigo.pdf');
+      doc.save('vendas-por-mesa.pdf');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
-      alert('Erro ao gerar PDF. Tente novamente.');
+      addNotification('error', 'Erro ao gerar PDF. Tente novamente.');
     } finally {
       setPdfLoading(null);
     }
