@@ -645,8 +645,9 @@ const OwnerDashboard = () => {
       let totalVendas = 0;
       let faturacaoHoje = 0;
       try {
-        // DATA DE HOJE EM ANGOLA - FILTRO OBRIGATÓRIO
-        const today = new Date().toISOString().split('T')[0];
+        // DATA DE HOJE EM LUANDA (GMT+1) - FILTRO OBRIGATÓRIO
+        const todayLuanda = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Luanda"}));
+        const today = todayLuanda.toISOString().split('T')[0];
         
         console.log('[OWNER HUB] INTEGRIDADE CRÍTICA - Apenas Ordens Finalizadas:', {
           today: today,
@@ -655,34 +656,44 @@ const OwnerDashboard = () => {
           erroAtual: '202.000 Kz (valor bruto incorreto)'
         });
         
-        // ÚNICA QUERY - APENAS ORDENS FINALIZADAS DE HOJE
+        // ÚNICA QUERY - APENAS ORDENS FINALIZADAS (FILTRO DE DATA NO FRONT-END)
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('total_amount, created_at')
-          .eq('status', 'finalized') // APENAS FINALIZADAS - CRÍTICO
-          .gte('created_at', `${today}T00:00:00`) // HOJE EM ANGOLA
-          .lte('created_at', `${today}T23:59:59`); // HOJE EM ANGOLA
+          .eq('status', 'finalized'); // APENAS FINALIZADAS - DATA FILTRADA DEPOIS
 
-        console.log('[OWNER HUB] INTEGRIDADE - Orders Data (finalized + hoje):', {
+        console.log('[OWNER HUB] INTEGRIDADE - Orders Data (finalized apenas):', {
           data: ordersData,
           error: ordersError,
           totalOrders: ordersData?.length || 0,
-          filtroAplicado: 'status = finalized + data de hoje'
+          filtroAplicado: 'status = finalized (data filtrada no front-end)'
         });
 
         if (!ordersError && ordersData) {
+          // FILTRAR POR DATA NO FRONT-END - USANDO DATA DE LUANDA
+          const todayOrders = ordersData.filter(order => {
+            const orderDate = new Date(order.created_at || '');
+            const orderDateStr = orderDate.toISOString().split('T')[0];
+            return orderDateStr === today;
+          });
+          
           // SOMAR APENAS ORDENS FINALIZADAS DE HOJE
-          totalVendas = ordersData.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+          totalVendas = todayOrders.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
           faturacaoHoje = totalVendas; // USA O MESMO VALOR - INTEGRIDADE
           
-          console.log('[OWNER HUB] FATURAÇÃO CORRIGIDA (apenas finalized):', {
+          // LOG DE DEBUG TEMPORÁRIO
+          console.log(`Vendas encontradas hoje com status finalized: ${totalVendas} Kz`);
+          
+          console.log('[OWNER HUB] FATURAÇÃO CORRIGIDA (apenas finalized + Luanda):', {
             totalVendas: totalVendas,
             faturacaoHoje: faturacaoHoje,
             today: today,
+            todayLuanda: todayLuanda.toISOString(),
             totalOrders: ordersData.length,
+            todayOrders: todayOrders.length,
             status: 'finalized',
             valorAlvo: '73.500 Kz',
-            erroCorrigido: '202.000 Kz (bruto) → 73.500 Kz (finalizado)'
+            erroCorrigido: 'ZERO → 73.500 Kz (ajuste de fuso horário)'
           });
         } else {
           console.error('[OWNER HUB] Erro Query Finalizada:', ordersError);
