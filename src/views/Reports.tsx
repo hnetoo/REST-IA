@@ -3,7 +3,7 @@ import { DollarSign, TrendingUp, Activity, Download, FileText, AlertCircle, Shop
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable'; // IMPORTAÇÃO CORRETA
 import html2canvas from 'html2canvas';
 
 // Extender jsPDF para incluir autoTable
@@ -482,7 +482,7 @@ const Reports = () => {
         
         // Tabela com tratamento de erro
         try {
-          doc.autoTable({
+          autoTable(doc, {
             head: [['Mesa', 'Quantidade de Vendas', 'Receita Total']],
             body: tableData,
             startY: 45,
@@ -561,7 +561,7 @@ const Reports = () => {
         formatKz(item.total || 0)
       ]);
       
-      doc.autoTable({
+      autoTable(doc, {
         head: [['Categoria', 'Total']],
         body: tableData,
         startY: 80,
@@ -624,7 +624,7 @@ const Reports = () => {
         formatKz(item.salarioLiquido || 0)
       ]);
       
-      doc.autoTable({
+      autoTable(doc, {
         head: [['Funcionário', 'Salário Base', 'Dias Falta', 'Total Desconto', 'Salário Líquido']],
         body: tableData,
         startY: 35,
@@ -683,16 +683,16 @@ const Reports = () => {
       formatKz(item.total || 0)
     ]);
     
-    doc.autoTable({
-      head: [['Tipo de Despesa', 'Total']],
-      body: tableData,
-      startY: 35,
-      theme: 'grid',
-      styles: {
-        fontSize: 9,
-        cellPadding: 3
-      }
-    });
+    autoTable(doc, {
+        head: [['Tipo de Despesa', 'Total']],
+        body: tableData,
+        startY: 35,
+        theme: 'grid',
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        }
+      });
     
     // Rodapé - Garantir que a tabela foi gerada antes de acessar finalY
     doc.setFontSize(8);
@@ -744,7 +744,7 @@ const Reports = () => {
       `${(item.margemPercentual || 0).toFixed(1)}%`
     ]);
     
-    doc.autoTable({
+    autoTable(doc, {
       head: [['Produto', 'Preço Venda', 'Preço Custo', 'Margem', '% Margem']],
       body: tableData,
       startY: 35,
@@ -803,7 +803,7 @@ const Reports = () => {
       item.pedidos || 0
     ]);
     
-    doc.autoTable({
+    autoTable(doc, {
       head: [['Turno', 'Total Faturado', 'Nº Pedidos']],
       body: tableData,
       startY: 35,
@@ -863,7 +863,7 @@ const Reports = () => {
       (item.alertas || []).join(', ')
     ]);
     
-    doc.autoTable({
+    autoTable(doc, {
       head: [['Produto', 'Quantidade', 'Preço Custo', 'Alertas']],
       body: tableData,
       startY: 35,
