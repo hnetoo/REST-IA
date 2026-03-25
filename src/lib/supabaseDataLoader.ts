@@ -78,7 +78,11 @@ export async function loadCustomersFromSupabase(): Promise<Customer[]> {
 
 export async function loadTablesFromSupabase(): Promise<Table[]> {
   try {
-    const { data, error } = await supabase.from('pos_tables').select('*');
+    const { data, error } = await supabase
+      .from('pos_tables')
+      .select('*')
+      .order('name', { ascending: true }); // ORDENAÇÃO NUMÉRICA CRESCENTE
+    
     if (error || !data?.length) return DEFAULT_TABLES;
     return data.map((t: Record<string, unknown>) => ({
       id: Number(t.id ?? 0),

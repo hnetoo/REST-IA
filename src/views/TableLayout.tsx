@@ -47,11 +47,18 @@ const TableLayout = () => {
       try {
         const result = await supabase
           .from(tableName)
-          .insert([newTable])
+          .insert([{
+            name: newTable.name,
+            zone: newTable.zone,
+            x: newTable.x,
+            y: newTable.y,
+            seats: newTable.seats,
+            status: newTable.status
+          }])
           .select();
         
         if (result.error) {
-          console.error('Erro ao adicionar mesa em pos_tables:', result.error);
+          console.error('[DEBUG SUPABASE]', result.error);
           addNotification('error', 'Erro ao adicionar mesa. Tente novamente.');
           return;
         }
