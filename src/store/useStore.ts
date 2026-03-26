@@ -608,31 +608,38 @@ export const useStore = create<StoreState>()(
           
           console.log('[CHECKOUT] ✅ Validação passou. Enviando para Supabase...');
           
+          // FLUXO DE DADOS REAL-TIME - INSERT IMEDIATO E COMPLETO
           const { error: orderError, data: orderResult } = await supabase.from('orders').insert(orderData).select();
           if (orderError) {
             console.error('[CHECKOUT] Erro ao inserir order:', orderError);
             throw orderError;
           }
           
-          console.log('[CHECKOUT] Order inserida com sucesso:', orderResult);
+          console.log('[CHECKOUT] ✅ Order inserida com sucesso no Supabase:', orderResult);
 
+          // INSERT IMEDIATO DOS ITENS - GARANTIR REAL-TIME
           if (orderItems.length > 0) {
             const validItems = orderItems.filter(
               i => typeof i.product_id === 'string' && /^[0-9a-f-]{36}$/i.test(i.product_id)
             );
-            console.log('[CHECKOUT] Items válidos para inserção:', validItems);
+            console.log('[CHECKOUT] ✅ Inserindo itens em tempo real:', validItems.length, 'itens');
             
             if (validItems.length > 0) {
-              const { error: itemsError, data: itemsResult } = await supabase.from('order_items').insert(validItems);
+              const { error: itemsError, data: itemsResult } = await supabase.from('order_items').insert(validItems).select();
               if (itemsError) {
-                console.error('[CHECKOUT] Erro ao inserir order_items:', itemsError);
+                console.error('[CHECKOUT] ❌ Erro ao inserir order_items:', itemsError);
+                throw itemsError;
               } else {
-                console.log('[CHECKOUT] OrderItems inseridos com sucesso:', itemsResult);
+                console.log('[CHECKOUT] ✅ Order_items inseridos com sucesso:', itemsResult);
               }
             }
           }
 
-          // 🛡️ LIBERAR MESA APÓS VENDA CONFIRMADA
+          // � FORÇAR REFRESH DO STORE PARA REAL-TIME
+          console.log('[CHECKOUT] 🔄 Forçando refresh do store para real-time...');
+          await get().fetchOrders(); // Buscar ordens atualizadas do Supabase
+
+          // �🛡️ LIBERAR MESA APÓS VENDA CONFIRMADA
           if (tableId) {
             try {
               const { error: tableError } = await supabase
