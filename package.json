@@ -1,10 +1,13 @@
 {
   "name": "tasca-do-vereda-app",
   "private": true,
+  "main": "main.cjs",
+  "homepage": "./",
   "version": "1.0.6",
-  "type": "module",
+  "description": "Sistema de Gestão Restaurante",
+  "author": "Tasca do Vereda",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"vite\" \"electron .\"",
     "build": "vite build",
     "build:vercel": "vite build --mode production",
     "preview": "vite preview",
@@ -14,6 +17,11 @@
     "build:windows": "npm run build && tauri build",
     "build:msi": "tauri build --target x86_64-pc-windows-msvc",
     "build:windows-fixed": "powershell -ExecutionPolicy Bypass -File build-windows.ps1",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "build:electron": "npm run build && electron-builder",
+    "build:electron:win": "npm run build && electron-builder --win",
+    "build:msi:electron": "npm run build && electron-builder --win --x64 --publish=never",
     "test": "vitest run",
     "supabase:init": "./scripts/supabase-setup.ps1 init",
     "supabase:start": "./scripts/supabase-setup.ps1 start",
@@ -35,7 +43,6 @@
     "@tauri-apps/plugin-shell": "^2.1.0",
     "@tauri-apps/plugin-sql": "^2.1.0",
     "@types/uuid": "^10.0.0",
-    "better-sqlite3": "^12.6.2",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.4",
     "html2canvas": "^1.4.1",
@@ -63,12 +70,58 @@
     "@vitejs/plugin-react": "^4.3.1",
     "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.1",
+    "electron": "^41.0.4",
+    "electron-builder": "^26.8.1",
     "jsdom": "^28.0.0",
     "postcss": "^8.4.41",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.5.3",
     "vite": "^5.4.2",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "wait-on": "^9.0.4"
+  },
+  "build": {
+    "appId": "com.tascadovereda.app",
+    "productName": "Tasca do Vereda",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "main.cjs",
+      "preload.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "public/icon.png",
+        "to": "icon.png"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/icon.png",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "uninstallDisplayName": "Tasca do Vereda - Desinstalar",
+      "perMachine": true
+    },
+    "msi": {
+      "oneClick": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

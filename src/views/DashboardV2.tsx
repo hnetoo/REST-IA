@@ -17,6 +17,7 @@ const DashboardV2 = () => {
   const [persistentRevenue, setPersistentRevenue] = useState<number>(0);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
   const previousRevenueRef = useRef<number>(0);
+  const syncGuardRef = useRef<boolean>(false); // Guardião para evitar sync duplicado
 
   // LIMPEZA DE LOCALSTORAGE - CONFIAR APENAS NA DB
   useEffect(() => {
@@ -45,6 +46,30 @@ const DashboardV2 = () => {
   useEffect(() => {
     const initializeDashboard = async () => {
       console.log('[DASHBOARD] Inicializando dados...');
+      
+      // 🔥 PERSISTÊNCIA DE DESPESAS - Carregar do Supabase
+      try {
+        const todayLuanda = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
+        const todayStr = todayLuanda.toISOString().split('T')[0];
+        
+        console.log('[EXPENSES] Carregando despesas do Supabase para:', todayStr);
+        
+        const { data: expensesData, error: expensesError } = await supabase
+          .from('expenses')
+          .select('*')
+          .gte('created_at', `${todayStr}T00:00:00Z`)
+          .lte('created_at', `${todayStr}T23:59:59Z`)
+          .order('created_at', { ascending: false });
+          
+        if (expensesError) {
+          console.error('[EXPENSES] Erro ao carregar despesas:', expensesError);
+        } else if (expensesData && expensesData.length > 0) {
+          console.log('[EXPENSES] ✅ Despesas carregadas do Supabase:', expensesData.length, 'registros');
+          console.log('[EXPENSES] Total despesas hoje:', expensesData.reduce((sum, e) => sum + (e.amount_kz || 0), 0), 'Kz');
+        }
+      } catch (error) {
+        console.error('[EXPENSES] Erro na persistência:', error);
+      }
       
       // Verificar se temos produtos e categorias carregados
       const store = useStore.getState();
@@ -132,6 +157,12 @@ const DashboardV2 = () => {
   // FONTE DA VERDADE: Apenas Supabase - ignorar localStorage e activeOrders
   const rendimentoGlobalDinamico = useMemo(() => {
     return metrics?.rendimentoGlobal || 0;
+  }, [metrics?.rendimentoGlobal]);
+  
+  // 🔥 MEMOIZAÇÃO DO RENDIMENTO GLOBAL - Evitar recálculos desnecessários
+  const rendimentoGlobalMemo = useMemo(() => {
+    if (!metrics) return 0;
+    return metrics.rendimentoGlobal || 0;
   }, [metrics?.rendimentoGlobal]);
   
   // CARREGAR MÉTRICAS
@@ -377,7 +408,7 @@ const DashboardV2 = () => {
         };
         
         setMetrics(mockMetrics);
-        console.log('[DASHBOARD PRINCIPAL] Métricas sincronizadas com Owner Hub:', mockMetrics);
+        console.log('[DASHBOARD PRINCIPAL] Métricas calculadas:', mockMetrics);
         
       } catch (error) {
         console.error('[DASHBOARD PRINCIPAL] Erro ao carregar métricas:', error);
@@ -389,16 +420,68 @@ const DashboardV2 = () => {
     useEffect(() => {
       console.log("🔍 DEBUG HOME -> Utilizador voltou para Home, forçando re-cálculo...");
       fetchMetrics();
-    }, [closedOrders, expenses, loadExpenses, employees, loadEmployees]);
+    }, [closedOrders, expenses, employees]); // Removido loadExpenses e loadEmployees para evitar loop infinito
 
-    // SINCRONIZAÇÃO DE VENDAS EM TEMPO REAL
+    // 🔥 SINCRONIZAÇÃO CONTROLADA - useEffect dedicado com dependências primitivas
     useEffect(() => {
-      console.log("🔍 DEBUG VENDAS -> Mudança em activeOrders detectada, recalculando...");
-      console.log("🔍 DEBUG VENDAS -> Número de ordens ativas:", activeOrders.length);
-      
-      // Recalcular Rendimento Global sempre que as vendas mudam
-      fetchMetrics();
-    }, [activeOrders]); // Ouvir mudanças nas ordens ativas
+      if (metrics && !syncGuardRef.current) {
+        const totalVendas = metrics.totalVendas || 0;
+        const despesas = metrics.despesas || 0;
+        const lucroLiquido = metrics.lucroLiquido || 0;
+        
+        console.log('[SYNC] Valores primitivos mudaram:', { totalVendas, despesas, lucroLiquido });
+        
+        // Sincronizar apenas se valores realmente mudaram
+        if (totalVendas !== previousRevenueRef.current) {
+          previousRevenueRef.current = totalVendas;
+          
+          if (!syncGuardRef.current) {
+            syncGuardRef.current = true;
+            
+            // Chamar updateGlobalMetrics
+            const updateGlobalMetrics = async () => {
+              try {
+                const { data: currentUser } = await supabase.auth.getUser();
+                if (currentUser.user) {
+                  const establishmentId = currentUser.user.user_metadata?.establishment_id || 'default';
+                  
+                  const todayLuanda = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Luanda' }));
+                  const todayStr = todayLuanda.toISOString().split('T')[0];
+                  
+                  const { error: metricsError } = await supabase
+                    .from('establishment_metrics')
+                    .upsert({
+                      establishment_id: establishmentId,
+                      date: todayStr,
+                      total_vendas_kz: totalVendas,
+                      faturacao_anual_kz: metrics.faturacaoAnual || 0,
+                      lucro_liquido_kz: lucroLiquido,
+                      despesas_kz: despesas,
+                      folha_salarial_kz: metrics.folhaSalarial || 0,
+                      rendimento_global_kz: metrics.rendimentoGlobal || 0,
+                      updated_at: new Date().toISOString()
+                    }, {
+                      onConflict: 'establishment_id,date'
+                    });
+                    
+                  if (!metricsError) {
+                    console.log('[SYNC] ✅ Sincronização única concluída:', { totalVendas, despesas });
+                  }
+                }
+              } catch (error) {
+                console.error('[SYNC] Erro:', error);
+              } finally {
+                setTimeout(() => {
+                  syncGuardRef.current = false;
+                }, 2000);
+              }
+            };
+            
+            updateGlobalMetrics();
+          }
+        }
+      }
+    }, [metrics?.totalVendas, metrics?.despesas, metrics?.lucroLiquido]); // Apenas valores primitivos
   
   // ATUALIZAÇÃO EM TEMPO REAL - SUPABASE CHANNEL
   useEffect(() => {
