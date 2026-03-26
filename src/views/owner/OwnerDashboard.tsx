@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useStore } from '../../store/useStore';
@@ -117,7 +117,12 @@ const OwnerDashboard = () => {
         },
         (payload) => {
           log.info('OWNER_DASHBOARD', 'Mudança detectada em orders', payload);
-          setTimeout(() => fetchMetrics(), 1000);
+          // EVITAR FLICKERING - não limpar estado, apenas atualizar
+          setTimeout(() => {
+            if (!isLoading) { // Só atualizar se não estiver carregando
+              fetchMetrics();
+            }
+          }, 500);
         }
       )
       .on(
@@ -129,7 +134,12 @@ const OwnerDashboard = () => {
         },
         (payload) => {
           log.info('OWNER_DASHBOARD', 'Mudança detectada em expenses', payload);
-          setTimeout(() => fetchMetrics(), 1000);
+          // EVITAR FLICKERING - não limpar estado, apenas atualizar
+          setTimeout(() => {
+            if (!isLoading) { // Só atualizar se não estiver carregando
+              fetchMetrics();
+            }
+          }, 500);
         }
       )
       .subscribe((status) => {
@@ -465,7 +475,7 @@ const OwnerDashboard = () => {
       
       const { data: orderItemsData, error: orderItemsError } = await supabase
         .from('order_items')
-        .select('product_id, quantity, unit_price, order_id')
+        .select('product_id, quantity, unit_price, total_price, order_id')
         .in('order_id', orderIds);
 
       if (orderItemsError) {
@@ -527,8 +537,16 @@ const OwnerDashboard = () => {
     return orderDate === today;
   };
 
+  // Debounce para evitar múltiplas chamadas
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Função principal para buscar métricas
   const fetchMetrics = async () => {
+    // CANCELAR CHAMADA ANTERIOR SE EXISTIR (DEBOUNCE)
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+    
     setIsLoading(true);
     try {
       console.log('[OWNER HUB] Buscando métricas do Supabase...');
@@ -684,6 +702,7 @@ const OwnerDashboard = () => {
     } catch (error) {
       console.error('[OWNER HUB] Erro ao buscar métricas:', error);
     } finally {
+      // EVITAR FLICKERING - só setLoading false no final
       setIsLoading(false);
     }
   };
