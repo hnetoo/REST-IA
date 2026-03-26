@@ -31,6 +31,26 @@ console.log('🚀 [APP BOOT] Tasca do Vereda iniciando...');
 console.log('🔧 [APP BOOT] Ambiente:', typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__ ? 'Tauri/Windows' : 'Web/Browser');
 console.log('📡 [APP BOOT] Tentando conectar ao Supabase...');
 
+// 🪟 LOGS DE EMERGÊNCIA - Capturar erros globais
+window.addEventListener('error', (event) => {
+  console.error('🪟 [EMERGENCY] JavaScript Error:', {
+    message: event.message,
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+    stack: event.error?.stack
+  });
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('🪟 [EMERGENCY] Unhandled Promise Rejection:', {
+    reason: event.reason,
+    stack: event.reason?.stack
+  });
+});
+
+console.log('🪟 [DEBUG] Emergency logging ativado');
+
 // Atalho F12 para abrir DevTools no Windows
 if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
   document.addEventListener('keydown', (e) => {
