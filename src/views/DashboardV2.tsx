@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 import { DollarSign, ShoppingBag, Users, TrendingUp, Sparkles, Loader2, Activity, Target, Zap, ChefHat, MonitorOff, Printer, History, PieChart, Receipt } from 'lucide-react';
@@ -12,6 +12,11 @@ const DashboardV2 = () => {
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
+  
+  // 🪟 ANTI-FLICKER WINDOWS - Estado persistente para manter valores durante carregamento
+  const [persistentRevenue, setPersistentRevenue] = useState<number>(0);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(false);
+  const previousRevenueRef = useRef<number>(0);
 
   // LIMPEZA DE LOCALSTORAGE - CONFIAR APENAS NA DB
   useEffect(() => {
@@ -442,7 +447,7 @@ const DashboardV2 = () => {
       const today = new Date().toISOString().split('T')[0]; // Data atual para despesas
       const orders = closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
       
-      // FATURAÇÃO HOJE: Query SEPARADA - Apenas vendas de 18/03/2026
+      // FATURAÇÃO HOJE: Query SEPARADA - Apenas vendas de hoje com Africa/Luanda
       const hojeWAT = new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
       const vendasHojeFiltradas = orders.filter(order => {
         const dataOrder = new Date(order.timestamp).toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' });
@@ -450,6 +455,25 @@ const DashboardV2 = () => {
       });
       
       const faturacaoHoje = vendasHojeFiltradas.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
+      
+      // 🪟 ANTI-FLICKER WINDOWS - Manter valor antigo até novo ser validado
+      if (faturacaoHoje > 0) {
+        setPersistentRevenue(faturacaoHoje);
+        previousRevenueRef.current = faturacaoHoje;
+      }
+      
+      // 🪟 WINDOWS SYNC LOG - Log específico para Inspector Tauri
+      console.log('[WINDOWS_SYNC] Dados recebidos:', {
+        faturacaoHoje,
+        persistentRevenue: persistentRevenue || faturacaoHoje,
+        formatKz: formatKz(persistentRevenue || faturacaoHoje),
+        hojeWAT,
+        totalOrders: orders.length,
+        vendasHojeFiltradas: vendasHojeFiltradas.length,
+        environment: 'TAURI_WINDOWS',
+        timestamp: new Date().toISOString(),
+        antiFlicker: 'ACTIVE'
+      });
       
       console.log('[DASHBOARD PRINCIPAL] FATURAÇÃO HOJE (SEPARADA):', {
         hojeWAT, // "18/03/2026"
@@ -598,7 +622,7 @@ const DashboardV2 = () => {
               <span className="text-xs text-white/60 uppercase tracking-wider">FATURAÇÃO HOJE</span>
             </div>
             <div className="text-xl font-black text-amber-400 mb-2">
-              {formatKz(todayMetrics.revenue)}
+              {formatKz(persistentRevenue || todayMetrics.revenue)}
             </div>
             <div className="text-xs text-white/60">Moeda: AKZ</div>
         </div>
