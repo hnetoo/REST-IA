@@ -30,7 +30,14 @@ export interface DatabaseLog {
 class DatabaseService {
   private STORAGE_KEY = 'tasca_db_backups';
   private LOGS_KEY = 'tasca_db_logs';
-  private isTauri = !!(window as any).__TAURI_INTERNALS__;
+  private _isTauri: boolean | null = null;
+
+  private getIsTauri(): boolean {
+    if (this._isTauri === null) {
+      this._isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
+    }
+    return this._isTauri;
+  }
 
   private async calculateHash(data: string): Promise<string> {
     const msgUint8 = new TextEncoder().encode(data);
@@ -142,7 +149,7 @@ class DatabaseService {
   async exportToFile(backup: BackupFile) {
     const backupContent = JSON.stringify(backup, null, 2); // Pretty print JSON
 
-    if (this.isTauri) {
+    if (this.getIsTauri()) {
       try {
         const filePath = await save({
           filters: [{

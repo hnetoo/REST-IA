@@ -287,7 +287,14 @@ export const getTodayDateString = (): string => {
   return new Date().toISOString().split('T')[0]; // 🔑 PADRÃO UNIFICADO
 };
 
-const syncChannel = new BroadcastChannel('vereda_state_sync');
+// 🔗 BroadcastChannel para sync entre tabs - criado lazy para evitar erro SSR
+let syncChannel: BroadcastChannel | null = null;
+const getSyncChannel = (): BroadcastChannel | null => {
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window && !syncChannel) {
+    syncChannel = new BroadcastChannel('vereda_state_sync');
+  }
+  return syncChannel;
+};
 
 // 🔑 LIMPEZA DE PRODUTOS - Remover produto problemático que bloqueia deletes
 export const cleanupProblematicProduct = async () => {
@@ -527,7 +534,10 @@ const customPersistenceStorage: StateStorage = {
       }
       
       // Notify other tabs/windows
-      syncChannel.postMessage({ type: 'STATE_UPDATE' });
+      const channel = getSyncChannel();
+      if (channel) {
+        channel.postMessage({ type: 'STATE_UPDATE' });
+      }
     } catch (e) {
       console.error('[PERSISTENCE] ❌ Erro ao salvar dados:', e);
     }
@@ -553,7 +563,11 @@ const customPersistenceStorage: StateStorage = {
       console.log('[PERSISTENCE] 📱 Removendo do SQLite...');
       await sqliteService.saveState(null);
       
-      syncChannel.postMessage({ type: 'STATE_UPDATE' });
+      // Notify other tabs/windows
+      const channel = getSyncChannel();
+      if (channel) {
+        channel.postMessage({ type: 'STATE_UPDATE' });
+      }
     } catch (e) {
       console.error('[PERSISTENCE] ❌ Erro ao remover dados:', e);
     }

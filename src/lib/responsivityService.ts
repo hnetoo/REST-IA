@@ -22,21 +22,43 @@ export interface ResponsiveConfig {
 }
 
 class ResponsivityService {
-  private currentScreen: ScreenSize;
-  private currentConfig: ResponsiveConfig;
+  private currentScreen: ScreenSize | null = null;
+  private currentConfig: ResponsiveConfig | null = null;
   private listeners: ((config: ResponsiveConfig) => void)[] = [];
   private resizeObserver: ResizeObserver | null = null;
   private mediaQueries: MediaQueryList[] = [];
+  private initialized: boolean = false;
 
   constructor() {
+    // Defer initialization to avoid window access during module load
+    if (typeof window !== 'undefined') {
+      setTimeout(() => this.initialize(), 0);
+    }
+  }
+
+  private initialize() {
+    if (this.initialized || typeof window === 'undefined') return;
+    
     this.currentScreen = this.detectScreenSize();
     this.currentConfig = this.generateConfig(this.currentScreen);
     this.setupResizeDetection();
     this.setupMediaQueries();
     this.applyConfig();
+    this.initialized = true;
   }
 
   private detectScreenSize(): ScreenSize {
+    if (typeof window === 'undefined') {
+      return {
+        width: 1920,
+        height: 1080,
+        ratio: 16/9,
+        category: 'desktop',
+        type: 'landscape',
+        density: 1
+      };
+    }
+    
     const width = window.innerWidth;
     const height = window.innerHeight;
     const ratio = width / height;
@@ -56,7 +78,7 @@ class ResponsivityService {
     }
 
     // Detectar densidade de pixels
-    const density = window.devicePixelRatio || 1;
+    const density = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
 
     return {
       width,
@@ -170,6 +192,8 @@ class ResponsivityService {
 
   private setupResizeDetection() {
     // Usar ResizeObserver para detectar mudanças no viewport
+    if (typeof window === 'undefined') return;
+    
     if (window.ResizeObserver) {
       this.resizeObserver = new ResizeObserver((entries) => {
         for (const entry of entries) {
@@ -187,6 +211,8 @@ class ResponsivityService {
   }
 
   private setupMediaQueries() {
+    if (typeof window === 'undefined') return;
+    
     // Configurar media queries para diferentes breakpoints
     const queries = [
       '(max-width: 767px)',
@@ -206,10 +232,12 @@ class ResponsivityService {
   }
 
   private handleResize() {
+    if (typeof window === 'undefined') return;
     this.updateScreenSize(window.innerWidth, window.innerHeight);
   }
 
   private handleMediaQueryChange() {
+    if (typeof window === 'undefined') return;
     this.updateScreenSize(window.innerWidth, window.innerHeight);
   }
 
@@ -220,11 +248,11 @@ class ResponsivityService {
       ratio: width / height,
       category: this.getCategoryFromWidth(width),
       type: width > height ? 'landscape' : 'portrait',
-      density: window.devicePixelRatio || 1
+      density: typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
     };
 
     // Verificar se houve mudança significativa
-    if (this.hasSignificantChange(this.currentScreen, newScreen)) {
+    if (this.currentScreen && this.hasSignificantChange(this.currentScreen, newScreen)) {
       this.currentScreen = newScreen;
       this.currentConfig = this.generateConfig(newScreen);
       this.applyConfig();
@@ -250,6 +278,8 @@ class ResponsivityService {
   }
 
   private applyConfig() {
+    if (!this.currentConfig || !this.currentScreen || typeof window === 'undefined') return;
+    
     const root = document.documentElement;
     const body = document.body;
     
@@ -279,20 +309,40 @@ class ResponsivityService {
   }
 
   private notifyListeners() {
-    this.listeners.forEach(listener => listener(this.currentConfig));
+    if (this.currentConfig) {
+      this.listeners.forEach(listener => listener(this.currentConfig!));
+    }
   }
 
   // Métodos públicos
   public getCurrentConfig(): ResponsiveConfig {
+    if (!this.currentConfig) {
+      return this.getBaseConfig('desktop');
+    }
     return { ...this.currentConfig };
   }
 
   public getCurrentScreen(): ScreenSize {
+    if (!this.currentScreen) {
+      return {
+        width: 1920,
+        height: 1080,
+        ratio: 16/9,
+        category: 'desktop',
+        type: 'landscape',
+        density: 1
+      };
+    }
     return { ...this.currentScreen };
   }
 
   public subscribe(listener: (config: ResponsiveConfig) => void): () => void {
     this.listeners.push(listener);
+    
+    // Notificar imediatamente se já inicializado
+    if (this.currentConfig) {
+      listener(this.currentConfig);
+    }
     
     // Retornar função de unsubscribe
     return () => {
@@ -301,27 +351,32 @@ class ResponsivityService {
   }
 
   public forceUpdate() {
-    this.updateScreenSize(window.innerWidth, window.innerHeight);
+    if (!this.initialized) {
+      this.initialize();
+    }
+    if (this.currentScreen && typeof window !== 'undefined') {
+      this.updateScreenSize(window.innerWidth, window.innerHeight);
+    }
   }
 
   public isMobile(): boolean {
-    return this.currentScreen.category === 'mobile';
+    return this.currentScreen?.category === 'mobile';
   }
 
   public isTablet(): boolean {
-    return this.currentScreen.category === 'tablet';
+    return this.currentScreen?.category === 'tablet';
   }
 
   public isDesktop(): boolean {
-    return ['desktop', 'large-desktop', 'ultra-wide'].includes(this.currentScreen.category);
+    return ['desktop', 'large-desktop', 'ultra-wide'].includes(this.currentScreen?.category || '');
   }
 
   public isPortrait(): boolean {
-    return this.currentScreen.type === 'portrait';
+    return this.currentScreen?.type === 'portrait';
   }
 
   public isLandscape(): boolean {
-    return this.currentScreen.type === 'landscape';
+    return this.currentScreen?.type === 'landscape';
   }
 
   public destroy() {
@@ -333,7 +388,9 @@ class ResponsivityService {
       mq.removeEventListener('change', this.handleMediaQueryChange.bind(this));
     });
     
-    window.removeEventListener('resize', this.handleResize.bind(this));
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.handleResize.bind(this));
+    }
     this.listeners = [];
   }
 }
