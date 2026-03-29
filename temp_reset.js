@@ -1,0 +1,1 @@
+console.log('🧹 Executando reset do localStorage...'); localStorage.clear(); console.log('✅ localStorage limpo! Recarregue a página manualmente.'); console.log('🎯 O valor de 39.500 Kz do SQLite/Windows agora deve ser o único a subir para o Dashboard.');

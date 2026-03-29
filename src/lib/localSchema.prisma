@@ -1,0 +1,91 @@
+// 🎯 SCHEMA PRISMA PARA SQLITE LOCAL - UNIFICADO COM SUPABASE
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./local.db"
+}
+
+// 📦 ORDERS - Mesma estrutura do Supabase
+model orders {
+  id               String    @id @default(cuid())
+  customer_name    String?
+  customer_phone   String?
+  delivery_address String?
+  total_amount     Decimal?  @default(0) @db.Decimal(10, 2)
+  status           String?   @default("pending")
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now())
+  cost_amount      Decimal?  @default(0) @db.Decimal(15, 2)
+  payment_method   String?   @default("NUMERARIO")
+  invoice_number   String?
+  table_id         String?
+  customer_id      String?
+  user_id          String?
+
+  @@map("orders")
+}
+
+// 💸 EXPENSES - Mesma estrutura do Supabase
+model expenses {
+  id            String    @id @default(cuid())
+  description   String
+  amount_kz     Decimal   @db.Decimal(15, 2)
+  category      String
+  is_recurring  Boolean?  @default(false)
+  period_start  DateTime? @db.Date
+  period_end    DateTime? @db.Date
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now())
+  status        String?   @default("pago")
+  category_name String?
+
+  @@map("expenses")
+}
+
+// 👥 STAFF - Mesma estrutura do Supabase
+model staff {
+  id              String    @id @default(cuid())
+  full_name       String
+  role            String?
+  base_salary_kz  Decimal?  @default(0) @db.Decimal(12, 2)
+  phone           String?
+  status          String?   @default("active")
+  created_at      DateTime  @default(now())
+  subsidios       Decimal?  @default(0) @db.Decimal
+  bonus           Decimal?  @default(0) @db.Decimal
+  horas_extras    Decimal?  @default(0) @db.Decimal
+  descontos       Decimal?  @default(0) @db.Decimal
+  salario_base    Decimal?  @default(0) @db.Decimal
+
+  @@map("staff")
+}
+
+// 📚 EXTERNAL_HISTORY - Mesma estrutura do Supabase
+model external_history {
+  id            String    @id @default(cuid())
+  source_name   String
+  total_revenue Decimal   @default(0) @db.Decimal
+  gross_profit  Decimal   @default(0) @db.Decimal
+  period        String
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now())
+
+  @@map("external_history")
+}
+
+// 📊 SYNC_QUEUE - Controle de sincronização
+model sync_queue {
+  id         String   @id @default(cuid())
+  table_name String
+  operation  String   // insert, update, delete
+  data       String   // JSON
+  status     String   @default("pending") // pending, synced, error
+  created_at DateTime @default(now())
+  synced_at  DateTime?
+
+  @@map("sync_queue")
+}

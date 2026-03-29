@@ -1,0 +1,36 @@
+-- 🚨 LIMPEZA COMPLETA DO SUPABASE (BASEADO NO SCHEMA REAL)
+-- 1. DESATIVAR RLS EM TODAS AS TABELAS IMPORTANTES
+
+ALTER TABLE "orders" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "expenses" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "staff" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "categories" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "products" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "customers" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "external_history" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "business_stats" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "financial_history" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "order_items" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "purchase_requests" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "salary_payments" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "staff_schedules" DISABLE ROW LEVEL SECURITY;
+ALTER TABLE "cash_flow" DISABLE ROW LEVEL SECURITY;
+
+-- 2. REMOVER TABELAS FANTASMA DO SCHEMA REAL
+DROP TABLE IF EXISTS "establishments" CASCADE;  -- Linhas 548-560
+DROP TABLE IF EXISTS "establishment_metrics" CASCADE;  -- Linhas 870-881  
+DROP TABLE IF EXISTS "terminal_sync" CASCADE;  -- Linhas 860-868
+
+-- 3. MANTER TABELAS ESSENCIAIS (HÉLER DESIGN)
+-- external_history: CONTÉM O HISTÓRICO DE 8 MILHÕES
+-- orders: CONTÉM AS VENDAS ATUAIS
+-- establishments, establishment_metrics, terminal_sync: SÃO LIXO
+
+-- 4. GARANTIR POLÍTICA PERMISSIVA
+-- Todos os utilizadores (Anon/Auth) com acesso total
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON "orders";
+DROP POLICY IF EXISTS "Enable select for authenticated users" ON "orders";
+DROP POLICY IF EXISTS "Enable update for authenticated users" ON "orders";
+DROP POLICY IF EXISTS "Enable delete for authenticated users" ON "orders";
+
+COMMIT;

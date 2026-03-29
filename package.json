@@ -1,0 +1,147 @@
+{
+  "name": "tasca-do-vereda-app",
+  "private": true,
+  "main": "main.cjs",
+  "homepage": "./",
+  "version": "1.0.2",
+  "description": "Sistema de Gestão Restaurante",
+  "author": "Tasca do Vereda",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"electron .\"",
+    "build": "vite build",
+    "build:vercel": "vite build --mode production",
+    "build:frontend": "vite build --mode production",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "build:electron": "npm run build && electron-builder",
+    "build:electron:win": "npm run build && electron-builder --win",
+    "build:msi": "node scripts/prebuild-clean.js && npm run build:frontend && electron-builder --win msi",
+    "build:msi:clean": "npm run build:msi && node scripts/cleanup-build.js",
+    "clean": "rimraf node_modules/.cache dist out dist-electron dist/installers",
+    "prebuild": "node scripts/prebuild-clean.js",
+    "test": "vitest run",
+    "supabase:init": "./scripts/supabase-setup.ps1 init",
+    "supabase:start": "./scripts/supabase-setup.ps1 start",
+    "supabase:stop": "./scripts/supabase-setup.ps1 stop",
+    "supabase:status": "./scripts/supabase-setup.ps1 status",
+    "supabase:push": "./scripts/supabase-setup.ps1 push",
+    "supabase:seed": "./scripts/supabase-setup.ps1 seed",
+    "supabase:types": "./scripts/supabase-setup.ps1 types",
+    "supabase:deploy": "./scripts/supabase-setup.ps1 deploy",
+    "supabase:reset": "./scripts/supabase-setup.ps1 reset"
+  },
+  "dependencies": {
+    "@google/genai": "^1.40.0",
+    "@prisma/client": "^5.22.0",
+    "@supabase/supabase-js": "^2.95.3",
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-dialog": "^2.1.0",
+    "@tauri-apps/plugin-fs": "^2.1.0",
+    "@tauri-apps/plugin-shell": "^2.1.0",
+    "@tauri-apps/plugin-sql": "^2.1.0",
+    "@types/uuid": "^10.0.0",
+    "date-fns-tz": "^3.2.0",
+    "dotenv": "^17.2.4",
+    "html2canvas": "^1.4.1",
+    "i18next": "^23.11.5",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^0.454.0",
+    "pg": "^8.18.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-i18next": "^14.1.2",
+    "react-router-dom": "^6.26.1",
+    "recharts": "^2.15.4",
+    "supabase": "^2.78.1",
+    "uuid": "^13.0.0",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/ui": "^4.0.18",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.2.1",
+    "electron": "^41.0.4",
+    "electron-builder": "^26.8.1",
+    "jsdom": "^28.0.0",
+    "postcss": "^8.4.41",
+    "prisma": "^5.22.0",
+    "rimraf": "^6.1.3",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.2",
+    "vitest": "^4.0.18",
+    "wait-on": "^9.0.4"
+  },
+  "build": {
+    "appId": "com.tascadovereda.app",
+    "productName": "Tasca Vereda",
+    "directories": {
+      "output": "dist/installers"
+    },
+    "files": [
+      "dist/**/*",
+      "main.cjs",
+      "preload.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "public/icon.png",
+        "to": "icon.png"
+      },
+      {
+        "from": "src/lib/localSchema.prisma",
+        "to": "localSchema.prisma"
+      },
+      {
+        "from": "scripts/prisma/schema.prisma",
+        "to": "schema.prisma"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "msi",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/icon.png",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Tasca Vereda",
+      "uninstallDisplayName": "Tasca Vereda - Desinstalar",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "menuCategory": "Tasca Vereda",
+      "license": "LICENSE.txt",
+      "displayLanguageSelector": true
+    },
+    "msi": {
+      "oneClick": false,
+      "perMachine": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Tasca Vereda",
+      "runAfterFinish": true,
+      "menuCategory": "Tasca Vereda",
+      "artifactName": "TascaVereda-Setup.msi"
+    }
+  }
+}

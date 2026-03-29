@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sync Core</title>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body>
+    <h1>Teste do Motor Sync Core</h1>
+    <div id="output"></div>
+    
+    <script>
+        const supabaseUrl = 'https://tboiuiwlqfzcvakxrsmj.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRib2l1d2xxZnpjdnhreHJzbWoiLCJpYXQiOjE3MjQ1NjQ1MDksImV4cCI6MjA0MDE0MDUwOX0.q2q6m8tO1YkLqQW8xK3J3xQFzZ8nLqJ9X2wF6L7s3Y';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const output = document.getElementById('output');
+        
+        async function testSync() {
+            output.innerHTML = '<h2>🔄 Testando conexão...</h2>';
+            
+            try {
+                // Testar Orders
+                console.log('📊 Testando Orders...');
+                const { data: orders, error: ordersError } = await supabase
+                    .from('orders')
+                    .select('total_amount, status, created_at')
+                    .eq('status', 'pending');
+                
+                if (ordersError) {
+                    output.innerHTML += `<p>❌ Erro Orders: ${ordersError.message}</p>`;
+                } else {
+                    const totalRevenue = orders.reduce((acc, order) => acc + Number(order.total_amount || 0), 0);
+                    output.innerHTML += `<p>✅ Orders: ${orders.length} registros, Total: ${totalRevenue} Kz</p>`;
+                }
+                
+                // Testar Cash Flow
+                console.log('💰 Testando Cash Flow...');
+                const { data: cashFlow, error: cashFlowError } = await supabase
+                    .from('cash_flow')
+                    .select('amount, type, created_at')
+                    .eq('type', 'saida');
+                
+                if (cashFlowError) {
+                    output.innerHTML += `<p>❌ Erro Cash Flow: ${cashFlowError.message}</p>`;
+                } else {
+                    const totalExpenses = cashFlow.reduce((acc, cf) => acc + Number(cf.amount || 0), 0);
+                    output.innerHTML += `<p>✅ Cash Flow Saídas: ${cashFlow.length} registros, Total: ${totalExpenses} Kz</p>`;
+                }
+                
+                // Testar Expenses
+                console.log('💸 Testando Expenses...');
+                const { data: expenses, error: expensesError } = await supabase
+                    .from('expenses')
+                    .select('amount_kz, created_at');
+                
+                if (expensesError) {
+                    output.innerHTML += `<p>❌ Erro Expenses: ${expensesError.message}</p>`;
+                } else {
+                    const totalExp = expenses.reduce((acc, exp) => acc + Number(exp.amount_kz || 0), 0);
+                    output.innerHTML += `<p>✅ Expenses: ${expenses.length} registros, Total: ${totalExp} Kz</p>`;
+                }
+                
+                // Resumo Final
+                const revenue = orders ? orders.reduce((acc, o) => acc + Number(o.total_amount || 0), 0) : 0;
+                const expenses = cashFlow ? cashFlow.reduce((acc, cf) => acc + Number(cf.amount || 0), 0) : 0;
+                const profit = revenue - expenses;
+                
+                output.innerHTML += `
+                    <h2>📊 Resumo Dashboard Esperado:</h2>
+                    <p><strong>Rendimento Global:</strong> ${revenue} Kz</p>
+                    <p><strong>Despesas de Hoje:</strong> ${expenses} Kz</p>
+                    <p><strong>Lucro Líquido:</strong> ${profit} Kz</p>
+                    <p><strong>Status:</strong> 🟢 Teste Concluído</p>
+                `;
+                
+            } catch (error) {
+                output.innerHTML += `<p>❌ Erro geral: ${error.message}</p>`;
+                console.error('Erro no teste:', error);
+            }
+        }
+        
+        // Executar teste
+        testSync();
+    </script>
+</body>
+</html>

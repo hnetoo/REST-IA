@@ -1,0 +1,33 @@
+{
+  "name": "Tasca Do VEREDA - Menu Digital",
+  "short_name": "MenuVereda",
+  "description": "Menu digital interativo para restaurante Tasca Do VEREDA",
+  "start_url": "/menu-digital",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "api_endpoints": {
+    "menu_data": "https://tasca-do-vereda.vercel.app/api/menu",
+    "categories": "https://tasca-do-vereda.vercel.app/api/categories",
+    "restaurant_info": "https://tasca-do-vereda.vercel.app/api/restaurant"
+  },
+  "supabase_config": {
+    "url": "https://ratzyxwpzrqbtpheygch.supabase.co",
+    "anon_key": "sb_publishable_brYx8iH2oCK5uVUowtUhTQ_c7X4nrAo"
+  }
+}

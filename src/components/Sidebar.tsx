@@ -1,0 +1,130 @@
+
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { 
+  LayoutDashboard, UtensilsCrossed, Package, Settings, 
+  Banknote, Map as MapIcon, ChevronLeft, Menu, 
+  LogOut, Target, Users as UsersIcon, TrendingUp, Terminal,
+  Database, Bell, ShoppingCart, BarChart3, FileText, RefreshCw
+} from 'lucide-react';
+import { useStore } from '../store/useStore';
+import { PermissionKey } from '../../types';
+import appLogo from '/logo.png';
+
+const Sidebar = () => {
+  const { logout, currentUser, settings, updateSettings, notifications } = useStore();
+  const isCollapsed = settings.isSidebarCollapsed;
+  const notificationCount = notifications.length;
+
+  const toggleSidebar = () => updateSettings({ isSidebarCollapsed: !isCollapsed });
+
+  const refreshDashboard = async () => {
+    try {
+      // Refresh inteligente: revalidar dados Supabase sem reload
+      const { loadExpenses, loadEmployees } = useStore.getState();
+      
+      // Recarregar dados críticos do Supabase
+      await Promise.allSettled([
+        loadExpenses(),
+        loadEmployees()
+      ]);
+      
+      // Notificar sucesso
+      useStore.getState().addNotification('success', 'Dados atualizados com sucesso!');
+      
+      console.log('[REFRESH] Dados revalidados sem reload da página');
+    } catch (error) {
+      console.error('[REFRESH] Erro na revalidação:', error);
+      useStore.getState().addNotification('error', 'Erro ao atualizar dados');
+    }
+  };
+
+  const navItems: { to: string; icon: React.ReactNode; label: string; permission?: PermissionKey }[] = [
+    { to: "/", icon: <LayoutDashboard size={20} />, label: "Dashboard" },
+    { to: "/pos", icon: <UtensilsCrossed size={20} />, label: "Terminal POS", permission: 'POS_SALES' },
+    { to: "/profit-center", icon: <Target size={20} />, label: "Centro de Lucro", permission: 'FINANCE_VIEW' },
+    { to: "/tables-layout", icon: <MapIcon size={20} />, label: "Mapa de Sala", permission: 'POS_SALES' },
+    { to: "/inventory", icon: <Package size={20} />, label: "Menu & Stock", permission: 'STOCK_MANAGE' },
+    { to: "/compras", icon: <ShoppingCart size={20} />, label: "COMPRAS", permission: 'STOCK_MANAGE' },
+    { to: "/finance", icon: <Banknote size={20} />, label: "Financeiro Legal", permission: 'FINANCE_VIEW' },
+    { to: "/analytics", icon: <BarChart3 size={20} />, label: "ANALYTICS", permission: 'FINANCE_VIEW' },
+    { to: "/reports", icon: <FileText size={20} />, label: "RELATÓRIOS", permission: 'FINANCE_VIEW' },
+    { to: "/settings", icon: <Settings size={20} />, label: "Sistema", permission: 'SYSTEM_CONFIG' },
+  ];
+
+  const filteredItems = navItems.filter(item => {
+    if (!currentUser) return false;
+    if (!item.permission) return true;
+    return currentUser.permissions.includes(item.permission);
+  });
+
+  return (
+    <aside className={`${isCollapsed ? 'w-16' : 'w-64'} h-screen glass-panel flex flex-col z-20 transition-all duration-300 border-r border-white/5 bg-slate-950 overflow-hidden`}>
+      <div className="p-4 flex items-center justify-between">
+        {!isCollapsed && (
+          <div className="flex items-center gap-3 min-w-0">
+            <img 
+                src={appLogo} 
+                alt="Logo" 
+                className="w-8 h-8 object-contain rounded-lg shrink-0 shadow-glow border border-white/10 bg-white/5 p-1" 
+            />
+            <div className="flex flex-col min-w-0">
+                <span className="font-black text-white uppercase italic tracking-tighter text-sm leading-tight">
+                    {settings.restaurantName || "Tasca do Vereda"}
+                </span>
+                <span className="text-[8px] font-bold text-primary uppercase tracking-widest opacity-60">REST IA OS v1.0.6</span>
+            </div>
+          </div>
+        )}
+        <div className="flex items-center gap-2 ml-auto">
+          {notificationCount > 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary">
+              <Bell size={12} />
+              <span className="text-[8px] font-black uppercase tracking-widest">{notificationCount}</span>
+            </div>
+          )}
+          <button 
+            onClick={refreshDashboard} 
+            className="text-slate-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5" 
+            title="Atualizar Dashboard"
+          >
+            <RefreshCw size={16} />
+          </button>
+          <button onClick={toggleSidebar} className="text-slate-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5">
+            {isCollapsed ? <Menu size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-3 space-y-1 mt-2 overflow-y-auto no-scrollbar">
+        {filteredItems.map(item => (
+          <NavLink 
+            key={item.to} 
+            to={item.to} 
+            className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${isActive ? 'bg-primary text-black shadow-glow' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}
+          >
+            <div className="shrink-0">{item.icon}</div>
+            {!isCollapsed && <span className="text-xs font-black uppercase tracking-[0.1em] truncate">{item.label}</span>}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="p-3 border-t border-white/5 bg-black/20">
+        <div className="mb-2 px-3">
+           <div className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{currentUser?.role}</span>
+           </div>
+           {!isCollapsed && <p className="text-xs font-bold text-white truncate">{currentUser?.name}</p>}
+        </div>
+        <button onClick={logout} className="w-full flex items-center gap-2 px-3 py-2 text-red-500 hover:bg-red-500/10 transition-all rounded-lg border border-transparent hover:border-red-500/20">
+          <LogOut size={16} />
+          {!isCollapsed && <span className="text-xs font-black uppercase tracking-widest">Sair</span>}
+        </button>
+      </div>
+    </aside>
+  );
+};
+
+export default Sidebar;
+

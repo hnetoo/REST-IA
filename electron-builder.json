@@ -1,0 +1,98 @@
+{
+  "appId": "com.tascadovereda.app",
+  "productName": "Tasca Vereda",
+  "directories": {
+    "output": "dist/installers",
+    "buildResources": "build"
+  },
+  "files": [
+    "dist/**/*",
+    "main.cjs",
+    "preload.js",
+    "package.json",
+    "node_modules/**/*",
+    "!node_modules/.cache/**/*",
+    "!node_modules/**/test/**/*",
+    "!node_modules/**/tests/**/*",
+    "!node_modules/**/*.md",
+    "!node_modules/**/*.txt",
+    "!node_modules/**/CHANGELOG*",
+    "!node_modules/**/README*"
+  ],
+  "extraResources": [
+    {
+      "from": "public/icon.png",
+      "to": "icon.png"
+    },
+    {
+      "from": "src/lib/localSchema.prisma",
+      "to": "localSchema.prisma"
+    },
+    {
+      "from": "scripts/prisma/schema.prisma",
+      "to": "schema.prisma"
+    },
+    {
+      "from": "LICENSE.txt",
+      "to": "LICENSE.txt"
+    }
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "msi",
+        "arch": ["x64"]
+      },
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "public/icon.png",
+    "requestedExecutionLevel": "asInvoker",
+    "publisherName": "Tasca do Vereda"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": true,
+    "allowToChangeInstallationDirectory": true,
+    "allowElevation": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Tasca Vereda",
+    "uninstallDisplayName": "Tasca Vereda - Desinstalar",
+    "deleteAppDataOnUninstall": false,
+    "runAfterFinish": true,
+    "menuCategory": "Tasca Vereda",
+    "license": "LICENSE.txt",
+    "displayLanguageSelector": true,
+    "installerIcon": "public/icon.png",
+    "uninstallerIcon": "public/icon.png"
+  },
+  "msi": {
+    "oneClick": false,
+    "perMachine": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Tasca Vereda",
+    "runAfterFinish": true,
+    "menuCategory": "Tasca Vereda",
+    "artifactName": "TascaVereda-Setup-${version}.${ext}",
+    "publisherName": "Tasca do Vereda",
+    "installerIcon": "public/icon.png",
+    "uninstallerIcon": "public/icon.png",
+    "license": "LICENSE.txt"
+  },
+  "compression": "maximum",
+  "removePackageScripts": true,
+  "npmRebuild": false,
+  "nodeGypRebuild": false,
+  "buildDependenciesFromSource": false,
+  "includeSubNodeModules": false,
+  "asarUnpack": [
+    "node_modules/better-sqlite3/**/*"
+  ],
+  "asar": true,
+  "nodeVersion": "18.17.0",
+  "electronVersion": "41.0.4"
+}

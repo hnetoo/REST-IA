@@ -1,0 +1,49 @@
+directories:
+  output: dist/installers
+  buildResources: build
+appId: com.tascadovereda.app
+productName: Tasca Vereda
+files:
+  - filter:
+      - dist/**/*
+      - main.cjs
+      - preload.js
+      - package.json
+extraResources:
+  - from: public/icon.png
+    to: icon.png
+  - from: src/lib/localSchema.prisma
+    to: localSchema.prisma
+  - from: scripts/prisma/schema.prisma
+    to: schema.prisma
+win:
+  target:
+    - target: msi
+      arch:
+        - x64
+  icon: public/icon.png
+  requestedExecutionLevel: asInvoker
+nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Tasca Vereda
+  uninstallDisplayName: Tasca Vereda - Desinstalar
+  deleteAppDataOnUninstall: false
+  runAfterFinish: true
+  menuCategory: Tasca Vereda
+  license: LICENSE.txt
+  displayLanguageSelector: true
+msi:
+  oneClick: false
+  perMachine: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Tasca Vereda
+  runAfterFinish: true
+  menuCategory: Tasca Vereda
+  artifactName: TascaVereda-Setup.msi
+electronVersion: 41.1.0
