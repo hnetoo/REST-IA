@@ -1175,7 +1175,7 @@ export const useStore = create<StoreState>()(
           invoice_number: invoiceNumber,
           created_at: now,
           updated_at: now,
-          table_id: null, // 🛡️ Enviar null ate termos UUID correto da mesa
+          table_id: tableId ? String(tableId) : null, // ✅ Enviar table_id da mesa quando existir
         };
 
         const orderItems = (order.items || []).map(item => ({
