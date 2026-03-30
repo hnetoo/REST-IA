@@ -629,39 +629,68 @@ const POS = () => {
              </div>
            </div>
            {!activeTableId ? (
-              <div className="grid grid-cols-4 gap-2 w-full max-w-[600px] mx-auto p-2">
+              <div className="grid grid-cols-3 gap-4 w-full max-w-[600px] mx-auto p-4">
                  {[...tables].sort((a, b) => {
                     const numA = parseInt(a.name.replace(/\D/g, '')) || 0;
                     const numB = parseInt(b.name.replace(/\D/g, '')) || 0;
                     return numA - numB;
-                 }).map((table) => {
+                 }).map((table, index) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (
                       <button 
                         key={table.id} 
                         onClick={() => handleTableClick(table)}
-                        className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 relative group border-2 ${!isOccupied ? 'border-white/5 bg-[#1a1a1a] text-white' : 'border-primary bg-primary/10 text-primary shadow-lg'}`}
+                        className={`
+                          relative aspect-square rounded-2xl flex flex-col items-center justify-center 
+                          transition-all duration-300 ease-out group overflow-hidden
+                          border backdrop-blur-sm
+                          ${!isOccupied 
+                            ? 'bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-slate-600/30 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-400/10 hover:scale-105' 
+                            : 'bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/50 shadow-lg shadow-emerald-500/20 animate-pulse'
+                          }
+                        `}
                       >
-                         <span className={`text-xs font-black uppercase tracking-widest ${!isOccupied ? 'text-slate-500' : 'text-primary/60'}`}>{table.name}</span>
-                         <span className={`text-4xl font-black italic tracking-tighter leading-none ${!isOccupied ? 'text-white' : 'text-primary'}`}>{table.id}</span>
-                         
-                         {isOccupied && (
-                           <div className="absolute -top-3 -right-3 flex gap-1">
-                             <div className="w-8 h-8 bg-primary text-black rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                               <Users size={14} />
-                             </div>
-                             <button
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 closeTable(table.id);
-                               }}
-                               className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-all scale-0 group-hover:scale-100"
-                               title="Fechar Mesa"
-                             >
-                               <X size={14} />
-                             </button>
-                           </div>
-                         )}
+                        {/* Número da mesa grande */}
+                        <span className={`
+                          text-5xl font-black italic tracking-tighter leading-none mb-1
+                          ${!isOccupied ? 'text-slate-400 group-hover:text-cyan-400' : 'text-emerald-400'}
+                          transition-colors duration-300
+                        `}>
+                          {table.id}
+                        </span>
+                        
+                        {/* Nome da mesa */}
+                        <span className={`
+                          text-[9px] font-black uppercase tracking-[0.2em] 
+                          ${!isOccupied ? 'text-slate-500 group-hover:text-slate-300' : 'text-emerald-300/70'}
+                        `}>
+                          {table.name}
+                        </span>
+
+                        {/* Status indicator */}
+                        <div className={`
+                          absolute top-3 right-3 w-2 h-2 rounded-full
+                          ${!isOccupied 
+                            ? 'bg-slate-600 group-hover:bg-cyan-400' 
+                            : 'bg-emerald-400 shadow-lg shadow-emerald-400/50'
+                          }
+                          transition-all duration-300
+                        `} />
+
+                        {/* Lugares (apenas se livre) */}
+                        {!isOccupied && (
+                          <span className="absolute bottom-3 text-[8px] font-bold text-slate-600 group-hover:text-slate-400 transition-colors">
+                            {table.seats} lugares
+                          </span>
+                        )}
+
+                        {/* Ícone de ocupado */}
+                        {isOccupied && (
+                          <div className="absolute bottom-3 flex items-center gap-1 text-emerald-400">
+                            <Users size={12} />
+                            <span className="text-[8px] font-bold uppercase">Ocupada</span>
+                          </div>
+                        )}
                       </button>
                     );
                  })}
