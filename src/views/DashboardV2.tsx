@@ -64,20 +64,25 @@ const DashboardV2 = () => {
   // 🔥 ADICIONADO: Estado para Optimistic Update
   const [optimisticRevenue, setOptimisticRevenue] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
+  const previousRevenueRef = useRef(0);
   
   // 🔥 OPTIMISTIC UPDATE: Combinar valor real com otimista
   const displayRevenue = useMemo(() => {
     const baseRevenue = todayRevenue || 0;
     const total = baseRevenue + optimisticRevenue;
     
-    // Resetar optimistic quando o valor real for atualizado
-    if (baseRevenue > 0 && optimisticRevenue > 0) {
-      console.log('[DASHBOARD] 🔄 Resetando optimistic revenue - valor real atualizado:', {
-        baseRevenue,
-        optimisticRevenue,
-        total
+    // 🔥 CORREÇÃO: Só resetar optimistic quando o valor real DE FATO aumentar
+    if (baseRevenue > previousRevenueRef.current && optimisticRevenue > 0) {
+      console.log('[DASHBOARD] ✅ Valor real atualizado! Resetando optimistic:', {
+        anterior: previousRevenueRef.current,
+        atual: baseRevenue,
+        optimistic: optimisticRevenue
       });
+      previousRevenueRef.current = baseRevenue;
       setOptimisticRevenue(0);
+    } else if (baseRevenue !== previousRevenueRef.current) {
+      // Atualizar referência mesmo sem resetar optimistic
+      previousRevenueRef.current = baseRevenue;
     }
     
     return total;

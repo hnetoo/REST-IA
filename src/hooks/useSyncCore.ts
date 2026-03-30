@@ -175,114 +175,62 @@ export const useSyncCore = () => {
   const calculateRevenue = useCallback(async (): Promise<{
     total: number;
     today: number;
-    externalHistory: number;     // ✅ ADICIONADO: Retornar external_history
+    externalHistory: number;
   }> => {
     try {
-      console.log('[SYNC_CORE] 🔄 Iniciando Revenue Engine...');
-      
-      // 📚 Buscar external_history (tabela de configurações/meta)
-      console.log('[SYNC_CORE] 📚 Buscando external_history...');
+      // 📚 Buscar external_history
       const { data: externalHistoryData, error: externalError } = await supabase
         .from('external_history')
         .select('total_revenue')
-        .limit(1); // 🔥 CORREÇÃO: Remover .single() e usar .limit(1) para evitar PGRST116
+        .limit(1);
       
       let externalHistory = 0;
       if (!externalError && externalHistoryData && externalHistoryData.length > 0) {
-        externalHistory = Number(externalHistoryData[0].total_revenue) || 0; // 🔥 CORREÇÃO: Acessar primeiro item do array
-        console.log('[SYNC_CORE] ✅ External history encontrado:', externalHistory);
-        console.log('[SYNC_CORE] 📊 Dados brutos:', externalHistoryData);
-      } else {
-        console.log('[SYNC_CORE] ℹ️ Nenhum external history encontrado - usando 0');
-        console.log('[SYNC_CORE] 📊 Erro:', externalError);
-        externalHistory = 0;  // ✅ FORÇAR 0 quando não há dados
+        externalHistory = Number(externalHistoryData[0].total_revenue) || 0;
       }
       
-      // 💰 Buscar todas as orders com status variados (não apenas 'pending')
-      console.log('[SYNC_CORE] 💰 Buscando todas as orders...');
+      // 💰 Buscar todas as orders
       const { data: allOrdersData, error: allOrdersError } = await supabase
         .from('orders')
         .select('id, total_amount, created_at, status')
-        // 🔥 CORREÇÃO: Aceitar múltiplos status para incluir vendas reais
         .in('status', ['pending', 'closed', 'paid', 'FECHADO', 'PAGO', 'completed', 'delivered', 'DELIVERED']);
       
       let totalRevenue = 0;
       if (!allOrdersError && allOrdersData && Array.isArray(allOrdersData)) {
-        console.log('[SYNC_CORE] 📊 Orders encontradas com status:', allOrdersData.map(o => ({ id: o.id, status: o.status, amount: o.total_amount })));
         totalRevenue = allOrdersData.reduce((acc, order) => {
           return acc + Number(order.total_amount || 0);
         }, 0);
-        console.log('[SYNC_CORE] ✅ Orders encontradas:', allOrdersData.length, 'Total:', totalRevenue);
-      } else {
-        console.log('[SYNC_CORE] ℹ️ Nenhuma order encontrada ou erro na busca');
       }
       
-      // 📅 Buscar orders de hoje com status variados
-      const hojeUTC = new Date().toISOString().split('T')[0]; // 🔥 CORREÇÃO: Usar UTC diretamente
-      
-      console.log('[SYNC_CORE] 📅 Buscando orders de hoje (', hojeUTC, ')...');
-      console.log('[SYNC_CORE] 📅 Data atual:', new Date().toISOString());
+      // 📅 Buscar orders de hoje
+      const hojeUTC = new Date().toISOString().split('T')[0];
       
       const { data: todayOrdersData, error: todayOrdersError } = await supabase
         .from('orders')
         .select('id, total_amount, created_at, status')
-        // 🔥 CORREÇÃO: Aceitar múltiplos status para incluir vendas reais
         .in('status', ['pending', 'closed', 'paid', 'FECHADO', 'PAGO', 'completed', 'delivered', 'DELIVERED'])
         .gte('created_at', `${hojeUTC}T00:00:00Z`)
         .lte('created_at', `${hojeUTC}T23:59:59Z`);
       
-      console.log('[SYNC_CORE] 📊 Resultado da busca:', { error: todayOrdersError, dataLength: todayOrdersData?.length });
-      
-      // 🔥 TESTE: Buscar todas as orders sem filtro de data
-      const { data: allTodayOrders, error: allTodayError } = await supabase
-        .from('orders')
-        .select('id, total_amount, created_at, status')
-        .in('status', ['pending', 'closed', 'paid', 'FECHADO', 'PAGO'])
-        .limit(10);
-      
-      console.log('[SYNC_CORE] 🔍 TESTE - Todas as orders recentes:', { error: allTodayError, data: allTodayOrders });
-      
-      // 🔥 DEBUG: Verificar data das orders
-      if (allTodayOrders && allTodayOrders.length > 0) {
-        console.log('[SYNC_CORE] 📅 DATAS DAS ORDERS:');
-        allTodayOrders.forEach(order => {
-          const orderDate = new Date(order.created_at).toISOString().split('T')[0];
-          const hoje = new Date().toISOString().split('T')[0];
-          console.log(`Order ${order.id}: ${order.created_at} -> ${orderDate} (Hoje: ${hoje}) - É hoje? ${orderDate === hoje}`);
-        });
-      }
-      
       let todayRevenue = 0;
       if (!todayOrdersError && todayOrdersData && Array.isArray(todayOrdersData)) {
-        console.log('[SYNC_CORE] 📊 Orders de hoje encontradas:', todayOrdersData.map(o => ({ id: o.id, status: o.status, amount: o.total_amount, created: o.created_at })));
         todayRevenue = todayOrdersData.reduce((acc, order) => {
           return acc + Number(order.total_amount || 0);
         }, 0);
-        console.log('[SYNC_CORE] ✅ Orders de hoje:', todayOrdersData.length, 'Total:', todayRevenue);
-      } else {
-        console.log('[SYNC_CORE] ℹ️ Nenhuma order de hoje encontrada');
-        console.log('[SYNC_CORE] ❌ Erro detalhado:', todayOrdersError);
       }
       
-      // 🚀 Cálculo final do Revenue Engine
+      // 🚀 Cálculo final
       const finalTotal = externalHistory + totalRevenue;
       
       return {
         total: finalTotal,
         today: todayRevenue,
-        externalHistory: externalHistory   // ✅ ADICIONADO: Retornar external_history
+        externalHistory: externalHistory
       };
       
     } catch (error) {
-      // Tratamento específico para Erro 400 e outros erros
-      if (error && typeof error === 'object' && 'status' in error) {
-        const errorStatus = (error as any).status;
-        if (errorStatus === 400) {
-          console.error('[SYNC_CORE] ❌ Erro 400 - Bad Request:', error);
-        }
-      }
       console.error('[SYNC_CORE] ❌ Revenue Engine error:', error);
-      return { total: 0, today: 0, externalHistory: 0 };  // ✅ ADICIONADO: Retorno padrão
+      return { total: 0, today: 0, externalHistory: 0 };
     }
   }, [getLuandaDate]);
 
@@ -709,35 +657,44 @@ export const useSyncCore = () => {
 
   // 🔄 CONFIGURAR SUBSCRIPTIONS REALTIME
   const setupRealtimeSubscriptions = useCallback(() => {
+    console.log('[SYNC_CORE] 📡 Configurando subscriptions realtime...');
     
     // Orders subscription
+    console.log('[SYNC_CORE] 📡 Subscribing to orders channel...');
     const ordersSubscription = supabase
-      .channel('sync-core-orders')
+      .channel('sync-core-orders-v3') // 🔥 Nome único para evitar conflitos
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
           console.log('[SYNC_CORE] 📊 Orders mudou - recalculando...', payload);
+          console.log('[SYNC_CORE] 📊 Event type:', payload.eventType);
+          console.log('[SYNC_CORE] 📊 New record:', payload.new);
           recalculateAll();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[SYNC_CORE] 📡 Orders subscription status:', status);
+      });
 
     // Expenses subscription
+    console.log('[SYNC_CORE] 📡 Subscribing to expenses channel...');
     const expensesSubscription = supabase
-      .channel('sync-core-expenses')
+      .channel('sync-core-expenses-v3')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'expenses' },
         (payload) => {
           console.log('[SYNC_CORE] 💸 Expenses mudou - recalculando...', payload);
-          console.log('[SYNC_CORE] 💸 Chamando recalculateAll()...');
           recalculateAll();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[SYNC_CORE] 📡 Expenses subscription status:', status);
+      });
 
     // Staff subscription
+    console.log('[SYNC_CORE] 📡 Subscribing to staff channel...');
     const staffSubscription = supabase
-      .channel('sync-core-staff')
+      .channel('sync-core-staff-v3')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'staff' },
         (payload) => {
@@ -745,11 +702,14 @@ export const useSyncCore = () => {
           recalculateAll();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[SYNC_CORE] 📡 Staff subscription status:', status);
+      });
 
     // Cash Flow subscription (saídas)
+    console.log('[SYNC_CORE] 📡 Subscribing to cash_flow channel...');
     const cashFlowSubscription = supabase
-      .channel('sync-core-cash-flow')
+      .channel('sync-core-cash-flow-v3')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'cash_flow' },
         (payload) => {
@@ -757,7 +717,9 @@ export const useSyncCore = () => {
           recalculateAll();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[SYNC_CORE] 📡 Cash Flow subscription status:', status);
+      });
 
     // Salvar referências
     subscriptionsRef.current = {
@@ -766,6 +728,8 @@ export const useSyncCore = () => {
       staff: staffSubscription,
       cashFlow: cashFlowSubscription
     };
+    
+    console.log('[SYNC_CORE] ✅ Subscriptions configuradas:', Object.keys(subscriptionsRef.current));
   }, [recalculateAll]);
 
   // 🔥 DEBOUNCE SYNC IMPLEMENTATION
@@ -816,11 +780,10 @@ export const useSyncCore = () => {
     // Configurar realtime
     setupRealtimeSubscriptions();
     
-    // 🔥 ADICIONADO: Polling de 5 segundos como fallback para garantir sincronização
+    // 🔥 ADICIONADO: Polling de 30 segundos como fallback
     const pollingInterval = setInterval(() => {
-      console.log('[SYNC_CORE] 🔄 Polling automático - verificando atualizações...');
       recalculateAll();
-    }, 5000); // 5 segundos
+    }, 30000); // 30 segundos
     
     // Cleanup
     return () => {
@@ -830,13 +793,6 @@ export const useSyncCore = () => {
   }, [recalculateAll, setupRealtimeSubscriptions, cleanupSubscriptions]);
 
   // 🔄 EXPORTAR DADOS E FUNÇÕES
-  console.log('[SYNC_CORE] 📊 RETORNO DO MOTOR:', {
-    staffCosts: syncData.staffCosts,
-    staffCount: syncData.staffCount,
-    totalRevenue: syncData.totalRevenue,
-    todayRevenue: syncData.todayRevenue
-  });
-  
   return {
     // Estado completo
     syncData,
