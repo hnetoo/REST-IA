@@ -605,7 +605,10 @@ const DashboardV2 = () => {
                 </h3>
              </div>
              <div className="space-y-3">
-                {recentInvoices.map(order => (
+                {recentInvoices.map(order => {
+                  // Calcular profit se não existir (dados do Supabase não têm profit)
+                  const profit = order.profit || (order.total ? order.total * 0.3 : 0);
+                  return (
                   <div key={order.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/30 transition-all group">
                      <div>
                         <p className="text-[10px] font-black text-primary uppercase tracking-widest">{order.invoiceNumber}</p>
@@ -614,7 +617,7 @@ const DashboardV2 = () => {
                      <div className="flex items-center gap-4">
                         <div className="text-right mr-2">
                             <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Lucro</p>
-                            <p className="text-xs font-mono font-bold text-white">+{formatKz(order.profit)}</p>
+                            <p className="text-xs font-mono font-bold text-white">+{formatKz(profit)}</p>
                         </div>
                         <button 
                           onClick={() => handleReprint(order)}
@@ -626,7 +629,8 @@ const DashboardV2 = () => {
                         </button>
                      </div>
                   </div>
-                ))}
+                  );
+                })}
                 {recentInvoices.length === 0 && <p className="text-center text-slate-500 py-4 text-xs italic uppercase">Nenhuma fatura emitida hoje.</p>}
              </div>
           </div>
