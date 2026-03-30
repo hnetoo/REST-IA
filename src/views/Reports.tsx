@@ -154,10 +154,49 @@ const Reports = () => {
   const fetchMapaDespesas = async () => {
     setMapaDespesas({ ...mapaDespesas, loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMapaDespesas({ data: [{ categoria: 'Alimentos', valor: 15000 }, { categoria: 'Bebidas', valor: 8000 }], loading: false });
+      console.log('[RELATÓRIO] Buscando mapa de despesas do Supabase...');
+      
+      // Buscar despesas do Supabase
+      const { data: expenses, error } = await supabase
+        .from('expenses')
+        .select('category, amount_kz');
+      
+      if (error) {
+        console.error('[RELATÓRIO] Erro ao buscar despesas:', error);
+        setMapaDespesas({ data: [], loading: false });
+        return;
+      }
+      
+      if (!expenses || expenses.length === 0) {
+        console.log('[RELATÓRIO] Nenhuma despesa encontrada');
+        setMapaDespesas({ data: [], loading: false });
+        return;
+      }
+      
+      console.log('[RELATÓRIO] Despesas encontradas:', expenses.length);
+      
+      // Agrupar por categoria
+      const categoryTotals: Record<string, number> = {};
+      
+      expenses.forEach((expense: any) => {
+        const category = expense.category || 'Outros';
+        const amount = Number(expense.amount_kz || 0);
+        
+        if (!categoryTotals[category]) {
+          categoryTotals[category] = 0;
+        }
+        categoryTotals[category] += amount;
+      });
+      
+      const result = Object.entries(categoryTotals)
+        .map(([categoria, valor]) => ({ categoria, valor }))
+        .sort((a, b) => b.valor - a.valor);
+      
+      console.log('[RELATÓRIO] Mapa de despesas calculado:', result);
+      setMapaDespesas({ data: result, loading: false });
+      
     } catch (error) {
-      console.error(error);
+      console.error('[RELATÓRIO] Erro ao buscar mapa de despesas:', error);
       setMapaDespesas({ data: [], loading: false });
     }
   };
