@@ -299,6 +299,26 @@ const DashboardV2 = () => {
     return { revenue, profit, count: orders.length, orders };
   }, [closedOrders, metrics, supabaseOrders, todayRevenue, totalExpenses, activeOrders]);
   
+  // 🔥 RESERVA FISCAL (AGT) - Imposto Industrial 25% + Retenção 6.5%
+  const reservaFiscal = useMemo(() => {
+    const lucro = todayMetrics.profit || 0;
+    const faturacao = todayMetrics.revenue || 0;
+    const taxaRetencao = (settings.taxRate || 7) / 100;
+    
+    // Imposto Industrial: 25% sobre lucro
+    const impostoIndustrial = lucro > 0 ? lucro * 0.25 : 0;
+    
+    // Retenção na Fonte: 6.5% (ou taxRate) sobre faturação
+    const retencaoFonte = faturacao * taxaRetencao;
+    
+    return {
+      total: impostoIndustrial + retencaoFonte,
+      impostoIndustrial,
+      retencaoFonte,
+      percentual: faturacao > 0 ? ((impostoIndustrial + retencaoFonte) / faturacao) * 100 : 0
+    };
+  }, [todayMetrics.profit, todayMetrics.revenue, settings.taxRate]);
+  
   const recentInvoices = useMemo(() => {
     // 🔥 CORREÇÃO: Usar supabaseOrders em vez de closedOrders
     const ordersToUse = supabaseOrders.length > 0 ? supabaseOrders : closedOrders;
