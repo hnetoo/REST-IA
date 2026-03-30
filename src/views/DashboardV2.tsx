@@ -38,6 +38,9 @@ const DashboardV2 = () => {
     recalculate
   } = useSyncCoreSmart();
   
+  // 🔥 ATIVAR SINCRONIZAÇÃO EM TEMPO REAL - Força atualização imediata quando vendas são feitas
+  useRealtimeSync();
+  
   // 🔥 ADICIONADO: Debug dos valores recebidos com resiliência
   useEffect(() => {
     try {

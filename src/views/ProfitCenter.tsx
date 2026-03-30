@@ -37,7 +37,7 @@ const ProfitCenter = () => {
   const [realtimeOrders, setRealtimeOrders] = useState<any[]>([]);
   
   // 🔑 SYNC CORE - Usar valor calculado do motor de sincronização
-  const { totalRevenue: syncCoreRevenue } = useSyncCore();
+  const { totalRevenue: syncCoreRevenue, topMarginProducts: syncCoreTopMargins } = useSyncCore();
 
   useEffect(() => {
     if (!navigator.onLine) return;
@@ -172,79 +172,8 @@ const ProfitCenter = () => {
       return acc;
     }, {} as Record<string, number>);
 
-    // Top produtos por Margem de Contribuição (Lucro real, não volume)
-    const productProfit: Record<string, { name: string, profit: number, qty: number }> = {};
-    
-    console.log('[PROFIT_CENTER] 📊 DEBUG Top Margens:', {
-      closedOrdersCount: closedOrders.length,
-      menuCount: menu?.length || 0,
-      firstOrder: closedOrders[0] ? {
-        id: closedOrders[0].id,
-        status: closedOrders[0].status,
-        items: closedOrders[0].items,
-        itemsType: typeof closedOrders[0].items
-      } : 'NENHUM'
-    });
-    
-    closedOrders.forEach((o, idx) => {
-      // 🔥 CORREÇÃO: Parse items se vier como string JSON do Supabase
-      let items = o.items;
-      if (typeof items === 'string') {
-        try {
-          items = JSON.parse(items);
-          console.log(`[PROFIT_CENTER] 📦 Ordem ${o.id}: items parseado de string`, items);
-        } catch (e) {
-          console.warn(`[PROFIT_CENTER] ⚠️ Ordem ${o.id}: Erro ao parse items:`, e);
-          items = [];
-        }
-      }
-      
-      if (!Array.isArray(items)) {
-        console.warn(`[PROFIT_CENTER] ⚠️ Ordem ${o.id}: items não é array:`, items);
-        return;
-      }
-      
-      if (items.length > 0) {
-        console.log(`[PROFIT_CENTER] 📦 Ordem ${o.id}: ${items.length} items encontrados`);
-      }
-      
-      items.forEach((i: any, itemIdx: number) => {
-        // 🔥 CORREÇÃO: Suportar tanto dishId (camelCase) quanto dish_id (snake_case)
-        const dishId = i?.dishId || i?.dish_id;
-        const quantity = i?.quantity || i?.quantidade || 0;
-        
-        if (!dishId) {
-          console.warn(`[PROFIT_CENTER] ⚠️ Ordem ${o.id} Item ${itemIdx}: Sem dishId/dish_id:`, i);
-          return;
-        }
-        
-        const dish = menu.find(d => d.id === dishId);
-        
-        if (!dish) {
-          console.warn(`[PROFIT_CENTER] ⚠️ Prato ${dishId} não encontrado no menu`);
-        }
-        
-        if (!productProfit[dishId]) {
-          productProfit[dishId] = { name: dish?.name || `Prato ${dishId}`, profit: 0, qty: 0 };
-        }
-        
-        // CÁLCULO DA MARGEM: (price - cost_price) * unidades_vendidas
-        const itemProfit = ((dish?.price || 0) - (dish?.costPrice || 0)) * quantity;
-        productProfit[dishId].profit += itemProfit;
-        productProfit[dishId].qty += quantity;
-        
-        console.log(`[PROFIT_CENTER] 💰 Item ${dishId}: qty=${quantity}, price=${dish?.price}, cost=${dish?.costPrice}, profit=${itemProfit}`);
-      });
-    });
-
-    const topMarginProducts = Object.values(productProfit)
-      .sort((a, b) => b.profit - a.profit)
-      .slice(0, 5);
-    
-    console.log('[PROFIT_CENTER] ✅ Top Margens calculado:', {
-      totalProducts: Object.keys(productProfit).length,
-      top5: topMarginProducts
-    });
+    // � TOP MARGENS: Usar do SyncCore (já calculado no motor)
+    const topMarginProducts = syncCoreTopMargins;
 
     return {
       revenue,

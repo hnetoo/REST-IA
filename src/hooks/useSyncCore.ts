@@ -6,6 +6,12 @@ const DEBOUNCE_DELAY = 30000; // 30 segundos
 const BATCH_SIZE = 10; // Máximo de operações em lote
 
 // 🏗️ TIPOS DO MOTOR DE SINCRONIZAÇÃO
+interface TopMarginProduct {
+  name: string;
+  profit: number;
+  qty: number;
+}
+
 interface SyncData {
   totalRevenue: number;        // Soma total de todas as orders
   todayRevenue: number;        // Faturamento de hoje
@@ -16,6 +22,7 @@ interface SyncData {
   staffCount: number;         // ✅ ADICIONADO: Número de funcionários ativos
   netProfit: number;          // Lucro líquido (Revenue - Expenses - Staff)
   externalHistory: number;     // ✅ ADICIONADO: Histórico externo da tabela external_history
+  topMarginProducts: TopMarginProduct[]; // 🔥 ADICIONADO: Top produtos por margem
   lastUpdate: string;         // Timestamp da última atualização
   lastUpdated: Date | null;   // Data da última atualização (compatibilidade)
   isLoading: boolean;         // Status de carregamento
@@ -64,6 +71,7 @@ export const useSyncCore = () => {
     staffCount: 0,            // ✅ ADICIONADO: Contagem de funcionários
     netProfit: 0,
     externalHistory: 0,        // ✅ ADICIONADO: Histórico externo
+    topMarginProducts: [],     // 🔥 ADICIONADO: Top produtos por margem
     isLoading: false,
     error: null,
     lastUpdated: null,
@@ -549,6 +557,80 @@ export const useSyncCore = () => {
     }
   }, []);
 
+  // 🍽️ TOP MARGINS ENGINE - Cálculo de produtos mais rentáveis
+  const calculateTopMargins = useCallback(async (): Promise<TopMarginProduct[]> => {
+    try {
+      console.log('[SYNC_CORE] 🍽️ Iniciando Top Margins Engine...');
+      
+      // Buscar orders com items detalhados e menu
+      const [ordersResult, menuResult] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('id, items, status')
+          .in('status', ['closed', 'FECHADO', 'paid', 'PAGO', 'completed', 'delivered']),
+        supabase
+          .from('menu')
+          .select('id, name, price, cost_price')
+      ]);
+      
+      const orders = ordersResult.data || [];
+      const menu = menuResult.data || [];
+      
+      console.log('[SYNC_CORE] 🍽️ Dados carregados:', {
+        ordersCount: orders.length,
+        menuCount: menu.length
+      });
+      
+      const productProfit: Record<string, { name: string, profit: number, qty: number }> = {};
+      
+      orders.forEach(order => {
+        // Parse items se for string
+        let items = order.items;
+        if (typeof items === 'string') {
+          try {
+            items = JSON.parse(items);
+          } catch (e) {
+            items = [];
+          }
+        }
+        
+        if (!Array.isArray(items)) return;
+        
+        items.forEach((item: any) => {
+          const dishId = item?.dishId || item?.dish_id;
+          const quantity = item?.quantity || item?.quantidade || 0;
+          
+          if (!dishId) return;
+          
+          const dish = menu.find(m => m.id === dishId);
+          if (!dish) return;
+          
+          if (!productProfit[dishId]) {
+            productProfit[dishId] = { name: dish.name || 'Desconhecido', profit: 0, qty: 0 };
+          }
+          
+          const price = Number(dish.price) || 0;
+          const costPrice = Number(dish.cost_price) || 0;
+          const itemProfit = (price - costPrice) * quantity;
+          
+          productProfit[dishId].profit += itemProfit;
+          productProfit[dishId].qty += quantity;
+        });
+      });
+      
+      const topProducts = Object.values(productProfit)
+        .sort((a, b) => b.profit - a.profit)
+        .slice(0, 5);
+      
+      console.log('[SYNC_CORE] 🍽️ Top Margins calculado:', topProducts);
+      return topProducts;
+      
+    } catch (error) {
+      console.error('[SYNC_CORE] ❌ Top Margins Engine error:', error);
+      return [];
+    }
+  }, []);
+
   // 🔄 RECÁLCULO COMPLETO
   const recalculateAll = useCallback(async () => {
     console.log('[SYNC_CORE] 🔄 Iniciando recalculateAll...');
@@ -558,10 +640,11 @@ export const useSyncCore = () => {
     try {
       console.log('[SYNC_CORE] 🚀 Executando engines em paralelo...');
       // Executar todos os engines em paralelo
-      const [revenueResult, expensesResult, staffResult] = await Promise.all([
+      const [revenueResult, expensesResult, staffResult, topMarginsResult] = await Promise.all([
         calculateRevenue(),
         calculateExpenses(),
-        calculateStaffCosts()
+        calculateStaffCosts(),
+        calculateTopMargins()
       ]);
       
       console.log('[SYNC_CORE] ✅ Engines executados:', {
@@ -584,6 +667,7 @@ export const useSyncCore = () => {
         staffCount: staffResult.count,  // ✅ ADICIONADO: Contagem de funcionários
         netProfit,
         externalHistory: revenueResult.externalHistory,  // ✅ ADICIONADO: Valor do external_history
+        topMarginProducts: topMarginsResult,  // 🔥 ADICIONADO: Top produtos por margem
         lastUpdate: new Date().toISOString(),
         lastUpdated: new Date(),
         isLoading: false,
@@ -621,7 +705,7 @@ export const useSyncCore = () => {
         error: error instanceof Error ? error.message : 'Erro desconhecido'
       }));
     }
-  }, [calculateRevenue, calculateExpenses, calculateStaffCosts]);
+  }, [calculateRevenue, calculateExpenses, calculateStaffCosts, calculateTopMargins]);
 
   // 🔄 CONFIGURAR SUBSCRIPTIONS REALTIME
   const setupRealtimeSubscriptions = useCallback(() => {
@@ -771,6 +855,8 @@ export const useSyncCore = () => {
     staffCount: syncData.staffCount,  // ✅ ADICIONADO: Contagem de funcionários
     netProfit: syncData.netProfit,
     
+    topMarginProducts: syncData.topMarginProducts,  // 🔥 ADICIONADO: Top produtos por margem
+    
     // Status
     isLoading: syncData.isLoading,
     error: syncData.error,
@@ -787,4 +873,4 @@ export const useSyncCore = () => {
 };
 
 // 🎯 EXPORTAR TIPOS
-export type { SyncData, ExpenseCategory };
+export type { SyncData, ExpenseCategory, TopMarginProduct };
