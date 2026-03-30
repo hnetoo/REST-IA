@@ -282,12 +282,27 @@ export const useSyncCore = () => {
         }, 0);
       }
       
-      // 📅 Buscar orders de hoje
-      const hojeUTC = new Date().toISOString().split('T')[0];
+      // 📅 Buscar orders de HOJE (usando data de Luanda WAT)
+      const agora = new Date();
+      const luandaOffset = -1; // WAT é UTC-1 (ou seja, 1 hora a menos que UTC)
+      const hojeLuanda = new Date(agora.getTime() + (luandaOffset * 60 * 60 * 1000));
+      const hojeString = hojeLuanda.toISOString().split('T')[0];
+      
+      console.log('[SYNC_CORE] 📅 Data de hoje (Luanda):', hojeString);
       
       const todayRevenue = typedOrders.reduce((acc, order) => {
-        const orderDate = order.created_at?.toISOString().split('T')[0];
-        if (orderDate === hojeUTC) {
+        if (!order.created_at) return acc;
+        
+        // Converter data da order para mesmo formato
+        const orderDateUTC = new Date(order.created_at.getTime() + (luandaOffset * 60 * 60 * 1000));
+        const orderDateString = orderDateUTC.toISOString().split('T')[0];
+        
+        if (orderDateString === hojeString) {
+          console.log('[SYNC_CORE] ✅ Order de hoje encontrada:', {
+            id: order.id,
+            amount: order.total_amount,
+            date: orderDateString
+          });
           return acc + (order.total_amount || 0);
         }
         return acc;
@@ -295,6 +310,14 @@ export const useSyncCore = () => {
       
       // 🚀 Cálculo final
       const finalTotal = externalHistory + totalRevenue;
+      
+      console.log('[SYNC_CORE] 💰 Revenue calculado:', {
+        todayRevenue,
+        totalRevenue,
+        externalHistory,
+        finalTotal,
+        ordersCount: typedOrders.length
+      });
       
       // 📡 EMITIR SINAL DE ATUALIZAÇÃO
       emitSyncSignal({
@@ -450,9 +473,17 @@ export const useSyncCore = () => {
   // 👥 STAFF ENGINE (COM TIPOS PRISMA)
   const calculateStaffCosts = useCallback(async (): Promise<{ costs: number; count: number; staff: StaffWithRelations[] }> => {
     try {
+      console.log('[SYNC_CORE] 👥 Buscando funcionários da tabela staff...');
+      
       const { data: staffData, error: staffError } = await supabase
         .from('staff')
         .select('id, full_name, role, base_salary_kz, phone, status, created_at, subsidios, bonus, horas_extras, descontos, salario_base');
+      
+      console.log('[SYNC_CORE] 👥 Staff recebido:', {
+        count: staffData?.length || 0,
+        error: staffError?.message,
+        sample: staffData?.[0]
+      });
       
       let totalStaffCosts = 0;
       const typedStaff: StaffWithRelations[] = [];
@@ -493,6 +524,11 @@ export const useSyncCore = () => {
           return acc + salaryTotal;
         }, 0);
         
+        console.log('[SYNC_CORE] 👥 Staff calculado:', {
+          count: typedStaff.length,
+          costs: totalStaffCosts
+        });
+        
         // 📡 EMITIR SINAL DE ATUALIZAÇÃO
         emitSyncSignal({
           type: 'staff',
@@ -507,6 +543,7 @@ export const useSyncCore = () => {
           staff: typedStaff
         };
       } else {
+        console.error('[SYNC_CORE] ❌ Erro ao buscar staff:', staffError);
         // 🔄 FALLBACK: Retornar estrutura vazia tipada
         return {
           costs: 0,
