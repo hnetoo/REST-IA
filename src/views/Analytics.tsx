@@ -14,6 +14,7 @@ const Analytics = () => {
   const { settings, activeOrders, menu, expenses, loadExpenses } = useStore();
   const [dateRange, setDateRange] = useState('Hoje');
   const [realtimeOrders, setRealtimeOrders] = useState<any[]>([]);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
 
   useEffect(() => {
     if (!navigator.onLine) return;
@@ -22,6 +23,8 @@ const Analytics = () => {
     const fetchRealtimeData = async () => {
       try {
         console.log('[ANALYTICS] Buscando dados atualizados do Supabase...');
+        
+        // Buscar orders fechadas
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('*')
@@ -29,11 +32,33 @@ const Analytics = () => {
           .order('created_at', { ascending: false })
           .limit(100);
 
-        if (!ordersError && ordersData) {
-          setRealtimeOrders(ordersData);
-          console.log('[ANALYTICS] ✅ Dados atualizados:', ordersData.length, 'vendas');
-        } else if (ordersError) {
+        if (ordersError) {
           console.error('[ANALYTICS] ❌ Erro ao buscar vendas:', ordersError);
+          return;
+        }
+
+        // Buscar order_items para todas as orders
+        const orderIds = ordersData?.map((o: any) => o.id) || [];
+        let itemsData: any[] = [];
+        
+        if (orderIds.length > 0) {
+          const { data: items, error: itemsError } = await supabase
+            .from('order_items')
+            .select('*')
+            .in('order_id', orderIds);
+            
+          if (!itemsError && items) {
+            itemsData = items;
+            console.log('[ANALYTICS] ✅ Order items carregados:', items.length);
+          } else if (itemsError) {
+            console.error('[ANALYTICS] ❌ Erro ao buscar order_items:', itemsError);
+          }
+        }
+
+        if (ordersData) {
+          setRealtimeOrders(ordersData);
+          setOrderItems(itemsData);
+          console.log('[ANALYTICS] ✅ Dados atualizados:', ordersData.length, 'vendas,', itemsData.length, 'items');
         }
       } catch (error) {
         console.error('[ANALYTICS] ❌ Erro crítico:', error);
@@ -169,32 +194,27 @@ const Analytics = () => {
     }
   ];
 
-  // Calcular top produtos reais baseado nos realtimeOrders (pedidos do Supabase)
+  // Calcular top produtos reais baseado nos order_items (tabela separada)
   const realTopProducts = useMemo(() => {
     const productSales: Record<string, { name: string, category: string, sales: number }> = {};
     
-    // Filtrar apenas pedidos fechados do Supabase
-    const closedOrders = realtimeOrders.filter((order: any) => ['FECHADO', 'closed', 'paid'].includes(order.status));
+    console.log('[ANALYTICS] Calculando top produtos de:', orderItems.length, 'order items');
     
-    console.log('[ANALYTICS] Calculando top produtos de:', closedOrders.length, 'pedidos');
-    console.log('[ANALYTICS] Primeira order para debug:', closedOrders[0]);
-    
-    closedOrders.forEach((order: any, idx: number) => {
-      const items = order.items || [];
-      console.log(`[ANALYTICS] Order ${idx}:`, { id: order.id, itemsCount: items.length, items: items });
+    orderItems.forEach((item: any) => {
+      const productId = item.product_id || item.dish_id;
+      const quantity = item.quantity || 0;
       
-      items.forEach((item: any, itemIdx: number) => {
-        console.log(`[ANALYTICS] Item ${itemIdx}:`, item);
-        const dish = menu.find(d => d.id === item.dishId);
-        if (!productSales[item.dishId]) {
-          productSales[item.dishId] = {
-            name: dish?.name || item.name || 'Desconhecido',
-            category: dish?.category || item.category || 'Outros',
-            sales: 0
-          };
-        }
-        productSales[item.dishId].sales += item.quantity || 0;
-      });
+      if (!productId) return;
+      
+      const dish = menu.find(d => d.id === productId);
+      if (!productSales[productId]) {
+        productSales[productId] = {
+          name: dish?.name || item.product_name || 'Desconhecido',
+          category: dish?.category || 'Outros',
+          sales: 0
+        };
+      }
+      productSales[productId].sales += quantity;
     });
 
     const result = Object.values(productSales)
@@ -202,10 +222,9 @@ const Analytics = () => {
       .slice(0, 5);
       
     console.log('[ANALYTICS] Top produtos calculados:', result);
-    console.log('[ANALYTICS] ProductSales objeto completo:', productSales);
     
     return result;
-  }, [realtimeOrders, menu]);
+  }, [orderItems, menu]);
 
   // REMOVER ARRAY DE DADOS FICTÍCIOS - APENAS USAR DADOS REAIS
   // const salesData = [
