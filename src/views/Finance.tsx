@@ -156,25 +156,21 @@ const Finance = () => {
   const today = formatDateInAppTimezone(new Date()).split(' ')[0];
 
   const metrics = useMemo(() => {
-    // 🔄 LÓGICA COPIADA DO DASHBOARDV2 - Cálculo unificado de vendas
+    // 🔄 LÓGICA CORRIGIDA - Usar ordersData do Supabase
     const today = formatDateInAppTimezone(new Date()).split(' ')[0];
     
-    // FILTRAR ORDENS EXATAMENTE COMO O DASHBOARDV2 FAZ
-    const todayOrders = activeOrders.filter(order => {
-      const isInStatus = ['FECHADO', 'closed', 'paid'].includes(order.status || '');
-      const isToday = formatDateInAppTimezone(new Date(order.timestamp || '')).split(' ')[0] === today;
-      return isInStatus && isToday;
+    // FILTRAR ORDENS DE HOJE usando ordersData (dados do Supabase)
+    const todayOrders = ordersData.filter((order: any) => {
+      const orderDate = order.created_at ? formatDateInAppTimezone(new Date(order.created_at)).split(' ')[0] : '';
+      return orderDate === today;
     });
     
-    const revenue = todayOrders.reduce((a, b) => a + (b.total || 0), 0);
+    const revenue = todayOrders.reduce((a: number, b: any) => a + (b.total_amount || 0), 0);
     
-    console.log('[FINANCEIRO COPIADO DO POS] Query exata:', {
-      totalOrders: activeOrders.length,
+    console.log('[FINANCEIRO CORRIGIDO] Cálculo com ordersData:', {
+      totalOrdersData: ordersData.length,
       todayOrders: todayOrders.length,
-      revenue: revenue,
-      filtro: "status IN (FECHADO, closed, paid) + timestamp filter = hoje",
-      logica: 'Igual ao DashboardV2.tsx linha 387/423',
-      valorEsperado: '51.000 Kz (igual ao POS)'
+      revenue: revenue
     });
     
     // DESPESAS HOJE - Mesma lógica do Profit Center
@@ -197,10 +193,10 @@ const Finance = () => {
     // LUCRO LÍQUIDO REAL - IGUAL AO PROFIT CENTER (subtrair despesas acumuladas)
     const netProfit = revenue - accumulatedExpenses - tax;
     
-    // FLUXO POR MODALIDADE - FORÇAR MAPEAMENTO CORRETO
-    const payments = todayOrders.reduce((acc: any, o) => {
-      const method = (o.paymentMethod || '').trim().toUpperCase(); // CORRIGIDO: paymentMethod
-      const valor = Number(o.total || 0); // CORRIGIDO: total
+    // FLUXO POR MODALIDADE - CORRIGIDO para usar campos do Supabase
+    const payments = todayOrders.reduce((acc: any, o: any) => {
+      const method = (o.payment_method || '').trim().toUpperCase();
+      const valor = Number(o.total_amount || 0);
       
       // Mapeamento estrito de métodos de pagamento válidos
       if (method.includes('NUMER') || method.includes('DINHE')) {
@@ -211,9 +207,6 @@ const Finance = () => {
         acc['TRANSFERENCIA'] = (acc['TRANSFERENCIA'] || 0) + valor;
       } else if (method.includes('QR') || method.includes('QRCODE') || method === 'QR CODE') {
         acc['QR CODE'] = (acc['QR CODE'] || 0) + valor;
-      } else {
-        // MÉTODO INVÁLIDO - IGNORAR
-        return acc;
       }
       
       return acc;
