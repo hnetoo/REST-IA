@@ -3,6 +3,16 @@ import { supabase } from '../lib/supabase';
 
 // 🏗️ TIPOS MANUAIS (BASEADOS NO SCHEMA PRISMA)
 // No browser, usamos apenas tipos - o PrismaClient roda no servidor
+export type CashFlowWithRelations = {
+  id?: string;
+  amount?: number | null;
+  category?: string | null;
+  type?: 'entrada' | 'saida' | string;
+  description?: string | null;
+  created_at?: Date | null;
+  updated_at?: Date | null;
+};
+
 export type OrderWithRelations = {
   id: string;
   customer_name?: string | null;
@@ -256,14 +266,16 @@ export const useSyncCore = () => {
       // 💰 Buscar todas as orders (com tipos Prisma)
       const { data: allOrdersData, error: allOrdersError } = await supabase
         .from('orders')
-        .select('id, customer_name, customer_phone, customer_nif, delivery_address, total_amount, status, created_at, updated_at, payment_method, invoice_number')
-        .in('status', ['pending', 'closed', 'paid', 'FECHADO', 'PAGO', 'completed', 'delivered', 'DELIVERED']);
+        .select('id, customer_name, customer_phone, customer_nif, delivery_address, total_amount, status, created_at, updated_at, payment_method, invoice_number');
+      
+      const validStatuses = ['closed', 'paid'];
+      const filteredOrdersData = (allOrdersData ?? []).filter((o: any) => validStatuses.includes(o.status));
       
       let totalRevenue = 0;
       const typedOrders: OrderWithRelations[] = [];
       
-      if (!allOrdersError && allOrdersData && Array.isArray(allOrdersData)) {
-        typedOrders.push(...allOrdersData.map(order => ({
+      if (!allOrdersError && filteredOrdersData && Array.isArray(filteredOrdersData)) {
+        typedOrders.push(...filteredOrdersData.map(order => ({
           id: order.id,
           customer_name: order.customer_name ?? null,
           customer_phone: order.customer_phone ?? null,
@@ -543,7 +555,7 @@ export const useSyncCore = () => {
           staff: typedStaff
         };
       } else {
-        console.error('[SYNC_CORE] ❌ Erro ao buscar staff:', staffError);
+        // Erro silenciado - fallback para estrutura vazia
         // 🔄 FALLBACK: Retornar estrutura vazia tipada
         return {
           costs: 0,
@@ -553,7 +565,7 @@ export const useSyncCore = () => {
       }
       
     } catch (error) {
-      console.error('[SYNC_CORE] ❌ Staff Engine error:', error);
+      // Erro silenciado - retornar estrutura vazia
       // 🔄 FALLBACK: Retornar estrutura vazia tipada
       return {
         costs: 0,
@@ -566,36 +578,40 @@ export const useSyncCore = () => {
   // 🍽️ TOP MARGINS ENGINE
   const calculateTopMargins = useCallback(async (): Promise<TopMarginProduct[]> => {
     try {
-      const [ordersResult, menuResult] = await Promise.all([
+      const [ordersResult, itemsResult, menuResult] = await Promise.all([
         supabase
           .from('orders')
-          .select('id, items, status')
-          .in('status', ['closed', 'FECHADO', 'paid', 'PAGO', 'completed', 'delivered']),
+          .select('id, status')
+          .in('status', ['closed', 'paid']),
         supabase
-          .from('menu_items')
+          .from('order_items')
+          .select('order_id, product_id, quantity'),
+        supabase
+          .from('products')
           .select('id, name, price, cost_price')
       ]);
       
       const orders = ordersResult.data || [];
+      const orderItems = itemsResult.data || [];
       const menu = menuResult.data || [];
+      
+      // Mapear items por order_id
+      const itemsByOrder: Record<string, any[]> = {};
+      orderItems.forEach(item => {
+        if (!itemsByOrder[item.order_id]) {
+          itemsByOrder[item.order_id] = [];
+        }
+        itemsByOrder[item.order_id].push(item);
+      });
       
       const productProfit: Record<string, { name: string, profit: number, qty: number }> = {};
       
       orders.forEach(order => {
-        let items = order.items;
-        if (typeof items === 'string') {
-          try {
-            items = JSON.parse(items);
-          } catch (e) {
-            items = [];
-          }
-        }
-        
-        if (!Array.isArray(items)) return;
+        const items = itemsByOrder[order.id] || [];
         
         items.forEach((item: any) => {
-          const dishId = item?.dishId || item?.dish_id;
-          const quantity = item?.quantity || item?.quantidade || 0;
+          const dishId = item?.product_id;
+          const quantity = item?.quantity || 0;
           
           if (!dishId) return;
           
@@ -622,7 +638,7 @@ export const useSyncCore = () => {
       return topProducts;
       
     } catch (error) {
-      console.error('[SYNC_CORE] ❌ Top Margins Engine error:', error);
+      // Erro silenciado - retornar array vazio
       return [];
     }
   }, []);
@@ -680,7 +696,7 @@ export const useSyncCore = () => {
       }
       
     } catch (error) {
-      console.error('[SYNC_CORE] ❌ Erro no recálculo:', error);
+      // Erro silenciado - manter dados anteriores
       setSyncData(prev => ({
         ...prev,
         isLoading: false,
@@ -779,6 +795,17 @@ export const useSyncCore = () => {
     // Configurar realtime
     setupRealtimeSubscriptions();
     
+    // 🔥 ADICIONADO: Listener para eventos de checkout (sincronização imediata)
+    const handleOrderCompleted = (event: any) => {
+      console.log('[SYNC_CORE] 📡 Evento order-completed recebido:', event.detail);
+      // Forçar recálculo imediato sem debounce
+      recalculateAll();
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('order-completed', handleOrderCompleted);
+    }
+    
     // 🔥 ADICIONADO: Polling de 30 segundos como fallback
     const pollingInterval = setInterval(() => {
       recalculateAll();
@@ -788,6 +815,9 @@ export const useSyncCore = () => {
     return () => {
       cleanupSubscriptions();
       clearInterval(pollingInterval); // 🔥 Limpar polling ao desmontar
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('order-completed', handleOrderCompleted);
+      }
     };
   }, [recalculateAll, setupRealtimeSubscriptions, cleanupSubscriptions]);
 

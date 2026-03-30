@@ -49,7 +49,6 @@ const ProfitCenter = () => {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('*')
-          .in('status', ['closed', 'FECHADO', 'paid', 'PAGO', 'completed', 'delivered'])
           .order('created_at', { ascending: false })
           .limit(100);
 
@@ -93,7 +92,6 @@ const ProfitCenter = () => {
             const { data: ordersData, error: ordersError } = await supabase
               .from('orders')
               .select('*')
-              .in('status', ['closed', 'FECHADO', 'paid', 'PAGO', 'completed', 'delivered'])
               .order('created_at', { ascending: false })
               .limit(100);
 
@@ -114,8 +112,8 @@ const ProfitCenter = () => {
   }, [expenses.length, employees.length]); // Trigger quando dados mudarem
 
   const closedOrders = useMemo(() => {
-    // 🔄 USAR DADOS ATUALIZADOS DO SUPABASE em vez de activeOrders local
-    const filtered = realtimeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status));
+    const validStatuses = ['closed', 'paid'];
+    const filtered = realtimeOrders.filter(o => validStatuses.includes(o.status));
     console.log('[PROFIT_CENTER] 🔍 closedOrders calculado:', {
       realtimeOrdersCount: realtimeOrders.length,
       closedOrdersCount: filtered.length,

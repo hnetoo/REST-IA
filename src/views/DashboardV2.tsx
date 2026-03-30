@@ -167,7 +167,6 @@ const DashboardV2 = () => {
         const { data, error } = await supabase
           .from('orders')
           .select('id, total_amount, created_at, status, invoice_number, customer_name')
-          .in('status', ['pending', 'closed', 'paid', 'FECHADO'])
           .order('created_at', { ascending: false })
           .limit(100);
         
@@ -176,8 +175,11 @@ const DashboardV2 = () => {
           return;
         }
         
-        if (data && data.length > 0) {
-          const formattedOrders = data.map(order => ({
+        const validStatuses = ['closed', 'paid'];
+        const filteredData = (data || []).filter((o: any) => validStatuses.includes(o.status));
+        
+        if (filteredData.length > 0) {
+          const formattedOrders = filteredData.map(order => ({
             id: order.id,
             total: Number(order.total_amount) || 0,
             timestamp: order.created_at,
@@ -233,7 +235,7 @@ const DashboardV2 = () => {
           }
           
           const { data: productsData, error: productsError } = await supabase
-            .from('menu_items')
+            .from('products')
             .select('*');
           if (!productsError && productsData) {
             useStore.getState().setMenu(productsData);
@@ -269,7 +271,7 @@ const DashboardV2 = () => {
 
   // PROIBIÇÃO: Removida função getDateRangeToday - Base de dados é autoridade
 
-  const closedOrders = useMemo(() => activeOrders.filter((o: any) => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
+  const closedOrders = useMemo(() => activeOrders.filter((o: any) => ['closed', 'paid', 'completed'].includes(o.status)), [activeOrders]);
   
   const todayMetrics = useMemo(() => {
     if (todayRevenue > 0) {

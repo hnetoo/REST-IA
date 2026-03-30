@@ -68,32 +68,40 @@ const POS = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Verificar estado do caixa ao carregar
+  // Verificar estado do caixa ao carregar - REATIVADO com schema correto
   useEffect(() => {
     checkCashStatus();
   }, []);
 
-  // Função para verificar status do caixa
+  // Função para verificar status do caixa - CORRIGIDA para novo schema
   const checkCashStatus = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { data: cashFlow } = await supabase
+      const { data: cashFlow, error } = await supabase
         .from('cash_flow')
         .select('*')
-        .eq('date', today)
-        .eq('status', 'open')
-        .single();
+        .gte('created_at', `${today}T00:00:00`)
+        .lte('created_at', `${today}T23:59:59`)
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (cashFlow) {
+      if (error) {
+        console.log('[CAIXA] Erro ao buscar:', error.message);
+        setIsCashOpen(false);
+        setTodayCashFlow(null);
+        return;
+      }
+
+      if (cashFlow && cashFlow.length > 0) {
         setIsCashOpen(true);
-        setCashOpeningAmount(cashFlow.opening_amount || 0);
-        setTodayCashFlow(cashFlow);
+        setCashOpeningAmount(cashFlow[0].amount || 0);
+        setTodayCashFlow(cashFlow[0]);
       } else {
         setIsCashOpen(false);
         setTodayCashFlow(null);
       }
     } catch (error) {
-      console.log('[CAIXA] Nenhum caixa aberto encontrado hoje');
+      console.log('[CAIXA] Nenhum caixa encontrado hoje');
       setIsCashOpen(false);
       setTodayCashFlow(null);
     }
@@ -174,10 +182,9 @@ const POS = () => {
       
       // Buscar dados diretamente da tabela orders do Supabase
       const today = new Date().toISOString().split('T')[0];
-      const { data: todayOrders, error } = await supabase
+      const { data: allOrders, error } = await supabase
         .from('orders')
         .select('*')
-        .in('status', ['FECHADO', 'closed', 'paid'])
         .gte('created_at', `${today}T00:00:00`)
         .lte('created_at', `${today}T23:59:59`)
         .order('created_at', { ascending: false });
@@ -187,6 +194,9 @@ const POS = () => {
         addNotification('error', 'Erro ao buscar dados do fecho.');
         return;
       }
+
+      const validStatuses = ['closed', 'paid'];
+      const todayOrders = (allOrders ?? []).filter((o: any) => validStatuses.includes(o.status));
 
       if (!todayOrders || todayOrders.length === 0) {
         addNotification('warning', 'Nenhuma venda fechada encontrada hoje na tabela orders.');

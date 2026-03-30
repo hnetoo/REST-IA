@@ -16,7 +16,7 @@ export class RealtimeService {
     this.subscribeToOrders();
     this.subscribeToExpenses();
     this.subscribeToEmployees();
-    this.subscribeToMenuItems();
+    this.subscribeToProducts();
     
     console.log('[REALTIME] ✅ Todas as subscriptions ativas');
   }
@@ -99,26 +99,26 @@ export class RealtimeService {
     console.log('[REALTIME] ✅ Subscription employees ativa');
   }
 
-  // Menu Items - Produtos
-  private subscribeToMenuItems() {
+  // Products - Produtos
+  private subscribeToProducts() {
     const channel = supabase
-      .channel('menu_items_realtime')
+      .channel('products_realtime')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'menu_items'
+          table: 'products'
         },
         (payload) => {
-          console.log('[REALTIME] 🍽️ Mudança em menu_items:', payload);
-          this.handleMenuItemChange(payload);
+          console.log('[REALTIME] 🍽️ Mudança em products:', payload);
+          this.handleProductChange(payload);
         }
       )
       .subscribe();
 
-    this.subscriptions.set('menu_items', channel);
-    console.log('[REALTIME] ✅ Subscription menu_items ativa');
+    this.subscriptions.set('products', channel);
+    console.log('[REALTIME] ✅ Subscription products ativa');
   }
 
   // Handlers para cada tipo de mudança
@@ -194,7 +194,7 @@ export class RealtimeService {
     }
   }
 
-  private handleMenuItemChange(payload: any) {
+  private handleProductChange(payload: any) {
     const { eventType, new: newRecord, old: oldRecord } = payload;
 
     switch (eventType) {

@@ -7,6 +7,7 @@ import { versionControlService } from '../lib/versionControlService';
 import { sqlMigrationService } from '../lib/sqlMigrationService';
 import { databaseService } from '../lib/databaseService';
 import { Table, Order, Dish, Customer, PaymentMethod, User, SystemSettings, Notification, MenuCategory, OrderType, Employee, AttendanceRecord, StockItem, Reservation, WorkShift, OrderItem, PermissionTemplate, AuditLog, PaymentMethodConfig, Expense } from '../../types';
+import { orderTransactionService } from '../lib/orderTransactionService';
 import { addPendingSyncOrder, type PendingSyncOrder } from '../lib/pendingSyncOrders';
 import { MOCK_TABLES, MOCK_USERS, MOCK_STOCK, MOCK_RESERVATIONS } from '../../constants';
 import defaultLogo from '/logo.png';
@@ -1149,18 +1150,32 @@ export const useStore = create<StoreState>()(
         const count = get().invoiceCounter;
         const invoiceNumber = `FR VER${series}/${count}`;
         const now = new Date().toISOString();
-        const orderData = {
+        const orderData: {
+          id: string;
+          customer_name: string;
+          customer_phone: string;
+          customer_nif: string | null;
+          delivery_address: string;
+          total_amount: number;
+          status: 'closed';
+          payment_method: string;
+          invoice_number: string;
+          created_at: string;
+          updated_at: string;
+          table_id: string | null;
+        } = {
           id: order.id,
           customer_name: customerName,
           customer_phone: '999999999',
-          customer_nif: customerNif || null, // NOVO: NIF do cliente opcional
+          customer_nif: customerNif || null,
           delivery_address: 'ENDEREÇO_PADRAO',
           total_amount: order.total,
-          status: 'pending', // 🔥 CORREÇÃO: Usar 'pending' para match com useSyncCore
+          status: 'closed', // ✅ CORREÇÃO ESTRUTURAL: SEMPRE status final 'closed'
           payment_method: pm,
           invoice_number: invoiceNumber,
           created_at: now,
-          updated_at: now
+          updated_at: now,
+          table_id: null, // 🛡️ Enviar null ate termos UUID correto da mesa
         };
 
         const orderItems = (order.items || []).map(item => ({
@@ -1239,60 +1254,43 @@ export const useStore = create<StoreState>()(
           
           console.log('[CHECKOUT] ✅ Validação passou. Enviando para Supabase...');
           
-          // 🔑 OBRIGATÓRIO: FORÇAR UPLOAD DIRETO - TESTE COM INSERT
-          console.log('[CHECKOUT] 🚀 FORÇANDO UPLOAD DIRETO COM INSERT - TESTE DE CONEXÃO...');
-          console.log('[CHECKOUT] 📊 URL Supabase:', supabase.supabaseUrl);
-          console.log('[CHECKOUT] 📊 OrderData completo:', JSON.stringify(orderData, null, 2));
+          // �️ NOVA IMPLEMENTAÇÃO: TRANSAÇÃO ATÔMICA
+          console.log('[CHECKOUT] 🚀 USANDO TRANSAÇÃO ATÔMICA - Order + OrderItems juntos ou nada!');
           
-          const { data: insertData, error } = await supabase.from('orders').insert([orderData]).select();
+          const validItems = orderItems.filter(
+            i => typeof i.product_id === 'string' && /^[0-9a-f-]{36}$/i.test(i.product_id)
+          );
           
-          if (error) {
-            console.error('[CHECKOUT] ❌ ERRO CRÍTICO SUPABASE:', error);
-            console.error('[CHECKOUT] ❌ DETALHES DO ERRO:', JSON.stringify(error, null, 2));
-            throw new Error(`Falha crítica no Supabase: ${error.message}`);
-          } else {
-            console.log('[CHECKOUT] ✅ VENDA ENVIADA COM SUCESSO!');
-            console.log('[CHECKOUT] ✅ DADOS RETORNADOS:', insertData);
+          const transactionResult = await orderTransactionService.executeTransaction(
+            orderData,
+            validItems
+          );
+          
+          if (!transactionResult.success) {
+            throw new Error(transactionResult.error || 'Falha na transação');
           }
-
-          // INSERT IMEDIATO DOS ITENS - GARANTIR REAL-TIME
-          if (orderItems.length > 0) {
-            const validItems = orderItems.filter(
-              i => typeof i.product_id === 'string' && /^[0-9a-f-]{36}$/i.test(i.product_id)
-            );
-            console.log('[CHECKOUT] ✅ Inserindo itens em tempo real:', validItems.length, 'itens');
-            
-            if (validItems.length > 0) {
-              const { error: itemsError, data: itemsResult } = await supabase.from('order_items').insert(validItems).select();
-              if (itemsError) {
-                console.error('[CHECKOUT] ❌ Erro ao inserir order_items:', itemsError);
-                throw itemsError;
-              } else {
-                console.log('[CHECKOUT] ✅ Order_items inseridos com sucesso:', itemsResult);
+          
+          console.log('[CHECKOUT] TRANSAÇÃO CONCLUÍDA:', transactionResult.details);
+          
+          // NOTIFICAR SYNCCORE PARA SINCRONIZAÇÃO EM TEMPO REAL
+          console.log('[CHECKOUT] Notificando SyncCore...');
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('sync-core-update', { 
+              detail: { 
+                type: 'orders', 
+                action: 'created', 
+                timestamp: Date.now(),
+                payload: { orderId: orderData.id, total: orderData.total_amount }
               }
-            }
-          }
-
-          // � VERIFICAÇÃO: Confirmar que a venda foi salva no Supabase
-          console.log('[CHECKOUT] 🔍 VERIFICANDO SE VENDA FOI SALVA...');
-          const { data: verifyOrder, error: verifyError } = await supabase
-            .from('orders')
-            .select('id, total_amount, created_at, status')
-            .eq('id', orderData.id)
-            .single();
-          
-          if (verifyError) {
-            console.error('[CHECKOUT] ❌ Erro ao verificar venda no Supabase:', verifyError);
-          } else {
-            console.log('[CHECKOUT] ✅ VENDA CONFIRMADA NO SUPABASE:', verifyOrder);
+            }));
           }
           
-          // �🔄 FORÇAR REFRESH DO STORE PARA REAL-TIME
-          console.log('[CHECKOUT] 🔄 Forçando refresh do store para real-time...');
+          // FORÇAR REFRESH DO STORE PARA REAL-TIME
+          console.log('[CHECKOUT] Forçando refresh do store para real-time...');
           await get().fetchOrders(); // Buscar ordens atualizadas do Supabase
           
-          // 🔥 ADICIONADO: Trigger evento de sincronização para outros componentes
-          console.log('[CHECKOUT] 📡 Emitindo evento de sincronização...');
+          // ADICIONADO: Trigger evento de sincronização para outros componentes
+          console.log('[CHECKOUT] Emitindo evento de sincronização...');
           const event = new CustomEvent('order-completed', { 
             detail: { orderId: orderData.id, total: orderData.total_amount, action: 'created' } 
           });
@@ -1866,6 +1864,50 @@ export const useStore = create<StoreState>()(
           await get().loadExpenses();
         } catch {
           console.error('[EXPENSE] Erro na persistência da despesa');
+        }
+      },
+
+      // 💰 CASH FLOW COM PERSISTÊNCIA - Windows ↔ Web via dataServiceBridge
+      addCashFlowWithPersistence: async (cashFlowData: {
+        amount: number;
+        category: string;
+        type: 'entrada' | 'saida';
+        description?: string;
+      }) => {
+        try {
+          console.log('[CASH_FLOW] Persistindo movimento:', cashFlowData);
+
+          // 🌐 USAR DATA SERVICE BRIDGE (sem better-sqlite3)
+          const { cashFlowService } = await import('../lib/dataServiceBridge');
+          
+          const result = await cashFlowService.insert({
+            id: `cf-${Date.now()}`,
+            amount: cashFlowData.amount,
+            category: cashFlowData.category,
+            type: cashFlowData.type,
+            description: cashFlowData.description || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+          if (result.success) {
+            console.log('[CASH_FLOW] ✅ Movimento persistido:', result.data);
+            get().addNotification('success', 'Movimento de caixa registrado');
+            
+            // 🔄 TRIGGER SYNC para outras instâncias (Windows/Web)
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('cash-flow-updated', {
+                detail: { cashFlow: result.data, timestamp: new Date().toISOString() }
+              }));
+            }
+          } else {
+            console.error('[CASH_FLOW] ❌ Falha ao persistir:', result.error);
+            get().addNotification('error', 'Falha ao registrar movimento');
+          }
+
+        } catch (error) {
+          console.error('[CASH_FLOW] ❌ Erro crítico:', error);
+          get().addNotification('error', 'Erro ao registrar movimento de caixa');
         }
       },
 

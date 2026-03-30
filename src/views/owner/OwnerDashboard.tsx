@@ -56,11 +56,12 @@ const OwnerDashboard = () => {
         console.log('[OWNER DASHBOARD] 📊 Buscando TODAS as vendas sem filtro de data...');
         const { data, error } = await supabase
           .from('orders')
-          .select('total_amount')
-          .in('status', ['pending', 'closed', 'paid', 'FECHADO', 'PAGO', 'completed', 'delivered', 'DELIVERED']);
+          .select('total_amount, status');
         
         if (!error && data) {
-          const total = data.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+          const validStatuses = ['closed', 'paid'];
+          const filteredData = data.filter((o: any) => validStatuses.includes(o.status));
+          const total = filteredData.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
           setAllSalesTotal(total);
           console.log('[OWNER DASHBOARD] ✅ Total de vendas sem filtro:', total);
         } else {

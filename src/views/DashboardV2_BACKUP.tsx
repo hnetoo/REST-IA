@@ -108,7 +108,7 @@ const DashboardV2 = () => {
           
           // Carregar produtos
           const { data: productsData, error: productsError } = await supabase
-            .from('menu_items')
+            .from('products')
             .select('*');
             
           if (!productsError && productsData) {

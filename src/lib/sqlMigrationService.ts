@@ -171,7 +171,10 @@ export const sqlMigrationService = {
 
             if (localUpdatedAt > remoteUpdatedAt) {
               // Local é mais recente - fazer update PARCIAL apenas dos campos alterados
-              const updateData: any = { updated_at: new Date().toISOString() };
+              const updateData: any = { 
+                updated_at: new Date().toISOString(),
+                name: product.name // 🛡️ SEMPRE incluir nome (obrigatório no Supabase)
+              };
               
               // Verificar quais campos foram alterados e enviar apenas eles
               if (existingProduct) {
@@ -190,7 +193,6 @@ export const sqlMigrationService = {
                 }
               } else {
                 // Novo produto - enviar todos os campos exceto image_url se não existir
-                updateData.name = product.name;
                 updateData.price = product.price;
                 updateData.description = product.description;
                 updateData.category_id = product.categoryId;
@@ -198,6 +200,13 @@ export const sqlMigrationService = {
                 if (product.image) {
                   updateData.image_url = product.image;
                 }
+              }
+
+              // 🛡️ VALIDAÇÃO: Garantir que nome existe antes de upsert
+              if (!updateData.name || updateData.name.trim() === '') {
+                console.error('[autoMigrate] ❌ Produto sem nome, pulando:', productId);
+                syncDetails.products.errors++;
+                continue;
               }
 
               const { error: updateError } = await supabase

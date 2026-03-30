@@ -5,15 +5,17 @@ export const fetchVendasHoje = async () => {
   try {
     // 🛡️ QUERY DIRETA SEM RPC - Filtro para timezone Africa/Luanda
     const today = new Date().toISOString().split('T')[0];
-    const { data: ordersData, error } = await supabase
+    const { data: allOrders, error } = await supabase
       .from('orders')
-      .select('total_amount, created_at')
-      .in('status', ['closed', 'paid', 'FECHADO']);
+      .select('total_amount, created_at, status');
 
     if (error) {
       console.error('[SHARED METRICS] Erro na query de vendas hoje:', error);
       return 0;
     }
+
+    const validStatuses = ['closed', 'paid'];
+    const ordersData = (allOrders ?? []).filter((o: any) => validStatuses.includes(o.status));
 
     const vendasHoje = (ordersData ?? [])
       .filter((o: { created_at?: string }) => String(o.created_at || '').startsWith(today))

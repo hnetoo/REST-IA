@@ -11,7 +11,7 @@ import {
 
 const Inventory = () => {
   const { 
-    menu, categories, addNotification, addDish, addCategory, removeDish, updateDish, removeCategory
+    menu, categories, addNotification, addDish, addCategory, removeDish, updateDish, removeCategory, updateCategory
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'menu' | 'categories' | 'stock' | 'qr'>('menu');
@@ -431,6 +431,12 @@ const Inventory = () => {
   const handleSaveCategory = async () => {
     console.log('[Inventory] Salvando categoria:', newCategory);
     
+    // Verificar se está editando ou criando
+    if (editingCategory) {
+      // Modo de edição - usar handleUpdateCategory
+      return handleUpdateCategory();
+    }
+    
     try {
       // ✅ CRIAR CATEGORIA REAL NO BANCO PRIMEIRO
       const { data, error } = await supabase
@@ -532,11 +538,12 @@ const Inventory = () => {
     if (!editingCategory) return;
     
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('categories')
         .update({ name: newCategory.name })
         .eq('id', editingCategory.id)
-        .select();
+        .select()
+        .single();
       
       if (error) {
         console.error('[Inventory] Erro ao atualizar categoria:', error);
@@ -544,15 +551,12 @@ const Inventory = () => {
         return;
       }
       
-      // Atualizar no store local
-      const updatedCategories = categories.map(cat => 
-        cat.id === editingCategory.id 
-          ? { ...cat, name: newCategory.name }
-          : cat
-      );
+      // ✅ ATUALIZAR STORE LOCAL com dados do Supabase
+      if (data) {
+        updateCategory(data);
+        console.log('[Inventory] ✅ Categoria atualizada no store:', data);
+      }
       
-      // Atualizar store - precisamos implementar updateCategory no store
-      // Por enquanto, vamos recarregar a página
       addNotification('success', 'Categoria atualizada com sucesso!');
       setEditingCategory(null);
       setNewCategory({ name: '' });

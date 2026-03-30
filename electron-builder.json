@@ -2,7 +2,7 @@
   "appId": "com.tascadovereda.app",
   "productName": "Tasca Vereda",
   "directories": {
-    "output": "dist/installers",
+    "output": "release",
     "buildResources": "build"
   },
   "files": [
