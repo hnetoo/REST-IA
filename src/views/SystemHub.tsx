@@ -653,9 +653,11 @@ const SystemHub = () => {
           appLogoUrl: localSettings.appLogoUrl,
           nif: localSettings.nif,
           capitalSocial: localSettings.capitalSocial,
-          taxRegime: localSettings.taxRegime
+          taxRegime: localSettings.taxRegime,
+          taxRate: localSettings.taxRate
         };
         await updateSettings(settingsToSave);
+        addNotification('success', 'Dados fiscais atualizados com sucesso!');
         setTimeout(() => setIsSaving(false), 1000);
       } catch (error) {
         setIsSaving(false);
@@ -782,7 +784,13 @@ const SystemHub = () => {
                 <select 
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
                   value={localSettings.taxRegime}
-                  onChange={e => setLocalSettings({...localSettings, taxRegime: e.target.value as any})}
+                  onChange={e => {
+                    const regime = e.target.value as 'GERAL' | 'SIMPLIFICADO' | 'EXCLUSAO';
+                    let rate = 14;
+                    if (regime === 'SIMPLIFICADO') rate = 7;
+                    else if (regime === 'EXCLUSAO') rate = 0;
+                    setLocalSettings({...localSettings, taxRegime: regime, taxRate: rate});
+                  }}
                   aria-label="Regime fiscal IVA"
                 >
                   <option value="GERAL">Regime Geral (14%)</option>

@@ -179,8 +179,9 @@ const Finance = () => {
     );
     const variableCosts = todayExpenses.reduce((acc, exp) => acc + Number(exp.amount || 0), 0);
     
-    // IMPOSTOS: 7% como no Owner Hub
-    const tax = revenue * 0.07;
+    // IMPOSTOS: usar taxRate do settings (7% ou 14% conforme regime)
+    const taxRate = (settings.taxRate || 7) / 100;
+    const tax = revenue * taxRate;
     
     // Obter despesas acumuladas do ano (similar ao Owner Hub)
     const currentYear = new Date().getFullYear();
@@ -214,7 +215,7 @@ const Finance = () => {
 
     console.log('[FINANCEIRO DEBUG] Faturação Alinhada:', revenue);
     console.log('[FINANCEIRO DEBUG] Despesas Hoje:', variableCosts);
-    console.log('[FINANCEIRO DEBUG] Impostos (7%):', tax);
+    console.log('[FINANCEIRO DEBUG] Impostos (' + (settings.taxRate || 7) + '%):', tax);
     console.log('[FINANCEIRO DEBUG] Lucro Líquido Calculado:', netProfit);
     
     // Verificar soma total dos pagamentos
