@@ -4,9 +4,10 @@ import { Package, DollarSign, UserCheck, Activity, Target, Clock, AlertTriangle,
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useSyncCore } from '../hooks/useSyncCore';
+import { supabase } from '../supabase_standalone';
 
 const Reports = () => {
-  const { addNotification } = useStore();
+  const { addNotification, menu } = useStore();
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState<string | null>(null);
@@ -58,11 +59,61 @@ const Reports = () => {
   const fetchVendasPorArtigo = async () => {
     setVendasPorArtigo({ ...vendasPorArtigo, loading: true });
     try {
-      // Simulação de dados
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setVendasPorArtigo({ data: [{ produto: 'Cerveja', quantidade: 50, total: 25000 }], loading: false });
+      console.log('[RELATÓRIO] Buscando vendas por artigo do Supabase...');
+      
+      // Buscar order_items do Supabase
+      const { data: orderItems, error } = await supabase
+        .from('order_items')
+        .select('product_id, quantity, unit_price');
+      
+      if (error) {
+        console.error('[RELATÓRIO] Erro ao buscar order_items:', error);
+        setVendasPorArtigo({ data: [], loading: false });
+        return;
+      }
+      
+      if (!orderItems || orderItems.length === 0) {
+        console.log('[RELATÓRIO] Nenhum order_item encontrado');
+        setVendasPorArtigo({ data: [], loading: false });
+        return;
+      }
+      
+      console.log('[RELATÓRIO] Order items encontrados:', orderItems.length);
+      
+      // Agrupar por produto
+      const productSales: Record<string, { produto: string, quantidade: number, total: number }> = {};
+      
+      orderItems.forEach((item: any) => {
+        const productId = item.product_id;
+        const quantity = Number(item.quantity || 0);
+        const unitPrice = Number(item.unit_price || 0);
+        const total = quantity * unitPrice;
+        
+        // Buscar nome do produto do menu
+        const dish = menu.find(m => m.id === productId);
+        const productName = dish?.name || `Produto ${productId?.substring(0, 8) || 'Desconhecido'}`;
+        
+        if (!productSales[productId]) {
+          productSales[productId] = {
+            produto: productName,
+            quantidade: 0,
+            total: 0
+          };
+        }
+        
+        productSales[productId].quantidade += quantity;
+        productSales[productId].total += total;
+      });
+      
+      const result = Object.values(productSales)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10); // Top 10 produtos
+      
+      console.log('[RELATÓRIO] Vendas por artigo calculadas:', result);
+      setVendasPorArtigo({ data: result, loading: false });
+      
     } catch (error) {
-      console.error(error);
+      console.error('[RELATÓRIO] Erro ao buscar vendas por artigo:', error);
       setVendasPorArtigo({ data: [], loading: false });
     }
   };
