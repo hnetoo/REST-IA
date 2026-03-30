@@ -1165,15 +1165,19 @@ export const useStore = create<StoreState>()(
 
         const orderItems = (order.items || []).map(item => ({
           order_id: order.id,
-          product_id: item.dish?.id || item.dishId, // 🛡️ Usar dish.id com fallback para dishId
+          product_id: item.dish?.id || item.dishId, 
           quantity: item.quantity,
-          unit_price: item.dish?.price || item.unitPrice, // 🛡️ Usar dish.price com fallback
+          unit_price: item.dish?.price || item.unitPrice, 
           total_price: (item.dish?.price || item.unitPrice) * item.quantity
         }));
 
+        const validItems = orderItems.filter(
+          i => typeof i.product_id === 'string' && /^[0-9a-f-]{36}$/i.test(i.product_id)
+        );
+
         const applyLocalState = () => {
           const series = get().settings.invoiceSeries;
-          const count = get().invoiceCounter;
+          const count = get().settings.invoiceCounter;
           const invoiceNumber = `FR VER${series}/${count}`;
           const hash = Math.random().toString(36).substring(2, 12).toUpperCase();
           const orderTotal = order.total;

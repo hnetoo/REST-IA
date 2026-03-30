@@ -616,6 +616,7 @@ model orders {
   id               String        @id @default(dbgenerated("gen_random_uuid()"))
   customer_name    String?
   customer_phone   String?
+  customer_nif     String?
   delivery_address String?
   total_amount     Decimal?      @db.Decimal(10, 2)
   status           String?       @default("pending")
