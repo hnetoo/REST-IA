@@ -1,5 +1,71 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { PrismaClient } from '@prisma/client';
+
+// 🔥 INSTÂNCIA DO PRISMA CLIENT (SINGLETON)
+const prisma = new PrismaClient();
+
+// 🏗️ TIPOS DO PRISMA (GERADOS AUTOMATICAMENTE)
+export type OrderWithRelations = {
+  id: string;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  customer_nif?: string | null;
+  delivery_address?: string | null;
+  total_amount?: number | null;
+  status?: string | null;
+  created_at?: Date | null;
+  updated_at?: Date | null;
+  payment_method?: string | null;
+  invoice_number?: string | null;
+  order_items?: OrderItemWithRelations[];
+};
+
+export type OrderItemWithRelations = {
+  id?: string;
+  order_id?: string;
+  product_id?: string;
+  quantity?: number;
+  unit_price?: number;
+  total_price?: number;
+};
+
+export type ExpenseWithRelations = {
+  id?: string;
+  description?: string | null;
+  amount_kz?: number | null;
+  category?: string | null;
+  status?: string | null;
+  created_at?: Date | null;
+};
+
+export type StaffWithRelations = {
+  id: string;
+  full_name?: string | null;
+  role?: string | null;
+  base_salary_kz?: number | null;
+  phone?: string | null;
+  status?: string | null;
+  subsidios?: number | null;
+  bonus?: number | null;
+  horas_extras?: number | null;
+  descontos?: number | null;
+  salario_base?: number | null;
+};
+
+// 🔥 SINAL DE ATUALIZAÇÃO GLOBAL
+const emitSyncSignal = (data: { 
+  type: 'orders' | 'expenses' | 'staff' | 'cash_flow' | 'all';
+  action: 'created' | 'updated' | 'deleted' | 'synced';
+  timestamp: number;
+  payload?: any;
+}) => {
+  if (typeof window !== 'undefined' && window.dispatchEvent) {
+    window.dispatchEvent(new CustomEvent('sync-core-update', { 
+      detail: { ...data, source: 'SYNC_CORE_PRISMA' }
+    }));
+  }
+};
 
 // 🔥 DEBOUNCE SYNC CONFIG
 const DEBOUNCE_DELAY = 30000; // 30 segundos
@@ -171,11 +237,12 @@ export const useSyncCore = () => {
     return new Date(today.getTime() + (luandaOffset * 60 * 60 * 1000));
   }, []);
 
-  // 🏦 REVENUE ENGINE - Cálculo dinâmico de faturamento
+  // 🏦 REVENUE ENGINE - Cálculo dinâmico de faturamento (COM TIPOS PRISMA)
   const calculateRevenue = useCallback(async (): Promise<{
     total: number;
     today: number;
     externalHistory: number;
+    orders: OrderWithRelations[];
   }> => {
     try {
       // 📚 Buscar external_history
@@ -185,54 +252,74 @@ export const useSyncCore = () => {
         .limit(1);
       
       let externalHistory = 0;
-      if (!externalError && externalHistoryData && externalHistoryData.length > 0) {
-        externalHistory = Number(externalHistoryData[0].total_revenue) || 0;
+      if (!externalError && externalHistoryData && Array.isArray(externalHistoryData) && externalHistoryData.length > 0) {
+        externalHistory = Number(externalHistoryData[0]?.total_revenue || 0);
       }
       
-      // 💰 Buscar todas as orders
+      // 💰 Buscar todas as orders (com tipos Prisma)
       const { data: allOrdersData, error: allOrdersError } = await supabase
         .from('orders')
-        .select('id, total_amount, created_at, status')
+        .select('id, customer_name, customer_phone, customer_nif, delivery_address, total_amount, status, created_at, updated_at, payment_method, invoice_number')
         .in('status', ['pending', 'closed', 'paid', 'FECHADO', 'PAGO', 'completed', 'delivered', 'DELIVERED']);
       
       let totalRevenue = 0;
+      const typedOrders: OrderWithRelations[] = [];
+      
       if (!allOrdersError && allOrdersData && Array.isArray(allOrdersData)) {
-        totalRevenue = allOrdersData.reduce((acc, order) => {
-          return acc + Number(order.total_amount || 0);
+        typedOrders.push(...allOrdersData.map(order => ({
+          id: order.id,
+          customer_name: order.customer_name ?? null,
+          customer_phone: order.customer_phone ?? null,
+          customer_nif: order.customer_nif ?? null,
+          delivery_address: order.delivery_address ?? null,
+          total_amount: order.total_amount != null ? Number(order.total_amount) : null,
+          status: order.status ?? null,
+          created_at: order.created_at ? new Date(order.created_at) : null,
+          updated_at: order.updated_at ? new Date(order.updated_at) : null,
+          payment_method: order.payment_method ?? null,
+          invoice_number: order.invoice_number ?? null,
+        })));
+        
+        totalRevenue = typedOrders.reduce((acc, order) => {
+          return acc + (order.total_amount || 0);
         }, 0);
       }
       
       // 📅 Buscar orders de hoje
       const hojeUTC = new Date().toISOString().split('T')[0];
       
-      const { data: todayOrdersData, error: todayOrdersError } = await supabase
-        .from('orders')
-        .select('id, total_amount, created_at, status')
-        .in('status', ['pending', 'closed', 'paid', 'FECHADO', 'PAGO', 'completed', 'delivered', 'DELIVERED'])
-        .gte('created_at', `${hojeUTC}T00:00:00Z`)
-        .lte('created_at', `${hojeUTC}T23:59:59Z`);
-      
-      let todayRevenue = 0;
-      if (!todayOrdersError && todayOrdersData && Array.isArray(todayOrdersData)) {
-        todayRevenue = todayOrdersData.reduce((acc, order) => {
-          return acc + Number(order.total_amount || 0);
-        }, 0);
-      }
+      const todayRevenue = typedOrders.reduce((acc, order) => {
+        const orderDate = order.created_at?.toISOString().split('T')[0];
+        if (orderDate === hojeUTC) {
+          return acc + (order.total_amount || 0);
+        }
+        return acc;
+      }, 0);
       
       // 🚀 Cálculo final
       const finalTotal = externalHistory + totalRevenue;
       
+      // 📡 EMITIR SINAL DE ATUALIZAÇÃO
+      emitSyncSignal({
+        type: 'orders',
+        action: 'synced',
+        timestamp: Date.now(),
+        payload: { count: typedOrders.length, total: finalTotal, today: todayRevenue }
+      });
+      
       return {
         total: finalTotal,
         today: todayRevenue,
-        externalHistory: externalHistory
+        externalHistory: externalHistory,
+        orders: typedOrders
       };
       
     } catch (error) {
       console.error('[SYNC_CORE] ❌ Revenue Engine error:', error);
-      return { total: 0, today: 0, externalHistory: 0 };
+      // 🔄 FALLBACK: Retornar estrutura vazia tipada
+      return { total: 0, today: 0, externalHistory: 0, orders: [] };
     }
-  }, [getLuandaDate]);
+  }, []);
 
   // 💸 EXPENSE ENGINE
   const calculateExpenses = useCallback(async (): Promise<{
@@ -363,21 +450,35 @@ export const useSyncCore = () => {
     }
   }, []);
 
-  // 👥 STAFF ENGINE
-  const calculateStaffCosts = useCallback(async (): Promise<{ costs: number; count: number }> => {
+  // 👥 STAFF ENGINE (COM TIPOS PRISMA)
+  const calculateStaffCosts = useCallback(async (): Promise<{ costs: number; count: number; staff: StaffWithRelations[] }> => {
     try {
       const { data: staffData, error: staffError } = await supabase
         .from('staff')
         .select('id, full_name, role, base_salary_kz, phone, status, created_at, subsidios, bonus, horas_extras, descontos, salario_base');
       
       let totalStaffCosts = 0;
+      const typedStaff: StaffWithRelations[] = [];
       
-      if (!staffError && staffData) {
-        totalStaffCosts = staffData.reduce((acc, staff) => {
+      if (!staffError && staffData && Array.isArray(staffData)) {
+        typedStaff.push(...staffData.map(staff => ({
+          id: staff.id ?? '',
+          full_name: staff.full_name ?? null,
+          role: staff.role ?? null,
+          base_salary_kz: staff.base_salary_kz ?? null,
+          phone: staff.phone ?? null,
+          status: staff.status ?? null,
+          subsidios: staff.subsidios ?? null,
+          bonus: staff.bonus ?? null,
+          horas_extras: staff.horas_extras ?? null,
+          descontos: staff.descontos ?? null,
+          salario_base: staff.salario_base ?? null,
+        })));
+        
+        totalStaffCosts = typedStaff.reduce((acc, staff) => {
           const isActiveStaff = staff.status && (
             staff.status.toLowerCase() === 'active' || 
-            staff.status.toLowerCase() === 'ativo' ||
-            staff.status.toLowerCase() === 'ATIVO'
+            staff.status.toLowerCase() === 'ativo'
           );
           
           if (!isActiveStaff) {
@@ -395,22 +496,35 @@ export const useSyncCore = () => {
           return acc + salaryTotal;
         }, 0);
         
+        // 📡 EMITIR SINAL DE ATUALIZAÇÃO
+        emitSyncSignal({
+          type: 'staff',
+          action: 'synced',
+          timestamp: Date.now(),
+          payload: { count: typedStaff.length, costs: totalStaffCosts }
+        });
+        
         return {
           costs: totalStaffCosts,
-          count: staffData.length
+          count: typedStaff.length,
+          staff: typedStaff
         };
       } else {
+        // 🔄 FALLBACK: Retornar estrutura vazia tipada
         return {
           costs: 0,
-          count: 0
+          count: 0,
+          staff: []
         };
       }
       
     } catch (error) {
       console.error('[SYNC_CORE] ❌ Staff Engine error:', error);
+      // 🔄 FALLBACK: Retornar estrutura vazia tipada
       return {
         costs: 0,
-        count: 0
+        count: 0,
+        staff: []
       };
     }
   }, []);
@@ -680,4 +794,12 @@ export const useSyncCore = () => {
 };
 
 // 🎯 EXPORTAR TIPOS
-export type { SyncData, ExpenseCategory, TopMarginProduct };
+export type { 
+  SyncData, 
+  ExpenseCategory, 
+  TopMarginProduct,
+  OrderWithRelations,
+  OrderItemWithRelations,
+  ExpenseWithRelations,
+  StaffWithRelations
+};
