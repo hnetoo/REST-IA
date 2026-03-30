@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Package, DollarSign, UserCheck, Activity, Target, Clock, AlertTriangle, BarChart3, FileDown } from 'lucide-react';
+import { Package, DollarSign, UserCheck, Activity, Target, Clock, BarChart3, FileDown, CreditCard, PieChart, TrendingUp, Users } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useSyncCore } from '../hooks/useSyncCore';
@@ -30,6 +30,12 @@ const Reports = () => {
   const [mapaDespesas, setMapaDespesas] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
   const [topRentabilidade, setTopRentabilidade] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
   const [fluxoPorTurno, setFluxoPorTurno] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
+  
+  // 🆕 NOVOS RELATÓRIOS
+  const [vendasPorMesa, setVendasPorMesa] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
+  const [metodosPagamento, setMetodosPagamento] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
+  const [horarioPico, setHorarioPico] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
+  const [desempenhoCategoria, setDesempenhoCategoria] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
 
   const formatKz = (value: number) => {
     return new Intl.NumberFormat('pt-AO', {
@@ -267,10 +273,80 @@ const Reports = () => {
   const fetchTopRentabilidade = async () => {
     setTopRentabilidade({ ...topRentabilidade, loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setTopRentabilidade({ data: [{ produto: 'Cerveja', margem: 60 }, { produto: 'Refrigerante', margem: 45 }], loading: false });
+      console.log('[RELATÓRIO] Calculando top rentabilidade...');
+      
+      // Buscar order_items do Supabase
+      const { data: orderItems, error } = await supabase
+        .from('order_items')
+        .select('product_id, quantity, unit_price');
+      
+      if (error) {
+        console.error('[RELATÓRIO] Erro ao buscar order_items:', error);
+        setTopRentabilidade({ data: [], loading: false });
+        return;
+      }
+      
+      if (!orderItems || orderItems.length === 0) {
+        console.log('[RELATÓRIO] Nenhum order_item encontrado');
+        setTopRentabilidade({ data: [], loading: false });
+        return;
+      }
+      
+      // Calcular rentabilidade por produto
+      const productStats: Record<string, { 
+        produto: string, 
+        receita: number, 
+        quantidade: number,
+        custo: number 
+      }> = {};
+      
+      orderItems.forEach((item: any) => {
+        const productId = item.product_id;
+        const quantity = Number(item.quantity || 0);
+        const unitPrice = Number(item.unit_price || 0);
+        const revenue = quantity * unitPrice;
+        
+        // Buscar produto no menu para obter custo
+        const dish = menu.find(m => m.id === productId);
+        const productName = dish?.name || `Produto ${productId?.substring(0, 8) || 'Desconhecido'}`;
+        // Estimar custo como 40% do preço (markup típico de restaurante)
+        const estimatedCost = unitPrice * 0.4;
+        
+        if (!productStats[productId]) {
+          productStats[productId] = {
+            produto: productName,
+            receita: 0,
+            quantidade: 0,
+            custo: 0
+          };
+        }
+        
+        productStats[productId].receita += revenue;
+        productStats[productId].quantidade += quantity;
+        productStats[productId].custo += estimatedCost * quantity;
+      });
+      
+      // Calcular margem para cada produto
+      const result = Object.values(productStats)
+        .map((stats: any) => {
+          const lucro = stats.receita - stats.custo;
+          const margem = stats.receita > 0 ? ((lucro / stats.receita) * 100) : 0;
+          
+          return {
+            produto: stats.produto,
+            margem: Math.round(margem),
+            lucro: Math.round(lucro),
+            receita: Math.round(stats.receita)
+          };
+        })
+        .sort((a, b) => b.margem - a.margem)
+        .slice(0, 10); // Top 10
+      
+      console.log('[RELATÓRIO] Top rentabilidade calculada:', result);
+      setTopRentabilidade({ data: result, loading: false });
+      
     } catch (error) {
-      console.error(error);
+      console.error('[RELATÓRIO] Erro ao calcular rentabilidade:', error);
       setTopRentabilidade({ data: [], loading: false });
     }
   };
@@ -278,11 +354,229 @@ const Reports = () => {
   const fetchFluxoPorTurno = async () => {
     setFluxoPorTurno({ ...fluxoPorTurno, loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setFluxoPorTurno({ data: [{ turno: 'Manhã', total: 45000 }, { turno: 'Tarde', total: 55000 }], loading: false });
+      console.log('[RELATÓRIO] Buscando fluxo por turno...');
+      
+      // Buscar orders do Supabase com created_at
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('total_amount, created_at')
+        .in('status', ['closed', 'paid', 'finalized']);
+      
+      if (error) {
+        console.error('[RELATÓRIO] Erro ao buscar orders:', error);
+        setFluxoPorTurno({ data: [], loading: false });
+        return;
+      }
+      
+      if (!orders || orders.length === 0) {
+        console.log('[RELATÓRIO] Nenhuma order encontrada');
+        setFluxoPorTurno({ data: [], loading: false });
+        return;
+      }
+      
+      // Definir turnos (horário de Angola - UTC+1)
+      // Manhã: 06:00 - 12:00
+      // Tarde: 12:00 - 18:00
+      // Noite: 18:00 - 23:00
+      const turnos = {
+        'Manhã': { start: 6, end: 12, total: 0 },
+        'Tarde': { start: 12, end: 18, total: 0 },
+        'Noite': { start: 18, end: 23, total: 0 }
+      };
+      
+      orders.forEach((order: any) => {
+        const date = new Date(order.created_at);
+        const hour = date.getHours();
+        const amount = Number(order.total_amount || 0);
+        
+        if (hour >= 6 && hour < 12) {
+          turnos['Manhã'].total += amount;
+        } else if (hour >= 12 && hour < 18) {
+          turnos['Tarde'].total += amount;
+        } else if (hour >= 18 && hour < 23) {
+          turnos['Noite'].total += amount;
+        }
+      });
+      
+      const result = Object.entries(turnos)
+        .map(([turno, data]) => ({
+          turno,
+          total: data.total,
+          pedidos: orders.filter((o: any) => {
+            const hour = new Date(o.created_at).getHours();
+            return hour >= data.start && hour < data.end;
+          }).length
+        }))
+        .filter(t => t.total > 0)
+        .sort((a, b) => b.total - a.total);
+      
+      console.log('[RELATÓRIO] Fluxo por turno calculado:', result);
+      setFluxoPorTurno({ data: result, loading: false });
+      
     } catch (error) {
-      console.error(error);
+      console.error('[RELATÓRIO] Erro ao buscar fluxo por turno:', error);
       setFluxoPorTurno({ data: [], loading: false });
+    }
+  };
+
+  // 🆕 NOVOS RELATÓRIOS - FETCH FUNCTIONS
+
+  const fetchVendasPorMesa = async () => {
+    setVendasPorMesa({ ...vendasPorMesa, loading: true });
+    try {
+      console.log('[RELATÓRIO] Buscando vendas por mesa...');
+      
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('table_id, total_amount, status')
+        .in('status', ['closed', 'paid', 'finalized']);
+      
+      if (error) {
+        console.error('[RELATÓRIO] Erro ao buscar orders:', error);
+        setVendasPorMesa({ data: [], loading: false });
+        return;
+      }
+      
+      if (!orders || orders.length === 0) {
+        setVendasPorMesa({ data: [], loading: false });
+        return;
+      }
+      
+      // Agrupar por mesa
+      const mesaSales: Record<string, { mesa: string, total: number, pedidos: number }> = {};
+      
+      orders.forEach((order: any) => {
+        const mesaId = order.table_id || 'Sem Mesa';
+        const mesaName = mesaId.startsWith('Mesa') ? mesaId : `Mesa ${mesaId}`;
+        
+        if (!mesaSales[mesaId]) {
+          mesaSales[mesaId] = { mesa: mesaName, total: 0, pedidos: 0 };
+        }
+        mesaSales[mesaId].total += Number(order.total_amount || 0);
+        mesaSales[mesaId].pedidos += 1;
+      });
+      
+      const result = Object.values(mesaSales)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10);
+      
+      setVendasPorMesa({ data: result, loading: false });
+    } catch (error) {
+      console.error('[RELATÓRIO] Erro:', error);
+      setVendasPorMesa({ data: [], loading: false });
+    }
+  };
+
+  const fetchMetodosPagamento = async () => {
+    setMetodosPagamento({ ...metodosPagamento, loading: true });
+    try {
+      console.log('[RELATÓRIO] Buscando métodos de pagamento...');
+      
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('payment_method, total_amount')
+        .in('status', ['closed', 'paid', 'finalized']);
+      
+      if (error) {
+        console.error('[RELATÓRIO] Erro:', error);
+        setMetodosPagamento({ data: [], loading: false });
+        return;
+      }
+      
+      // Agrupar por método
+      const metodos: Record<string, { metodo: string, total: number, transacoes: number }> = {};
+      
+      orders?.forEach((order: any) => {
+        const metodo = order.payment_method || 'N/A';
+        if (!metodos[metodo]) {
+          metodos[metodo] = { metodo, total: 0, transacoes: 0 };
+        }
+        metodos[metodo].total += Number(order.total_amount || 0);
+        metodos[metodo].transacoes += 1;
+      });
+      
+      const result = Object.values(metodos).sort((a, b) => b.total - a.total);
+      setMetodosPagamento({ data: result, loading: false });
+    } catch (error) {
+      console.error('[RELATÓRIO] Erro:', error);
+      setMetodosPagamento({ data: [], loading: false });
+    }
+  };
+
+  const fetchHorarioPico = async () => {
+    setHorarioPico({ ...horarioPico, loading: true });
+    try {
+      console.log('[RELATÓRIO] Buscando horário de pico...');
+      
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('total_amount, created_at')
+        .in('status', ['closed', 'paid', 'finalized']);
+      
+      if (error) {
+        console.error('[RELATÓRIO] Erro:', error);
+        setHorarioPico({ data: [], loading: false });
+        return;
+      }
+      
+      // Agrupar por hora
+      const horas: Record<number, { hora: string, total: number, pedidos: number }> = {};
+      
+      for (let i = 6; i < 24; i++) {
+        horas[i] = { hora: `${i.toString().padStart(2, '0')}h`, total: 0, pedidos: 0 };
+      }
+      
+      orders?.forEach((order: any) => {
+        const hour = new Date(order.created_at).getHours();
+        if (hour >= 6 && hour < 24) {
+          horas[hour].total += Number(order.total_amount || 0);
+          horas[hour].pedidos += 1;
+        }
+      });
+      
+      const result = Object.values(horas).filter(h => h.total > 0).sort((a, b) => b.total - a.total);
+      setHorarioPico({ data: result, loading: false });
+    } catch (error) {
+      console.error('[RELATÓRIO] Erro:', error);
+      setHorarioPico({ data: [], loading: false });
+    }
+  };
+
+  const fetchDesempenhoCategoria = async () => {
+    setDesempenhoCategoria({ ...desempenhoCategoria, loading: true });
+    try {
+      console.log('[RELATÓRIO] Buscando desempenho por categoria...');
+      
+      // Buscar order_items com info do produto
+      const { data: orderItems, error } = await supabase
+        .from('order_items')
+        .select('product_id, quantity, unit_price');
+      
+      if (error) {
+        console.error('[RELATÓRIO] Erro:', error);
+        setDesempenhoCategoria({ data: [], loading: false });
+        return;
+      }
+      
+      // Agrupar por categoria (usar menu local)
+      const categorias: Record<string, { categoria: string, total: number, itens: number }> = {};
+      
+      orderItems?.forEach((item: any) => {
+        const dish = menu.find(m => m.id === item.product_id);
+        const categoria = dish?.category || 'Outros';
+        
+        if (!categorias[categoria]) {
+          categorias[categoria] = { categoria, total: 0, itens: 0 };
+        }
+        categorias[categoria].total += Number(item.unit_price || 0) * Number(item.quantity || 0);
+        categorias[categoria].itens += Number(item.quantity || 0);
+      });
+      
+      const result = Object.values(categorias).sort((a, b) => b.total - a.total);
+      setDesempenhoCategoria({ data: result, loading: false });
+    } catch (error) {
+      console.error('[RELATÓRIO] Erro:', error);
+      setDesempenhoCategoria({ data: [], loading: false });
     }
   };
 
@@ -523,7 +817,11 @@ const Reports = () => {
       fetchRhEFaltas(),
       fetchMapaDespesas(),
       fetchTopRentabilidade(),
-      fetchFluxoPorTurno()
+      fetchFluxoPorTurno(),
+      fetchVendasPorMesa(),
+      fetchMetodosPagamento(),
+      fetchHorarioPico(),
+      fetchDesempenhoCategoria()
     ]);
     setLoading(false);
   };
@@ -704,6 +1002,50 @@ const Reports = () => {
           onGenerate={fetchFluxoPorTurno}
           onGeneratePDF={generateFluxoPorTurnoPDF}
           color="#ec4899"
+        />
+        
+        <Card
+          title="Vendas por Mesa"
+          icon={<Users size={20} />}
+          description="Top mesas mais rentáveis"
+          data={vendasPorMesa.data}
+          loading={vendasPorMesa.loading}
+          onGenerate={fetchVendasPorMesa}
+          onGeneratePDF={() => {}}
+          color="#14b8a6"
+        />
+        
+        <Card
+          title="Métodos de Pagamento"
+          icon={<CreditCard size={20} />}
+          description="Dinheiro vs Cartão vs Outros"
+          data={metodosPagamento.data}
+          loading={metodosPagamento.loading}
+          onGenerate={fetchMetodosPagamento}
+          onGeneratePDF={() => {}}
+          color="#f97316"
+        />
+        
+        <Card
+          title="Horário de Pico"
+          icon={<TrendingUp size={20} />}
+          description="Análise de fluxo por hora"
+          data={horarioPico.data}
+          loading={horarioPico.loading}
+          onGenerate={fetchHorarioPico}
+          onGeneratePDF={() => {}}
+          color="#0ea5e9"
+        />
+        
+        <Card
+          title="Desempenho por Categoria"
+          icon={<PieChart size={20} />}
+          description="Vendas por categoria de produto"
+          data={desempenhoCategoria.data}
+          loading={desempenhoCategoria.loading}
+          onGenerate={fetchDesempenhoCategoria}
+          onGeneratePDF={() => {}}
+          color="#8b5cf6"
         />
       </div>
     </div>
