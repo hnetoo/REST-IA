@@ -543,11 +543,11 @@ const DashboardV2 = () => {
              <TrendingUp size={64} />
           </div>
           <div className="flex items-center gap-2 mb-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            IMPOSTOS (IVA)
+            IMPOSTOS ({settings.taxRate || 7}%)
           </div>
-          <p className="text-lg font-mono font-bold text-white">{formatKz(todayMetrics.revenue * 0.14)}</p>
+          <p className="text-lg font-mono font-bold text-white">{formatKz(todayMetrics.revenue * ((settings.taxRate || 7) / 100))}</p>
           <div className="mt-2 text-[10px] text-yellow-500 font-bold">
-             14% sobre Faturação Hoje
+             {settings.taxRate || 7}% sobre Faturação Hoje
           </div>
         </div>
 
@@ -556,11 +556,11 @@ const DashboardV2 = () => {
              <Receipt size={64} />
           </div>
           <div className="flex items-center gap-2 mb-4 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
-            Imposto Acumulado Anual
+            Imposto Acumulado Anual ({settings.taxRate || 7}%)
           </div>
-          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz((metrics?.rendimentoGlobal || 0) * 0.14)}</p>
+          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz((metrics?.rendimentoGlobal || 0) * ((settings.taxRate || 7) / 100))}</p>
           <div className="mt-2 text-[10px] text-primary/80 font-bold">
-             14% sobre Rendimento Global (Histórico + Vendas)
+             {settings.taxRate || 7}% sobre Rendimento Global
           </div>
         </div>
       </div>
