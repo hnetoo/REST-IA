@@ -14,6 +14,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   BarChart, Bar, Cell, PieChart, Pie, CartesianGrid
 } from 'recharts';
+import { useSyncCore } from '../hooks/useSyncCore';
 import { supabase } from '../supabase_standalone';
 
 // Extender jsPDF para incluir autoTable
@@ -34,6 +35,9 @@ const formatKz = (val: number) =>
 const ProfitCenter = () => {
   const { activeOrders, menu, settings, addNotification, expenses, employees, loadExpenses, loadEmployees } = useStore();
   const [realtimeOrders, setRealtimeOrders] = useState<any[]>([]);
+  
+  // 🔑 SYNC CORE - Usar valor calculado do motor de sincronização
+  const { totalRevenue: syncCoreRevenue } = useSyncCore();
 
   useEffect(() => {
     if (!navigator.onLine) return;
@@ -45,7 +49,7 @@ const ProfitCenter = () => {
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('*')
-          .eq('status', 'closed')
+          .in('status', ['closed', 'FECHADO', 'paid', 'PAGO', 'completed', 'delivered'])
           .order('created_at', { ascending: false })
           .limit(100);
 
@@ -89,7 +93,7 @@ const ProfitCenter = () => {
             const { data: ordersData, error: ordersError } = await supabase
               .from('orders')
               .select('*')
-              .eq('status', 'closed')
+              .in('status', ['closed', 'FECHADO', 'paid', 'PAGO', 'completed', 'delivered'])
               .order('created_at', { ascending: false })
               .limit(100);
 
@@ -110,9 +114,15 @@ const ProfitCenter = () => {
   }, [expenses.length, employees.length]); // Trigger quando dados mudarem
 
   const closedOrders = useMemo(() => {
-  // 🔄 USAR DADOS ATUALIZADOS DO SUPABASE em vez de activeOrders local
-  return realtimeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status));
-}, [realtimeOrders]);
+    // 🔄 USAR DADOS ATUALIZADOS DO SUPABASE em vez de activeOrders local
+    const filtered = realtimeOrders.filter(o => ['FECHADO', 'closed', 'paid'].includes(o.status));
+    console.log('[PROFIT_CENTER] 🔍 closedOrders calculado:', {
+      realtimeOrdersCount: realtimeOrders.length,
+      closedOrdersCount: filtered.length,
+      sampleOrder: filtered[0] ? { id: filtered[0].id, status: filtered[0].status, hasItems: !!filtered[0].items } : null
+    });
+    return filtered;
+  }, [realtimeOrders]);
   
   const metrics = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -129,10 +139,8 @@ const ProfitCenter = () => {
     });
     const revenueToday = todayOrders.reduce((a, b) => a + (Number(b.total_amount) || 0), 0);
     
-    // 🔑 CENTRO DE LUCRO - Faturação Total Bruta = external_history + todas as ordens reais
-    const totalRevenueAllOrders = closedOrders.reduce((a, b) => a + (Number(b.total_amount) || 0), 0);
-    const externalHistory = 8000000; // 8.000.000 Kz fixo
-    const revenue = externalHistory + totalRevenueAllOrders; // 🔑 CORREÇÃO: external_history + vendas reais
+    // 🔑 CENTRO DE LUCRO - Faturação Total Bruta do SyncCore (inclui external_history + todas as ordens reais)
+    const revenue = syncCoreRevenue; // Usar valor calculado pelo motor de sincronização
     
     // DESPESAS HOJE: Mesma lógica do Dashboard
     const todayExpenses = expenses.filter(expense => 
@@ -166,24 +174,77 @@ const ProfitCenter = () => {
 
     // Top produtos por Margem de Contribuição (Lucro real, não volume)
     const productProfit: Record<string, { name: string, profit: number, qty: number }> = {};
-    closedOrders.flatMap(o => o.items || []).forEach(i => {
-        // PROTEÇÃO CONTRA UNDEFINED - Verificar se item e dishId existem
-        if (!i || !i.dishId) return;
-        
-        if (!productProfit[i.dishId]) {
-            const dish = menu.find(d => d.id === i.dishId);
-            productProfit[i.dishId] = { name: dish?.name || 'Desconhecido', profit: 0, qty: 0 };
+    
+    console.log('[PROFIT_CENTER] 📊 DEBUG Top Margens:', {
+      closedOrdersCount: closedOrders.length,
+      menuCount: menu?.length || 0,
+      firstOrder: closedOrders[0] ? {
+        id: closedOrders[0].id,
+        status: closedOrders[0].status,
+        items: closedOrders[0].items,
+        itemsType: typeof closedOrders[0].items
+      } : 'NENHUM'
+    });
+    
+    closedOrders.forEach((o, idx) => {
+      // 🔥 CORREÇÃO: Parse items se vier como string JSON do Supabase
+      let items = o.items;
+      if (typeof items === 'string') {
+        try {
+          items = JSON.parse(items);
+          console.log(`[PROFIT_CENTER] 📦 Ordem ${o.id}: items parseado de string`, items);
+        } catch (e) {
+          console.warn(`[PROFIT_CENTER] ⚠️ Ordem ${o.id}: Erro ao parse items:`, e);
+          items = [];
         }
+      }
+      
+      if (!Array.isArray(items)) {
+        console.warn(`[PROFIT_CENTER] ⚠️ Ordem ${o.id}: items não é array:`, items);
+        return;
+      }
+      
+      if (items.length > 0) {
+        console.log(`[PROFIT_CENTER] 📦 Ordem ${o.id}: ${items.length} items encontrados`);
+      }
+      
+      items.forEach((i: any, itemIdx: number) => {
+        // 🔥 CORREÇÃO: Suportar tanto dishId (camelCase) quanto dish_id (snake_case)
+        const dishId = i?.dishId || i?.dish_id;
+        const quantity = i?.quantity || i?.quantidade || 0;
+        
+        if (!dishId) {
+          console.warn(`[PROFIT_CENTER] ⚠️ Ordem ${o.id} Item ${itemIdx}: Sem dishId/dish_id:`, i);
+          return;
+        }
+        
+        const dish = menu.find(d => d.id === dishId);
+        
+        if (!dish) {
+          console.warn(`[PROFIT_CENTER] ⚠️ Prato ${dishId} não encontrado no menu`);
+        }
+        
+        if (!productProfit[dishId]) {
+          productProfit[dishId] = { name: dish?.name || `Prato ${dishId}`, profit: 0, qty: 0 };
+        }
+        
         // CÁLCULO DA MARGEM: (price - cost_price) * unidades_vendidas
-        const dish = menu.find(d => d.id === i.dishId);
-        const itemProfit = ((dish?.price || 0) - (dish?.costPrice || 0)) * (i.quantity || 0);
-        productProfit[i.dishId].profit += itemProfit;
-        productProfit[i.dishId].qty += (i.quantity || 0);
+        const itemProfit = ((dish?.price || 0) - (dish?.costPrice || 0)) * quantity;
+        productProfit[dishId].profit += itemProfit;
+        productProfit[dishId].qty += quantity;
+        
+        console.log(`[PROFIT_CENTER] 💰 Item ${dishId}: qty=${quantity}, price=${dish?.price}, cost=${dish?.costPrice}, profit=${itemProfit}`);
+      });
     });
 
     const topMarginProducts = Object.values(productProfit)
       .sort((a, b) => b.profit - a.profit)
       .slice(0, 5);
+    
+    console.log('[PROFIT_CENTER] ✅ Top Margens calculado:', {
+      totalProducts: Object.keys(productProfit).length,
+      top5: topMarginProducts
+    });
 
     return {
       revenue,
