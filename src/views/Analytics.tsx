@@ -177,15 +177,19 @@ const Analytics = () => {
     const closedOrders = realtimeOrders.filter((order: any) => ['FECHADO', 'closed', 'paid'].includes(order.status));
     
     console.log('[ANALYTICS] Calculando top produtos de:', closedOrders.length, 'pedidos');
+    console.log('[ANALYTICS] Primeira order para debug:', closedOrders[0]);
     
-    closedOrders.forEach((order: any) => {
+    closedOrders.forEach((order: any, idx: number) => {
       const items = order.items || [];
-      items.forEach((item: any) => {
+      console.log(`[ANALYTICS] Order ${idx}:`, { id: order.id, itemsCount: items.length, items: items });
+      
+      items.forEach((item: any, itemIdx: number) => {
+        console.log(`[ANALYTICS] Item ${itemIdx}:`, item);
         const dish = menu.find(d => d.id === item.dishId);
         if (!productSales[item.dishId]) {
           productSales[item.dishId] = {
-            name: dish?.name || 'Desconhecido',
-            category: dish?.category || 'Outros',
+            name: dish?.name || item.name || 'Desconhecido',
+            category: dish?.category || item.category || 'Outros',
             sales: 0
           };
         }
@@ -198,6 +202,7 @@ const Analytics = () => {
       .slice(0, 5);
       
     console.log('[ANALYTICS] Top produtos calculados:', result);
+    console.log('[ANALYTICS] ProductSales objeto completo:', productSales);
     
     return result;
   }, [realtimeOrders, menu]);
