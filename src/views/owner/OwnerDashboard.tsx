@@ -18,7 +18,8 @@ import {
   RefreshCw,
   X,
   Calendar,
-  Zap
+  Zap,
+  Receipt
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatKz } from '../../lib/dateUtils';
