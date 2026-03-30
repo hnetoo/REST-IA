@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { PrismaClient } from '@prisma/client';
 
-// 🔥 INSTÂNCIA DO PRISMA CLIENT (SINGLETON)
-const prisma = new PrismaClient();
-
-// 🏗️ TIPOS DO PRISMA (GERADOS AUTOMATICAMENTE)
+// 🏗️ TIPOS MANUAIS (BASEADOS NO SCHEMA PRISMA)
+// No browser, usamos apenas tipos - o PrismaClient roda no servidor
 export type OrderWithRelations = {
   id: string;
   customer_name?: string | null;
@@ -62,7 +59,7 @@ const emitSyncSignal = (data: {
 }) => {
   if (typeof window !== 'undefined' && window.dispatchEvent) {
     window.dispatchEvent(new CustomEvent('sync-core-update', { 
-      detail: { ...data, source: 'SYNC_CORE_PRISMA' }
+      detail: { ...data, source: 'SYNC_CORE_BROWSER' }
     }));
   }
 };
