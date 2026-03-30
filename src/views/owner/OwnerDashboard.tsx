@@ -32,6 +32,13 @@ const OwnerDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
   const { addNotification, settings } = useStore();
+  const [taxRate, setTaxRate] = useState(settings?.taxRate || 7);
+  
+  // 🔄 Recarregar taxRate quando settings mudarem
+  useEffect(() => {
+    console.log('[OWNER DASHBOARD] Settings atualizadas, taxRate:', settings?.taxRate);
+    setTaxRate(settings?.taxRate || 7);
+  }, [settings?.taxRate]);
   
   // 🚀 INTEGRAR MOTOR SYNC CORE - USAR DIRETAMENTE OS VALORES
   const {
@@ -213,24 +220,24 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
-        {/* Card Verde - Impostos Acumulados ({settings.taxRate || 7}% Regime {settings.taxRegime === 'GERAL' ? 'Geral' : 'Simplificado'} - TEMPO REAL) */}
+        {/* Card Verde - Impostos Acumulados ({taxRate}% Regime {settings.taxRegime === 'GERAL' ? 'Geral' : 'Simplificado'} - TEMPO REAL) */}
         <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-6 text-white relative group">
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="bg-black/90 text-white text-xs rounded px-2 py-1 max-w-xs">
-              <p className="font-semibold mb-1">💰 Impostos ({settings.taxRate || 7}%)</p>
-              <p className="text-xs">Calcular {settings.taxRate || 7}% sobre Faturação Hoje</p>
-              <p className="text-xs font-bold mt-1">{settings.taxRate || 7}% sobre {formatKz(todayRevenue)} = {formatKz(todayRevenue * ((settings.taxRate || 7) / 100))}</p>
+              <p className="font-semibold mb-1">💰 Impostos ({taxRate}%)</p>
+              <p className="text-xs">Calcular {taxRate}% sobre Faturação Hoje</p>
+              <p className="text-xs font-bold mt-1">{taxRate}% sobre {formatKz(todayRevenue)} = {formatKz(todayRevenue * (taxRate / 100))}</p>
             </div>
           </div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Impostos ({settings.taxRate || 7}%)</h3>
+            <h3 className="text-lg font-semibold">Impostos ({taxRate}%)</h3>
             <DollarSign className="h-8 w-8 text-green-200" />
           </div>
           <div className="space-y-2">
-            <p className="text-2xl font-bold">{formatKz(todayRevenue * ((settings.taxRate || 7) / 100))}</p>
-            <p className="text-green-200 text-sm">{settings.taxRate || 7}% sobre Faturação Hoje</p>
+            <p className="text-2xl font-bold">{formatKz(todayRevenue * (taxRate / 100))}</p>
+            <p className="text-green-200 text-sm">{taxRate}% sobre Faturação Hoje</p>
             <p className="text-green-300 text-xs mt-2 italic">
-              {settings.taxRate || 7}% sobre Faturação do Dia ({formatKz(todayRevenue * ((settings.taxRate || 7) / 100))})
+              {taxRate}% sobre Faturação do Dia ({formatKz(todayRevenue * (taxRate / 100))})
             </p>
           </div>
         </div>
