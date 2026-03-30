@@ -442,7 +442,7 @@ const OwnerDashboard = () => {
         <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <Calendar className="h-5 w-5 text-blue-400" />
-            Despesas Totais
+            Valor Histórico
           </h3>
           <p className="text-2xl font-bold text-white">{formatKz(externalHistory || 0)}</p>
           <p className="text-white/60 text-sm">Apenas external_history</p>
