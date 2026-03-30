@@ -469,8 +469,8 @@ const SystemHub = () => {
       ...settings,
       // Valores padrão atualizados
       supabaseUrl: settings.supabaseUrl || 'https://tboiuiwlqfzcvakxrsmj.supabase.co',
-      supabaseKey: settings.supabaseKey || 'sb_publishable_fBMKbbzNYBe8d1rzdWyerg_4We8tZEm',
-      customDigitalMenuUrl: settings.customDigitalMenuUrl || 'https://rest-ia.vercel.app/#/menu-public'
+      supabaseKey: settings.supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRib2l1aXdscWZ6Y3Zha3hyc21qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNzc5MzksImV4cCI6MjA4ODY1MzkzOX0.-ioGcbogZMqLTtt0Up6DkPTAsROUmPDSokXPgHJgWBU',
+      customDigitalMenuUrl: settings.customDigitalMenuUrl || 'https://rest-ai.vercel.app/#/public-menu'
     });
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncing, setIsSyncing] = useState<string | null>(null);
