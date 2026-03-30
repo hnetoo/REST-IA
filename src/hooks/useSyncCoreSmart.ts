@@ -28,12 +28,8 @@ type SyncCoreReturn = {
 };
 
 export const useSyncCoreSmart = (): SyncCoreReturn => {
-  console.log('[SYNC_CORE_SMART] 🚀 Iniciando motor online padrão (sem better-sqlite3)');
-  
-  // Sempre usar modo online para evitar erros de compilação nativa
   const onlineResult = useSyncCore();
   
-  // 🔥 MEMOIZAR RETORNO para evitar recriação do objeto a cada render
   return useMemo(() => ({
     ...onlineResult,
     syncPending: async () => {},
@@ -41,6 +37,6 @@ export const useSyncCoreSmart = (): SyncCoreReturn => {
     syncStatus: 'synced' as const,
     pendingSyncCount: 0,
     externalHistory: onlineResult.externalHistory || 0,
-    calculateStaffCosts: async () => onlineResult.staffCosts || 0 // 🔥 CORREÇÃO: Retornar número ao invés de objeto
+    calculateStaffCosts: async () => onlineResult.staffCosts || 0
   }), [onlineResult]);
 };

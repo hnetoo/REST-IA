@@ -58,8 +58,8 @@ const DashboardV2 = () => {
   }, [todayRevenue, totalRevenue, staffCosts, netProfit, todayExpenses, totalExpenses]);
   
   // 🔥 CÁLCULOS CORRIGIDOS COM RESILIÊNCIA
-  const despesasHoje = todayExpenses || 0; // Despesas de hoje
-  const despesasTotais = 0; // 🔥 REMOVIDO: External history temporariamente desativado
+  const despesasHoje = todayExpenses || 0;
+  const despesasTotais = 0;
   
   // 🔥 ADICIONADO: Estado para Optimistic Update
   const [optimisticRevenue, setOptimisticRevenue] = useState(0);
@@ -71,47 +71,36 @@ const DashboardV2 = () => {
     const baseRevenue = todayRevenue || 0;
     const total = baseRevenue + optimisticRevenue;
     
-    // 🔥 CORREÇÃO: Só resetar optimistic quando o valor real DE FATO aumentar
+    // Só resetar optimistic quando o valor real DE FATO aumentar
     if (baseRevenue > previousRevenueRef.current && optimisticRevenue > 0) {
-      console.log('[DASHBOARD] ✅ Valor real atualizado! Resetando optimistic:', {
-        anterior: previousRevenueRef.current,
-        atual: baseRevenue,
-        optimistic: optimisticRevenue
-      });
       previousRevenueRef.current = baseRevenue;
       setOptimisticRevenue(0);
     } else if (baseRevenue !== previousRevenueRef.current) {
-      // Atualizar referência mesmo sem resetar optimistic
       previousRevenueRef.current = baseRevenue;
     }
     
     return total;
   }, [todayRevenue, optimisticRevenue]);
   
-  // 🔥 ADICIONADO: Listener direto para app Windows
+  // Listener para eventos de vendas
   useEffect(() => {
     const handleOrderCompleted = (event: Event) => {
       const customEvent = event as CustomEvent;
-      console.log('[DASHBOARD] 📡 Evento recebido diretamente:', customEvent.detail);
       
-      // 🔥 OPTIMISTIC UPDATE: Atualizar imediatamente com valor da venda
+      // Optimistic Update
       const saleAmount = customEvent.detail?.total || 0;
       if (saleAmount > 0) {
-        console.log('[DASHBOARD] 🚀 Optimistic Update - Adicionando venda:', saleAmount);
         setOptimisticRevenue(prev => prev + saleAmount);
         setLastUpdateTime(Date.now());
       }
       
-      console.log('[DASHBOARD] 🔄 Forçando recálculo imediato...');
-      
-      // Forçar recálculo do SyncCore
+      // Recalcular
       if (recalculate) {
         recalculate();
       }
       
-      // Forçar refresh dos dados do Dashboard
+      // Segundo refresh
       setTimeout(() => {
-        console.log('[DASHBOARD] 🔄 Segundo refresh para garantir...');
         if (recalculate) {
           recalculate();
         }
@@ -119,25 +108,21 @@ const DashboardV2 = () => {
     };
     
     const handleForceRefresh = () => {
-      console.log('[DASHBOARD] 🔄 Evento force-refresh recebido');
       if (recalculate) {
         recalculate();
       }
     };
     
     const handleDashboardMutate = () => {
-      console.log('[DASHBOARD] 🔄 Evento dashboard-mutate recebido - Forçando revalidação...');
       if (recalculate) {
         recalculate();
       }
     };
     
-    // Registrar listeners
     window.addEventListener('order-completed', handleOrderCompleted);
     window.addEventListener('force-refresh', handleForceRefresh);
     window.addEventListener('dashboard-mutate', handleDashboardMutate);
     
-    // Cleanup
     return () => {
       window.removeEventListener('order-completed', handleOrderCompleted);
       window.removeEventListener('force-refresh', handleForceRefresh);
@@ -175,11 +160,10 @@ const DashboardV2 = () => {
     }).format(val) + ',00 Kz';
   };
 
-  // 🔥 ADICIONADO: Buscar orders do Supabase para gráfico e log
+  // Buscar orders do Supabase
   useEffect(() => {
     const fetchOrdersFromSupabase = async () => {
       try {
-        console.log('[DASHBOARD] 🔄 Buscando orders do Supabase...');
         const { data, error } = await supabase
           .from('orders')
           .select('id, total_amount, created_at, status, invoice_number, customer_name')
@@ -188,12 +172,11 @@ const DashboardV2 = () => {
           .limit(100);
         
         if (error) {
-          console.error('[DASHBOARD] ❌ Erro ao buscar orders:', error);
+          console.error('[DASHBOARD] Erro ao buscar orders:', error);
           return;
         }
         
         if (data && data.length > 0) {
-          console.log('[DASHBOARD] ✅ Orders carregados do Supabase:', data.length);
           const formattedOrders = data.map(order => ({
             id: order.id,
             total: Number(order.total_amount) || 0,
@@ -205,18 +188,17 @@ const DashboardV2 = () => {
           setSupabaseOrders(formattedOrders);
         }
       } catch (err) {
-        console.error('[DASHBOARD] ❌ Erro crítico ao buscar orders:', err);
+        console.error('[DASHBOARD] Erro crítico ao buscar orders:', err);
       }
     };
     
     fetchOrdersFromSupabase();
-    const interval = setInterval(fetchOrdersFromSupabase, 3000); // 3 segundos
+    const interval = setInterval(fetchOrdersFromSupabase, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // LIMPEZA DE LOCALSTORAGE - CONFIAR APENAS NA DB
+  // LIMPEZA DE LOCALSTORAGE
   useEffect(() => {
-    // Limpar valores financeiros antigos guardados no navegador
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -226,88 +208,60 @@ const DashboardV2 = () => {
     }
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
-    // Limpar sessionStorage também
     for (let i = 0; i < sessionStorage.length; i++) {
       const key = sessionStorage.key(i);
       if (key && (key.includes('vendas') || key.includes('revenue') || key.includes('sales') || key.includes('lucro') || key.includes('metrics'))) {
         sessionStorage.removeItem(key);
       }
     }
-    
-    console.log('[DASHBOARD PRINCIPAL] Limpeza de cache local concluída:', keysToRemove.length, 'itens removidos');
-  }, []); // Executar apenas na montagem
+  }, []);
 
-  // CARREGAR DADOS INICIAIS QUANDO CONEXÃO FOR RESTABELECIDA
+  // CARREGAR DADOS INICIAIS
   useEffect(() => {
     const initializeDashboard = async () => {
-      console.log('[DASHBOARD] Inicializando dados...');
-      
-      // Verificar se temos produtos e categorias carregados
       const store = useStore.getState();
       const hasProducts = store.menu && store.menu.length > 0;
       const hasCategories = store.categories && store.categories.length > 0;
       
       if (!hasProducts || !hasCategories) {
-        console.log('[DASHBOARD] Carregando dados iniciais...');
-        
         try {
-          // Carregar categorias
           const { data: categoriesData, error: categoriesError } = await supabase
             .from('categories')
             .select('*');
-            
           if (!categoriesError && categoriesData) {
-            console.log('[DASHBOARD] Categorias carregadas:', categoriesData.length);
             useStore.getState().setCategories(categoriesData);
           }
           
-          // Carregar produtos
           const { data: productsData, error: productsError } = await supabase
             .from('menu_items')
             .select('*');
-            
           if (!productsError && productsData) {
-            console.log('[DASHBOARD] Produtos carregados:', productsData.length);
             useStore.getState().setMenu(productsData);
           }
           
-          // Carregar despesas
           await loadExpenses();
-          
-          // Carregar funcionários  
           await loadEmployees();
-          
-          console.log('[DASHBOARD] Dados iniciais carregados com sucesso!');
-          
         } catch (error) {
-          console.error('[DASHBOARD] Erro ao carregar dados iniciais:', error);
+          console.error('[DASHBOARD] Erro ao carregar dados:', error);
         }
-      } else {
-        console.log('[DASHBOARD] Dados já carregados, ignorando inicialização');
       }
     };
     
-    // Executar inicialização após 2 segundos
     const timer = setTimeout(initializeDashboard, 2000);
-    
     return () => clearTimeout(timer);
   }, []);
 
   // 🔥 CORREÇÃO: Removido listener antigo - agora usa useRealtimeSync
 
-  // 🔄 FORÇAR REFRESH MANUAL DO DASHBOARD
+  // 🔄 FORÇAR REFRESH MANUAL
   const handleManualRefresh = async () => {
-    console.log('[DASHBOARD] 🔄 Refresh manual acionado pelo usuário...');
     setIsRefreshing(true);
     
     try {
-      // 🔄 O Motor Sync Core já atualiza automaticamente
-      console.log('[DASHBOARD] ✅ Motor Sync Core ativo - dados atualizados automaticamente');
-      addNotification('success', 'Dashboard atualizado via Motor Sync Core');
-      
+      addNotification('success', 'Dashboard atualizado');
     } catch (error) {
-      console.error('[DASHBOARD] ❌ Erro no refresh manual:', error);
-      addNotification('error', 'Falha ao atualizar Dashboard');
+      console.error('[DASHBOARD] Erro no refresh:', error);
+      addNotification('error', 'Falha ao atualizar');
     } finally {
       setIsRefreshing(false);
     }
@@ -318,18 +272,7 @@ const DashboardV2 = () => {
   const closedOrders = useMemo(() => activeOrders.filter((o: any) => ['FECHADO', 'closed', 'paid'].includes(o.status)), [activeOrders]);
   
   const todayMetrics = useMemo(() => {
-    // DEBUG: Log dos valores recebidos
-    console.log('[DASHBOARD DEBUG] Valores recebidos:', {
-      todayRevenue,
-      totalRevenue,
-      metrics: metrics?.totalVendas,
-      activeOrdersLength: activeOrders?.length,
-      closedOrdersLength: closedOrders.length
-    });
-    
-    // 🔄 PRIORIDADE: Usar dados do Motor Sync (Supabase) se disponíveis
     if (todayRevenue > 0) {
-      console.log('[DASHBOARD] Usando todayRevenue do Motor Sync:', todayRevenue);
       return { 
         revenue: todayRevenue, 
         profit: (todayRevenue || 0) - (totalExpenses || 0) - ((todayRevenue || 0) * 0.065 || 0),
@@ -338,9 +281,7 @@ const DashboardV2 = () => {
       };
     }
     
-    // Se temos métricas globais, usar os dados reais calculados
     if (metrics.totalVendas > 0) {
-      console.log('[DASHBOARD] Usando totalVendas do Motor Sync:', metrics.totalVendas);
       return { 
         revenue: metrics.totalVendas, 
         profit: (metrics.totalVendas || 0) - (totalExpenses || 0) - ((metrics.totalVendas || 0) * 0.065 || 0),
@@ -349,11 +290,9 @@ const DashboardV2 = () => {
       };
     }
     
-    // Se não houver dados, usar dados locais como fallback
-    console.log('[DASHBOARD] ⚠️ Usando dados locais - activeOrders:', activeOrders.length);
     const today = new Date().toISOString().split('T')[0];
     const orders = supabaseOrders.length > 0 ? supabaseOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today) : closedOrders.filter(o => new Date(o.timestamp).toISOString().split('T')[0] === today);
-    const revenue = orders.reduce((acc, o) => acc + Number(o.total || 0), 0); // ELIMINAR NaN
+    const revenue = orders.reduce((acc, o) => acc + Number(o.total || 0), 0);
     const profit = (revenue || 0) - (0) - (0) - ((revenue || 0) * 0.065 || 0);
     return { revenue, profit, count: orders.length, orders };
   }, [closedOrders, metrics, supabaseOrders, todayRevenue, totalExpenses, activeOrders]);

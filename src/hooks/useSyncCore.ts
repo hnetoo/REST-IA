@@ -234,40 +234,22 @@ export const useSyncCore = () => {
     }
   }, [getLuandaDate]);
 
-  // 💸 EXPENSE ENGINE - Categorização automática de despesas (expenses + cash_flow)
+  // 💸 EXPENSE ENGINE
   const calculateExpenses = useCallback(async (): Promise<{
     total: number;
     today: number;
-    todayCount: number;       // 🔥 ADICIONADO: Contagem de despesas de hoje
+    todayCount: number;
     categories: ExpenseCategory;
   }> => {
     try {
-      console.log('[SYNC_CORE] 🔄 Iniciando Expense Engine...');
-      
-      // 📊 Buscar expenses tradicionais
-      console.log('[SYNC_CORE] 📊 Buscando expenses...');
       const { data: expensesData, error: expensesError } = await supabase
         .from('expenses')
         .select('amount_kz, category, description, created_at');
       
-      if (expensesError) {
-        console.error('[SYNC_CORE] ❌ Erro ao buscar expenses:', expensesError);
-      } else {
-        console.log('[SYNC_CORE] ✅ Expenses encontrados:', expensesData?.length || 0);
-      }
-      
-      // 💰 Buscar cash_flow do tipo 'saida'
-      console.log('[SYNC_CORE] 💰 Buscando cash_flow (saídas)...');
       const { data: cashFlowData, error: cashFlowError } = await supabase
         .from('cash_flow')
         .select('amount, category, description, created_at')
         .eq('type', 'saida');
-      
-      if (cashFlowError) {
-        console.error('[SYNC_CORE] ❌ Erro ao buscar cash_flow:', cashFlowError);
-      } else {
-        console.log('[SYNC_CORE] ✅ Cash flow saídas encontradas:', cashFlowData?.length || 0);
-      }
       
       const categories: ExpenseCategory = {
         staff: 0,
@@ -279,17 +261,15 @@ export const useSyncCore = () => {
       
       let totalExpenses = 0;
       let todayExpenses = 0;
-      let todayExpensesCount = 0;  // 🔥 ADICIONADO: Contagem de despesas de hoje
+      let todayExpensesCount = 0;
       
-      // 🔄 Processar expenses tradicionais
+      // Processar expenses
       if (!expensesError && expensesData && Array.isArray(expensesData)) {
-        console.log('[SYNC_CORE] 🔄 Processando', expensesData.length, 'expenses...');
         totalExpenses += expensesData.reduce((acc, expense) => {
           const amount = Number(expense.amount_kz || 0);
           const category = (expense.category || '').toLowerCase();
           const description = (expense.description || '').toLowerCase();
           
-          // 🤖 Categorização automática baseada em palavras-chave
           if (category.includes('staff') || category.includes('salario') || 
               description.includes('salario') || description.includes('ordenado') ||
               description.includes('staff') || description.includes('funcionario')) {
@@ -311,32 +291,27 @@ export const useSyncCore = () => {
           return acc + amount;
         }, 0);
         
-        // 📅 Calcular despesas de hoje (expenses)
-        const hojeUTC = new Date().toISOString().split('T')[0]; // 🔥 CORREÇÃO: Usar UTC diretamente
+        const hojeUTC = new Date().toISOString().split('T')[0];
         
         if (expensesData && Array.isArray(expensesData)) {
           todayExpenses += expensesData.reduce((acc, expense) => {
             const expenseDate = new Date(expense.created_at || '').toISOString().split('T')[0];
             if (expenseDate === hojeUTC) {
-              todayExpensesCount++; // 🔥 ADICIONADO: Contar despesa de hoje
+              todayExpensesCount++;
               return acc + Number(expense.amount_kz || 0);
             }
             return acc;
           }, 0);
         }
-      } else {
-        console.log('[SYNC_CORE] ℹ️ Nenhum expense encontrado ou erro na busca');
       }
       
-      // 💰 Processar cash_flow do tipo 'saida'
+      // Processar cash_flow
       if (!cashFlowError && cashFlowData && Array.isArray(cashFlowData)) {
-        console.log('[SYNC_CORE] 💰 Processando', cashFlowData.length, 'cash_flow saídas...');
         totalExpenses += cashFlowData.reduce((acc, cashFlow) => {
           const amount = Number(cashFlow.amount || 0);
           const category = (cashFlow.category || '').toLowerCase();
           const description = (cashFlow.description || '').toLowerCase();
           
-          // 🤖 Categorização automática para cash_flow
           if (category.includes('staff') || category.includes('salario') || 
               description.includes('salario') || description.includes('ordenado') ||
               description.includes('staff') || description.includes('funcionario')) {
@@ -358,82 +333,47 @@ export const useSyncCore = () => {
           return acc + amount;
         }, 0);
         
-        // 📅 Calcular despesas de hoje (cash_flow)
-        const hojeUTC = new Date().toISOString().split('T')[0]; // 🔥 CORREÇÃO: Usar UTC diretamente
+        const hojeUTC = new Date().toISOString().split('T')[0];
         
         todayExpenses += cashFlowData.reduce((acc, cashFlow) => {
           const cashFlowDate = new Date(cashFlow.created_at || '').toISOString().split('T')[0];
           if (cashFlowDate === hojeUTC) {
-            todayExpensesCount++; // 🔥 ADICIONADO: Contar cash flow de hoje
+            todayExpensesCount++;
             return acc + Number(cashFlow.amount || 0);
           }
           return acc;
         }, 0);
-      } else {
-        console.log('[SYNC_CORE] ℹ️ Nenhum cash_flow saída encontrado ou erro na busca');
       }
       
       return {
         total: totalExpenses,
         today: todayExpenses,
-        todayCount: todayExpensesCount, // 🔥 ADICIONADO: Retornar contagem
+        todayCount: todayExpensesCount,
         categories
       };
       
     } catch (error) {
-      // Tratamento específico para Erro 400 e outros erros
-      if (error && typeof error === 'object' && 'status' in error) {
-        const errorStatus = (error as any).status;
-        if (errorStatus === 400) {
-          console.error('[SYNC_CORE] ❌ Erro 400 - Bad Request em Expenses:', error);
-        }
-      }
       console.error('[SYNC_CORE] ❌ Expense Engine error:', error);
       return { 
         total: 0, 
         today: 0,
-        todayCount: 0, // 🔥 ADICIONADO: Retorno padrão
+        todayCount: 0,
         categories: { staff: 0, operational: 0, maintenance: 0, supplies: 0, other: 0 }
       };
     }
   }, []);
 
-  // 👥 STAFF ENGINE - Cálculo da folha salarial e contagem
+  // 👥 STAFF ENGINE
   const calculateStaffCosts = useCallback(async (): Promise<{ costs: number; count: number }> => {
     try {
-      console.log('[SYNC_CORE] 👥 Iniciando Staff Engine...');
-      console.log('[SYNC_CORE] 📡 Conectando ao Supabase...');
       const { data: staffData, error: staffError } = await supabase
         .from('staff')
-        .select('id, full_name, role, base_salary_kz, phone, status, created_at, subsidios, bonus, horas_extras, descontos, salario_base'); // ✅ PRISMA: Campos exatos
+        .select('id, full_name, role, base_salary_kz, phone, status, created_at, subsidios, bonus, horas_extras, descontos, salario_base');
       
       let totalStaffCosts = 0;
       
       if (!staffError && staffData) {
-        console.log('[SYNC_CORE] 📊 Staff encontrado:', staffData.length, 'funcionários');
-        console.log('[SYNC_CORE] 📋 Detalhes do staff (PRISMA):', staffData.map(s => ({ 
-          id: s.id, 
-          full_name: s.full_name,
-          role: s.role,
-          base_salary_kz: s.base_salary_kz,
-          salario_base: s.salario_base,
-          status: s.status,
-          subsidios: s.subsidios,
-          bonus: s.bonus,
-          horas_extras: s.horas_extras,
-          descontos: s.descontos
-        })));
-        
         totalStaffCosts = staffData.reduce((acc, staff) => {
-          // Apenas considerar staff ativo (PRISMA: status default "active")
-          console.log('[SYNC_CORE] 🔍 Verificando staff (PRISMA):', {
-            id: staff.id,
-            full_name: staff.full_name,
-            status: staff.status,
-            statusLower: staff.status ? staff.status.toLowerCase() : 'undefined'
-          });
-          
-          // 🔥 CORREÇÃO: Aceitar múltiplos status para staff ativo
           const isActiveStaff = staff.status && (
             staff.status.toLowerCase() === 'active' || 
             staff.status.toLowerCase() === 'ativo' ||
@@ -441,48 +381,25 @@ export const useSyncCore = () => {
           );
           
           if (!isActiveStaff) {
-            console.log('[SYNC_CORE] ⏭️ Pulando staff não ativo:', staff.full_name, 'status:', staff.status);
             return acc;
           }
           
-          // ✅ PRISMA: Usar campos exatos do schema
           const baseSalary = Number(staff.base_salary_kz) || Number(staff.salario_base) || 0;
           const subsidios = Number(staff.subsidios) || 0;
           const bonus = Number(staff.bonus) || 0;
           const horasExtras = Number(staff.horas_extras) || 0;
           const descontos = Number(staff.descontos) || 0;
           
-          // Cálculo completo do salário
           const salaryTotal = baseSalary + subsidios + bonus + horasExtras - descontos;
-          
-          console.log('[SYNC_CORE] 💰 Cálculo detalhado (PRISMA):', {
-            full_name: staff.full_name,
-            baseSalary,
-            subsidios,
-            bonus,
-            horasExtras,
-            descontos,
-            salaryTotal,
-            acumuladoAnterior: acc,
-            novoTotal: acc + salaryTotal
-          });
           
           return acc + salaryTotal;
         }, 0);
         
-        console.log('[SYNC_CORE] ✅ Cálculo staff final (PRISMA):', {
-          totalCosts: totalStaffCosts,
-          staffCount: staffData.length,
-          averagePerStaff: staffData.length > 0 ? totalStaffCosts / staffData.length : 0
-        });
-        
-        // Retornar tanto os custos quanto a contagem
         return {
           costs: totalStaffCosts,
           count: staffData.length
         };
       } else {
-        console.log('[SYNC_CORE] ❌ Erro ao buscar staff:', staffError);
         return {
           costs: 0,
           count: 0
@@ -490,13 +407,6 @@ export const useSyncCore = () => {
       }
       
     } catch (error) {
-      // Tratamento específico para Erro 400 e outros erros
-      if (error && typeof error === 'object' && 'status' in error) {
-        const errorStatus = (error as any).status;
-        if (errorStatus === 400) {
-          console.error('[SYNC_CORE] ❌ Erro 400 - Bad Request em Staff:', error);
-        }
-      }
       console.error('[SYNC_CORE] ❌ Staff Engine error:', error);
       return {
         costs: 0,
@@ -505,34 +415,25 @@ export const useSyncCore = () => {
     }
   }, []);
 
-  // 🍽️ TOP MARGINS ENGINE - Cálculo de produtos mais rentáveis
+  // 🍽️ TOP MARGINS ENGINE
   const calculateTopMargins = useCallback(async (): Promise<TopMarginProduct[]> => {
     try {
-      console.log('[SYNC_CORE] 🍽️ Iniciando Top Margins Engine...');
-      
-      // Buscar orders com items detalhados e menu
       const [ordersResult, menuResult] = await Promise.all([
         supabase
           .from('orders')
           .select('id, items, status')
           .in('status', ['closed', 'FECHADO', 'paid', 'PAGO', 'completed', 'delivered']),
         supabase
-          .from('menu')
+          .from('menu_items')
           .select('id, name, price, cost_price')
       ]);
       
       const orders = ordersResult.data || [];
       const menu = menuResult.data || [];
       
-      console.log('[SYNC_CORE] 🍽️ Dados carregados:', {
-        ordersCount: orders.length,
-        menuCount: menu.length
-      });
-      
       const productProfit: Record<string, { name: string, profit: number, qty: number }> = {};
       
       orders.forEach(order => {
-        // Parse items se for string
         let items = order.items;
         if (typeof items === 'string') {
           try {
@@ -570,7 +471,6 @@ export const useSyncCore = () => {
         .sort((a, b) => b.profit - a.profit)
         .slice(0, 5);
       
-      console.log('[SYNC_CORE] 🍽️ Top Margins calculado:', topProducts);
       return topProducts;
       
     } catch (error) {
@@ -581,13 +481,9 @@ export const useSyncCore = () => {
 
   // 🔄 RECÁLCULO COMPLETO
   const recalculateAll = useCallback(async () => {
-    console.log('[SYNC_CORE] 🔄 Iniciando recalculateAll...');
-    console.log('[SYNC_CORE] 🔄 Stack trace:', new Error().stack);
     setSyncData(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      console.log('[SYNC_CORE] 🚀 Executando engines em paralelo...');
-      // Executar todos os engines em paralelo
       const [revenueResult, expensesResult, staffResult, topMarginsResult] = await Promise.all([
         calculateRevenue(),
         calculateExpenses(),
@@ -595,32 +491,23 @@ export const useSyncCore = () => {
         calculateTopMargins()
       ]);
       
-      console.log('[SYNC_CORE] ✅ Engines executados:', {
-        revenueResult,
-        expensesResult,
-        staffResult
-      });
-      
-      // 🚀 Cálculo final do net profit
       const netProfit = revenueResult.total - expensesResult.total - staffResult.costs;
       
-      // Atualizar estado final
       const finalSyncData: SyncData = {
         totalRevenue: revenueResult.total,
         todayRevenue: revenueResult.today,
         totalExpenses: expensesResult.total,
         todayExpenses: expensesResult.today,
-        todayExpensesCount: expensesResult.todayCount, // 🔥 ADICIONADO: Contagem de despesas de hoje
+        todayExpensesCount: expensesResult.todayCount,
         staffCosts: staffResult.costs,
-        staffCount: staffResult.count,  // ✅ ADICIONADO: Contagem de funcionários
+        staffCount: staffResult.count,
         netProfit,
-        externalHistory: revenueResult.externalHistory,  // ✅ ADICIONADO: Valor do external_history
-        topMarginProducts: topMarginsResult,  // 🔥 ADICIONADO: Top produtos por margem
+        externalHistory: revenueResult.externalHistory,
+        topMarginProducts: topMarginsResult,
         lastUpdate: new Date().toISOString(),
         lastUpdated: new Date(),
         isLoading: false,
         error: null,
-        // 🧠 INTELIGÊNCIA E ALERTAS
         alerts: [],
         predictions: {
           monthlyForecast: 0,
@@ -632,7 +519,6 @@ export const useSyncCore = () => {
       
       setSyncData(finalSyncData);
       
-      // 🔄 Atualizar WINDOWS_SYNC se disponível
       if (typeof window !== 'undefined') {
         (window as any).WINDOWS_SYNC = {
           faturacaoHoje: revenueResult.today,
@@ -646,7 +532,7 @@ export const useSyncCore = () => {
       }
       
     } catch (error) {
-      console.error('[SYNC_CORE] ❌ Erro no recálculo completo:', error);
+      console.error('[SYNC_CORE] ❌ Erro no recálculo:', error);
       setSyncData(prev => ({
         ...prev,
         isLoading: false,
@@ -657,79 +543,44 @@ export const useSyncCore = () => {
 
   // 🔄 CONFIGURAR SUBSCRIPTIONS REALTIME
   const setupRealtimeSubscriptions = useCallback(() => {
-    console.log('[SYNC_CORE] 📡 Configurando subscriptions realtime...');
-    
-    // Orders subscription
-    console.log('[SYNC_CORE] 📡 Subscribing to orders channel...');
     const ordersSubscription = supabase
-      .channel('sync-core-orders-v3') // 🔥 Nome único para evitar conflitos
+      .channel('sync-core-orders-v3')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
-        (payload) => {
-          console.log('[SYNC_CORE] 📊 Orders mudou - recalculando...', payload);
-          console.log('[SYNC_CORE] 📊 Event type:', payload.eventType);
-          console.log('[SYNC_CORE] 📊 New record:', payload.new);
-          recalculateAll();
-        }
+        () => recalculateAll()
       )
-      .subscribe((status) => {
-        console.log('[SYNC_CORE] 📡 Orders subscription status:', status);
-      });
+      .subscribe();
 
-    // Expenses subscription
-    console.log('[SYNC_CORE] 📡 Subscribing to expenses channel...');
     const expensesSubscription = supabase
       .channel('sync-core-expenses-v3')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'expenses' },
-        (payload) => {
-          console.log('[SYNC_CORE] 💸 Expenses mudou - recalculando...', payload);
-          recalculateAll();
-        }
+        () => recalculateAll()
       )
-      .subscribe((status) => {
-        console.log('[SYNC_CORE] 📡 Expenses subscription status:', status);
-      });
+      .subscribe();
 
-    // Staff subscription
-    console.log('[SYNC_CORE] 📡 Subscribing to staff channel...');
     const staffSubscription = supabase
       .channel('sync-core-staff-v3')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'staff' },
-        (payload) => {
-          console.log('[SYNC_CORE] 👥 Staff mudou - recalculando...', payload);
-          recalculateAll();
-        }
+        () => recalculateAll()
       )
-      .subscribe((status) => {
-        console.log('[SYNC_CORE] 📡 Staff subscription status:', status);
-      });
+      .subscribe();
 
-    // Cash Flow subscription (saídas)
-    console.log('[SYNC_CORE] 📡 Subscribing to cash_flow channel...');
     const cashFlowSubscription = supabase
       .channel('sync-core-cash-flow-v3')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'cash_flow' },
-        (payload) => {
-          console.log('[SYNC_CORE] 💰 Cash Flow mudou - recalculando...', payload);
-          recalculateAll();
-        }
+        () => recalculateAll()
       )
-      .subscribe((status) => {
-        console.log('[SYNC_CORE] 📡 Cash Flow subscription status:', status);
-      });
+      .subscribe();
 
-    // Salvar referências
     subscriptionsRef.current = {
       orders: ordersSubscription,
       expenses: expensesSubscription,
       staff: staffSubscription,
       cashFlow: cashFlowSubscription
     };
-    
-    console.log('[SYNC_CORE] ✅ Subscriptions configuradas:', Object.keys(subscriptionsRef.current));
   }, [recalculateAll]);
 
   // 🔥 DEBOUNCE SYNC IMPLEMENTATION
