@@ -809,6 +809,159 @@ const Reports = () => {
     }
   };
 
+  // 🆕 PDF FUNCTIONS PARA NOVOS RELATÓRIOS
+  const generateVendasPorMesaPDF = async () => {
+    setPdfLoading('mesas');
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Vendas por Mesa', 14, 15);
+      
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
+      
+      const tableData = vendasPorMesa.data.map((item: any) => [
+        item.mesa || 'Mesa',
+        item.pedidos || 0,
+        formatKz(item.total || 0)
+      ]);
+      
+      autoTable(doc, {
+        head: [['Mesa', 'Pedidos', 'Total']],
+        body: tableData,
+        startY: 35,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 3 }
+      });
+      
+      savePDF(doc, 'vendas-por-mesa.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
+  };
+
+  const generateMetodosPagamentoPDF = async () => {
+    setPdfLoading('pagamentos');
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Métodos de Pagamento', 14, 15);
+      
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
+      
+      const tableData = metodosPagamento.data.map((item: any) => [
+        item.metodo || 'Método',
+        item.transacoes || 0,
+        formatKz(item.total || 0)
+      ]);
+      
+      autoTable(doc, {
+        head: [['Método', 'Transações', 'Total']],
+        body: tableData,
+        startY: 35,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 3 }
+      });
+      
+      savePDF(doc, 'metodos-pagamento.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
+  };
+
+  const generateHorarioPicoPDF = async () => {
+    setPdfLoading('horario');
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Horário de Pico', 14, 15);
+      
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
+      
+      const tableData = horarioPico.data.map((item: any) => [
+        item.hora || 'Hora',
+        item.pedidos || 0,
+        formatKz(item.total || 0)
+      ]);
+      
+      autoTable(doc, {
+        head: [['Hora', 'Pedidos', 'Total']],
+        body: tableData,
+        startY: 35,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 3 }
+      });
+      
+      savePDF(doc, 'horario-pico.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
+  };
+
+  const generateDesempenhoCategoriaPDF = async () => {
+    setPdfLoading('categoria');
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Tasca do Vereda - Desempenho por Categoria', 14, 15);
+      
+      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
+        timeZone: 'Africa/Luanda',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.text(`Data: ${dataLuanda}`, 14, 25);
+      
+      const tableData = desempenhoCategoria.data.map((item: any) => [
+        item.categoria || 'Categoria',
+        item.itens || 0,
+        formatKz(item.total || 0)
+      ]);
+      
+      autoTable(doc, {
+        head: [['Categoria', 'Itens Vendidos', 'Total']],
+        body: tableData,
+        startY: 35,
+        theme: 'grid',
+        styles: { fontSize: 9, cellPadding: 3 }
+      });
+      
+      savePDF(doc, 'desempenho-categoria.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(null);
+    }
+  };
+
   const loadAllCards = async () => {
     setLoading(true);
     await Promise.all([
@@ -1011,7 +1164,7 @@ const Reports = () => {
           data={vendasPorMesa.data}
           loading={vendasPorMesa.loading}
           onGenerate={fetchVendasPorMesa}
-          onGeneratePDF={() => {}}
+          onGeneratePDF={generateVendasPorMesaPDF}
           color="#14b8a6"
         />
         
@@ -1022,7 +1175,7 @@ const Reports = () => {
           data={metodosPagamento.data}
           loading={metodosPagamento.loading}
           onGenerate={fetchMetodosPagamento}
-          onGeneratePDF={() => {}}
+          onGeneratePDF={generateMetodosPagamentoPDF}
           color="#f97316"
         />
         
@@ -1033,7 +1186,7 @@ const Reports = () => {
           data={horarioPico.data}
           loading={horarioPico.loading}
           onGenerate={fetchHorarioPico}
-          onGeneratePDF={() => {}}
+          onGeneratePDF={generateHorarioPicoPDF}
           color="#0ea5e9"
         />
         
@@ -1044,7 +1197,7 @@ const Reports = () => {
           data={desempenhoCategoria.data}
           loading={desempenhoCategoria.loading}
           onGenerate={fetchDesempenhoCategoria}
-          onGeneratePDF={() => {}}
+          onGeneratePDF={generateDesempenhoCategoriaPDF}
           color="#8b5cf6"
         />
       </div>
