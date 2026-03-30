@@ -876,6 +876,19 @@ const Reports = () => {
   const generateVendasPorMesaPDF = async () => {
     setPdfLoading('mesas');
     try {
+      // Verificar se tem dados, se não, buscar primeiro
+      if (!vendasPorMesa.data || vendasPorMesa.data.length === 0) {
+        console.log('[PDF] Sem dados, buscando...');
+        await fetchVendasPorMesa();
+      }
+      
+      // Verificar novamente após buscar
+      if (!vendasPorMesa.data || vendasPorMesa.data.length === 0) {
+        alert('Nenhuma venda por mesa encontrada para exportar.');
+        setPdfLoading(null);
+        return;
+      }
+      
       const doc = new jsPDF();
       doc.setFontSize(16);
       doc.text('Tasca do Vereda - Vendas por Mesa', 14, 15);
