@@ -217,8 +217,8 @@ const OwnerDashboard = () => {
         </button>
       </div>
 
-      {/* Cards Principais - Os 4 Pilares */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Cards Principais - Os 5 Pilares */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         {/* Card Azul - Rendimento Global */}
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-6 text-white relative group">
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
