@@ -439,14 +439,14 @@ const Reports = () => {
       if (error) {
         console.error('[RELATÓRIO] Erro ao buscar orders:', error);
         setVendasPorMesa({ data: [], loading: false });
-        return;
+        return [];
       }
       
       console.log('[RELATÓRIO] Pedidos encontrados:', orders?.length || 0);
       
       if (!orders || orders.length === 0) {
         setVendasPorMesa({ data: [{ mesa: 'Nenhuma venda nos últimos 30 dias', total: 0, pedidos: 0 }], loading: false });
-        return;
+        return [];
       }
       
       // Agrupar por mesa
@@ -475,13 +475,15 @@ const Reports = () => {
       // Se não houver mesas com dados, mostrar mensagem
       if (result.length === 0) {
         setVendasPorMesa({ data: [{ mesa: 'Nenhuma mesa com vendas', total: 0, pedidos: 0 }], loading: false });
-        return;
+        return [];
       }
       
       setVendasPorMesa({ data: result, loading: false });
+      return result;
     } catch (error) {
       console.error('[RELATÓRIO] Erro:', error);
       setVendasPorMesa({ data: [], loading: false });
+      return [];
     }
   };
 
@@ -876,14 +878,15 @@ const Reports = () => {
   const generateVendasPorMesaPDF = async () => {
     setPdfLoading('mesas');
     try {
-      // Verificar se tem dados, se não, buscar primeiro
-      if (!vendasPorMesa.data || vendasPorMesa.data.length === 0) {
-        console.log('[PDF] Sem dados, buscando...');
-        await fetchVendasPorMesa();
+      // Buscar dados diretamente se não tiver
+      let data = vendasPorMesa.data;
+      if (!data || data.length === 0) {
+        console.log('[PDF] Buscando dados...');
+        data = await fetchVendasPorMesa();
       }
       
-      // Verificar novamente após buscar
-      if (!vendasPorMesa.data || vendasPorMesa.data.length === 0) {
+      // Verificar se tem dados
+      if (!data || data.length === 0) {
         alert('Nenhuma venda por mesa encontrada para exportar.');
         setPdfLoading(null);
         return;
@@ -901,7 +904,7 @@ const Reports = () => {
       });
       doc.text(`Data: ${dataLuanda}`, 14, 25);
       
-      const tableData = vendasPorMesa.data.map((item: any) => [
+      const tableData = data.map((item: any) => [
         item.mesa || 'Mesa',
         item.pedidos || 0,
         formatKz(item.total || 0)
