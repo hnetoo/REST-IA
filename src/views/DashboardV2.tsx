@@ -583,6 +583,23 @@ const DashboardV2 = () => {
              {settings.taxRate || 7}% sobre Rendimento Global
           </div>
         </div>
+
+        {/* 🔥 NOVO: Card Reserva Fiscal (AGT) */}
+        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group border-red-500/20 bg-red-500/5">
+          <div className="absolute top-0 right-0 p-4 text-red-500 opacity-10 group-hover:opacity-20 transition-opacity">
+             <Receipt size={64} />
+          </div>
+          <div className="flex items-center gap-2 mb-4 text-red-400 text-[10px] font-black uppercase tracking-[0.2em]">
+            Reserva Fiscal (AGT)
+          </div>
+          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz(reservaFiscal.total)}</p>
+          <div className="mt-2 text-[10px] text-red-400/80 font-bold">
+             25% II + {settings.taxRate || 7}% Retenção
+          </div>
+          <div className="mt-1 text-[8px] text-slate-500">
+             II: {formatKz(reservaFiscal.impostoIndustrial)} | Ret: {formatKz(reservaFiscal.retencaoFonte)}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

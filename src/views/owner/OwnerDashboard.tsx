@@ -54,6 +54,26 @@ const OwnerDashboard = () => {
     recalculate // 🔥 ADICIONADO: Função para recalcular
   } = useSyncCore();
   
+  // 🔥 RESERVA FISCAL (AGT) - Imposto Industrial 25% + Retenção 6.5%
+  const reservaFiscal = useMemo(() => {
+    const lucro = (todayRevenue || 0) - (totalExpenses || 0) - (staffCosts || 0);
+    const faturacao = todayRevenue || 0;
+    const taxaRetencao = (settings?.taxRate || 7) / 100;
+    
+    // Imposto Industrial: 25% sobre lucro
+    const impostoIndustrial = lucro > 0 ? lucro * 0.25 : 0;
+    
+    // Retenção na Fonte: 6.5% (ou taxRate) sobre faturação
+    const retencaoFonte = faturacao * taxaRetencao;
+    
+    return {
+      total: impostoIndustrial + retencaoFonte,
+      impostoIndustrial,
+      retencaoFonte,
+      percentual: faturacao > 0 ? ((impostoIndustrial + retencaoFonte) / faturacao) * 100 : 0
+    };
+  }, [todayRevenue, totalExpenses, staffCosts, settings?.taxRate]);
+  
   // 🔥 ADICIONADO: Buscar todas as vendas sem filtro de data
   const [allSalesTotal, setAllSalesTotal] = useState(0);
   
@@ -378,6 +398,28 @@ const OwnerDashboard = () => {
             <p className="text-indigo-200 text-sm">Todas as vendas (sem filtro)</p>
             <p className="text-indigo-300 text-xs mt-2 italic">
               Total acumulado sem filtro de data ({formatKz(allSalesTotal)} Kz)
+            </p>
+          </div>
+        </div>
+
+        {/* 🔥 NOVO: Card Reserva Fiscal (AGT) */}
+        <div className="bg-gradient-to-br from-red-600 to-red-700 rounded-xl p-6 text-white relative group">
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="bg-black/90 text-white text-xs rounded px-2 py-1 max-w-xs">
+              <p className="font-semibold mb-1">🏛️ Reserva Fiscal AGT</p>
+              <p className="text-xs">Imposto Industrial 25% + Retenção {settings?.taxRate || 7}%</p>
+              <p className="text-xs font-bold mt-1">Total: {formatKz(reservaFiscal.total)}</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Reserva Fiscal</h3>
+            <Receipt className="h-8 w-8 text-red-200" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-3xl font-bold">{formatKz(reservaFiscal.total)}</p>
+            <p className="text-red-200 text-sm">II 25% + Retenção {settings?.taxRate || 7}%</p>
+            <p className="text-red-300 text-xs mt-2 italic">
+              II: {formatKz(reservaFiscal.impostoIndustrial)} | Ret: {formatKz(reservaFiscal.retencaoFonte)}
             </p>
           </div>
         </div>
