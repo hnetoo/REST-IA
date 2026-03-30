@@ -30,7 +30,6 @@ const Reports = () => {
   const [mapaDespesas, setMapaDespesas] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
   const [topRentabilidade, setTopRentabilidade] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
   const [fluxoPorTurno, setFluxoPorTurno] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
-  const [alertasStock, setAlertasStock] = useState<{ data: any[], loading: boolean }>({ data: [], loading: false });
 
   const formatKz = (value: number) => {
     return new Intl.NumberFormat('pt-AO', {
@@ -220,17 +219,6 @@ const Reports = () => {
     } catch (error) {
       console.error(error);
       setFluxoPorTurno({ data: [], loading: false });
-    }
-  };
-
-  const fetchAlertasStock = async () => {
-    setAlertasStock({ ...alertasStock, loading: true });
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setAlertasStock({ data: [{ produto: 'Cerveja', stock: 5, minimo: 10 }], loading: false });
-    } catch (error) {
-      console.error(error);
-      setAlertasStock({ data: [], loading: false });
     }
   };
 
@@ -463,44 +451,6 @@ const Reports = () => {
     }
   };
 
-  const generateAlertasStockPDF = async () => {
-    setPdfLoading('stock');
-    try {
-      const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text('Tasca do Vereda - Alertas de Stock', 14, 15);
-      
-      const dataLuanda = new Date().toLocaleDateString('pt-AO', {
-        timeZone: 'Africa/Luanda',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      doc.text(`Data: ${dataLuanda}`, 14, 25);
-      
-      const tableData = alertasStock.data.map((item: any) => [
-        item.produto || 'Produto',
-        item.stock || 0,
-        item.minimo || 0
-      ]);
-      
-      autoTable(doc, {
-        head: [['Produto', 'Stock Atual', 'Stock Mínimo']],
-        body: tableData,
-        startY: 35,
-        theme: 'grid',
-        styles: { fontSize: 9, cellPadding: 3 }
-      });
-      
-      savePDF(doc, 'alertas-stock.pdf');
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      alert('Erro ao gerar PDF. Tente novamente.');
-    } finally {
-      setPdfLoading(null);
-    }
-  };
-
   const loadAllCards = async () => {
     setLoading(true);
     await Promise.all([
@@ -509,8 +459,7 @@ const Reports = () => {
       fetchRhEFaltas(),
       fetchMapaDespesas(),
       fetchTopRentabilidade(),
-      fetchFluxoPorTurno(),
-      fetchAlertasStock()
+      fetchFluxoPorTurno()
     ]);
     setLoading(false);
   };
@@ -691,17 +640,6 @@ const Reports = () => {
           onGenerate={fetchFluxoPorTurno}
           onGeneratePDF={generateFluxoPorTurnoPDF}
           color="#ec4899"
-        />
-        
-        <Card
-          title="Alertas de Stock"
-          icon={<AlertTriangle size={20} />}
-          description="Filtro de stock_quantity < min_stock"
-          data={alertasStock.data}
-          loading={alertasStock.loading}
-          onGenerate={fetchAlertasStock}
-          onGeneratePDF={generateAlertasStockPDF}
-          color="#f97316"
         />
       </div>
     </div>
