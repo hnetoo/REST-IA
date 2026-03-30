@@ -32,12 +32,12 @@ const OwnerDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
   const { addNotification, settings } = useStore();
-  const [taxRate, setTaxRate] = useState(settings?.taxRate || 14);
+  const [taxRate, setTaxRate] = useState(settings?.taxRate || 7);
   
   // 🔄 Recarregar taxRate quando settings mudarem
   useEffect(() => {
     console.log('[OWNER DASHBOARD] Settings atualizadas, taxRate:', settings?.taxRate);
-    setTaxRate(settings?.taxRate || 14);
+    setTaxRate(settings?.taxRate || 7);
   }, [settings?.taxRate]);
   
   // 🚀 INTEGRAR MOTOR SYNC CORE - USAR DIRETAMENTE OS VALORES
