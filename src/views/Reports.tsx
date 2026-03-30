@@ -426,10 +426,15 @@ const Reports = () => {
     try {
       console.log('[RELATÓRIO] Buscando vendas por mesa...');
       
+      // Buscar pedidos dos últimos 30 dias sem filtro de data restritivo
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
       const { data: orders, error } = await supabase
         .from('orders')
-        .select('table_id, total_amount, status')
-        .in('status', ['closed', 'paid', 'finalized']);
+        .select('table_id, total_amount, status, created_at')
+        .in('status', ['closed', 'paid', 'finalized'])
+        .gte('created_at', thirtyDaysAgo.toISOString());
       
       if (error) {
         console.error('[RELATÓRIO] Erro ao buscar orders:', error);
@@ -437,8 +442,10 @@ const Reports = () => {
         return;
       }
       
+      console.log('[RELATÓRIO] Pedidos encontrados:', orders?.length || 0);
+      
       if (!orders || orders.length === 0) {
-        setVendasPorMesa({ data: [], loading: false });
+        setVendasPorMesa({ data: [{ mesa: 'Nenhuma venda nos últimos 30 dias', total: 0, pedidos: 0 }], loading: false });
         return;
       }
       
@@ -558,16 +565,22 @@ const Reports = () => {
     try {
       console.log('[RELATÓRIO] Buscando desempenho por categoria...');
       
-      // Buscar order_items com info do produto e categoria
+      // Buscar order_items dos últimos 30 dias
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
       const { data: orderItems, error: itemsError } = await supabase
         .from('order_items')
-        .select('product_id, quantity, unit_price');
+        .select('product_id, quantity, unit_price, created_at')
+        .gte('created_at', thirtyDaysAgo.toISOString());
       
       if (itemsError) {
         console.error('[RELATÓRIO] Erro ao buscar order_items:', itemsError);
-        setDesempenhoCategoria({ data: [], loading: false });
+        setDesempenhoCategoria({ data: [{ categoria: 'Erro ao buscar dados', total: 0, itens: 0 }], loading: false });
         return;
       }
+      
+      console.log('[RELATÓRIO] Order items encontrados:', orderItems?.length || 0);
       
       // Buscar todos os produtos do menu para mapear categorias
       const { data: menuProducts, error: menuError } = await supabase

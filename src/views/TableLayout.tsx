@@ -356,10 +356,11 @@ const TableLayout = () => {
               style={style}
               onMouseDown={(e) => handleMouseDown(e, table)}
               className={`
-                w-28 h-28 rounded-[1.5rem] border-2 flex flex-col items-center justify-center group relative
+                w-28 h-28 rounded-2xl border-2 flex flex-col items-center justify-center group relative
+                transition-all duration-300
                 ${isDesignMode ? 'border-orange-500/50 bg-orange-500/5 hover:scale-105 hover:shadow-lg' : 
-                  !isOccupied ? 'border-white/10 bg-white/5 hover:border-primary/50 hover:scale-105' : 
-                    'border-red-500 bg-red-500/10 animate-pulse shadow-red-500/20'
+                  !isOccupied ? 'border-slate-600 bg-gradient-to-br from-slate-700/50 to-slate-800/30 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-400/10' : 
+                    'border-emerald-500 bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 shadow-lg shadow-emerald-500/20'
                 }
               `}
             >

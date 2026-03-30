@@ -630,7 +630,11 @@ const POS = () => {
            </div>
            {!activeTableId ? (
               <div className="grid grid-cols-4 gap-2 w-full max-w-[600px] mx-auto p-2">
-                 {tables.map((table) => {
+                 {[...tables].sort((a, b) => {
+                    const numA = parseInt(a.name.replace(/\D/g, '')) || 0;
+                    const numB = parseInt(b.name.replace(/\D/g, '')) || 0;
+                    return numA - numB;
+                 }).map((table) => {
                     const isOccupied = activeOrders.some(o => o.tableId === table.id && o.status === 'ABERTO');
                     return (
                       <button 
