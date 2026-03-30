@@ -446,7 +446,12 @@ const Reports = () => {
       const mesaSales: Record<string, { mesa: string, total: number, pedidos: number }> = {};
       
       orders.forEach((order: any) => {
-        const mesaId = order.table_id || 'Sem Mesa';
+        // Ignorar pedidos sem mesa definida
+        if (!order.table_id || order.table_id === 'null' || order.table_id === '') {
+          return;
+        }
+        
+        const mesaId = order.table_id;
         const mesaName = mesaId.startsWith('Mesa') ? mesaId : `Mesa ${mesaId}`;
         
         if (!mesaSales[mesaId]) {
@@ -459,6 +464,12 @@ const Reports = () => {
       const result = Object.values(mesaSales)
         .sort((a, b) => b.total - a.total)
         .slice(0, 10);
+      
+      // Se não houver mesas com dados, mostrar mensagem
+      if (result.length === 0) {
+        setVendasPorMesa({ data: [{ mesa: 'Nenhuma mesa com vendas', total: 0, pedidos: 0 }], loading: false });
+        return;
+      }
       
       setVendasPorMesa({ data: result, loading: false });
     } catch (error) {
@@ -547,23 +558,54 @@ const Reports = () => {
     try {
       console.log('[RELATÓRIO] Buscando desempenho por categoria...');
       
-      // Buscar order_items com info do produto
-      const { data: orderItems, error } = await supabase
+      // Buscar order_items com info do produto e categoria
+      const { data: orderItems, error: itemsError } = await supabase
         .from('order_items')
         .select('product_id, quantity, unit_price');
       
-      if (error) {
-        console.error('[RELATÓRIO] Erro:', error);
+      if (itemsError) {
+        console.error('[RELATÓRIO] Erro ao buscar order_items:', itemsError);
         setDesempenhoCategoria({ data: [], loading: false });
         return;
       }
       
-      // Agrupar por categoria (usar menu local)
+      // Buscar todos os produtos do menu para mapear categorias
+      const { data: menuProducts, error: menuError } = await supabase
+        .from('menu_items')
+        .select('id, name, category');
+      
+      if (menuError) {
+        console.error('[RELATÓRIO] Erro ao buscar menu_items:', menuError);
+      }
+      
+      // Criar mapa de produtos por ID (usar menu local + Supabase)
+      const productMap = new Map();
+      
+      // Primeiro adicionar do menu local (Zustand)
+      menu.forEach((item: any) => {
+        productMap.set(item.id, item);
+      });
+      
+      // Depois adicionar/atualizar do Supabase
+      menuProducts?.forEach((item: any) => {
+        productMap.set(item.id, item);
+      });
+      
+      // Agrupar por categoria
       const categorias: Record<string, { categoria: string, total: number, itens: number }> = {};
+      let categorizados = 0;
+      let naoCategorizados = 0;
       
       orderItems?.forEach((item: any) => {
-        const dish = menu.find(m => m.id === item.product_id);
-        const categoria = dish?.category || 'Outros';
+        const product = productMap.get(item.product_id);
+        const categoria = product?.category || product?.category_name || null;
+        
+        if (!categoria) {
+          naoCategorizados++;
+          return; // Ignorar itens sem categoria
+        }
+        
+        categorizados++;
         
         if (!categorias[categoria]) {
           categorias[categoria] = { categoria, total: 0, itens: 0 };
@@ -572,7 +614,15 @@ const Reports = () => {
         categorias[categoria].itens += Number(item.quantity || 0);
       });
       
+      console.log(`[RELATÓRIO] Categorias: ${categorizados} itens categorizados, ${naoCategorizados} sem categoria`);
+      
       const result = Object.values(categorias).sort((a, b) => b.total - a.total);
+      
+      if (result.length === 0) {
+        setDesempenhoCategoria({ data: [{ categoria: 'Nenhuma categoria encontrada', total: 0, itens: 0 }], loading: false });
+        return;
+      }
+      
       setDesempenhoCategoria({ data: result, loading: false });
     } catch (error) {
       console.error('[RELATÓRIO] Erro:', error);
