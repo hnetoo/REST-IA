@@ -142,10 +142,74 @@ const Reports = () => {
   const fetchRhEFaltas = async () => {
     setRhEFaltas({ ...rhEFaltas, loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setRhEFaltas({ data: [{ funcionario: 'João', faltas: 2, desconto: 10000 }], loading: false });
+      console.log('[RELATÓRIO] Buscando dados de RH do Supabase...');
+      
+      // Buscar funcionários do Supabase
+      const { data: staffData, error } = await supabase
+        .from('staff')
+        .select('id, full_name, base_salary_kz, role, is_active');
+      
+      if (error) {
+        console.error('[RELATÓRIO] Erro ao buscar staff:', error);
+        setRhEFaltas({ data: [], loading: false });
+        return;
+      }
+      
+      if (!staffData || staffData.length === 0) {
+        console.log('[RELATÓRIO] Nenhum funcionário encontrado');
+        setRhEFaltas({ data: [], loading: false });
+        return;
+      }
+      
+      console.log('[RELATÓRIO] Funcionários encontrados:', staffData.length);
+      
+      // Buscar faltas do mês (tabela attendance)
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const { data: attendanceData, error: attendanceError } = await supabase
+        .from('attendance')
+        .select('staff_id, status, date')
+        .gte('date', startOfMonth.toISOString())
+        .eq('status', 'absent');
+      
+      if (attendanceError) {
+        console.log('[RELATÓRIO] Erro ao buscar faltas:', attendanceError);
+      }
+      
+      // Contar faltas por funcionário
+      const faltasPorFuncionario: Record<string, number> = {};
+      if (attendanceData) {
+        attendanceData.forEach((record: any) => {
+          const staffId = record.staff_id;
+          faltasPorFuncionario[staffId] = (faltasPorFuncionario[staffId] || 0) + 1;
+        });
+      }
+      
+      // Calcular descontos (salário/30 * faltas)
+      const result = staffData
+        .filter((staff: any) => staff.is_active !== false) // Apenas ativos
+        .map((staff: any) => {
+          const salary = Number(staff.base_salary_kz || 0);
+          const faltas = faltasPorFuncionario[staff.id] || 0;
+          const desconto = faltas > 0 ? (salary / 30) * faltas : 0;
+          
+          return {
+            funcionario: staff.full_name || 'Funcionário',
+            cargo: staff.role || 'N/A',
+            salario: salary,
+            faltas: faltas,
+            desconto: Math.round(desconto)
+          };
+        })
+        .sort((a, b) => b.desconto - a.desconto);
+      
+      console.log('[RELATÓRIO] RH e Faltas calculado:', result);
+      setRhEFaltas({ data: result, loading: false });
+      
     } catch (error) {
-      console.error(error);
+      console.error('[RELATÓRIO] Erro ao buscar RH:', error);
       setRhEFaltas({ data: [], loading: false });
     }
   };
