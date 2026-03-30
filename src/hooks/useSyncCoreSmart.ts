@@ -1,4 +1,5 @@
 import { useSyncCore } from './useSyncCore';
+import { useMemo } from 'react';
 
 // 🧠 HOOK INTELIGENTE - USA MODO ONLINE PADRÃO (SEM ERROS NATIVOS)
 type SyncCoreReturn = {
@@ -32,7 +33,8 @@ export const useSyncCoreSmart = (): SyncCoreReturn => {
   // Sempre usar modo online para evitar erros de compilação nativa
   const onlineResult = useSyncCore();
   
-  return {
+  // 🔥 MEMOIZAR RETORNO para evitar recriação do objeto a cada render
+  return useMemo(() => ({
     ...onlineResult,
     syncPending: async () => {},
     isOnline: true,
@@ -40,5 +42,5 @@ export const useSyncCoreSmart = (): SyncCoreReturn => {
     pendingSyncCount: 0,
     externalHistory: onlineResult.externalHistory || 0,
     calculateStaffCosts: async () => onlineResult.staffCosts || 0 // 🔥 CORREÇÃO: Retornar número ao invés de objeto
-  };
+  }), [onlineResult]);
 };
