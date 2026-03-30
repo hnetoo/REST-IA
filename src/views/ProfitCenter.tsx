@@ -192,54 +192,91 @@ const ProfitCenter = () => {
       return;
     }
     
-    // Preparar dados para o relatório CSV
-    const today = new Date().toISOString().split('T')[0];
-    
-    const csvData = [
-      ['RELATÓRIO EXECUTIVO - CENTRO DE LUCRO'],
-      ['Data:', today],
-      [],
-      ['RESUMO FINANCEIRO'],
-      ['Métrica', 'Valor'],
-      ['Faturação Bruta', formatKz(metrics.revenue)],
-      ['Despesas Variáveis (Hoje)', formatKz(metrics.variableCosts)],
-      ['Despesas Fixas (Mês)', formatKz(metrics.fixedCosts)],
-      ['Impostos (6.5%)', formatKz(metrics.tax)],
-      ['LUCRO LÍQUIDO', formatKz(metrics.netProfit)],
-      ['Margem de Lucro', metrics.margin.toFixed(1) + '%'],
-      [],
-      ['ECOSSISTEMA DE PAGAMENTOS'],
-      ['Método', 'Valor'],
-      ...Object.entries(metrics.byMethod).map(([method, amount]) => [
+    try {
+      const doc = new jsPDF();
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Título
+      doc.setFontSize(18);
+      doc.text('RELATÓRIO EXECUTIVO - CENTRO DE LUCRO', 14, 20);
+      
+      // Data
+      doc.setFontSize(12);
+      doc.text(`Data: ${today}`, 14, 30);
+      
+      // Resumo Financeiro
+      doc.setFontSize(14);
+      doc.text('RESUMO FINANCEIRO', 14, 45);
+      
+      const summaryData = [
+        ['Faturação Bruta', formatKz(metrics.revenue)],
+        ['Despesas Variáveis (Hoje)', formatKz(metrics.variableCosts)],
+        ['Despesas Fixas (Mês)', formatKz(metrics.fixedCosts)],
+        ['Impostos (6.5%)', formatKz(metrics.tax)],
+        ['LUCRO LÍQUIDO', formatKz(metrics.netProfit)],
+        ['Margem de Lucro', metrics.margin.toFixed(1) + '%']
+      ];
+      
+      autoTable(doc, {
+        head: [['Métrica', 'Valor']],
+        body: summaryData,
+        startY: 50,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 4 },
+        headStyles: { fillColor: [6, 182, 212], textColor: 255 },
+        bodyStyles: { textColor: 0 }
+      });
+      
+      // Ecossistema de Pagamentos
+      const paymentStartY = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(14);
+      doc.text('ECOSSISTEMA DE PAGAMENTOS', 14, paymentStartY);
+      
+      const paymentData = Object.entries(metrics.byMethod).map(([method, amount]) => [
         method.toUpperCase(),
         formatKz(amount as number)
-      ]),
-      [],
-      ['TOP PRODUTOS POR MARGEM'],
-      ['Produto', 'Quantidade', 'Lucro'],
-      ...metrics.topMarginProducts.map(product => [
+      ]);
+      
+      autoTable(doc, {
+        head: [['Método', 'Valor']],
+        body: paymentData,
+        startY: paymentStartY + 5,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 4 },
+        headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+        bodyStyles: { textColor: 0 }
+      });
+      
+      // Top Produtos por Margem
+      const productsStartY = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(14);
+      doc.text('TOP PRODUTOS POR MARGEM', 14, productsStartY);
+      
+      const productsData = metrics.topMarginProducts.map(product => [
         product.name,
         product.qty.toString(),
         formatKz(product.profit || 0)
-      ])
-    ];
-    
-    // Converter para CSV
-    const csvContent = csvData.map(row => row.join(',')).join('\n');
-    
-    // Criar blob e download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `centro_lucro_${today}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    addNotification('success', 'Relatório executivo exportado com sucesso.');
-    console.log('[PROFIT CENTER] ✅ Relatório executivo exportado para CSV');
+      ]);
+      
+      autoTable(doc, {
+        head: [['Produto', 'Quantidade', 'Lucro']],
+        body: productsData,
+        startY: productsStartY + 5,
+        theme: 'grid',
+        styles: { fontSize: 10, cellPadding: 4 },
+        headStyles: { fillColor: [245, 158, 11], textColor: 255 },
+        bodyStyles: { textColor: 0 }
+      });
+      
+      // Salvar PDF
+      doc.save(`centro_lucro_${today}.pdf`);
+      
+      addNotification('success', 'Relatório executivo exportado com sucesso em PDF.');
+      console.log('[PROFIT CENTER] ✅ Relatório executivo exportado para PDF');
+    } catch (error) {
+      console.error('[PROFIT CENTER] ❌ Erro ao gerar PDF:', error);
+      addNotification('error', 'Erro ao gerar PDF. Tente novamente.');
+    }
   };
 
   // Cores futuristas
