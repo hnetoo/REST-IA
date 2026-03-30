@@ -59,12 +59,12 @@ const Analytics = () => {
     
     // 🔄 USAR DADOS ATUALIZADOS DO SUPABASE em vez de activeOrders local
     // Faturação Hoje: filtrar pedidos fechados de hoje do Supabase
-    const todayOrders = realtimeOrders.filter(order => 
+    const todayOrders = realtimeOrders.filter((order: any) => 
       ['closed', 'FECHADO', 'paid'].includes(order.status) && 
-      String(order.created_at || '').split('T')[0] === today // 🔑 UNIFICADO: toISOString().split('T')[0]
+      String(order.created_at || '').split('T')[0] === today
     );
     
-    const totalSalesToday = todayOrders.reduce((sum, order) => sum + (Number(order.total_amount) || 0), 0);
+    const totalSalesToday = todayOrders.reduce((sum: number, order: any) => sum + (Number(order.total_amount) || 0), 0);
     const totalOrdersToday = todayOrders.length;
     const ticketMedio = totalOrdersToday > 0 ? totalSalesToday / totalOrdersToday : 0;
     
@@ -72,6 +72,7 @@ const Analytics = () => {
       totalSalesToday,
       totalOrdersToday,
       ticketMedio,
+      todayOrdersCount: todayOrders.length,
       source: 'SUPABASE_REALTIME'
     });
     
@@ -100,7 +101,7 @@ const Analytics = () => {
       totalExpensesToday,
       lucroBruto
     };
-  }, [activeOrders, expenses]);
+  }, [realtimeOrders, expenses]);
 
   // Dados para gráfico dos últimos 7 dias
   const weekChartData = useMemo(() => {
@@ -168,29 +169,38 @@ const Analytics = () => {
     }
   ];
 
-  // Calcular top produtos reais baseado nos activeOrders (pedidos fechados)
+  // Calcular top produtos reais baseado nos realtimeOrders (pedidos do Supabase)
   const realTopProducts = useMemo(() => {
     const productSales: Record<string, { name: string, category: string, sales: number }> = {};
     
-    // Filtrar apenas pedidos fechados (incluindo todos os status de venda)
-    const closedOrders = activeOrders.filter(order => ['FECHADO', 'closed', 'paid'].includes(order.status));
+    // Filtrar apenas pedidos fechados do Supabase
+    const closedOrders = realtimeOrders.filter((order: any) => ['FECHADO', 'closed', 'paid'].includes(order.status));
     
-    closedOrders.flatMap((order: any) => order.items || []).forEach((item: any) => {
-      const dish = menu.find(d => d.id === item.dishId);
-      if (!productSales[item.dishId]) {
-        productSales[item.dishId] = {
-          name: dish?.name || 'Desconhecido',
-          category: dish?.category || 'Outros',
-          sales: 0
-        };
-      }
-      productSales[item.dishId].sales += item.quantity || 0;
+    console.log('[ANALYTICS] Calculando top produtos de:', closedOrders.length, 'pedidos');
+    
+    closedOrders.forEach((order: any) => {
+      const items = order.items || [];
+      items.forEach((item: any) => {
+        const dish = menu.find(d => d.id === item.dishId);
+        if (!productSales[item.dishId]) {
+          productSales[item.dishId] = {
+            name: dish?.name || 'Desconhecido',
+            category: dish?.category || 'Outros',
+            sales: 0
+          };
+        }
+        productSales[item.dishId].sales += item.quantity || 0;
+      });
     });
 
-    return Object.values(productSales)
+    const result = Object.values(productSales)
       .sort((a, b) => b.sales - a.sales)
       .slice(0, 5);
-  }, [activeOrders, menu]);
+      
+    console.log('[ANALYTICS] Top produtos calculados:', result);
+    
+    return result;
+  }, [realtimeOrders, menu]);
 
   // REMOVER ARRAY DE DADOS FICTÍCIOS - APENAS USAR DADOS REAIS
   // const salesData = [
