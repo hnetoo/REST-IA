@@ -299,23 +299,40 @@ const DashboardV2 = () => {
     return { revenue, profit, count: orders.length, orders };
   }, [closedOrders, metrics, supabaseOrders, todayRevenue, totalExpenses, activeOrders]);
   
-  // 🔥 RESERVA FISCAL (AGT) - Imposto Industrial 25% + Retenção 6.5%
+  // 🔥 RESERVA FISCAL (AGT) - Projeção Anual baseada no dia atual
   const reservaFiscal = useMemo(() => {
-    const lucro = todayMetrics.profit || 0;
-    const faturacao = todayMetrics.revenue || 0;
+    const lucroHoje = todayMetrics.profit || 0;
+    const faturacaoHoje = todayMetrics.revenue || 0;
     const taxaRetencao = (settings.taxRate || 7) / 100;
     
-    // Imposto Industrial: 25% sobre lucro
-    const impostoIndustrial = lucro > 0 ? lucro * 0.25 : 0;
+    // Cálculos diários
+    const impostoIndustrialHoje = lucroHoje > 0 ? lucroHoje * 0.25 : 0;
+    const retencaoFonteHoje = faturacaoHoje * taxaRetencao;
+    const reservaDiaria = impostoIndustrialHoje + retencaoFonteHoje;
     
-    // Retenção na Fonte: 6.5% (ou taxRate) sobre faturação
-    const retencaoFonte = faturacao * taxaRetencao;
+    // Projeção anual (baseada no dia atual × 365)
+    const impostoIndustrialAnual = impostoIndustrialHoje * 365;
+    const retencaoFonteAnual = retencaoFonteHoje * 365;
+    const reservaAnualProjetada = reservaDiaria * 365;
+    
+    // Dias restantes no ano
+    const hoje = new Date();
+    const fimAno = new Date(hoje.getFullYear(), 11, 31);
+    const diasRestantes = Math.ceil((fimAno.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
     
     return {
-      total: impostoIndustrial + retencaoFonte,
-      impostoIndustrial,
-      retencaoFonte,
-      percentual: faturacao > 0 ? ((impostoIndustrial + retencaoFonte) / faturacao) * 100 : 0
+      diaria: {
+        total: reservaDiaria,
+        impostoIndustrial: impostoIndustrialHoje,
+        retencaoFonte: retencaoFonteHoje
+      },
+      anual: {
+        total: reservaAnualProjetada,
+        impostoIndustrial: impostoIndustrialAnual,
+        retencaoFonte: retencaoFonteAnual,
+        diasRestantes
+      },
+      percentual: faturacaoHoje > 0 ? ((reservaDiaria / faturacaoHoje) * 100) : 0
     };
   }, [todayMetrics.profit, todayMetrics.revenue, settings.taxRate]);
   
@@ -584,20 +601,23 @@ const DashboardV2 = () => {
           </div>
         </div>
 
-        {/* 🔥 NOVO: Card Reserva Fiscal (AGT) */}
+        {/* 🔥 NOVO: Card Reserva Fiscal (AGT) - Projeção Anual */}
         <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group border-red-500/20 bg-red-500/5">
           <div className="absolute top-0 right-0 p-4 text-red-500 opacity-10 group-hover:opacity-20 transition-opacity">
              <Receipt size={64} />
           </div>
           <div className="flex items-center gap-2 mb-4 text-red-400 text-[10px] font-black uppercase tracking-[0.2em]">
-            Reserva Fiscal (AGT)
+            Reserva Fiscal Anual (Proj.)
           </div>
-          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz(reservaFiscal.total)}</p>
+          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz(reservaFiscal.anual.total)}</p>
           <div className="mt-2 text-[10px] text-red-400/80 font-bold">
-             25% II + {settings.taxRate || 7}% Retenção
+             Base: Hoje × 365 dias
           </div>
           <div className="mt-1 text-[8px] text-slate-500">
-             II: {formatKz(reservaFiscal.impostoIndustrial)} | Ret: {formatKz(reservaFiscal.retencaoFonte)}
+             II: {formatKz(reservaFiscal.anual.impostoIndustrial)} | Ret: {formatKz(reservaFiscal.anual.retencaoFonte)}
+          </div>
+          <div className="mt-1 text-[7px] text-slate-600">
+             Hoje: {formatKz(reservaFiscal.diaria.total)} | Dias restantes: {reservaFiscal.anual.diasRestantes}
           </div>
         </div>
       </div>

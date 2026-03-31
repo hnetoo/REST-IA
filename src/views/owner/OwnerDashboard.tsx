@@ -55,23 +55,40 @@ const OwnerDashboard = () => {
     recalculate // 🔥 ADICIONADO: Função para recalcular
   } = useSyncCore();
   
-  // 🔥 RESERVA FISCAL (AGT) - Imposto Industrial 25% + Retenção 6.5%
+  // 🔥 RESERVA FISCAL (AGT) - Projeção Anual baseada no dia atual
   const reservaFiscal = useMemo(() => {
-    const lucro = (todayRevenue || 0) - (totalExpenses || 0) - (staffCosts || 0);
-    const faturacao = todayRevenue || 0;
+    const lucroHoje = (todayRevenue || 0) - (totalExpenses || 0) - (staffCosts || 0);
+    const faturacaoHoje = todayRevenue || 0;
     const taxaRetencao = (settings?.taxRate || 7) / 100;
     
-    // Imposto Industrial: 25% sobre lucro
-    const impostoIndustrial = lucro > 0 ? lucro * 0.25 : 0;
+    // Cálculos diários
+    const impostoIndustrialHoje = lucroHoje > 0 ? lucroHoje * 0.25 : 0;
+    const retencaoFonteHoje = faturacaoHoje * taxaRetencao;
+    const reservaDiaria = impostoIndustrialHoje + retencaoFonteHoje;
     
-    // Retenção na Fonte: 6.5% (ou taxRate) sobre faturação
-    const retencaoFonte = faturacao * taxaRetencao;
+    // Projeção anual (baseada no dia atual × 365)
+    const impostoIndustrialAnual = impostoIndustrialHoje * 365;
+    const retencaoFonteAnual = retencaoFonteHoje * 365;
+    const reservaAnualProjetada = reservaDiaria * 365;
+    
+    // Dias restantes no ano
+    const hoje = new Date();
+    const fimAno = new Date(hoje.getFullYear(), 11, 31);
+    const diasRestantes = Math.ceil((fimAno.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
     
     return {
-      total: impostoIndustrial + retencaoFonte,
-      impostoIndustrial,
-      retencaoFonte,
-      percentual: faturacao > 0 ? ((impostoIndustrial + retencaoFonte) / faturacao) * 100 : 0
+      diaria: {
+        total: reservaDiaria,
+        impostoIndustrial: impostoIndustrialHoje,
+        retencaoFonte: retencaoFonteHoje
+      },
+      anual: {
+        total: reservaAnualProjetada,
+        impostoIndustrial: impostoIndustrialAnual,
+        retencaoFonte: retencaoFonteAnual,
+        diasRestantes
+      },
+      percentual: faturacaoHoje > 0 ? ((reservaDiaria / faturacaoHoje) * 100) : 0
     };
   }, [todayRevenue, totalExpenses, staffCosts, settings?.taxRate]);
   
@@ -403,24 +420,27 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
-        {/* 🔥 NOVO: Card Reserva Fiscal (AGT) */}
+        {/* 🔥 NOVO: Card Reserva Fiscal (AGT) - Projeção Anual */}
         <div className="bg-gradient-to-br from-red-600 to-red-700 rounded-xl p-6 text-white relative group">
           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="bg-black/90 text-white text-xs rounded px-2 py-1 max-w-xs">
-              <p className="font-semibold mb-1">🏛️ Reserva Fiscal AGT</p>
-              <p className="text-xs">Imposto Industrial 25% + Retenção {settings?.taxRate || 7}%</p>
-              <p className="text-xs font-bold mt-1">Total: {formatKz(reservaFiscal.total)}</p>
+              <p className="font-semibold mb-1">🏛️ Reserva Fiscal Anual (Proj.)</p>
+              <p className="text-xs">Base: Hoje × 365 dias</p>
+              <p className="text-xs font-bold mt-1">Total: {formatKz(reservaFiscal.anual.total)}</p>
             </div>
           </div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Reserva Fiscal</h3>
+            <h3 className="text-lg font-semibold">Reserva Fiscal Anual</h3>
             <Receipt className="h-8 w-8 text-red-200" />
           </div>
           <div className="space-y-2">
-            <p className="text-3xl font-bold">{formatKz(reservaFiscal.total)}</p>
-            <p className="text-red-200 text-sm">II 25% + Retenção {settings?.taxRate || 7}%</p>
+            <p className="text-3xl font-bold">{formatKz(reservaFiscal.anual.total)}</p>
+            <p className="text-red-200 text-sm">Projeção: Hoje × 365 dias</p>
             <p className="text-red-300 text-xs mt-2 italic">
-              II: {formatKz(reservaFiscal.impostoIndustrial)} | Ret: {formatKz(reservaFiscal.retencaoFonte)}
+              II Anual: {formatKz(reservaFiscal.anual.impostoIndustrial)} | Ret Anual: {formatKz(reservaFiscal.anual.retencaoFonte)}
+            </p>
+            <p className="text-red-400 text-[10px]">
+              Hoje: {formatKz(reservaFiscal.diaria.total)} | Dias restantes: {reservaFiscal.anual.diasRestantes}
             </p>
           </div>
         </div>
