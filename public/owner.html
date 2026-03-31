@@ -3,11 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#06b6d4">
+    <meta name="background-color" content="#0f172a">
+    <meta name="description" content="Dashboard do proprietário para gestão do restaurante Tasca do Vereda">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Owner Dashboard">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Owner Dashboard">
+    <meta name="msapplication-TileColor" content="#06b6d4">
+    <meta name="msapplication-TileImage" content="/icon-144x144.png">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest-owner.json">
+    
+    <!-- Favicon e Ícones -->
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon.png">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon.png">
+    
+    <!-- Mask Icon para Safari Pinned Tab -->
+    <link rel="mask-icon" href="/icon-maskable.svg" color="#06b6d4">
+    
     <title>Owner Dashboard - Tasca do Vereda</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         .glass {
             background: rgba(255, 255, 255, 0.05);
@@ -21,9 +47,129 @@
         .card-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
         .card-red-dark { background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%); }
         .card-blue-dark { background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); }
+        
+        /* PWA Install Prompt */
+        #pwa-install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(6, 182, 212, 0.4);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 90%;
+            width: 400px;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        
+        #pwa-install-prompt.show {
+            display: flex;
+        }
+        
+        .pwa-install-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .pwa-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .pwa-btn-install {
+            background: white;
+            color: #0891b2;
+        }
+        
+        .pwa-btn-install:hover {
+            background: #f0f9ff;
+            transform: scale(1.05);
+        }
+        
+        .pwa-btn-dismiss {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .pwa-btn-dismiss:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Offline Indicator */
+        #offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ef4444;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 9998;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        #offline-indicator.show {
+            display: block;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="min-h-screen text-white">
+    <!-- Offline Indicator -->
+    <div id="offline-indicator">
+        ⚠️ Sem conexão com a internet - Modo Offline Ativo
+    </div>
+    
+    <!-- PWA Install Prompt -->
+    <div id="pwa-install-prompt">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <div style="width: 48px; height: 48px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <div style="font-weight: 700; font-size: 16px;">Instalar Owner Dashboard</div>
+                <div style="font-size: 13px; opacity: 0.9;">Acesse o dashboard diretamente da sua tela inicial</div>
+            </div>
+        </div>
+        <div class="pwa-install-buttons">
+            <button class="pwa-btn pwa-btn-dismiss" onclick="dismissInstallPrompt()">Agora não</button>
+            <button class="pwa-btn pwa-btn-install" onclick="installPWA()">Instalar</button>
+        </div>
+    </div>
+    
     <!-- Login Page -->
     <div id="loginPage" class="min-h-screen flex flex-col justify-center items-center p-6">
         <div class="w-full max-w-md">
@@ -321,7 +467,194 @@
             } else {
                 showLogin();
             }
+            
+            // Inicializar PWA
+            initPWA();
         };
+
+        // ==================== PWA FUNCTIONALITY ====================
+        
+        let deferredPrompt;
+        const installPrompt = document.getElementById('pwa-install-prompt');
+        
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw-owner.js')
+                    .then((registration) => {
+                        console.log('[Owner PWA] Service Worker registrado:', registration.scope);
+                        
+                        // Verificar atualizações
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('[Owner PWA] Nova versão disponível!');
+                                    // Pode mostrar notificação de atualização aqui
+                                }
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('[Owner PWA] Erro ao registrar Service Worker:', error);
+                    });
+            });
+        }
+        
+        // Capturar evento de instalação
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('[Owner PWA] beforeinstallprompt disparado');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar prompt de instalação após 3 segundos
+            setTimeout(() => {
+                showInstallPrompt();
+            }, 3000);
+        });
+        
+        // Mostrar prompt de instalação
+        function showInstallPrompt() {
+            if (installPrompt && deferredPrompt) {
+                installPrompt.classList.add('show');
+            }
+        }
+        
+        // Esconder prompt
+        function hideInstallPrompt() {
+            if (installPrompt) {
+                installPrompt.classList.remove('show');
+            }
+        }
+        
+        // Instalar PWA
+        function installPWA() {
+            if (!deferredPrompt) {
+                console.log('[Owner PWA] Não há prompt de instalação disponível');
+                return;
+            }
+            
+            deferredPrompt.prompt();
+            
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('[Owner PWA] Usuário aceitou instalar');
+                    hideInstallPrompt();
+                } else {
+                    console.log('[Owner PWA] Usuário recusou instalar');
+                }
+                deferredPrompt = null;
+            });
+        }
+        
+        // Dismiss prompt
+        function dismissInstallPrompt() {
+            hideInstallPrompt();
+            // Guardar preferência para não mostrar novamente por 7 dias
+            localStorage.setItem('pwa_prompt_dismissed', Date.now().toString());
+        }
+        
+        // Verificar se app foi instalado
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('[Owner PWA] App instalado com sucesso!');
+            hideInstallPrompt();
+            deferredPrompt = null;
+            
+            // Mostrar confirmação
+            showNotification('App instalado com sucesso! 🎉');
+        });
+        
+        // Detectar modo standalone (app instalado)
+        function isStandalone() {
+            return window.matchMedia('(display-mode: standalone)').matches || 
+                   window.navigator.standalone ||
+                   document.referrer.includes('android-app://');
+        }
+        
+        // Mostrar notificação toast
+        function showNotification(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+                box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // Monitorar status de conexão
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offline-indicator');
+            if (!navigator.onLine) {
+                indicator.classList.add('show');
+                console.log('[Owner PWA] App está offline');
+            } else {
+                indicator.classList.remove('show');
+                console.log('[Owner PWA] App está online');
+            }
+        }
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // Inicializar PWA
+        function initPWA() {
+            updateOnlineStatus();
+            
+            // Verificar se já está instalado
+            if (isStandalone()) {
+                console.log('[Owner PWA] Rodando em modo standalone');
+                hideInstallPrompt();
+            }
+            
+            // Verificar se usuário já dismissou o prompt recentemente
+            const dismissed = localStorage.getItem('pwa_prompt_dismissed');
+            if (dismissed) {
+                const daysSince = (Date.now() - parseInt(dismissed)) / (1000 * 60 * 60 * 24);
+                if (daysSince < 7) {
+                    console.log('[Owner PWA] Prompt dismissado recentemente, aguardando...');
+                }
+            }
+        }
+        
+        // Solicitar permissão para notificações
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then((permission) => {
+                    if (permission === 'granted') {
+                        console.log('[Owner PWA] Permissão de notificação concedida');
+                    }
+                });
+            }
+        }
+        
+        // Adicionar estilos de animação
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
