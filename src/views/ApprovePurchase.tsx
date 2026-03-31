@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -22,53 +22,77 @@ const ApprovePurchase = () => {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string>('');
+  const [criticalError, setCriticalError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPurchase = async () => {
-      if (!id || !token) {
-        setError('Link de aprovação inválido');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        console.log('[APPROVE] Buscando pedido:', id, token);
-        
-        const { data, error } = await supabase
-          .from('purchase_requests')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (error) {
-          console.error('[APPROVE] Erro ao buscar pedido:', error);
-          setError('Pedido não encontrado ou link inválido');
+    try {
+      setDebugInfo(`ID: ${id}, Token: ${token}, URL: ${window.location.href}`);
+      
+      const fetchPurchase = async () => {
+        if (!id || !token) {
+          setError('Link de aprovação inválido - ID ou Token em falta');
+          setLoading(false);
           return;
         }
 
-        if (!data) {
-          setError('Pedido não encontrado ou link inválido');
-          return;
+        try {
+          console.log('[APPROVE] Buscando pedido:', id, token);
+          setDebugInfo(prev => prev + `\nBuscando pedido: ${id}`);
+          
+          // Verificar se supabase está disponível
+          if (!supabase) {
+            setCriticalError('Supabase não inicializado');
+            setLoading(false);
+            return;
+          }
+          
+          const { data, error } = await supabase
+            .from('purchase_requests')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+          if (error) {
+            console.error('[APPROVE] Erro ao buscar pedido:', error);
+            setDebugInfo(prev => prev + `\nErro Supabase: ${error.message}`);
+            setError(`Erro ao buscar pedido: ${error.message}`);
+            setLoading(false);
+            return;
+          }
+
+          if (!data) {
+            setError('Pedido não encontrado no banco de dados');
+            setLoading(false);
+            return;
+          }
+
+          // Verificar se já foi processado
+          if (data.status !== 'pendente') {
+            setError(`Este pedido já foi ${data.status === 'aprovado' ? 'aprovado' : data.status === 'rejeitado' ? 'rejeitado' : 'processado'}`);
+            setLoading(false);
+            return;
+          }
+
+          setPurchase(data);
+          setDebugInfo(prev => prev + `\nPedido encontrado: ${data.description}`);
+          console.log('[APPROVE] Pedido encontrado:', data);
+          setLoading(false);
+          
+        } catch (err: any) {
+          console.error('[APPROVE] Erro:', err);
+          setDebugInfo(prev => prev + `\nErro geral: ${err.message}`);
+          setError(`Erro ao carregar pedido: ${err.message}`);
+          setLoading(false);
         }
+      };
 
-        // Verificar se já foi processado
-        if (data.status !== 'pendente') {
-          setError(`Este pedido já foi ${data.status === 'aprovado' ? 'aprovado' : data.status === 'rejeitado' ? 'rejeitado' : 'processado'}`);
-          return;
-        }
-
-        setPurchase(data);
-        console.log('[APPROVE] Pedido encontrado:', data);
-        
-      } catch (err) {
-        console.error('[APPROVE] Erro:', err);
-        setError('Erro ao carregar pedido');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPurchase();
+      fetchPurchase();
+    } catch (outerErr: any) {
+      console.error('[APPROVE] Erro crítico no useEffect:', outerErr);
+      setCriticalError(`Erro crítico: ${outerErr.message}`);
+      setLoading(false);
+    }
   }, [id, token]);
 
   const handleApprove = async () => {
@@ -80,6 +104,7 @@ const ApprovePurchase = () => {
     try {
       console.log('[APPROVE] Aprovando pedido:', purchase.id);
       
+      // 1. Atualizar status do pedido
       const { error } = await supabase
         .from('purchase_requests')
         .update({ 
@@ -94,10 +119,28 @@ const ApprovePurchase = () => {
         return;
       }
 
+      // 2. 🚀 REGISTRAR EM CASH_FLOW COMO DESPESA (só quando aprovado)
+      console.log('[APPROVE] Registrando despesa em cash_flow...');
+      const { error: cashFlowError } = await supabase
+        .from('cash_flow')
+        .insert({
+          amount: purchase.amount,
+          type: 'saida',
+          category: 'Compras',
+          description: `Compra Aprovada: ${purchase.description} - ${purchase.provider}`
+        });
+
+      if (cashFlowError) {
+        console.error('[APPROVE] Erro ao registrar despesa:', cashFlowError);
+        // Não falhar - pedido já foi aprovado
+      } else {
+        console.log('[APPROVE] ✅ Despesa registrada com sucesso');
+      }
+
       console.log('[APPROVE] Pedido aprovado com sucesso!');
       setAction('approve');
       
-    } catch (err) {
+    } catch (err: any) {
       console.error('[APPROVE] Erro:', err);
       setError('Erro ao aprovar pedido');
     } finally {
@@ -166,6 +209,12 @@ const ApprovePurchase = () => {
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-[#06b6d4] mx-auto mb-4" />
           <p className="text-white text-lg">Carregando pedido...</p>
+          {criticalError && (
+            <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+              <p className="text-red-400 text-xs">{criticalError}</p>
+            </div>
+          )}
+          <p className="text-slate-500 text-xs mt-2 font-mono">{debugInfo}</p>
         </div>
       </div>
     );
@@ -178,7 +227,10 @@ const ApprovePurchase = () => {
           <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-red-500 mb-2">Erro</h1>
-            <p className="text-red-400 mb-6">{error}</p>
+            <p className="text-red-400 mb-4">{error}</p>
+            <div className="bg-slate-900/50 rounded-lg p-3 mb-6 text-left">
+              <p className="text-slate-500 text-xs font-mono whitespace-pre-wrap">{debugInfo}</p>
+            </div>
             <button
               onClick={() => window.close()}
               className="px-6 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-colors"

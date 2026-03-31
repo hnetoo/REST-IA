@@ -649,6 +649,9 @@ const App = () => {
     <AppErrorBoundary>
       <Router>
         <Routes>
+          {/* 🚀 ROTA DE APROVAÇÃO PRIMEIRO - fora de qualquer proteção */}
+          <Route path="/approve-purchase/:id/:token" element={<ApprovePurchase />} />
+          
           <Route path="/" element={<Navigate to="/pos" replace />} />
           <Route path="/pos" element={<POS />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -664,7 +667,6 @@ const App = () => {
           <Route path="/agt" element={<AGTControl />} />
           <Route path="/profit-center" element={<ProfitCenter />} />
           <Route path="/analytics" element={<Analytics />} />
-          <Route path="/approve-purchase/:id/:token" element={<ApprovePurchase />} />
         </Routes>
       </Router>
     </AppErrorBoundary>

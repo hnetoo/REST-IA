@@ -24,6 +24,9 @@ const Purchases = () => {
   const { addNotification, settings } = useStore();
   const { recalculate } = useSyncCore(); // 🚀 CONECTAR AO MOTOR SYNC
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
+  const [editingRequest, setEditingRequest] = useState<PurchaseRequest | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -41,8 +44,9 @@ const Purchases = () => {
       return JSON.parse(saved);
     }
     return {
-      approvalNumbers: ['+244923000000'],
-      customMessage: 'Olá, novo pedido de compra no Vereda OS: {description} - {amount} Kz. Link para decidir: {approvalLink}'
+      restaurantNumber: '', // Número do restaurante que envia
+      approvalNumbers: ['+244923000000'], // Números dos donos que aprovam
+      customMessage: '*🛒 PEDIDO DE COMPRA PARA APROVAÇÃO*\n\n*Descrição:* {description}\n*Valor:* {amount}\n*Fornecedor:* {provider}\n\n*Para aprovar ou rejeitar:*\n{approvalLink}\n\n_Este link expira após o uso._'
     };
   });
 
@@ -170,36 +174,78 @@ const Purchases = () => {
 
       if (error) throw error;
 
-      // 🚀 REGISTRAR AUTOMATICAMENTE EM CASH_FLOW COMO SAÍDA
-      console.log('[PURCHASES] Registrando em cash_flow como saída...');
-      const { error: cashFlowError } = await supabase
-        .from('cash_flow')
-        .insert({
-          amount: parseFloat(formData.amount),
-          type: 'saida',
-          category: 'Compras',
-          description: `Compra: ${formData.description} - ${formData.provider}`
-        });
-
-      if (cashFlowError) {
-        console.error('[PURCHASES] Erro ao registrar em cash_flow:', cashFlowError);
-        // Não falhar o processo principal se cash_flow falhar
-      } else {
-        console.log('[PURCHASES] ✅ Registrado em cash_flow com sucesso');
-        
-        // 🔄 RECALCULAR MOTOR SYNC CORE
-        console.log('[PURCHASES] Recalculando motor sync...');
-        await recalculate();
-      }
-
       console.log('[PURCHASES] Pedido enviado com sucesso!');
-      addNotification('success', 'Pedido de compra enviado com sucesso!');
+      addNotification('success', 'Pedido de compra enviado com sucesso! Aguardando aprovação para registrar despesa.');
       setFormData({ description: '', amount: '', provider: '', proforma_file: null });
       setShowForm(false);
+      setEditingRequest(null);
       fetchPurchaseRequests();
     } catch (error) {
       console.error('Erro ao enviar pedido:', error);
       addNotification('error', 'Erro ao enviar pedido de compra');
+    }
+  };
+
+  const handleEdit = (request: PurchaseRequest) => {
+    setEditingRequest(request);
+    setFormData({
+      description: request.description,
+      amount: request.amount.toString(),
+      provider: request.provider,
+      proforma_file: null
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (request: PurchaseRequest) => {
+    if (!confirm('Tem certeza que deseja apagar este pedido de compra?')) return;
+    
+    try {
+      const { error } = await supabase
+        .from('purchase_requests')
+        .delete()
+        .eq('id', request.id);
+      
+      if (error) throw error;
+      
+      addNotification('success', 'Pedido de compra apagado com sucesso!');
+      fetchPurchaseRequests();
+    } catch (error) {
+      console.error('Erro ao apagar pedido:', error);
+      addNotification('error', 'Erro ao apagar pedido de compra');
+    }
+  };
+
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingRequest) return;
+    
+    if (!formData.description || !formData.amount || !formData.provider) {
+      addNotification('error', 'Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('purchase_requests')
+        .update({
+          description: formData.description,
+          amount: parseFloat(formData.amount),
+          provider: formData.provider
+        })
+        .eq('id', editingRequest.id);
+
+      if (error) throw error;
+
+      addNotification('success', 'Pedido de compra atualizado com sucesso!');
+      setFormData({ description: '', amount: '', provider: '', proforma_file: null });
+      setShowForm(false);
+      setEditingRequest(null);
+      fetchPurchaseRequests();
+    } catch (error) {
+      console.error('Erro ao atualizar pedido:', error);
+      addNotification('error', 'Erro ao atualizar pedido de compra');
     }
   };
 
@@ -213,7 +259,7 @@ const Purchases = () => {
       
       // Gerar token manualmente se não existir
       const approvalToken = 'TOKEN' + Date.now().toString(36).toUpperCase();
-      const approvalUrl = `https://rest-ia.vercel.app/approve-purchase/${request.id}/${approvalToken}`;
+      const approvalUrl = `https://rest-ia.vercel.app/approve-purchase.html?id=${request.id}&token=${approvalToken}`;
       
       // 🚀 PERSONALIZAR MENSAGEM COM VARIÁVEIS
       let message = whatsappSettings.customMessage || 
@@ -269,6 +315,12 @@ const Purchases = () => {
       default: return <AlertCircle size={16} />;
     }
   };
+
+  // Filtrar pedidos por status
+  const filteredRequests = requests.filter(req => {
+    if (statusFilter === 'todos') return true;
+    return req.status === statusFilter;
+  });
 
   const saveWhatsappSettings = () => {
     localStorage.setItem('whatsappPurchaseSettings', JSON.stringify(whatsappSettings));
@@ -340,10 +392,25 @@ const Purchases = () => {
           </div>
           
           <div className="space-y-6">
-            {/* Números de WhatsApp para Aprovação */}
+            {/* Número do Restaurante (quem envia) */}
             <div>
               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
-                Números para Aprovação
+                Número do Restaurante (quem envia)
+              </label>
+              <input 
+                type="text" 
+                className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-[#06b6d4]" 
+                value={whatsappSettings.restaurantNumber || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWhatsappSettings((prev: { restaurantNumber?: string; approvalNumbers: string[]; customMessage?: string }) => ({...prev, restaurantNumber: e.target.value}))}
+                placeholder="+244923000000"
+              />
+              <p className="mt-2 text-xs text-slate-400">Número de WhatsApp do restaurante que irá enviar os pedidos</p>
+            </div>
+
+            {/* Números de WhatsApp para Aprovação (donos) */}
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+                Números dos Donos (quem aprova)
               </label>
               <div className="space-y-3">
                 {whatsappSettings.approvalNumbers.map((number: string, index: number) => (
@@ -406,9 +473,15 @@ const Purchases = () => {
       {showForm && (
         <div className="glass-panel p-8 rounded-[3rem] border border-[#070b14]/30 bg-[#070b14]/5 mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-white">Novo Pedido de Compra</h3>
+            <h3 className="text-xl font-bold text-white">
+              {editingRequest ? 'Editar Pedido de Compra' : 'Novo Pedido de Compra'}
+            </h3>
             <button 
-              onClick={() => setShowForm(false)}
+              onClick={() => {
+                setShowForm(false);
+                setEditingRequest(null);
+                setFormData({ description: '', amount: '', provider: '', proforma_file: null });
+              }}
               className="text-slate-400 hover:text-white transition-colors"
               title="Fechar formulário"
             >
@@ -416,7 +489,7 @@ const Purchases = () => {
             </button>
           </div>
           
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={editingRequest ? handleUpdateSubmit : handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Descrição do Item</label>
@@ -489,7 +562,7 @@ const Purchases = () => {
                 className="px-8 py-3 bg-[#06b6d4] text-black rounded-xl text-[10px] font-black uppercase tracking-widest shadow-glow hover:brightness-110 transition-all flex items-center gap-2"
               >
                 <Send size={16} />
-                Enviar Pedido
+                {editingRequest ? 'Atualizar Pedido' : 'Enviar Pedido'}
               </button>
             </div>
           </form>
@@ -499,10 +572,30 @@ const Purchases = () => {
       {/* Lista de Pedidos */}
       <div className="glass-panel rounded-[3rem] border border-white/5 overflow-hidden">
         <div className="p-6 border-b border-white/5">
-          <h3 className="text-xl font-bold text-white flex items-center gap-3">
-            <ShoppingCart size={24} className="text-[#070b14]" />
-            Pedidos de Compra
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-white flex items-center gap-3">
+              <ShoppingCart size={24} className="text-[#070b14]" />
+              Pedidos de Compra
+            </h3>
+            
+            {/* Filtros de Status */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 mr-2">Filtrar:</span>
+              {['todos', 'pendente', 'aprovado', 'rejeitado'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
+                    statusFilter === status
+                      ? 'bg-[#06b6d4] text-black'
+                      : 'bg-white/10 text-white hover:bg-white/20'
+                  }`}
+                >
+                  {status === 'todos' ? 'Todos' : status}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         
         {loading ? (
@@ -512,14 +605,14 @@ const Purchases = () => {
               <span className="text-slate-400">Carregando pedidos...</span>
             </div>
           </div>
-        ) : requests.length === 0 ? (
+        ) : filteredRequests.length === 0 ? (
           <div className="p-12 text-center">
             <AlertCircle size={48} className="mx-auto text-slate-500 mb-4" />
             <p className="text-slate-400">Nenhum pedido de compra encontrado</p>
           </div>
         ) : (
           <div className="divide-y divide-white/5">
-            {requests.map((request) => (
+            {filteredRequests.map((request) => (
               <div key={request.id} className="p-6 hover:bg-white/5 transition-colors">
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex-1">
@@ -562,6 +655,7 @@ const Purchases = () => {
                   </div>
                   
                   <div className="flex items-center gap-2">
+                    {/* Botão Enviar para Aprovação - só aparece para pendentes */}
                     {request.status === 'pendente' && (
                       <button 
                         onClick={() => sendForApproval(request)}
@@ -572,6 +666,28 @@ const Purchases = () => {
                         Enviar
                       </button>
                     )}
+                    
+                    {/* Botão Editar - só aparece para pendentes */}
+                    {request.status === 'pendente' && (
+                      <button 
+                        onClick={() => handleEdit(request)}
+                        className="px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-2"
+                        title="Editar pedido"
+                      >
+                        <Settings size={14} />
+                        Editar
+                      </button>
+                    )}
+                    
+                    {/* Botão Apagar - aparece para todos */}
+                    <button 
+                      onClick={() => handleDelete(request)}
+                      className="px-4 py-2 bg-red-500/10 text-red-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-500/20 transition-all flex items-center gap-2"
+                      title="Apagar pedido"
+                    >
+                      <Trash2 size={14} />
+                      Apagar
+                    </button>
                     
                     {request.receipt_url && (
                       <a 
