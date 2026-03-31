@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area, PieChart, Pie } from 'recharts';
-import { Users, Target, TrendingUp, DollarSign, Zap, RefreshCw, Activity, MonitorOff, Printer, ChefHat, Loader2, Sparkles, ShoppingBag, Receipt } from 'lucide-react';
+import { Users, Target, TrendingUp, DollarSign, Zap, RefreshCw, Activity, MonitorOff, Printer, ChefHat, Loader2, Sparkles, ShoppingBag, Receipt, AlertTriangle } from 'lucide-react';
 import { AIAnalysisResult, Order } from '../../types';
 import { supabase } from '../supabase_standalone';
 import { printFinanceReport, printThermalInvoice } from '../lib/printService';
@@ -517,7 +517,7 @@ const DashboardV2 = () => {
           <div className="flex items-center gap-2 mb-3 text-slate-400 text-[9px] font-black uppercase tracking-[0.2em]">
             Despesas Hoje
           </div>
-          <p className="text-lg font-mono font-bold text-white">{formatKz(metrics?.despesas || 0)}</p>
+          <p className="text-lg font-mono font-bold text-white">{formatKz(todayExpenses || 0)}</p>
           <div className="mt-2 text-[9px] text-orange-500 font-bold">
              {todayExpensesCount || 0} Registros
           </div>
@@ -561,7 +561,7 @@ const DashboardV2 = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
         <div className="glass-panel p-4 rounded-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
              <TrendingUp size={48} />
@@ -588,16 +588,17 @@ const DashboardV2 = () => {
           </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group border-primary/20 bg-primary/5">
-          <div className="absolute top-0 right-0 p-4 text-primary opacity-10 group-hover:opacity-20 transition-opacity">
-             <Receipt size={64} />
+        {/* 🔥 NOVO: Card Despesas Totais */}
+        <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group border-red-500/20 bg-red-500/5">
+          <div className="absolute top-0 right-0 p-4 text-red-500 opacity-10 group-hover:opacity-20 transition-opacity">
+             <AlertTriangle size={64} />
           </div>
-          <div className="flex items-center gap-2 mb-4 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
-            Imposto Acumulado Anual ({settings.taxRate || 7}%)
+          <div className="flex items-center gap-2 mb-4 text-red-400 text-[10px] font-black uppercase tracking-[0.2em]">
+            Despesas Totais
           </div>
-          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz((metrics?.rendimentoGlobal || 0) * ((settings.taxRate || 7) / 100))}</p>
-          <div className="mt-2 text-[10px] text-primary/80 font-bold">
-             {settings.taxRate || 7}% sobre Rendimento Global
+          <p className="text-2xl font-mono font-bold text-white text-glow">{formatKz(totalExpenses || 0)}</p>
+          <div className="mt-2 text-[10px] text-red-400/80 font-bold">
+             Todas as despesas registradas
           </div>
         </div>
 
