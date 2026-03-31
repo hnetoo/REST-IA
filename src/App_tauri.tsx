@@ -13,6 +13,7 @@ import Finance from './views/Finance';
 import AGTControl from './views/AGTControl';
 import ProfitCenter from './views/ProfitCenter';
 import Analytics from './views/Analytics';
+import ApprovePurchase from './views/ApprovePurchase';
 import SetupModal from './components/SetupModal';
 import { Loader2, Database, AlertTriangle, Trash2 } from 'lucide-react';
 import { runAutoDiagnostics } from './lib/supabaseDiagnostics';
@@ -663,6 +664,7 @@ const App = () => {
           <Route path="/agt" element={<AGTControl />} />
           <Route path="/profit-center" element={<ProfitCenter />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/approve-purchase/:id/:token" element={<ApprovePurchase />} />
         </Routes>
       </Router>
     </AppErrorBoundary>

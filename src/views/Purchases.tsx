@@ -104,17 +104,56 @@ const Purchases = () => {
         const fileName = `proforma_${Date.now()}.${fileExt}`;
         
         console.log('[PURCHASES] Fazendo upload do arquivo...');
-        const { data, error } = await supabase.storage
-          .from('purchase-documents')
-          .upload(fileName, formData.proforma_file);
+        
+        // 🚀 TENTATIVA 1: Usar bucket 'documents' (padrão do sistema)
+        let bucketName = 'purchase-documents';
+        let uploadSuccess = false;
+        
+        try {
+          const { data, error: uploadError } = await supabase.storage
+            .from(bucketName)
+            .upload(fileName, formData.proforma_file);
 
-        if (error) throw error;
+          if (!uploadError) {
+            const { data: { publicUrl } } = supabase.storage
+              .from(bucketName)
+              .getPublicUrl(fileName);
+            proforma_url = publicUrl;
+            console.log('[PURCHASES] Upload concluído:', publicUrl);
+            uploadSuccess = true;
+          } else {
+            console.warn('[PURCHASES] Bucket purchase-documents não encontrado:', uploadError.message);
+          }
+        } catch (uploadErr) {
+          console.warn('[PURCHASES] Erro no upload:', uploadErr);
+        }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('purchase-documents')
-          .getPublicUrl(fileName);
+        // 🚀 TENTATIVA 2: Se falhou, tentar bucket 'documents'
+        if (!uploadSuccess) {
+          try {
+            console.log('[PURCHASES] Tentando bucket documents...');
+            const { data, error: uploadError2 } = await supabase.storage
+              .from('documents')
+              .upload(fileName, formData.proforma_file);
+            
+            if (!uploadError2) {
+              const { data: { publicUrl } } = supabase.storage
+                .from('documents')
+                .getPublicUrl(fileName);
+              proforma_url = publicUrl;
+              console.log('[PURCHASES] Upload concluído em documents:', publicUrl);
+              uploadSuccess = true;
+            }
+          } catch (err) {
+            console.warn('[PURCHASES] Bucket documents também não disponível');
+          }
+        }
 
-        proforma_url = publicUrl;
+        // 🚀 TENTATIVA 3: Se ainda falhou, continuar sem proforma
+        if (!uploadSuccess) {
+          console.warn('[PURCHASES] Nenhum bucket disponível. Continuando sem proforma...');
+          // Não falhar - proforma é opcional
+        }
       }
 
       // Insert purchase request
@@ -168,24 +207,37 @@ const Purchases = () => {
     try {
       console.log('[PURCHASES] Enviando para aprovação:', request);
       
+      // 🚀 USAR NÚMERO CONFIGURADO (primeiro da lista)
+      const targetNumber = whatsappSettings.approvalNumbers[0] || '+244923000000';
+      console.log('[PURCHASES] Enviando para:', targetNumber);
+      
       // Gerar token manualmente se não existir
       const approvalToken = 'TOKEN' + Date.now().toString(36).toUpperCase();
       const approvalUrl = `https://rest-ia.vercel.app/approve-purchase/${request.id}/${approvalToken}`;
       
-      const message = `*🛒 PEDIDO DE COMPRA PARA APROVAÇÃO*\n\n` +
-        `*Descrição:* ${request.description}\n` +
-        `*Valor:* ${formatKz(request.amount)}\n` +
-        `*Fornecedor:* ${request.provider}\n\n` +
-        `*Para aprovar ou rejeitar, clique no link abaixo:*\n` +
-        `${approvalUrl}\n\n` +
+      // 🚀 PERSONALIZAR MENSAGEM COM VARIÁVEIS
+      let message = whatsappSettings.customMessage || 
+        `*🛒 PEDIDO DE COMPRA PARA APROVAÇÃO*\n\n` +
+        `*Descrição:* {description}\n` +
+        `*Valor:* {amount}\n` +
+        `*Fornecedor:* {provider}\n\n` +
+        `*Para aprovar ou rejeitar, clique no link:*\n` +
+        `{approvalLink}\n\n` +
         `*Este link expira após o uso.*`;
+      
+      // Substituir variáveis
+      message = message
+        .replace('{description}', request.description)
+        .replace('{amount}', formatKz(request.amount))
+        .replace('{provider}', request.provider)
+        .replace('{approvalLink}', approvalUrl);
 
-      const whatsappUrl = `https://wa.me/244923000000?text=${encodeURIComponent(message)}`;
+      const whatsappUrl = `https://wa.me/${targetNumber.replace('+', '')}?text=${encodeURIComponent(message)}`;
       
       console.log('[PURCHASES] Abrindo WhatsApp:', whatsappUrl);
       window.open(whatsappUrl, '_blank');
       
-      addNotification('success', 'Link de aprovação enviado via WhatsApp!');
+      addNotification('success', `Link de aprovação enviado para ${targetNumber} via WhatsApp!`);
     } catch (error) {
       console.error('Erro ao enviar para aprovação:', error);
       addNotification('error', 'Erro ao enviar link de aprovação');
