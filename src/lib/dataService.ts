@@ -1,5 +1,6 @@
 import { supabase } from '../supabase_standalone';
 import { formatKz } from './dateUtils';
+import { useStore } from '../store/useStore';
 
 // 🎯 BRIDGE DE DADOS - Remove Prisma do Frontend
 export interface MetricsData {
@@ -120,10 +121,12 @@ class DataServiceBridge {
         console.log('[DATA BRIDGE] 🗑️ Cache local limpo');
       }
       
-      // 2. Forçar reload do store
-      const { loadExpenses } = await import('../store/useStore').then(m => m.useStore.getState());
-      await loadExpenses();
-      console.log('[DATA BRIDGE] 🔄 Store reload forçado');
+      // 2. Forçar reload do store usando useStore importado
+      const { loadExpenses } = useStore.getState();
+      if (loadExpenses) {
+        await loadExpenses();
+        console.log('[DATA BRIDGE] 🔄 Store reload forçado');
+      }
       
       // 3. Disparar evento de atualização
       if (typeof window !== 'undefined') {
