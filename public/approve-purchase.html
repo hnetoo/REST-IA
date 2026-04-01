@@ -383,7 +383,22 @@
         
         if (updateError) throw updateError;
         
-        // 3. Registrar despesa em cash_flow
+        // 3. Criar despesa na tabela expenses (para atualizar o dashboard)
+        const { error: expenseError } = await supabaseClient
+          .from('expenses')
+          .insert({
+            description: `Compra Aprovada: ${currentData.description}`,
+            amount_kz: currentData.amount,
+            category: 'COMPRAS',
+            status: 'PENDING',
+            created_at: new Date().toISOString()
+          });
+          
+        if (expenseError) {
+          console.error('Erro ao criar despesa:', expenseError);
+        }
+        
+        // 4. Registrar despesa em cash_flow
         await supabaseClient
           .from('cash_flow')
           .insert({
