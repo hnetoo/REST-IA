@@ -52,6 +52,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState<'GENERAL' | 'STAFF' | 'OPERATORS' | 'FISCAL' | 'CORE' | 'SUPABASE'>('GENERAL');
   const [localSettings, setLocalSettings] = useState(settings);
   const [confirmText, setConfirmText] = useState('');
+  const [showReconfigConfirm, setShowReconfigConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   
@@ -482,6 +483,55 @@ const Settings = () => {
                   <p className="text-[10px] text-slate-500">[INFO] Aguardando novas faturas para push de analítica...</p>
                   {isSyncing && <p className="text-[10px] text-primary animate-pulse">[BUSY] A enviar pacotes de dados para {isSyncing}...</p>}
                </div>
+            </div>
+
+            {/* Reconfigurar Base de Dados */}
+            <div className="p-8 bg-amber-500/5 border border-amber-500/20 rounded-[2.5rem] space-y-4">
+              <div className="flex items-center gap-3 mb-2">
+                <Database className="text-amber-400" size={20} />
+                <h4 className="text-sm font-black text-white uppercase tracking-widest">Reconfigurar Projecto Supabase</h4>
+              </div>
+              <p className="text-[10px] text-slate-400 leading-relaxed">
+                Use esta opção para ligar a app a um <b className="text-white">novo projecto Supabase</b> (ex: novo cliente). 
+                A app irá pedir o URL e a Anon Key do novo projecto e recarregar automaticamente.
+              </p>
+              <div className="p-3 bg-white/5 rounded-xl text-[10px] text-slate-400">
+                <span className="text-slate-300 font-bold">Projecto actual: </span>
+                {localStorage.getItem('SUPABASE_URL') 
+                  ? <span className="text-emerald-400 font-mono">{localStorage.getItem('SUPABASE_URL')}</span>
+                  : <span className="text-slate-500 italic">Projecto de desenvolvimento (padrão)</span>
+                }
+              </div>
+              {!showReconfigConfirm ? (
+                <button
+                  onClick={() => setShowReconfigConfirm(true)}
+                  className="px-6 py-3 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-amber-500/20 transition-all flex items-center gap-2"
+                >
+                  <RefreshCw size={14} /> Reconfigurar Base de Dados
+                </button>
+              ) : (
+                <div className="space-y-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+                  <p className="text-[10px] text-red-300 font-bold uppercase">⚠️ Atenção: A app irá recarregar. Certifique-se que não há pedidos abertos.</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('SUPABASE_URL');
+                        localStorage.removeItem('SUPABASE_ANON_KEY');
+                        setTimeout(() => window.location.reload(), 200);
+                      }}
+                      className="px-6 py-3 bg-red-500/20 border border-red-500/40 text-red-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500/30 transition-all"
+                    >
+                      Confirmar — Reconfigurar
+                    </button>
+                    <button
+                      onClick={() => setShowReconfigConfirm(false)}
+                      className="px-6 py-3 bg-white/5 border border-white/10 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

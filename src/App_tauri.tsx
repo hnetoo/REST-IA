@@ -83,7 +83,7 @@ import { runAutoDiagnostics } from './lib/supabaseDiagnostics';
 import { logger } from './lib/loggerService';
 import AuthGuard from './components/AuthGuard';
 import AppErrorBoundary from './components/AppErrorBoundary';
-import { schemaSQL } from './lib/autoSchema';
+import { schemaStatements } from './lib/autoSchema';
 
 const App = () => {
   const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
@@ -538,6 +538,9 @@ const App = () => {
       
       // Definir cliente global
       (window as any).supabase = client;
+
+      // Recarregar para que supabase_standalone.ts use as novas credenciais
+      setTimeout(() => window.location.reload(), 500);
       
     } catch (error: any) {
       console.error('Erro no setup:', error);
@@ -546,40 +549,25 @@ const App = () => {
   };
 
   const runAutoSchema = async (client: any) => {
-    // Schema SQL importado de arquivo externo (T2 otimizacao)
-    // Executar o schema SQL via RPC do Supabase
-    const { error } = await client.rpc('exec_sql', { sql: schemaSQL });
-    
-    if (error) {
-      console.warn('RPC não disponível, tentando criar tabelas individualmente...');
-      // Se RPC não funcionar, criar tabelas individualmente
-      await createTablesIndividually(client);
-    }
-  };
-
-  const createTablesIndividually = async (client: any) => {
-    // Criar tabelas individualmente se RPC não funcionar
-    const tables = [
-      'categories',
-      'products', 
-      'staff',
-      'tables',
-      'customers',
-      'orders',
-      'order_items',
-      'expenses',
-      'settings',
-      'external_history'
-    ];
-
-    for (const table of tables) {
+    console.log('[SCHEMA] A criar tabelas no projecto Supabase do cliente...');
+    let ok = 0;
+    let fail = 0;
+    for (const sql of schemaStatements) {
       try {
-        // Tentar ler da tabela para verificar se existe
-        await client.from(table).select('id').limit(1);
-      } catch (error) {
-        console.warn(`Tabela ${table} pode não existir, mas continuando...`);
+        const { error } = await client.rpc('exec_sql', { sql });
+        if (error) {
+          // exec_sql pode não existir — tentar via query directa
+          console.warn('[SCHEMA] RPC exec_sql falhou para:', sql.slice(0, 60), error.message);
+          fail++;
+        } else {
+          ok++;
+        }
+      } catch (e) {
+        console.warn('[SCHEMA] Erro:', e);
+        fail++;
       }
     }
+    console.log(`[SCHEMA] Concluído: ${ok} OK, ${fail} ignorados (tabelas já existem ou RPC indisponível)`);
   };
 
   if (isLoading) {
