@@ -151,14 +151,6 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ currentUserName, onN
 
   const totalShiftSales = shiftOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
 
-  // Apenas vendas em DINHEIRO (Numerário) — o que deve estar na gaveta
-  const CASH_METHODS = ['NUMERÁRIO', 'NUMERARIO', 'DINHEIRO', 'CASH', 'numerário', 'numerario', 'dinheiro', 'cash'];
-  const cashSales = shiftOrders
-    .filter(o => CASH_METHODS.includes((o.payment_method || '').toUpperCase().trim()) || (o.payment_method || '').toUpperCase().includes('NUMER') || (o.payment_method || '').toUpperCase().includes('CASH') || (o.payment_method || '').toUpperCase().includes('DINHEIRO'))
-    .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
-  const nonCashSales = totalShiftSales - cashSales;
-  const expectedInDrawer = Number(activeShift?.opening_amount || 0) + cashSales;
-
   const fetchProductsSold = async (orderIds: string[]) => {
     if (orderIds.length === 0) return [];
     // Tentar 1: tabela order_items (com produtos nomeados)
@@ -202,15 +194,10 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ currentUserName, onN
 
   const generateReportHtml = (shift: ShiftRecord, orders?: any[], productsSold?: { name: string; quantity: number; total: number }[]): string => {
     const breakdown = getPaymentBreakdown(orders);
-    const sourceOrders = orders || shiftOrders;
-    const salesTotal = sourceOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
-    const CASH_KEYS = ['NUMER', 'CASH', 'DINHEIRO'];
-    const reportCashSales = sourceOrders
-      .filter(o => CASH_KEYS.some(k => (o.payment_method || '').toUpperCase().includes(k)))
-      .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
-    const reportNonCashSales = salesTotal - reportCashSales;
-    const reportExpected = Number(shift.expected_amount || 0);
-    const diff = Number(shift.closing_amount || 0) - reportExpected;
+    const salesTotal = shift.expected_amount != null
+      ? (Number(shift.expected_amount) - Number(shift.opening_amount))
+      : (orders || shiftOrders).reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+    const diff = Number(shift.closing_amount || 0) - Number(shift.expected_amount || 0);
     const breakdownEntries = Object.entries(breakdown);
     const prodEntries = productsSold || [];
 
@@ -226,15 +213,13 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ currentUserName, onN
           <p style="margin: 2px 0; font-size: 11px;"><strong>Operador:</strong> ${shift.opened_by}</p>
           <hr style="border: 1px dashed #000; margin: 8px 0;">
           <p style="margin: 4px 0; font-size: 11px;"><strong>ABERTURA</strong></p>
-          <p style="margin: 2px 0; font-size: 11px;">Fundo de caixa: ${Number(shift.opening_amount).toLocaleString('pt-AO')} Kz</p>
+          <p style="margin: 2px 0; font-size: 11px;">Valor em caixa: ${Number(shift.opening_amount).toLocaleString('pt-AO')} Kz</p>
           <hr style="border: 1px dashed #000; margin: 8px 0;">
           <p style="margin: 4px 0; font-size: 11px;"><strong>VENDAS POR MODALIDADE</strong></p>
           ${breakdownEntries.length === 0 ? '<p style="margin: 2px 0; font-size: 11px;">Nenhuma venda registada</p>' : breakdownEntries.map(([method, data]) => `
             <p style="margin: 2px 0; font-size: 11px;">${method}: <strong>${data.total.toLocaleString('pt-AO')} Kz</strong> (${data.count} venda${data.count > 1 ? 's' : ''})</p>
           `).join('')}
           <p style="margin: 4px 0; font-size: 11px;"><strong>Total Vendas:</strong> ${salesTotal.toLocaleString('pt-AO')} Kz</p>
-          <p style="margin: 2px 0; font-size: 11px;">  Numerário (gaveta): ${reportCashSales.toLocaleString('pt-AO')} Kz</p>
-          ${reportNonCashSales > 0 ? `<p style="margin: 2px 0; font-size: 11px;">  Multicaixa/QR (banco): ${reportNonCashSales.toLocaleString('pt-AO')} Kz</p>` : ''}
           ${prodEntries.length > 0 ? `
           <hr style="border: 1px dashed #000; margin: 8px 0;">
           <p style="margin: 4px 0; font-size: 11px;"><strong>PRODUTOS VENDIDOS</strong></p>
@@ -243,12 +228,10 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ currentUserName, onN
           `).join('')}
           ` : ''}
           <hr style="border: 1px dashed #000; margin: 8px 0;">
-          <p style="margin: 4px 0; font-size: 11px;"><strong>RESUMO DE CAIXA</strong></p>
-          <p style="margin: 2px 0; font-size: 11px;">Fundo abertura:   ${Number(shift.opening_amount).toLocaleString('pt-AO')} Kz</p>
-          <p style="margin: 2px 0; font-size: 11px;">+ Vendas Numer.:  ${reportCashSales.toLocaleString('pt-AO')} Kz</p>
-          <p style="margin: 2px 0; font-size: 11px; border-top: 1px dashed #000; padding-top: 4px;">Esperado gaveta:  ${reportExpected.toLocaleString('pt-AO')} Kz</p>
-          <p style="margin: 2px 0; font-size: 11px;">Valor contado:    ${Number(shift.closing_amount || 0).toLocaleString('pt-AO')} Kz</p>
-          <p style="margin: 2px 0; font-size: 11px;"><strong>Diferença: ${diff.toLocaleString('pt-AO')} Kz ${Math.abs(diff) <= 1 ? '✓ OK' : '⚠ VERIFICAR'}</strong></p>
+          <p style="margin: 4px 0; font-size: 11px;"><strong>RESUMO</strong></p>
+          <p style="margin: 2px 0; font-size: 11px;">Esperado: ${Number(shift.expected_amount || 0).toLocaleString('pt-AO')} Kz</p>
+          <p style="margin: 2px 0; font-size: 11px;">Contado: ${Number(shift.closing_amount || 0).toLocaleString('pt-AO')} Kz</p>
+          <p style="margin: 2px 0; font-size: 11px;">Diferença: ${diff.toLocaleString('pt-AO')} Kz ${Math.abs(diff) <= 1 ? 'OK' : '!'}</p>
           <hr style="border: 1px dashed #000; margin: 8px 0;">
           <p style="text-align: center; margin-top: 16px; font-size: 11px;">__________________________<br>Assinatura</p>
           <p style="text-align: center; font-size: 9px; margin-top: 12px;">Tasca do Vereda POS</p>
@@ -320,12 +303,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ currentUserName, onN
       setShiftOrders(currentOrders);
 
       const totalSales = currentOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
-      // Apenas vendas em dinheiro (Numerário) para o esperado na gaveta
-      const CASH_KEYS = ['NUMER', 'CASH', 'DINHEIRO'];
-      const cashOnly = currentOrders
-        .filter(o => CASH_KEYS.some(k => (o.payment_method || '').toUpperCase().includes(k)))
-        .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
-      const expected = Number(activeShift.opening_amount) + cashOnly;
+      const expected = Number(activeShift.opening_amount) + totalSales;
 
       const diff = Number(closingAmount) - expected;
       const { error } = await supabase
@@ -584,28 +562,17 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ currentUserName, onN
                 <div className="space-y-4">
                   <div className="p-3 bg-white/[0.02] rounded-lg space-y-1 text-xs">
                     <div className="flex justify-between text-slate-400">
-                      <span>Fundo de abertura:</span>
+                      <span>Abertura:</span>
                       <span>{Number(activeShift.opening_amount).toLocaleString('pt-AO')} Kz</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Vendas Numerário:</span>
-                      <span className="text-emerald-400 font-bold">{cashSales.toLocaleString('pt-AO')} Kz</span>
+                      <span>Vendas ({shiftOrders.length}):</span>
+                      <span className="text-white font-bold">{totalShiftSales.toLocaleString('pt-AO')} Kz</span>
                     </div>
-                    {nonCashSales > 0 && (
-                      <div className="flex justify-between text-slate-500">
-                        <span>Multicaixa/QR (banco):</span>
-                        <span>{nonCashSales.toLocaleString('pt-AO')} Kz</span>
-                      </div>
-                    )}
                     <div className="flex justify-between text-primary font-bold border-t border-white/5 pt-1">
-                      <span>Esperado na gaveta:</span>
-                      <span>{expectedInDrawer.toLocaleString('pt-AO')} Kz</span>
+                      <span>Esperado:</span>
+                      <span>{(Number(activeShift.opening_amount) + totalShiftSales).toLocaleString('pt-AO')} Kz</span>
                     </div>
-                  </div>
-                  <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                    <p className="text-[10px] text-blue-300 text-center">
-                      💡 Conte apenas o dinheiro físico na gaveta. Multicaixa e QR Code não entram na contagem.
-                    </p>
                   </div>
 
                   <div>
@@ -660,7 +627,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ currentUserName, onN
                       <span className="text-white font-bold">{currentUserName}</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Fundo de abertura:</span>
+                      <span>Abertura:</span>
                       <span>{Number(activeShift.opening_amount).toLocaleString('pt-AO')} Kz</span>
                     </div>
                     {/* Breakdown por modalidade */}
@@ -679,32 +646,22 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ currentUserName, onN
                       <span>Total Vendas:</span>
                       <span className="text-white font-bold">{totalShiftSales.toLocaleString('pt-AO')} Kz</span>
                     </div>
-                    <div className="flex justify-between text-emerald-400 font-bold">
-                      <span>Vendas Numerário:</span>
-                      <span>{cashSales.toLocaleString('pt-AO')} Kz</span>
-                    </div>
-                    {nonCashSales > 0 && (
-                      <div className="flex justify-between text-slate-500">
-                        <span>Multicaixa/QR (banco):</span>
-                        <span>{nonCashSales.toLocaleString('pt-AO')} Kz</span>
-                      </div>
-                    )}
                     <div className="flex justify-between text-primary font-bold border-t border-white/5 pt-1">
-                      <span>Esperado na gaveta:</span>
-                      <span>{expectedInDrawer.toLocaleString('pt-AO')} Kz</span>
+                      <span>Esperado:</span>
+                      <span>{(Number(activeShift.opening_amount) + totalShiftSales).toLocaleString('pt-AO')} Kz</span>
                     </div>
                     <div className="flex justify-between text-emerald-400 font-bold">
                       <span>Valor Contado:</span>
                       <span>{Number(closingAmount).toLocaleString('pt-AO')} Kz</span>
                     </div>
                     <div className="flex justify-between font-bold border-t border-white/5 pt-1">
-                      <span className={Math.abs(Number(closingAmount) - expectedInDrawer) > DISCREPANCY_TOLERANCE ? 'text-red-400' : 'text-amber-400'}>Diferença:</span>
-                      <span className={Math.abs(Number(closingAmount) - expectedInDrawer) > DISCREPANCY_TOLERANCE ? 'text-red-400' : 'text-amber-400'}>{(Number(closingAmount) - expectedInDrawer).toLocaleString('pt-AO')} Kz</span>
+                      <span className={Math.abs(Number(closingAmount) - (Number(activeShift.opening_amount) + totalShiftSales)) > DISCREPANCY_TOLERANCE ? 'text-red-400' : 'text-amber-400'}>Diferença:</span>
+                      <span className={Math.abs(Number(closingAmount) - (Number(activeShift.opening_amount) + totalShiftSales)) > DISCREPANCY_TOLERANCE ? 'text-red-400' : 'text-amber-400'}>{(Number(closingAmount) - (Number(activeShift.opening_amount) + totalShiftSales)).toLocaleString('pt-AO')} Kz</span>
                     </div>
                   </div>
 
                   {/* 🔒 ALERTA DE DISCREPÂNCIA */}
-                  {Math.abs(Number(closingAmount) - expectedInDrawer) > DISCREPANCY_TOLERANCE && (
+                  {Math.abs(Number(closingAmount) - (Number(activeShift.opening_amount) + totalShiftSales)) > DISCREPANCY_TOLERANCE && (
                     <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
                         <AlertTriangle size={16} className="text-red-400" />
@@ -734,7 +691,7 @@ export const ShiftManager: React.FC<ShiftManagerProps> = ({ currentUserName, onN
                     <button onClick={() => setIsCloseConfirm(false)} className="flex-1 py-3 bg-white/5 rounded-lg text-slate-400 text-xs font-bold hover:bg-white/10">Voltar</button>
                     <button
                       onClick={handleCloseShift}
-                      disabled={loading || (Math.abs(Number(closingAmount) - expectedInDrawer) > DISCREPANCY_TOLERANCE && discrepancyJustification.trim().length < 5)}
+                      disabled={loading || (Math.abs(Number(closingAmount) - (Number(activeShift.opening_amount) + totalShiftSales)) > DISCREPANCY_TOLERANCE && discrepancyJustification.trim().length < 5)}
                       className="flex-1 py-3 bg-amber-500 rounded-lg text-black text-xs font-bold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? 'A fechar...' : 'Confirmar Fecho'}

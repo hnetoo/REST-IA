@@ -39,3 +39,5 @@ scripts/check-tables.mjs
 scripts/audit-all-tables.mjs
 scripts/list-all-tables.mjs
 scripts/run-sql.mjs
+.vercel
+.env*
