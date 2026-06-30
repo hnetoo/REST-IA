@@ -27,9 +27,8 @@ Write-Host "  $pushResult" -ForegroundColor Green
 git checkout $branch 2>&1 | Out-Null
 Write-Host "  Voltou para '$branch'" -ForegroundColor Gray
 
-# Disparar deploy Vercel
-Write-Host "`n[4/4] A disparar deploy Vercel..." -ForegroundColor Cyan
-$result = Invoke-RestMethod -Uri "https://api.vercel.com/v1/integrations/deploy/prj_jMDvpEOSqLUZQk3EXzFmpporQjpd/5mptxSqBpp" -Method Post
-Write-Host "  Deploy iniciado: $($result.job.id) — Estado: $($result.job.state)" -ForegroundColor Green
+# Deploy Vercel para producao
+Write-Host "`n[4/4] A fazer deploy Vercel (producao)..." -ForegroundColor Cyan
+npx vercel --prod 2>&1 | Select-String "Aliased|Ready|Error" | Select-Object -First 3
 
-Write-Host "`nDone! Deploy a construir em https://rest-ia.vercel.app`n" -ForegroundColor Yellow
+Write-Host "`nDone! https://rest-ia.vercel.app`n" -ForegroundColor Yellow
