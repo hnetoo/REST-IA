@@ -1,0 +1,39 @@
+{
+  "success": true,
+  "data": {
+    "totalExpensesToday": 87000,
+    "totalExpensesMonth": 87000,
+    "staffTotal": 385000,
+    "externalTotal": 26100000,
+    "orders": [
+      {
+        "id": "1",
+        "total_amount": 50000,
+        "payment_method": "NUMERARIO",
+        "created_at": new Date().toISOString(),
+        "status": "closed"
+      },
+      {
+        "id": "2", 
+        "total_amount": 75000,
+        "payment_method": "TPA",
+        "created_at": new Date().toISOString(),
+        "status": "closed"
+      },
+      {
+        "id": "3",
+        "total_amount": 25000,
+        "payment_method": "QRCODE",
+        "created_at": new Date().toISOString(),
+        "status": "closed"
+      },
+      {
+        "id": "4",
+        "total_amount": 100000,
+        "payment_method": "TRANSFERENCIA",
+        "created_at": new Date().toISOString(),
+        "status": "closed"
+      }
+    ]
+  }
+}

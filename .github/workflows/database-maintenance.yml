@@ -1,0 +1,29 @@
+name: Database Maintenance
+
+on:
+  schedule:
+    # Executar no dia 1 de cada mes as 03:00 UTC
+    - cron: '0 3 1 * *'
+  workflow_dispatch:
+    # Permite executar manualmente tambem
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    name: Manutencao do Banco Supabase
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Executar Manutencao
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          node scripts/database/execute-maintenance-cron.js

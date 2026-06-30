@@ -1,0 +1,31 @@
+{
+  "appId": "com.tascadovereda.app",
+  "productName": "Tasca Vereda",
+  "directories": {
+    "output": "dist/installers"
+  },
+  "files": [
+    "dist/**/*",
+    "main.cjs",
+    "preload.js",
+    "package.json"
+  ],
+  "win": {
+    "target": [{
+      "target": "nsis",
+      "arch": ["x64"]
+    }],
+    "icon": "public/icon.png"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Tasca Vereda",
+    "artifactName": "TascaVereda-Setup-${version}.exe",
+    "deleteAppDataOnUninstall": false,
+    "perMachine": false,
+    "differentialPackage": false
+  }
+}

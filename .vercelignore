@@ -1,0 +1,32 @@
+# Build outputs - NÃO enviar para Vercel
+dist/
+dist-electron/
+build/
+out/
+release-new/
+dist-msi/
+
+# Dependencies
+node_modules/
+
+# Source maps (grande)
+*.map
+
+# Logs e temporários
+*.log
+logs/
+.temp/
+
+# Electron builds
+*.exe
+*.msi
+*.dmg
+
+# Banco de dados local
+*.db
+*.sqlite
+*.sqlite3
+
+# Git
+.git/
+.gitignore

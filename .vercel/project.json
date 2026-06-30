@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_jMDvpEOSqLUZQk3EXzFmpporQjpd",
+  "orgId": "team_7LY3SR50Qug2SWlTsawfwooh",
+  "projectName": "rest-ia",
+  "settings": {
+    "createdAt": 1770822098115,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": true,
+    "nodeVersion": "24.x"
+  }
+}

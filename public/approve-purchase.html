@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aprovação de Compra - Tasca do Vereda</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .container { max-width: 600px; width: 100%; background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 40px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+    .logo { width: 80px; height: 80px; background: #06b6d4; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    .logo svg { width: 40px; height: 40px; color: white; }
+    h1 { color: white; text-align: center; font-size: 28px; margin-bottom: 8px; }
+    .subtitle { color: #94a3b8; text-align: center; margin-bottom: 32px; }
+    .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+    .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: #94a3b8; font-size: 14px; }
+    .detail-value { color: white; font-weight: 600; }
+    .amount { font-size: 24px; color: #06b6d4; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    button { padding: 16px 24px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-approve { background: #22c55e; color: white; }
+    .btn-approve:hover { background: #16a34a; }
+    .btn-reject { background: #ef4444; color: white; }
+    .btn-reject:hover { background: #dc2626; }
+    .loading { text-align: center; color: white; }
+    .spinner { width: 48px; height: 48px; border: 4px solid #06b6d4; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 20px; border-radius: 12px; text-align: center; }
+    .success { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #22c55e; padding: 20px; border-radius: 12px; text-align: center; }
+    .warning { background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); color: #eab308; padding: 16px; border-radius: 12px; margin-bottom: 24px; }
+    .info { background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); color: #06b6d4; padding: 16px; border-radius: 12px; margin-bottom: 24px; }
+    .partial { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; padding: 20px; border-radius: 12px; text-align: center; }
+    .debug { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-top: 16px; font-family: monospace; font-size: 12px; color: #64748b; word-break: break-all; }
+    .approval-badge { display: inline-block; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; margin-top: 8px; }
+    .badge-partial { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-pending { background: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Carregando...</p>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://tboiuiwlqfzcvakxrsmj.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRib2l1aXdscWZ6Y3Zha3hyc21qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNzc5MzksImV4cCI6MjA4ODY1MzkzOX0.-ioGcbogZMqLTtt0Up6DkPTAsROUmPDSokXPgHJgWBU';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    const token = urlParams.get('token');
+    const ownerNum = urlParams.get('owner') || '';
+
+    console.log('[APPROVE HTML] URL:', window.location.href, 'ID:', id, 'Token:', token, 'Owner:', ownerNum);
+
+    const app = document.getElementById('app');
+
+    function formatKz(value) {
+      return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(value).replace('AOA', 'Kz');
+    }
+    function formatDate(dateString) {
+      return new Date(dateString).toLocaleDateString('pt-AO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function getLuandaISO() {
+      const now = new Date();
+      const luandaOffset = 1 * 60 * 60 * 1000;
+      return new Date(now.getTime() + luandaOffset).toISOString();
+    }
+
+    // Ler regras de aprovação do localStorage (fallback com padrão)
+    function getApprovalRules() {
+      try {
+        const saved = localStorage.getItem('purchaseApprovalRules');
+        if (saved) return JSON.parse(saved);
+      } catch(_) {}
+      return { autoApproveLimit: 0, singleApproveLimit: 50000 };
+    }
+
+    function getRequiredApprovals(amount) {
+      const rules = getApprovalRules();
+      if (amount <= rules.autoApproveLimit && rules.autoApproveLimit > 0) return 0;
+      if (amount <= rules.singleApproveLimit) return 1;
+      return 2;
+    }
+
+    async function loadPurchase() {
+      if (!id || id === 'approve-purchase') {
+        app.innerHTML = '<div class="container"><div class="error"><h2>Link Inválido</h2><p>Este link de aprovação não é válido.</p><div class="debug">ID: ' + id + '</div></div></div>';
+        return;
+      }
+      try {
+        const { data, error } = await supabaseClient.from('purchase_requests').select('*').eq('id', id).single();
+        if (error) { app.innerHTML = '<div class="container"><div class="error"><h2>Erro</h2><p>' + error.message + '</p></div></div>'; return; }
+        if (!data) { app.innerHTML = '<div class="container"><div class="error"><h2>Não Encontrado</h2><p>Pedido não existe.</p></div></div>'; return; }
+        if (data.status === 'aprovado' || data.status === 'rejeitado' || data.status === 'pago') {
+          app.innerHTML = '<div class="container"><div class="success"><h2>Pedido Já Processado</h2><p>Este pedido já foi ' + (data.status === 'aprovado' ? 'aprovado' : data.status === 'rejeitado' ? 'rejeitado' : 'pago') + '.</p></div></div>';
+          return;
+        }
+        renderPurchase(data);
+      } catch (err) {
+        app.innerHTML = '<div class="container"><div class="error"><h2>Erro</h2><p>' + err.message + '</p></div></div>';
+      }
+    }
+
+    function renderPurchase(purchase) {
+      const required = getRequiredApprovals(purchase.amount);
+      const currentCount = purchase.approval_count || 0;
+      const isPartial = purchase.status === 'parcial';
+
+      var approvalInfo = '';
+      if (required === 0) {
+        approvalInfo = '<div class="info"><strong>✅ Auto-aprovação:</strong> Este valor não precisa de aprovação manual.</div>';
+      } else if (required === 1) {
+        approvalInfo = '<div class="info"><strong>📋 Aprovação:</strong> 1 owner necessário.</div>';
+      } else {
+        approvalInfo = '<div class="info"><strong>📋 Aprovação:</strong> 2 owners necessários. ' + (isPartial ? '<span class="approval-badge badge-partial">1 de 2 aprovado</span>' : '<span class="approval-badge badge-pending">0 de 2 aprovados</span>') + '</div>';
+      }
+
+      app.innerHTML = `
+        <div class="container">
+          <div class="logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <h1>Aprovação de Compra</h1>
+          <p class="subtitle">Revise os detalhes e aprove ou rejeite</p>
+          ${approvalInfo}
+          <div class="warning"><strong>Atenção:</strong> Ao aprovar, o valor será registrado como despesa no sistema.${required === 2 && !isPartial ? '<br><strong>⚠️ Requer aprovação de ambos os owners.</strong>' : ''}</div>
+          <div class="card">
+            <div class="detail-row"><span class="detail-label">Descrição</span><span class="detail-value">${purchase.description}</span></div>
+            <div class="detail-row"><span class="detail-label">Valor</span><span class="detail-value amount">${formatKz(purchase.amount)}</span></div>
+            <div class="detail-row"><span class="detail-label">Fornecedor</span><span class="detail-value">${purchase.provider}</span></div>
+            <div class="detail-row"><span class="detail-label">Data do Pedido</span><span class="detail-value">${formatDate(purchase.created_at)}</span></div>
+            ${purchase.proforma_url ? '<div class="detail-row"><span class="detail-label">Proforma</span><a href="' + purchase.proforma_url + '" target="_blank" style="color:#06b6d4;font-weight:600;">Ver Documento</a></div>' : ''}
+          </div>
+          <div class="buttons">
+            <button class="btn-approve" onclick="handleApprove()">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              APROVAR
+            </button>
+            <button class="btn-reject" onclick="handleReject()">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              REJEITAR
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function handleApprove() {
+      app.innerHTML = '<div class="container"><div class="loading"><div class="spinner"></div><p>Processando aprovação...</p></div></div>';
+      try {
+        const { data: currentData, error: checkError } = await supabaseClient.from('purchase_requests').select('*').eq('id', id).single();
+        if (checkError) throw checkError;
+        if (currentData.status === 'aprovado' || currentData.status === 'rejeitado' || currentData.status === 'pago') {
+          app.innerHTML = '<div class="container"><div class="success" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);"><h2 style="color:#f59e0b;">Já Processado</h2><p>Este pedido já foi processado.</p></div></div>';
+          return;
+        }
+
+        const required = getRequiredApprovals(currentData.amount);
+        const currentCount = currentData.approval_count || 0;
+        const newCount = currentCount + 1;
+        const luandaDate = getLuandaISO();
+
+        if (required <= 1 || newCount >= required) {
+          // Aprovação completa
+          const { error: updateError } = await supabaseClient.from('purchase_requests').update({
+            status: 'aprovado',
+            approved_at: luandaDate,
+            approved_by: null,
+            approval_count: newCount
+          }).eq('id', id);
+
+          if (updateError) throw updateError;
+
+          // Criar despesa em expenses
+          const amountValue = Number(currentData.amount);
+          if (amountValue > 0) {
+            await supabaseClient.from('expenses').insert({
+              description: 'Compra Aprovada: ' + currentData.description,
+              amount_kz: amountValue,
+              category: 'COMPRAS',
+              status: 'PENDING',
+              created_at: luandaDate
+            });
+            await supabaseClient.from('cash_flow').insert({
+              amount: amountValue,
+              type: 'saida',
+              category: 'Compras',
+              description: 'Compra Aprovada: ' + currentData.description + ' - ' + currentData.provider
+            });
+          }
+
+          app.innerHTML = '<div class="container"><div class="success"><svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 16px;display:block;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><h2>Compra Aprovada!</h2><p>A compra foi aprovada e registrada como despesa.</p></div></div>';
+        } else {
+          // Aprovação parcial (1 de 2)
+          const { error: updateError } = await supabaseClient.from('purchase_requests').update({
+            status: 'parcial',
+            approval_count: newCount,
+            approved_by: null
+          }).eq('id', id);
+
+          if (updateError) throw updateError;
+
+          app.innerHTML = '<div class="container"><div class="partial"><svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 16px;display:block;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><h2>Aprovação Parcial (1 de 2)</h2><p>Sua aprovação foi registrada. Aguardando o 2º owner aprovar.</p><p style="margin-top:8px;font-size:14px;">O 2º owner receberá uma notificação no WhatsApp.</p></div></div>';
+        }
+      } catch (err) {
+        app.innerHTML = '<div class="container"><div class="error"><h2>Erro</h2><p>' + err.message + '</p></div></div>';
+      }
+    }
+
+    async function handleReject() {
+      app.innerHTML = '<div class="container"><div class="loading"><div class="spinner"></div><p>Processando rejeição...</p></div></div>';
+      try {
+        const { data: currentData, error: checkError } = await supabaseClient.from('purchase_requests').select('status, description').eq('id', id).single();
+        if (checkError) throw checkError;
+        if (currentData.status === 'aprovado' || currentData.status === 'rejeitado' || currentData.status === 'pago') {
+          app.innerHTML = '<div class="container"><div class="success" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);"><h2 style="color:#f59e0b;">Já Processado</h2><p>Este pedido já foi processado.</p></div></div>';
+          return;
+        }
+
+        const luandaDate = getLuandaISO();
+        const { error } = await supabaseClient.from('purchase_requests').update({
+          status: 'rejeitado',
+          approved_at: luandaDate,
+          approved_by: null
+        }).eq('id', id);
+
+        if (error) throw error;
+
+        app.innerHTML = '<div class="container"><div class="error" style="background:rgba(239,68,68,0.1);"><svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 16px;display:block;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><h2>Compra Rejeitada</h2><p>O pedido de compra foi rejeitado.</p></div></div>';
+      } catch (err) {
+        app.innerHTML = '<div class="container"><div class="error"><h2>Erro</h2><p>' + err.message + '</p></div></div>';
+      }
+    }
+
+    loadPurchase();
+  </script>
+</body>
+</html>

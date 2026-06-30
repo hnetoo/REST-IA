@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual do Utilizador - REST IA OS</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.7; padding: 40px; }
+.container { max-width: 900px; margin: 0 auto; }
+h1 { font-size: 2.5rem; font-weight: 900; color: #f97316; margin-bottom: 10px; text-transform: uppercase; }
+.version { font-size: .75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 40px; }
+h2 { font-size: 1.25rem; font-weight: 800; color: #f97316; margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 2px solid rgba(249,115,22,.2); text-transform: uppercase; }
+h3 { font-size: 1rem; font-weight: 700; color: #fff; margin: 25px 0 12px; }
+h4 { font-size: .9rem; font-weight: 600; color: #cbd5e1; margin: 18px 0 8px; }
+p { margin-bottom: 15px; color: #94a3b8; }
+ul { margin: 15px 0 20px 25px; }
+li { margin-bottom: 10px; color: #94a3b8; }
+strong { color: #fff; font-weight: 600; }
+.warning { background: rgba(234,179,8,.1); border: 1px solid rgba(234,179,8,.3); border-radius: 12px; padding: 16px 20px; margin: 20px 0; }
+.warning strong { color: #eab308; }
+.tip { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3); border-radius: 12px; padding: 16px 20px; margin: 20px 0; }
+.tip strong { color: #22c55e; }
+.danger { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); border-radius: 12px; padding: 16px 20px; margin: 20px 0; }
+.danger strong { color: #ef4444; }
+.step-box { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 16px 20px; margin: 12px 0; }
+.step-box p { margin-bottom: 8px; }
+.step-box p:last-child { margin-bottom: 0; }
+.example { background: rgba(249,115,22,.05); border-left: 3px solid #f97316; padding: 12px 16px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+.example strong { color: #f97316; }
+.toc { background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06); border-radius: 16px; padding: 24px 28px; margin-bottom: 40px; }
+.toc h3 { color: #f97316; margin-bottom: 12px; }
+.toc ul { list-style: none; margin: 0; }
+.toc li { margin-bottom: 6px; }
+.toc a { color: #94a3b8; text-decoration: none; transition: color .2s; }
+.toc a:hover { color: #f97316; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Manual do Utilizador</h1>
+<p class="version">REST IA OS v1.1.1 — Tasca do Vereda</p>
+
+<div class="tip">
+<strong>📖 O que vai aprender neste manual:</strong>
+<ul style="margin: 10px 0 0 20px;">
+<li>Como abrir e fechar turnos (manhã e tarde)</li>
+<li>Como registar vendas no Terminal POS (abrir mesa, adicionar itens, pagar)</li>
+<li>Como usar o Mapa de Sala para gerir mesas</li>
+<li>Como criar reservas e eventos especiais</li>
+<li>Como fazer fecho de turno com resumo de produtos vendidos</li>
+<li>Como fazer fecho do dia (inclui resumo dos dois turnos)</li>
+<li>Como consultar o Controlo de Vendas</li>
+<li>Como usar o Menu Público Digital (QR Code)</li>
+<li>Como funciona o Fecho Automático de Caixa</li>
+<li>Como usar o Dashboard (visão geral para utilizadores)</li>
+<li>O que fazer quando algo não funciona (problemas comuns)</li>
+</ul>
+<p style="margin-top: 10px;"><strong>💡 Dica:</strong> Use o botão de chat no canto inferior direito para perguntas rápidas. Para detalhes completos, consulte este manual ou o Manual do Administrador.</p>
+</div>
+
+<div class="toc">
+<h3>📋 Índice</h3>
+<ul>
+<li><a href="#turnos">0. Turnos — Abrir e Fechar</a></li>
+<li><a href="#pos">1. Terminal POS — Vendas</a></li>
+<li><a href="#mapa">2. Mapa de Sala</a></li>
+<li><a href="#reservas">3. Reservas</a></li>
+<li><a href="#eventos">4. Eventos</a></li>
+<li><a href="#fecho-turno">5. Fecho de Turno</a></li>
+<li><a href="#fecho-dia">6. Fecho do Dia</a></li>
+<li><a href="#fecho-auto">7. Fecho Automático de Caixa</a></li>
+<li><a href="#vendas">8. Controlo de Vendas</a></li>
+<li><a href="#menu-publico">9. Menu Público Digital (QR Code)</a></li>
+<li><a href="#dashboard">10. Dashboard (Visão Geral)</a></li>
+<li><a href="#problemas">11. Problemas Comuns e Soluções</a></li>
+<li><a href="#faq">12. Perguntas Frequentes</a></li>
+</ul>
+</div>
+
+<!-- ==================== 0. TURNOS ==================== -->
+<h2 id="turnos">0. Turnos — Abrir e Fechar</h2>
+<p>O sistema trabalha com <strong>dois turnos por dia</strong>: Manhã (07h00 — 14h00) e Tarde (14h00 — 22h00). Cada operador deve abrir o seu turno no início e fechá-lo no final. O fecho do dia só pode ser feito quando ambos os turnos estiverem fechados.</p>
+
+<h3>0.1 Como Abrir um Turno</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> No Terminal POS, clique no botão <strong>"TURNO"</strong> (canto inferior esquerdo).</p>
+<p><strong>Passo 2:</strong> Escolha o turno:</p>
+<ul>
+<li><strong>MANHÃ</strong> — 07h00 às 14h00 (almoço)</li>
+<li><strong>TARDE</strong> — 14h00 às 22h00 (jantar)</li>
+</ul>
+<p><strong>Passo 3:</strong> Insira o <strong>valor em caixa</strong> (dinheiro físico que tem para troco). Ex: 10.000 Kz.</p>
+<p><strong>Passo 4:</strong> Clique em <strong>"ABRIR TURNO"</strong>.</p>
+<div class="example"><strong>Exemplo:</strong> A operadora de caixa Ana chega às 07h00. Clica em TURNO, escolhe MANHÃ, insere 15.000 Kz (troco para o dia), e confirma. O turno fica "ABERTO".</div>
+</div>
+<div class="tip"><strong>DICA:</strong> Anote o valor que inseriu. No final do turno, o sistema pergunta quanto dinheiro tem — deve corresponder ao valor de abertura + vendas em numerário.</div>
+
+<h3>0.2 Durante o Turno</h3>
+<div class="step-box">
+<p>Todas as vendas que faz durante o turno ficam associadas automaticamente ao turno aberto. Não precisa fazer nada especial — é só usar o POS normalmente.</p>
+<p><strong>O que fica ligado ao turno:</strong></p>
+<ul>
+<li>Todas as mesas abertas e fechadas</li>
+<li>Todos os pagamentos (numerário, multicaixa, TPA, transferência)</li>
+<li>Todos os produtos vendidos</li>
+<li>Quantidade de vendas realizadas</li>
+</ul>
+</div>
+
+<h3>0.3 Como Fechar um Turno</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Clique no botão <strong>"TURNO"</strong> no POS.</p>
+<p><strong>Passo 2:</strong> O sistema mostra o resumo do turno:</p>
+<ul>
+<li><strong>Vendas por modalidade:</strong> Numerário, Multicaixa, TPA, Transferência, QR Code</li>
+<li><strong>Produtos vendidos:</strong> Lista de cada produto com quantidade e total</li>
+<li><strong>Total de vendas:</strong> Soma de todas as vendas do turno</li>
+<li><strong>Número de vendas:</strong> Quantas contas foram fechadas</li>
+</ul>
+<p><strong>Passo 3:</strong> Clique em <strong>"VER RELATÓRIO"</strong> para ver o preview completo.</p>
+<p><strong>Passo 4:</strong> Conte o dinheiro físico em caixa (só numerário).</p>
+<p><strong>Passo 5:</strong> Insira o <strong>valor contado</strong> no campo "Valor em caixa".</p>
+<p><strong>Passo 6:</strong> O sistema calcula a <strong>diferença</strong>:</p>
+<ul>
+<li><strong>Esperado:</strong> Valor de abertura + vendas em numerário</li>
+<li><strong>Contado:</strong> O que contou fisicamente</li>
+<li><strong>Diferença:</strong> Se for 0 Kz = OK. Se for positivo = sobra. Se for negativo = falta.</li>
+</ul>
+<p><strong>Passo 7:</strong> Clique em <strong>"FECHAR TURNO"</strong> para confirmar.</p>
+<p><strong>Passo 8:</strong> O relatório pode ser impresso automaticamente.</p>
+</div>
+<div class="warning"><strong>ATENÇÃO:</strong> Se houver diferença (falta ou sobra), NÃO ignore. Anote o valor e explique no campo de observações. O gerente precisa saber.</div>
+
+<!-- ==================== 1. POS ==================== -->
+<h2 id="pos">1. Terminal POS — Vendas</h2>
+<p>O Terminal POS é onde se registam todos os pedidos dos clientes. É o menu mais usado no dia-a-dia.</p>
+
+<h3>1.1 Como Abrir uma Mesa</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> No ecrã principal do POS, clique no botão <strong>"NOVA MESA"</strong>.</p>
+<p><strong>Passo 2:</strong> Aparece uma grelha com os números das mesas. Clique na mesa que quer abrir.</p>
+<p><strong>Passo 3:</strong> Escolha o tipo:</p>
+<ul>
+<li><strong>LOCAL</strong> — Cliente no restaurante (mesa normal)</li>
+<li><strong>ENTREGA</strong> — Delivery/takeaway (precisa nome e telefone)</li>
+</ul>
+<p><strong>Passo 4:</strong> Se ENTREGA, preencha <strong>nome</strong> e <strong>telefone</strong> do cliente.</p>
+<p><strong>Passo 5:</strong> Confirme. A mesa fica aberta e pronta para adicionar itens.</p>
+</div>
+
+<h3>1.2 Como Adicionar Itens ao Pedido</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Com a mesa aberta, veja as <strong>categorias</strong> na barra lateral (Entradas, Pratos, Bebidas, Sobremesas, etc.).</p>
+<p><strong>Passo 2:</strong> Clique numa categoria para ver os produtos disponíveis.</p>
+<p><strong>Passo 3:</strong> Clique no produto para adicioná-lo ao pedido. Cada clique adiciona 1 unidade.</p>
+<p><strong>Passo 4:</strong> Para ajustar quantidade: use os botões <strong>+</strong> e <strong>−</strong> ao lado do item no carrinho.</p>
+<p><strong>Passo 5:</strong> Para remover um item: clique no ícone de <strong>lixo</strong> ao lado do item.</p>
+<p><strong>Passo 6:</strong> Para adicionar observação (ex: "sem cebola"): clique no ícone de <strong>lápis</strong> ao lado do item.</p>
+</div>
+
+<h3>1.3 Como Enviar Pedido para a Cozinha</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Depois de adicionar todos os itens, clique no botão verde <strong>"ENVIAR PEDIDO"</strong>.</p>
+<p><strong>Passo 2:</strong> Confirme o envio.</p>
+<p><strong>Passo 3:</strong> O pedido aparece no <strong>Monitor de Cozinha</strong> com o número da mesa, itens e observações.</p>
+<p><strong>Passo 4:</strong> Pode adicionar mais itens depois e enviar novamente — o cozinheiro vê a atualização.</p>
+</div>
+
+<h3>1.4 Como Processar Pagamento</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Clique em <strong>"FECHAR CONTA"</strong> no POS.</p>
+<p><strong>Passo 2:</strong> O ecrã mostra o resumo: itens, quantidades, preços, <strong>TOTAL GERAL</strong>.</p>
+<p><strong>Passo 3:</strong> Selecione o <strong>método de pagamento</strong>:</p>
+<ul>
+<li><strong>NUMERÁRIO</strong> — digite valor recebido, sistema calcula troco</li>
+<li><strong>MULTICAIXA</strong> — passe cartão no terminal POS</li>
+<li><strong>TPA</strong> — use referência de pagamento</li>
+<li><strong>TRANSFERÊNCIA</strong> — anote comprovativo</li>
+<li><strong>DÍVIDA</strong> — cliente fica a dever (só com autorização)</li>
+</ul>
+<p><strong>Passo 4:</strong> Verifique o valor.</p>
+<p><strong>Passo 5:</strong> Clique <strong>"CONFIRMAR PAGAMENTO"</strong>.</p>
+<p><strong>Passo 6:</strong> Recibo imprime automaticamente (se houver impressora).</p>
+<p><strong>Passo 7:</strong> Mesa passa a "Fechada".</p>
+</div>
+<div class="danger"><strong>DÍVIDA:</strong> Deve ser liquidada antes do fecho do dia. Só use com autorização do gerente.</div>
+
+<h3>1.5 Sub-Contas (Dividir Conta)</h3>
+<div class="step-box">
+<p>Para dividir a conta de uma mesa entre vários clientes:</p>
+<p><strong>Passo 1:</strong> Abra a mesa que quer dividir.</p>
+<p><strong>Passo 2:</strong> Clique no botão <strong>"SUB-CONTA"</strong> ou <strong>"DIVIDIR"</strong>.</p>
+<p><strong>Passo 3:</strong> Mova itens entre a conta principal e a sub-conta.</p>
+<p><strong>Passo 4:</strong> Cada sub-conta pode ser paga separadamente.</p>
+</div>
+
+<h3>1.6 Monitor do Cliente (2º Ecrã)</h3>
+<div class="step-box">
+<p>Para mostrar o total ao cliente num segundo monitor:</p>
+<p><strong>Passo 1:</strong> Clique no ícone de <strong>Monitor</strong> no POS.</p>
+<p><strong>Passo 2:</strong> O sistema abre uma janela no segundo ecrã (se disponível).</p>
+<p><strong>Passo 3:</strong> O cliente vê os itens e o total em tempo real.</p>
+</div>
+
+<!-- ==================== 2. MAPA DE SALA ==================== -->
+<h2 id="mapa">2. Mapa de Sala</h2>
+<p>O Mapa de Sala mostra a disposição visual de todas as mesas do restaurante.</p>
+
+<h3>2.1 Cores das Mesas</h3>
+<div class="step-box">
+<ul>
+<li><strong>🟢 VERDE</strong> — Mesa livre (clique para abrir POS)</li>
+<li><strong>🟠 LARANJA</strong> — Mesa ocupada (clique para ver pedido)</li>
+<li><strong>🔴 VERMELHO</strong> — Mesa com dívida pendente</li>
+<li><strong>🔵 AZUL</strong> — Mesa com reserva marcada</li>
+</ul>
+</div>
+
+<h3>2.2 Operações no Mapa</h3>
+<div class="step-box">
+<p><strong>Abrir POS:</strong> Clique numa mesa verde para abrir o POS diretamente nessa mesa.</p>
+<p><strong>Ver pedido:</strong> Clique numa mesa laranja para ver os itens do pedido atual.</p>
+<p><strong>Mover mesa:</strong> Clique e arraste para reorganizar o layout.</p>
+<p><strong>Histórico:</strong> Clique direito numa mesa para ver histórico dos últimos 30 dias.</p>
+</div>
+<div class="tip"><strong>DICA:</strong> Reorganize as mesas para corresponder ao layout real do restaurante. O layout fica guardado automaticamente.</div>
+
+<!-- ==================== 3. RESERVAS ==================== -->
+<h2 id="reservas">3. Reservas</h2>
+<p>O sistema de reservas permite marcar mesas para clientes em datas e horários específicos.</p>
+
+<h3>3.1 Criar Reserva</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"RESERVAS"</strong> na barra lateral.</p>
+<p><strong>Passo 2:</strong> Clique <strong>"NOVA RESERVA"</strong> (canto superior direito).</p>
+<p><strong>Passo 3:</strong> Preencha:</p>
+<ul>
+<li><strong>Nome do cliente</strong> (ex: "Família Santos — Aniversário")</li>
+<li><strong>Telefone</strong> com +244 (ex: +244 923 456 789)</li>
+<li><strong>Data</strong> — clique no calendário</li>
+<li><strong>Hora</strong> — formato 24h (ex: 19:30)</li>
+<li><strong>Número de pessoas</strong></li>
+<li><strong>Mesa preferida</strong> (opcional)</li>
+</ul>
+<p><strong>Passo 4:</strong> Em <strong>OBSERVAÇÕES</strong>, adicione detalhes importantes:</p>
+<ul>
+<li>"Aniversário — trazer bolo surpresa às 21h"</li>
+<li>"Cliente VIP — mesa junto à janela"</li>
+<li>"Criança com alergia a amêndoa"</li>
+</ul>
+<p><strong>Passo 5:</strong> Clique <strong>"GUARDAR RESERVA"</strong>.</p>
+<p><strong>Passo 6:</strong> A mesa fica <strong>AZUL</strong> no Mapa de Sala.</p>
+</div>
+<div class="warning"><strong>ATENÇÃO:</strong> Só pode editar/cancelar até 2 horas antes do horário marcado. Reservas expiradas vão para o Histórico.</div>
+
+<h3>3.2 Gerir Reservas</h3>
+<div class="step-box">
+<p><strong>Lista de reservas:</strong> Mostra todas as reservas ordenadas por data/hora.</p>
+<p><strong>Filtros:</strong> Hoje, Esta Semana, Próximas, Histórico.</p>
+<p><strong>Editar:</strong> Clique numa reserva para editar ou cancelar.</p>
+<p><strong>Confirmar chegada:</strong> Quando o cliente chegar, marque como "Confirmada" — a mesa fica pronta para abrir no POS.</p>
+</div>
+
+<!-- ==================== 4. EVENTOS ==================== -->
+<h2 id="eventos">4. Eventos</h2>
+<p>Eventos permitem gerir ocasiões especiais: casamentos, aniversários, jantares de grupo.</p>
+
+<h3>4.1 Criar Evento</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"EVENTOS"</strong> na barra lateral.</p>
+<p><strong>Passo 2:</strong> Clique <strong>"NOVO EVENTO"</strong>.</p>
+<p><strong>Passo 3:</strong> Preencha:</p>
+<ul>
+<li><strong>Tipo:</strong> Casamento, Aniversário, Jantar de Grupo, ou Outro</li>
+<li><strong>Nome</strong> (ex: "Casamento Joana e Pedro")</li>
+<li><strong>Data e Hora</strong> (ex: 20/06/2026 às 18:00)</li>
+<li><strong>Convidados</strong> (ex: 50 pessoas)</li>
+<li><strong>Menu especial</strong> — descrição do menu acordado</li>
+<li><strong>Preço por pessoa</strong> (ex: 8.000 Kz)</li>
+</ul>
+<p><strong>Passo 4:</strong> O sistema calcula automaticamente:</p>
+<ul>
+<li><strong>Receita estimada</strong> = convidados × preço (ex: 50 × 8.000 = 400.000 Kz)</li>
+<li><strong>Custo estimado</strong> (baseado nos ingredientes)</li>
+<li><strong>Lucro estimado</strong> = receita − custo</li>
+</ul>
+<p><strong>Passo 5:</strong> Guarde o evento.</p>
+</div>
+
+<h3>4.2 Gerir Eventos</h3>
+<div class="step-box">
+<p><strong>Lista:</strong> Mostra eventos próximos, em curso e arquivados.</p>
+<p><strong>Editar:</strong> Pode editar até a data do evento. Depois é arquivado.</p>
+<p><strong>Observações:</strong> Use para detalhes como "Decoração rosa e branco", "DJ até meia-noite".</p>
+</div>
+
+<!-- ==================== 5. FECHO DE TURNO ==================== -->
+<h2 id="fecho-turno">5. Fecho de Turno (Detalhado)</h2>
+<p>O fecho de turno fecha o período de trabalho e gera um relatório completo.</p>
+
+<h3>5.1 Relatório de Fecho de Turno</h3>
+<div class="step-box">
+<p>O relatório inclui:</p>
+<ul>
+<li><strong>Cabeçalho:</strong> Data, tipo de turno (Manhã/Tarde), nome do operador</li>
+<li><strong>Abertura:</strong> Valor inicial em caixa</li>
+<li><strong>Vendas por modalidade:</strong> Cada método com quantidade e valor</li>
+<li><strong>Produtos vendidos:</strong> Lista completa com quantidade e valor total</li>
+<li><strong>Resumo:</strong> Esperado, Contado, Diferença, indicador OK ou NÃO OK</li>
+<li><strong>Rodapé:</strong> Linha para assinatura do operador</li>
+</ul>
+</div>
+<div class="tip"><strong>DICA:</strong> Guarde o recibo do fecho de turno. É o comprovativo oficial das vendas do turno.</div>
+
+<!-- ==================== 6. FECHO DO DIA ==================== -->
+<h2 id="fecho-dia">6. Fecho do Dia</h2>
+<p>O Fecho do Dia fecha o dia operacional completo (05:00 às 04:59) e gera o relatório oficial.</p>
+
+<h3>6.1 Pré-requisitos</h3>
+<div class="step-box">
+<ul>
+<li><strong>Ambos os turnos</strong> (Manhã e Tarde) devem estar FECHADOS.</li>
+<li>Verifique se não há mesas abertas (todas devem estar fechadas ou pagas).</li>
+<li>Verifique se não há dívidas pendentes não autorizadas.</li>
+</ul>
+</div>
+
+<h3>6.2 Passo a Passo</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> No POS, clique no botão <strong>"Fecho do Dia"</strong> (visível para Gerente/Admin).</p>
+<p><strong>Passo 2:</strong> O sistema mostra o modal com:</p>
+<ul>
+<li>Resumo geral: operador, data, total do dia, nº de vendas</li>
+<li>Turno da Manhã: operador, vendas, modalidades, produtos vendidos</li>
+<li>Turno da Tarde: operador, vendas, modalidades, produtos vendidos</li>
+<li>Vendas por Modalidade (total do dia)</li>
+<li>Produtos Vendidos (total do dia, agregado)</li>
+</ul>
+<p><strong>Passo 3:</strong> Clique <strong>"Ver Relatório"</strong> para ver o preview completo.</p>
+<p><strong>Passo 4:</strong> Verifique: valores dos turnos, produtos vendidos, modalidades.</p>
+<p><strong>Passo 5:</strong> Se estiver tudo certo, clique <strong>"Confirmar Fecho do Dia"</strong>.</p>
+<p><strong>Passo 6:</strong> O fecho é guardado no cash_flow (Supabase) com descrição "Fecho do Dia".</p>
+<p><strong>Passo 7:</strong> O relatório pode ser impresso automaticamente.</p>
+</div>
+<div class="danger"><strong>ATENÇÃO:</strong> Se houver discrepância, NÃO confirme. Verifique os turnos primeiro. O Fecho do Dia só pode ser feito uma vez por dia.</div>
+
+<!-- ==================== 7. FECHO AUTOMÁTICO ==================== -->
+<h2 id="fecho-auto">7. Fecho Automático de Caixa</h2>
+<p>O sistema tem um <strong>fecho automático de segurança</strong> que funciona mesmo que se esqueça de fazer o fecho manual.</p>
+
+<h3>7.1 Como Funciona</h3>
+<div class="step-box">
+<p><strong>Janela de fecho:</strong> Entre 04:55 e 04:59 (hora de Luanda), o sistema verifica automaticamente se o dia que está a acabar tem fecho.</p>
+<p><strong>Condição:</strong> Se não houver fecho registado para a data, o sistema cria automaticamente um fecho com:</p>
+<ul>
+<li>Soma de todas as vendas do dia (status "closed" ou "paid")</li>
+<li>Descrição: "Fecho Automático de Segurança — X vendas"</li>
+<li>Operador: "Sistema (Auto-Fecho)"</li>
+</ul>
+<p><strong>Onde funciona:</strong> Em qualquer página da app que esteja aberta — POS, Dashboard, Owner Dashboard. Se a app estiver aberta em qualquer página, o fecho automático executa.</p>
+</div>
+
+<h3>7.2 Fecho Retroativo</h3>
+<div class="step-box">
+<p>Se ninguém teve a app aberta às 04:55, o sistema também faz <strong>fecho retroativo</strong>:</p>
+<p>Quando o Owner Dashboard ou Dashboard abre <strong>depois das 05:00</strong> e o dia anterior não tem fecho, o sistema cria automaticamente o fecho retroativo com as vendas do dia.</p>
+<p>Isto garante que o card "Fecho do Dia" no Owner Dashboard sempre tem um valor.</p>
+</div>
+<div class="tip"><strong>DICA:</strong> Mesmo com o fecho automático, faça sempre o fecho manual no final do dia para conferir os valores. O fecho automático é uma rede de segurança, não substitui o procedimento normal.</div>
+
+<!-- ==================== 8. CONTROLO DE VENDAS ==================== -->
+<h2 id="vendas">8. Controlo de Vendas</h2>
+<p>O Controlo de Vendas mostra uma análise detalhada de cada produto vendido.</p>
+
+<h3>8.1 O que Mostra</h3>
+<div class="step-box">
+<ul>
+<li><strong>Vendas por produto:</strong> Quantidade vendida, receita gerada, margem de lucro</li>
+<li><strong>Comparação de períodos:</strong> Hoje vs Ontem, Esta Semana vs Semana Passada</li>
+<li><strong>Ranking de produtos:</strong> Os mais vendidos e os menos vendidos</li>
+<li><strong>Análise por categoria:</strong> Entradas, Pratos, Bebidas, Sobremesas</li>
+<li><strong>Ticket médio:</strong> Valor médio gasto por cliente</li>
+</ul>
+</div>
+
+<h3>8.2 Como Usar</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"VENDAS"</strong> na barra lateral.</p>
+<p><strong>Passo 2:</strong> Selecione o período (Hoje, Semana, Mês, Personalizado).</p>
+<p><strong>Passo 3:</strong> Veja os gráficos e tabelas de análise.</p>
+<p><strong>Passo 4:</strong> Use os filtros para ver por categoria ou produto específico.</p>
+<p><strong>Passo 5:</strong> Exporte em PDF ou Excel se necessário.</p>
+</div>
+
+<!-- ==================== 9. MENU PÚBLICO ==================== -->
+<h2 id="menu-publico">9. Menu Público Digital (QR Code)</h2>
+<p>O Menu Público Digital permite que os clientes vejam o menu nos seus telemóveis através de um QR Code.</p>
+
+<h3>9.1 Como Aceder</h3>
+<div class="step-box">
+<p><strong>URL directo:</strong> https://rest-ia.vercel.app/menu</p>
+<p><strong>QR Code:</strong> O sistema gera automaticamente um QR Code que pode imprimir e colocar nas mesas.</p>
+<p>Os clientes abrem a câmara do telemóvel, apontam para o QR Code, e o menu abre no browser — sem instalar nada.</p>
+</div>
+
+<h3>9.2 O que o Cliente Vê</h3>
+<div class="step-box">
+<ul>
+<li><strong>Categorias</strong> do menu (Entradas, Pratos, Bebidas, Sobremesas)</li>
+<li><strong>Foto</strong> de cada produto (se disponível)</li>
+<li><strong>Nome, descrição e preço</strong> em Kwanzas</li>
+<li><strong>Indicação de disponibilidade</strong> (disponível / esgotado)</li>
+</ul>
+<p>O menu público atualiza automaticamente quando o administrador altera produtos no Menu & Stock.</p>
+</div>
+
+<h3>9.3 Como Configurar (Admin)</h3>
+<div class="step-box">
+<p>O Menu Público é configurado em <strong>Sistema → Configurações</strong>. O administrador pode:</p>
+<ul>
+<li>Activar/desactivar produtos no menu público</li>
+<li>Definir qual URL usar (pode ser personalizado)</li>
+<li>Imprimir QR Codes para as mesas</li>
+</ul>
+</div>
+
+<!-- ==================== 10. DASHBOARD ==================== -->
+<h2 id="dashboard">10. Dashboard (Visão Geral para Utilizadores)</h2>
+<p>O Dashboard mostra um resumo visual do restaurante em tempo real. Mesmo utilizadores sem permissões de admin podem ver alguns cards.</p>
+
+<h3>10.1 Cards Principais</h3>
+<div class="step-box">
+<ul>
+<li><strong>Faturação Hoje:</strong> Vendas do dia em tempo real</li>
+<li><strong>Despesas Hoje:</strong> Gastos do dia</li>
+<li><strong>Mesas Ocupadas:</strong> Quantas mesas estão ativas agora</li>
+<li><strong>Pedidos Abertos:</strong> Contas em curso</li>
+</ul>
+</div>
+
+<h3>10.2 Gráficos</h3>
+<div class="step-box">
+<ul>
+<li><strong>Receita Semanal:</strong> Vendas dos últimos 7 dias</li>
+<li><strong>Receita vs Custos vs Break-Even:</strong> Comparação semanal</li>
+<li><strong>Receita por Categoria:</strong> Bebidas vs Pratos vs Sobremesas</li>
+</ul>
+</div>
+<div class="tip"><strong>DICA:</strong> Para análises mais detalhadas (lucro, margem, previsões), consulte o <strong>Manual do Administrador</strong>.</div>
+
+<!-- ==================== 11. PROBLEMAS COMUNS ==================== -->
+<h2 id="problemas">11. Problemas Comuns e Soluções</h2>
+
+<h3>11.1 O POS não abre / ecrã branco</h3>
+<div class="step-box">
+<p><strong>Solução:</strong> Feche a app completamente e abra novamente. Se persistir, verifique a ligação à internet. A app funciona offline, mas precisa de carregar dados do Supabase na primeira vez.</p>
+</div>
+
+<h3>11.2 Vendas não aparecem no Dashboard</h3>
+<div class="step-box">
+<p><strong>Solução:</strong> Verifique se a venda tem status "closed" ou "paid". Vendas com status "open" não contam. Se fez venda offline, pode estar pendente de sincronização. Verifique a ligação à internet.</p>
+</div>
+
+<h3>11.3 Impressora não imprime</h3>
+<div class="step-box">
+<p><strong>Solução:</strong> Verifique se a impressora está ligada e configurada em <strong>Sistema → Configurações → Impressora</strong>. Teste a impressão. Se não funcionar, reinicie a impressora e volte a testar.</p>
+</div>
+
+<h3>11.4 Não consigo fazer Fecho do Dia</h3>
+<div class="step-box">
+<p><strong>Solução:</strong> Verifique se ambos os turnos estão fechados. Se houver mesas abertas, feche-as primeiro. Se o sistema diz "Já existe fecho", o fecho automático pode já ter executado.</p>
+</div>
+
+<h3>11.5 Esqueci-me do PIN</h3>
+<div class="step-box">
+<p><strong>Solução:</strong> Contacte o administrador. Ele pode redefinir o PIN em Sistema → Gestão de Utilizadores.</p>
+</div>
+
+<h3>11.6 A app diz "Offline" mas tenho internet</h3>
+<div class="step-box">
+<p><strong>Solução:</strong> O indicador pode demorar alguns segundos a atualizar. Faça refresh (F5). Se persistir, verifique se o Supabase está acessível em Sistema → Diagnosticar.</p>
+</div>
+
+<!-- ==================== 12. FAQ ==================== -->
+<h2 id="faq">12. Perguntas Frequentes</h2>
+
+<div class="step-box">
+<p><strong>P: Posso usar o POS sem internet?</strong><br>
+R: Sim! A app funciona offline. As vendas são guardadas localmente e sincronizam automaticamente quando a internet voltar.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: Quantos utilizadores posso ter?</strong><br>
+R: Não há limite. Pode criar quantos utilizadores precisar, cada um com PIN e permissões próprias.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: O que acontece se o computador falhar?</strong><br>
+R: Todos os dados estão guardados no Supabase (nuvem). Faça login noutro computador com as mesmas credenciais e todos os dados restauram.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: Posso editar uma venda depois de fechada?</strong><br>
+R: Não. Vendas fechadas são definitivas para fins fiscais. Se houver erro, faça uma nova venda com valor negativo (desconto) ou contacte o administrador.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: O fecho automático substitui o fecho manual?</strong><br>
+R: Não. O fecho automático é uma rede de segurança. Deve sempre fazer o fecho manual para conferir os valores e gerar o relatório completo.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: Como adiciono um novo produto ao menu?</strong><br>
+R: Apenas administradores podem adicionar produtos. Vá a Menu & Stock → Adicionar Produto. Consulte o Manual do Administrador para detalhes.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: Posso ver o menu no meu telemóvel?</strong><br>
+R: Sim! Aceda a https://rest-ia.vercel.app/menu ou aponte a câmara para o QR Code na mesa.</p>
+</div>
+
+<div class="tip"><strong>💡 Precisa de mais ajuda?</strong> Use o chat bot no canto inferior direito de qualquer página. O bot responde a perguntas sobre todas as funcionalidades do sistema.</p>
+</div>
+
+</div>
+</body>
+</html>

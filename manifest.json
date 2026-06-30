@@ -1,0 +1,24 @@
+
+{
+  "name": "Tasca Do VEREDA - Gestão Inteligente",
+  "short_name": "TascaVereda",
+  "description": "Sistema inovador de gestão de restaurantes com IA e POS.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#06b6d4",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3448/3448609.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3448/3448609.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

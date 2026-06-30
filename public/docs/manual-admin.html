@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual do Administrador - REST IA OS</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0f172a;color:#e2e8f0;line-height:1.7;padding:40px}
+.container{max-width:900px;margin:0 auto}
+h1{font-size:2.5rem;font-weight:900;color:#a855f7;margin-bottom:10px;text-transform:uppercase}
+.version{font-size:.75rem;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:40px}
+h2{font-size:1.25rem;font-weight:800;color:#a855f7;margin:40px 0 20px;padding-bottom:10px;border-bottom:2px solid rgba(168,85,247,.2);text-transform:uppercase}
+h3{font-size:1rem;font-weight:700;color:#fff;margin:25px 0 12px}
+h4{font-size:.9rem;font-weight:600;color:#cbd5e1;margin:18px 0 8px}
+p{margin-bottom:15px;color:#94a3b8}
+ul{margin:15px 0 20px 25px}
+li{margin-bottom:10px;color:#94a3b8}
+strong{color:#fff;font-weight:600}
+.warning{background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);border-radius:12px;padding:16px 20px;margin:20px 0}
+.warning strong{color:#eab308}
+.tip{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:16px 20px;margin:20px 0}
+.tip strong{color:#22c55e}
+.danger{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:16px 20px;margin:20px 0}
+.danger strong{color:#ef4444}
+.step-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 20px;margin:12px 0}
+.step-box p{margin-bottom:8px}
+.step-box p:last-child{margin-bottom:0}
+.example{background:rgba(168,85,247,.05);border-left:3px solid #a855f7;padding:12px 16px;margin:10px 0;border-radius:0 8px 8px 0}
+.example strong{color:#a855f7}
+.toc{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:24px 28px;margin-bottom:40px}
+.toc h3{color:#a855f7;margin-bottom:12px}
+.toc ul{list-style:none;margin:0}
+.toc li{margin-bottom:6px}
+.toc a{color:#94a3b8;text-decoration:none;transition:color .2s}
+.toc a:hover{color:#a855f7}
+table{width:100%;border-collapse:collapse;margin:15px 0;font-size:.875rem;border-radius:12px;overflow:hidden}
+th{background:rgba(168,85,247,.12);color:#a855f7;font-weight:700;text-transform:uppercase;font-size:.7rem;letter-spacing:.08em;padding:1rem;text-align:left}
+td{padding:.875rem 1rem;color:#94a3b8;border-bottom:1px solid rgba(255,255,255,.05)}
+tr:hover td{background:rgba(255,255,255,.02)}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Manual do Administrador</h1>
+<p class="version">REST IA OS v1.1.1 — Tasca do Vereda</p>
+
+<div class="tip">
+<strong>📖 O que vai aprender neste manual:</strong>
+<ul style="margin:10px 0 0 20px">
+<li>Como interpretar o Dashboard V2 com BI Charts (Break-Even, Receita por Categoria)</li>
+<li>Como usar o Centro de Lucro e previsões SyncCore</li>
+<li>Como gerir Financeiro, Despesas e controlo fiscal (AGT)</li>
+<li>Como gerir AGT: Certificação, Compliance Reports e SAF-T</li>
+<li>Como gerir Menu, Stock, Inventário físico e alertas</li>
+<li>Como processar Folha Salarial com INSS e IRT</li>
+<li>Como gerir Compras e aprovações (Owner Hub)</li>
+<li>Como configurar Impressora Térmica</li>
+<li>Como usar o Owner Dashboard (acesso remoto)</li>
+<li>Como gerir Utilizadores, Permissões e Sistema (SystemHub)</li>
+<li>Como funciona o Fecho Automático de Caixa</li>
+<li>Como resolver problemas comuns</li>
+</ul>
+<p style="margin-top:10px"><strong>💡 Dica:</strong> Este manual é para Gerentes e Proprietários. Para instruções de operação diária (garçons, caixas), consulte o Manual do Utilizador.</p>
+</div>
+
+<div class="toc">
+<h3>📋 Índice</h3>
+<ul>
+<li><a href="#dashboard">1. Dashboard V2 e BI Charts</a></li>
+<li><a href="#analytics">2. Analytics</a></li>
+<li><a href="#profit">3. Centro de Lucro</a></li>
+<li><a href="#finance">4. Financeiro</a></li>
+<li><a href="#agt">5. AGT — Controlo Fiscal</a></li>
+<li><a href="#agt-cert">6. AGT — Certificação de Software</a></li>
+<li><a href="#agt-comp">7. AGT — Compliance Reports</a></li>
+<li><a href="#inventory">8. Menu & Stock (Inventário)</a></li>
+<li><a href="#compras">9. Compras e Aprovações</a></li>
+<li><a href="#hr">10. Capital Humano</a></li>
+<li><a href="#reports">11. Relatórios</a></li>
+<li><a href="#owner">12. Owner Dashboard</a></li>
+<li><a href="#printer">13. Configuração de Impressora</a></li>
+<li><a href="#system">14. Sistema (SystemHub)</a></li>
+<li><a href="#fecho-auto">15. Fecho Automático de Caixa</a></li>
+<li><a href="#problemas">16. Problemas Comuns</a></li>
+<li><a href="#faq">17. FAQ Administrador</a></li>
+</ul>
+</div>
+
+<!-- ==================== 1. DASHBOARD V2 ==================== -->
+<h2 id="dashboard">1. Dashboard V2 e BI Charts</h2>
+<p>O Dashboard V2 é o painel de controlo principal com métricas em tempo real e análise de business intelligence (BI).</p>
+
+<h3>1.1 Cards Principais</h3>
+<div class="step-box">
+<p><strong>Rendimento Global:</strong> Faturamento total acumulado desde 01/01. Inclui todas as vendas com status "closed" ou "paid".</p>
+<p><strong>Faturação Hoje:</strong> Vendas do dia (00:00 até agora). Atualiza em tempo real.</p>
+<p><strong>Despesas Totais:</strong> Soma de todas as despesas: compras, salários, aluguer, luz/água, marketing.</p>
+<p><strong>Folha Salarial:</strong> Custo total com funcionários do mês. Cálculo: (Base + Subsídios + Extras) − (INSS + IRT).</p>
+<p><strong>Impostos (7%):</strong> IVA estimado sobre faturamento. Taxa simplificada Angola.</p>
+<p><strong>Custos Totais:</strong> Despesas + Folha Salarial.</p>
+</div>
+
+<h3>1.2 BI Charts — Gráficos de Business Intelligence</h3>
+<div class="step-box">
+<p><strong>Receita vs Custos vs Break-Even (BarChart):</strong> Compara semanalmente a receita, os custos totais e o ponto de equilíbrio. Use para identificar semanas em que o restaurante operou abaixo do break-even (prejuízo).</p>
+<div class="example"><strong>Exemplo:</strong> Semana 3: Receita 450.000 Kz, Custos 380.000 Kz, Break-Even 350.000 Kz. Lucro = 70.000 Kz. Acima do break-even = saudável.</div>
+<p><strong>Receita por Categoria (BarChart horizontal):</strong> Mostra qual categoria gera mais receita. Bebidas vs Pratos vs Sobremesas vs Entradas. Use para ajustar preços e promoções.</p>
+<p><strong>Receita Semanal (LineChart):</strong> Tendência de vendas nos últimos 7 dias. Identifique dias fracos e fortes.</p>
+</div>
+
+<h3>1.3 Break-Even (Ponto de Equilíbrio)</h3>
+<div class="step-box">
+<p>O <strong>Break-Even</strong> calcula quanto precisa faturar para cobrir todos os custos fixos.</p>
+<p><strong>Custos Fixos Mensais =</strong></p>
+<ul>
+<li><strong>Salários dos funcionários</strong> (staffCosts: salário base + bónus de cada funcionário ativo)</li>
+<li><strong>Despesas de UTILIDADES</strong> (aluguer, água, luz, internet — despesas com categoria "UTILIDADES")</li>
+</ul>
+<p><strong>Se o utilizador definir um valor manual</strong> em Sistema → Custos Fixos Mensais, esse valor substitui o cálculo automático.</p>
+<p><strong>Se deixar vazio</strong>, o sistema usa automaticamente: staffCosts + UTILIDADES.</p>
+<p><strong>Break-Even diário</strong> = Custos Fixos Mensais ÷ 30 dias</p>
+<div class="example"><strong>Exemplo:</strong> Salários = 450.000 Kz + Utilidades = 120.000 Kz = Custos Fixos = 570.000 Kz/mês. Break-Even diário = 19.000 Kz. Se faturar mais que 19.000 Kz/dia, está acima do break-even.</div>
+</div>
+
+<h3>1.4 Outros Indicadores</h3>
+<div class="step-box">
+<p><strong>Ticket Médio:</strong> Valor médio gasto por cliente = Faturação ÷ Nº de vendas.</p>
+<p><strong>Taxa de Ocupação:</strong> Percentagem de mesas ocupadas vs total.</p>
+<p><strong>Margem de Lucro:</strong> (Receita − Custos) ÷ Receita × 100.</p>
+</div>
+
+<!-- ==================== 2. ANALYTICS ==================== -->
+<h2 id="analytics">2. Analytics</h2>
+<p>O Analytics fornece análises avançadas para decisões de negócio.</p>
+
+<h3>2.1 O que Mostra</h3>
+<div class="step-box">
+<ul>
+<li><strong>Vendas por período:</strong> Dia, semana, mês, ano — com comparação</li>
+<li><strong>Tendências de crescimento:</strong> % de crescimento ou declínio</li>
+<li><strong>Produtos mais rentáveis:</strong> Ranking por margem de lucro</li>
+<li><strong>Horários de pico:</strong> Volume de vendas por hora</li>
+<li><strong>Análise por dia da semana:</strong> Qual dia rende mais</li>
+<li><strong>Comparação entre períodos:</strong> Este mês vs mês anterior</li>
+</ul>
+</div>
+
+<h3>2.2 Como Usar</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"ANALYTICS"</strong> na barra lateral.</p>
+<p><strong>Passo 2:</strong> Selecione o período de análise.</p>
+<p><strong>Passo 3:</strong> Use os filtros para segmentar por categoria, produto ou período.</p>
+<p><strong>Passo 4:</strong> Exporte relatórios em PDF ou Excel para apresentações.</p>
+</div>
+<div class="tip"><strong>DICA:</strong> Use Analytics para: ajustar menu (retirar produtos que não vendem), ajustar horários de staff, planear promoções em dias fracos.</div>
+
+<!-- ==================== 3. CENTRO DE LUCRO ==================== -->
+<h2 id="profit">3. Centro de Lucro</h2>
+<p>O Centro de Lucro mostra a saúde financeira do restaurante com previsões inteligentes.</p>
+
+<h3>3.1 Indicadores</h3>
+<div class="step-box">
+<p><strong>Lucro Atual:</strong> Receitas − Despesas − Salários − Impostos</p>
+<p><strong>Margem de Lucro:</strong> Lucro ÷ Receita × 100 (em %)</p>
+<p><strong>Comparação mês a mês:</strong> Evolução do lucro</p>
+<p><strong>Alertas:</strong> Notificação quando lucro desce abaixo do limite definido</p>
+</div>
+
+<h3>3.2 Previsões SyncCore</h3>
+<div class="step-box">
+<p>O Motor SyncCore faz previsões baseadas em dados históricos:</p>
+<ul>
+<li><strong>Previsão de stock:</strong> "Stock de cerveja acaba em 3 dias"</li>
+<li><strong>Previsão de clientes:</strong> "Sábado esperado: 150 clientes"</li>
+<li><strong>Alerta de margem:</strong> "Margem abaixo do esperado"</li>
+<li><strong>Tendência de receita:</strong> "Receita a crescer 12% vs mês anterior"</li>
+</ul>
+</div>
+
+<h3>3.3 Como Usar</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"CENTRO DE LUCRO"</strong> na barra lateral (menu Gestão).</p>
+<p><strong>Passo 2:</strong> Veja o lucro atual e a margem.</p>
+<p><strong>Passo 3:</strong> Analise as previsões do SyncCore.</p>
+<p><strong>Passo 4:</strong> Defina alertas para margem mínima.</p>
+<p><strong>Passo 5:</strong> Use os dados para ajustar preços, reduzir custos ou planear promoções.</p>
+</div>
+
+<!-- ==================== 4. FINANCEIRO ==================== -->
+<h2 id="finance">4. Financeiro</h2>
+<p>O módulo Financeiro inclui fluxo de caixa, despesas, e controlo fiscal.</p>
+
+<h3>4.1 Fluxo de Caixa</h3>
+<div class="step-box">
+<p><strong>Entradas:</strong> Vendas do POS (automático) + entradas manuais</p>
+<p><strong>Saídas:</strong> Despesas registadas + saídas manuais</p>
+<p><strong>Saldo:</strong> Entradas − Saídas</p>
+<p>Pode filtrar por período e ver tendências. Atualiza automaticamente com cada venda.</p>
+</div>
+
+<h3>4.2 Despesas</h3>
+<div class="step-box">
+<p><strong>Categorias:</strong> Compras, Salários, Aluguer, Luz/Água (UTILIDADES), Marketing, Outros</p>
+<p>Para cada despesa: descrição, valor, data, categoria, anexo de recibo (PDF/imagem).</p>
+<p><strong>Estados:</strong> Pendente, Pago, Cancelado.</p>
+<p><strong>Importante:</strong> As despesas com categoria "UTILIDADES" são usadas no cálculo do Break-Even. Certifique-se de categorizar corretamente.</p>
+</div>
+
+<h3>4.3 Como Registar Despesa</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"FINANCEIRO"</strong> na barra lateral.</p>
+<p><strong>Passo 2:</strong> Clique em <strong>"NOVA DESPESA"</strong>.</p>
+<p><strong>Passo 3:</strong> Preencha: descrição, valor, data, categoria.</p>
+<p><strong>Passo 4:</strong> Anexe recibo (opcional mas recomendado).</p>
+<p><strong>Passo 5:</strong> Clique <strong>"GUARDAR"</strong>.</p>
+</div>
+
+<!-- ==================== 5. AGT ==================== -->
+<h2 id="agt">5. AGT — Controlo Fiscal</h2>
+<p>O módulo AGT gere a conformidade fiscal com a Administração Geral Tributária de Angola.</p>
+
+<h3>5.1 Funcionalidades</h3>
+<div class="step-box">
+<ul>
+<li><strong>Registo de NIFs:</strong> Registe NIFs dos clientes nas vendas com IVA</li>
+<li><strong>Exportação SAF-T:</strong> Ficheiro SAF-T (formato OGA 2024) para entregar à AGT</li>
+<li><strong>Relatório mensal de IVA:</strong> IVA liquidado (7% em Angola)</li>
+<li><strong>Numeração de faturas:</strong> Controlo automático de séries</li>
+</ul>
+</div>
+
+<h3>5.2 Como Usar</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"AGT"</strong> na barra lateral.</p>
+<p><strong>Passo 2:</strong> Configure os dados fiscais: NIF do restaurante, regime fiscal, série de faturação.</p>
+<p><strong>Passo 3:</strong> Para faturas com IVA, registe o NIF do cliente no POS antes de fechar a conta.</p>
+<p><strong>Passo 4:</strong> No final do mês, exporte o ficheiro SAF-T.</p>
+<p><strong>Passo 5:</strong> Gere o relatório mensal de IVA.</p>
+</div>
+
+<h3>5.3 IVA em Angola</h3>
+<div class="step-box">
+<p><strong>Taxa simplificada:</strong> 7% sobre o faturamento.</p>
+<p>O sistema calcula automaticamente. O card "Impostos (7%)" no Dashboard mostra IVA estimado do dia.</p>
+<p>Para faturas com IVA, registe NIF do cliente no POS.</p>
+</div>
+
+<!-- ==================== 6. AGT CERTIFICAÇÃO ==================== -->
+<h2 id="agt-cert">6. AGT — Certificação de Software</h2>
+<p>O submenu de Certificação gere a certificação do software de faturação junto da AGT.</p>
+
+<h3>6.1 O que Mostra</h3>
+<div class="step-box">
+<ul>
+<li><strong>Estado da certificação:</strong> Pendente, Certificado, Rejeitado</li>
+<li><strong>Número de certificação:</strong> Atribuído pela AGT</li>
+<li><strong>Data de validade:</strong> Quando precisa renovar</li>
+<li><strong>Histórico de submissões:</strong> Registo de envios à AGT</li>
+</ul>
+</div>
+
+<h3>6.2 Como Usar</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>AGT → Certificação</strong>.</p>
+<p><strong>Passo 2:</strong> Verifique o estado atual da certificação.</p>
+<p><strong>Passo 3:</strong> Se pendente, prepare os documentos necessários.</p>
+<p><strong>Passo 4:</strong> Submeta o ficheiro SAF-T para validação.</p>
+<p><strong>Passo 5:</strong> Acompanhe o estado até receber a certificação.</p>
+</div>
+<div class="warning"><strong>ATENÇÃO:</strong> Sem certificação AGT válida, as faturas emitidas podem não ser reconhecidas fiscalmente. Mantenha a certificação sempre atualizada.</div>
+
+<!-- ==================== 7. AGT COMPLIANCE ==================== -->
+<h2 id="agt-comp">7. AGT — Compliance Reports</h2>
+<p>O submenu de Compliance Reports gera relatórios de conformidade fiscal.</p>
+
+<h3>7.1 Relatórios Disponíveis</h3>
+<div class="step-box">
+<ul>
+<li><strong>Relatório de IVA Mensal:</strong> IVA liquidado e a pagar</li>
+<li><strong>Relatório de Faturação:</strong> Todas as faturas do período</li>
+<li><strong>Relatório de Retenções:</strong> Retenções na fonte (se aplicável)</li>
+<li><strong>Relatório de SAF-T:</strong> Validação do ficheiro SAF-T</li>
+<li><strong>Audit Trail:</strong> Registo de alterações para auditoria</li>
+</ul>
+</div>
+
+<h3>7.2 Como Gerar</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>AGT → Compliance Reports</strong>.</p>
+<p><strong>Passo 2:</strong> Selecione o tipo de relatório.</p>
+<p><strong>Passo 3:</strong> Defina o período (mês, trimestre, ano).</p>
+<p><strong>Passo 4:</strong> Clique <strong>"GERAR RELATÓRIO"</strong>.</p>
+<p><strong>Passo 5:</strong> Exporte em PDF ou Excel.</p>
+</div>
+
+<!-- ==================== 8. INVENTORY ==================== -->
+<h2 id="inventory">8. Menu & Stock (Inventário)</h2>
+<p>Gestão completa de produtos, stock e inventário físico.</p>
+
+<h3>8.1 Adicionar Produto</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"MENU & STOCK"</strong> na barra lateral.</p>
+<p><strong>Passo 2:</strong> Clique <strong>"ADICIONAR PRODUTO"</strong>.</p>
+<p><strong>Passo 3:</strong> Preencha:</p>
+<ul>
+<li><strong>Nome</strong> do produto (ex: "Cerveja Cuca 33cl")</li>
+<li><strong>Categoria</strong> (Entradas, Pratos, Bebidas, Sobremesas)</li>
+<li><strong>Preço de venda</strong> (ex: 800 Kz)</li>
+<li><strong>Custo de produção</strong> (ex: 350 Kz)</li>
+<li><strong>Stock atual</strong> (quantidade em stock)</li>
+<li><strong>Stock mínimo</strong> (alerta quando atinge este valor)</li>
+<li><strong>Imagem</strong> (opcional — aparece no menu público)</li>
+</ul>
+<p><strong>Passo 4:</strong> Clique <strong>"GUARDAR"</strong>.</p>
+<p><strong>Margem automática:</strong> Preço − Custo. Mostra em % e valor absoluto. Produtos com margem negativa aparecem em vermelho.</p>
+</div>
+
+<h3>8.2 Gestão de Stock</h3>
+<div class="step-box">
+<p><strong>Alertas de stock baixo:</strong> Aparecem quando quantidade atinge o stock mínimo. Recebe notificação no Dashboard e Menu & Stock.</p>
+<p><strong>Ajuste de stock:</strong> Clique num produto → "Ajustar Stock" → insira nova quantidade → confirme. Use para:</p>
+<ul>
+<li>Reabastecimento após compra</li>
+<li>Correção após inventário físico</li>
+<li>Registar perdas/desperdício</li>
+</ul>
+<p><strong>Activar/desactivar:</strong> Produtos desactivados não aparecem no POS nem no menu público.</p>
+</div>
+
+<h3>8.3 Inventário Físico</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Em Menu & Stock, clique <strong>"INVENTÁRIO"</strong>.</p>
+<p><strong>Passo 2:</strong> O sistema mostra todos os produtos com stock atual.</p>
+<p><strong>Passo 3:</strong> Conte fisicamente cada produto e insira o valor real.</p>
+<p><strong>Passo 4:</strong> O sistema calcula diferenças (sobra/falta).</p>
+<p><strong>Passo 5:</strong> Clique <strong>"CONFIRMAR INVENTÁRIO"</strong> para ajustar stock.</p>
+</div>
+<div class="tip"><strong>DICA:</strong> Faça inventário físico pelo menos uma vez por mês. Discrepâncias repetidas indicam furtos ou erros de registo.</div>
+
+<!-- ==================== 9. COMPRAS ==================== -->
+<h2 id="compras">9. Compras e Aprovações</h2>
+<p>Gestão de pedidos de compra com fluxo de aprovação.</p>
+
+<h3>9.1 Fluxo de Compras</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Funcionário cria pedido de compra (descrição, quantidade, preço estimado, fornecedor).</p>
+<p><strong>Passo 2:</strong> Admin/Owner recebe notificação.</p>
+<p><strong>Passo 3:</strong> Aprovação: pode ser feita no sistema ou via Owner Hub (remoto).</p>
+<p><strong>Passo 4:</strong> Pedido fica "Aprovado" → compra pode ser executada.</p>
+<p><strong>Passo 5:</strong> Registar compra executada → stock atualizado automaticamente.</p>
+</div>
+
+<h3>9.2 Aprovação Remota (Owner Hub)</h3>
+<div class="step-box">
+<p>O proprietário pode aprovar compras de qualquer lugar:</p>
+<p><strong>Passo 1:</strong> Recebe notificação no Owner Dashboard.</p>
+<p><strong>Passo 2:</strong> Abre o pedido e vê: descrição, quantidade, preço, fornecedor.</p>
+<p><strong>Passo 3:</strong> Clique <strong>"APROVAR"</strong> ou <strong>"REJEITAR"</strong>.</p>
+<p><strong>Passo 4:</strong> O funcionário recebe a notificação no sistema.</p>
+</div>
+
+<h3>9.3 Cadastro de Fornecedores</h3>
+<div class="step-box">
+<p><strong>Campos:</strong> Nome, NIF, telefone, email, endereço.</p>
+<p>O sistema guarda histórico de compras por fornecedor para negociar melhores preços.</p>
+</div>
+
+<!-- ==================== 10. CAPITAL HUMANO ==================== -->
+<h2 id="hr">10. Capital Humano</h2>
+<p>Gestão de funcionários e processamento de folha salarial.</p>
+
+<h3>10.1 Adicionar Funcionário</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"CAPITAL HUMANO"</strong> na barra lateral.</p>
+<p><strong>Passo 2:</strong> Clique <strong>"ADICIONAR FUNCIONÁRIO"</strong>.</p>
+<p><strong>Passo 3:</strong> Preencha:</p>
+<ul>
+<li><strong>Nome completo</strong> (ex: João Manuel Silva)</li>
+<li><strong>Cargo</strong> — Garçom, Cozinheiro, Auxiliar, Gerente, Administrativo, Outro</li>
+<li><strong>NIF</strong> — 9 dígitos (ex: 123456789)</li>
+<li><strong>Salário base</strong> em Kwanza (ex: 150.000 Kz)</li>
+<li><strong>Tipo de contrato:</strong> Indeterminado, Determinado, ou Serviço</li>
+<li><strong>Subsídios</strong> (opcional): Alimentação, Transporte, Bónus</li>
+<li><strong>Isenção de IRT</strong> (apenas deficiência ou combatente)</li>
+</ul>
+<p><strong>Passo 4:</strong> Clique <strong>"GUARDAR FUNCIONÁRIO"</strong>.</p>
+</div>
+
+<h3>10.2 Processar Folha Salarial</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Capital Humano → Folha de Salário.</p>
+<p><strong>Passo 2:</strong> Clique <strong>"INICIAR PROCESSAMENTO DO MÊS"</strong>.</p>
+<p><strong>Passo 3:</strong> O sistema carrega todos os funcionários ativos.</p>
+<p><strong>Passo 4:</strong> Para cada funcionário, adicione ajustes (se aplicável):</p>
+<ul>
+<li><strong>Horas extras</strong> — valor positivo (ex: +20.000 Kz)</li>
+<li><strong>Outros descontos</strong> — valor negativo (ex: −5.000 Kz)</li>
+</ul>
+<p><strong>Passo 5:</strong> O sistema calcula automaticamente:</p>
+<ul>
+<li><strong>BRUTO</strong> = Salário Base + Subsídios + Horas Extras</li>
+<li><strong>INSS (3%)</strong> = 3% do (Salário Base + Bónus)</li>
+<li><strong>IRT</strong> = consulta tabela progressiva OGE 2024</li>
+<li><strong>LÍQUIDO</strong> = Bruto − INSS − IRT − Outros Descontos</li>
+</ul>
+<p><strong>Passo 6:</strong> Verifique os valores.</p>
+<p><strong>Passo 7:</strong> Clique <strong>"FECHAR E PROCESSAR FOLHA"</strong>.</p>
+<p><strong>Passo 8:</strong> A folha é gravada com número de recibo (RV-AAAA-MM-NNN).</p>
+</div>
+<div class="danger"><strong>IMPORTANTE:</strong> Depois de fechada, a folha NÃO pode ser alterada. Verifique tudo antes de confirmar.</div>
+
+<h3>10.3 INSS e IRT</h3>
+<div class="step-box">
+<p><strong>INSS Angola:</strong> Trabalhador paga 3% sobre (Salário + Bónus). Empregador paga 8%. Calculado automaticamente.</p>
+<p><strong>IRT Angola (tabela progressiva OGE 2024):</strong></p>
+<table>
+<tr><th>Escalão</th><th>Taxa</th></tr>
+<tr><td>1</td><td>10%</td></tr>
+<tr><td>2</td><td>13%</td></tr>
+<tr><td>3</td><td>16%</td></tr>
+<tr><td>4</td><td>18,5%</td></tr>
+<tr><td>5</td><td>19%</td></tr>
+<tr><td>6</td><td>20%</td></tr>
+<tr><td>7</td><td>21%</td></tr>
+</table>
+<p>Salários até 100.000 Kz isentos. Calculado automaticamente na folha.</p>
+</div>
+
+<h3>10.4 Recibos</h3>
+<div class="step-box">
+<p><strong>Recibos individuais:</strong> Capital Humano → Folha → ícone de impressora. Inclui: logotipo, dados, salário, subsídios, INSS, IRT, bruto e líquido.</p>
+<p><strong>Folha completa A4:</strong> Capital Humano → Folha → "Ver Folha Completa". A4 com todos os funcionários e totais.</p>
+</div>
+
+<!-- ==================== 11. RELATÓRIOS ==================== -->
+<h2 id="reports">11. Relatórios</h2>
+<p>Geração de relatórios detalhados para análise e compliance.</p>
+
+<h3>11.1 Relatórios Disponíveis</h3>
+<div class="step-box">
+<ul>
+<li><strong>Vendas por Período:</strong> Dia/semana/mês, exporte Excel</li>
+<li><strong>Vendas por Funcionário:</strong> Performance POS de cada operador</li>
+<li><strong>Vendas por Produto:</strong> Ranking de produtos vendidos</li>
+<li><strong>Vendas por Mesa:</strong> Análise por mesa do restaurante</li>
+<li><strong>Métodos de Pagamento:</strong> Breakdown por modalidade</li>
+<li><strong>Movimentação de Stock:</strong> Entradas, saídas e ajustes</li>
+<li><strong>Fluxo de Caixa:</strong> Entradas e saídas do período</li>
+<li><strong>Folha Salarial:</strong> Resumo de salários do mês</li>
+<li><strong>Despesas:</strong> Por categoria e período</li>
+<li><strong>Relatórios Fiscais (AGT):</strong> IVA, SAF-T, compliance</li>
+</ul>
+</div>
+
+<h3>11.2 Como Gerar e Exportar</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>"RELATÓRIOS"</strong> na barra lateral.</p>
+<p><strong>Passo 2:</strong> Selecione o tipo de relatório.</p>
+<p><strong>Passo 3:</strong> Defina o período e filtros.</p>
+<p><strong>Passo 4:</strong> Clique <strong>"GERAR"</strong>.</p>
+<p><strong>Passo 5:</strong> Exporte em <strong>PDF</strong> (layout oficial com logotipo) ou <strong>Excel</strong> (.xlsx).</p>
+</div>
+
+<!-- ==================== 12. OWNER DASHBOARD ==================== -->
+<h2 id="owner">12. Owner Dashboard</h2>
+<p>Acesso remoto para o proprietário gerir o restaurante de qualquer lugar.</p>
+
+<h3>12.1 Como Aceder</h3>
+<div class="step-box">
+<p><strong>URL:</strong> https://rest-ia.vercel.app/owner</p>
+<p>Login separado com credenciais de Owner. Acesso de qualquer dispositivo: telefone, tablet, computador.</p>
+</div>
+
+<h3>12.2 Cards do Owner Dashboard</h3>
+<div class="step-box">
+<ul>
+<li><strong>Faturação de Ontem:</strong> Total de vendas do dia operacional anterior</li>
+<li><strong>Fecho do Dia (Snapshot):</strong> Valor registado no momento do fecho. Se vazio, significa que não foi feito fecho (o sistema cria automaticamente — ver secção 15)</li>
+<li><strong>Despesas:</strong> Gastos do período</li>
+<li><strong>Lucro:</strong> Receita − Custos</li>
+<li><strong>Gráfico semanal:</strong> Vendas dos últimos 7 dias</li>
+</ul>
+</div>
+
+<h3>12.3 Aprovação de Compras Remota</h3>
+<div class="step-box">
+<p>No Owner Dashboard, o proprietário pode:</p>
+<ul>
+<li>Ver pedidos de compra pendentes</li>
+<li>Aprovar ou rejeitar com um clique</li>
+<li>Ver detalhes: descrição, quantidade, preço, fornecedor</li>
+<li>Receber notificações em tempo real</li>
+</ul>
+</div>
+
+<h3>12.4 Fecho de Caixa no Owner Dashboard</h3>
+<div class="step-box">
+<p>O card "Fecho do Dia" mostra o valor do fecho de caixa de ontem. Se o fecho não foi feito manualmente, o sistema cria automaticamente um fecho retroativo quando o Owner Dashboard abre (depois das 05:00).</p>
+<p>Cores do card:</p>
+<ul>
+<li><strong>Azul escuro:</strong> Fecho existe (valor disponível)</li>
+<li><strong>Cinzento:</strong> Sem fecho (será criado automaticamente)</li>
+</ul>
+</div>
+
+<!-- ==================== 13. IMPRESSORA ==================== -->
+<h2 id="printer">13. Configuração de Impressora</h2>
+<p>Configuração de impressora térmica para recibos.</p>
+
+<h3>13.1 Como Configurar</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Aceda a <strong>Configuração de Impressora</strong> (através do menu Sistema ou URL /printer-config).</p>
+<p><strong>Passo 2:</strong> Selecione o tipo de impressora:</p>
+<ul>
+<li><strong>USB</strong> — Impressora térmica ligada por USB (mais comum)</li>
+<li><strong>Rede</strong> — Impressora de rede (IP/porta)</li>
+<li><strong>Sem impressora</strong> — Apenas PDF/digital</li>
+</ul>
+<p><strong>Passo 3:</strong> Configure os parâmetros:</p>
+<ul>
+<li><strong>Largura do papel:</strong> 58mm, 80mm, ou A4</li>
+<li><strong>Velocidade:</strong> Normal ou Alta</li>
+<li><strong>Cortar papel:</strong> Sim/Não</li>
+</ul>
+<p><strong>Passo 4:</strong> Clique <strong>"TESTAR IMPRESSÃO"</strong> para verificar.</p>
+<p><strong>Passo 5:</strong> Se o teste imprimir corretamente, clique <strong>"GUARDAR"</strong>.</p>
+</div>
+
+<h3>13.2 Layout do Recibo</h3>
+<div class="step-box">
+<p>O recibo inclui automaticamente:</p>
+<ul>
+<li><strong>Cabeçalho:</strong> Nome do restaurante, NIF, endereço</li>
+<li><strong>Número da fatura:</strong> Formato FR VER{serie}/{nº}</li>
+<li><strong>Data e hora</strong></li>
+<li><strong>Itens:</strong> Nome, quantidade, preço unitário, total</li>
+<li><strong>Subtotal, IVA (7%), Total Geral</strong></li>
+<li><strong>Método de pagamento</strong></li>
+<li><strong>Rodapé:</strong> Mensagem configurável</li>
+</ul>
+</div>
+
+<h3>13.3 Impressão de Cozinha</h3>
+<div class="step-box">
+<p>Pode configurar uma impressora separada para a cozinha:</p>
+<ul>
+<li>Imprime tickets de pedido com itens e observações</li>
+<li>Formato compacto: mesa, item, quantidade, observações</li>
+<li>Configurar em Sistema → Configurações → Impressora de Cozinha</li>
+</ul>
+</div>
+
+<!-- ==================== 14. SISTEMA ==================== -->
+<h2 id="system">14. Sistema (SystemHub)</h2>
+<p>Configurações gerais do sistema, gestão de utilizadores e integrações.</p>
+
+<h3>14.1 Dados do Restaurante</h3>
+<div class="step-box">
+<p><strong>Nome do restaurante</strong> (ex: "Tasca do Vereda")</p>
+<p><strong>NIF</strong> do restaurante (obrigatório para faturação)</p>
+<p><strong>Endereço</strong> (aparece nos recibos)</p>
+<p><strong>Telefone</strong> e email</p>
+<p><strong>Taxa IVA</strong> (padrão 7% para Angola)</p>
+<p><strong>Moeda</strong> (Kz — Kwanzas)</p>
+</div>
+
+<h3>14.2 Custos Fixos Mensais (Break-Even)</h3>
+<div class="step-box">
+<p>Em Sistema → Custos Fixos Mensais, pode definir manualmente o valor dos custos fixos para o cálculo do Break-Even.</p>
+<p><strong>Se preencher:</strong> O sistema usa este valor como custos fixos (ex: 570.000 Kz).</p>
+<p><strong>Se deixar vazio:</strong> O sistema calcula automaticamente: Salários (staffCosts) + Despesas de UTILIDADES.</p>
+<div class="example"><strong>Recomendado:</strong> Deixar vazio para usar o cálculo automático. O sistema soma automaticamente os salários de todos os funcionários ativos + despesas categorizadas como "UTILIDADES".</div>
+</div>
+
+<h3>14.3 Gestão de Utilizadores</h3>
+<div class="step-box">
+<p><strong>Funções:</strong></p>
+<ul>
+<li><strong>Garçom</strong> — Apenas POS (vendas)</li>
+<li><strong>Caixa</strong> — POS + fecho de turno/dia</li>
+<li><strong>Gerente</strong> — Tudo excepto configurações do sistema</li>
+<li><strong>Proprietário (Owner)</strong> — Acesso total</li>
+</ul>
+<p><strong>Permissões:</strong></p>
+<ul>
+<li><strong>POS_SALES</strong> — Terminal POS e vendas</li>
+<li><strong>STOCK_MANAGE</strong> — Menu & Stock, Compras, Inventário</li>
+<li><strong>FINANCE_VIEW</strong> — Dashboard, Financeiro, Relatórios, Analytics</li>
+<li><strong>SYSTEM_CONFIG</strong> — Configurações, Gestão de Utilizadores, Supabase</li>
+</ul>
+<p><strong>Criar utilizador:</strong> Sistema → Gestão de Utilizadores → Novo → Nome, função, PIN (4 dígitos), permissões → Guardar.</p>
+</div>
+
+<h3>14.4 Configuração Supabase</h3>
+<div class="step-box">
+<p><strong>Passo 1:</strong> Sistema → Supabase.</p>
+<p><strong>Passo 2:</strong> Insira <strong>URL do projeto</strong> e <strong>chave anónima</strong>.</p>
+<p><strong>Passo 3:</strong> Clique <strong>"TESTAR LIGAÇÃO"</strong>.</p>
+<p><strong>Passo 4:</strong> Se verde = OK → clique <strong>"GUARDAR"</strong>.</p>
+<p><strong>Passo 5:</strong> Use <strong>"DIAGNOSTICAR"</strong> para verificar estado da conexão.</p>
+</div>
+<div class="danger"><strong>ATENÇÃO:</strong> NUNCA partilhe a chave do Supabase. O PIN de cada utilizador é confidencial.</div>
+
+<h3>14.5 Menu Público Digital</h3>
+<div class="step-box">
+<p>Configure o menu público que os clientes acedem via QR Code:</p>
+<ul>
+<li>Activar/desactivar produtos no menu público</li>
+<li>URL: https://rest-ia.vercel.app/menu</li>
+<li>Gerar e imprimir QR Codes para as mesas</li>
+</ul>
+</div>
+
+<!-- ==================== 15. FECHO AUTOMÁTICO ==================== -->
+<h2 id="fecho-auto">15. Fecho Automático de Caixa</h2>
+<p>O sistema tem fecho automático de segurança que funciona em qualquer página da app.</p>
+
+<h3>15.1 Fecho às 04:55 (Automático)</h3>
+<div class="step-box">
+<p>Entre 04:55 e 04:59 (hora de Luanda), se o dia que está a acabar não tem fecho, o sistema cria automaticamente:</p>
+<ul>
+<li>Soma de todas as vendas do dia (status "closed" ou "paid")</li>
+<li>Descrição: "Fecho Automático de Segurança — X vendas"</li>
+<li>Operador: "Sistema (Auto-Fecho)"</li>
+</ul>
+<p><strong>Onde funciona:</strong> Em qualquer página aberta — POS, Dashboard, Owner Dashboard. Se a app estiver aberta em qualquer página, o fecho automático executa.</p>
+</div>
+
+<h3>15.2 Fecho Retroativo</h3>
+<div class="step-box">
+<p>Se ninguém teve a app aberta às 04:55, quando o Owner Dashboard ou Dashboard abre depois das 05:00 e o dia anterior não tem fecho, o sistema cria automaticamente o fecho retroativo.</p>
+<p>Descrição: "Fecho Automático Retroativo — X vendas".</p>
+</div>
+
+<h3>15.3 Prevenção de Duplicação</h3>
+<div class="step-box">
+<p>O sistema verifica sempre se já existe fecho antes de criar. Se já existe (manual ou automático), não cria duplicado.</p>
+<p>Se houver tentativa de fecho manual para um dia que já tem fecho automático, o sistema actualiza o registo existente em vez de criar novo.</p>
+</div>
+<div class="tip"><strong>DICA:</strong> Mesmo com o fecho automático, faça sempre o fecho manual no final do dia para conferir os valores. O fecho automático é uma rede de segurança, não substitui o procedimento normal.</div>
+
+<!-- ==================== 16. PROBLEMAS COMUNS ==================== -->
+<h2 id="problemas">16. Problemas Comuns (Admin)</h2>
+
+<h3>16.1 Dashboard mostra 0 Kz</h3>
+<div class="step-box">
+<p><strong>Causa:</strong> Sem ligação ao Supabase ou sem vendas com status "closed"/"paid".</p>
+<p><strong>Solução:</strong> Sistema → Diagnosticar. Verifique se o Supabase está acessível. Se houver vendas pendentes, sincronize manualmente.</p>
+</div>
+
+<h3>16.2 Break-Even mostra valor errado</h3>
+<div class="step-box">
+<p><strong>Causa:</strong> Custos fixos definidos manualmente em Sistema, ou despesas de UTILIDADES não categorizadas corretamente.</p>
+<p><strong>Solução:</strong> Verifique em Sistema → Custos Fixos Mensais. Se definido manualmente, limpe o campo para usar cálculo automático (salários + UTILIDADES). Confirme que as despesas de aluguer/água/luz têm categoria "UTILIDADES".</p>
+</div>
+
+<h3>16.3 Fecho de caixa não foi feito</h3>
+<div class="step-box">
+<p><strong>Causa:</strong> Ninguém fez fecho manual e a app não estava aberta às 04:55.</p>
+<p><strong>Solução:</strong> Abra o Owner Dashboard depois das 05:00. O sistema cria o fecho retroativo automaticamente. O card "Fecho do Dia" passa a mostrar o valor.</p>
+</div>
+
+<h3>16.4 Folha salarial com valores errados</h3>
+<div class="step-box">
+<p><strong>Causa:</strong> Dados do funcionário incorretos (salário base, subsídios) ou IRT calculado sobre base errada.</p>
+<p><strong>Solução:</strong> Verifique os dados de cada funcionário em Capital Humano. Confirme salário base e subsídios. O INSS é 3% sobre (salário + bónus). O IRT usa tabela progressiva OGE 2024.</p>
+</div>
+
+<h3>16.5 Supabase não sincroniza</h3>
+<div class="step-box">
+<p><strong>Solução:</strong> Sistema → Diagnosticar. Verifique URL e chave. Teste a ligação. Se a chave expirou, gere nova no dashboard do Supabase. Verifique se as tabelas existem e têm as permissões RLS corretas.</p>
+</div>
+
+<h3>16.6 AGT — SAF-T não exporta</h3>
+<div class="step-box">
+<p><strong>Solução:</strong> Verifique se o NIF do restaurante está configurado em Sistema. Confirme que há vendas no período selecionado. Verifique se a série de faturação está configurada em AGT → Configurações.</p>
+</div>
+
+<!-- ==================== 17. FAQ ==================== -->
+<h2 id="faq">17. FAQ Administrador</h2>
+
+<div class="step-box">
+<p><strong>P: Como altero a taxa de IVA?</strong><br>
+R: Sistema → Configurações → Taxa IVA. Padrão é 7% (Angola). Altere e guarde. Aplica-se a todas as novas vendas.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: Como adiciono um novo utilizador?</strong><br>
+R: Sistema → Gestão de Utilizadores → Novo Utilizador. Defina nome, função, PIN (4 dígitos) e permissões.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: O cálculo de Break-Even inclui todos os custos?</strong><br>
+R: Inclui salários (staffCosts) e despesas de UTILIDADES. Se definir um valor manual em Sistema, esse valor substitui o cálculo automático. Não inclui despesas de compras ou marketing — apenas custos fixos.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: Posso aprovar compras do meu telemóvel?</strong><br>
+R: Sim! Aceda ao Owner Dashboard em https://rest-ia.vercel.app/owner. Veja pedidos pendentes e aprove/rejeite com um clique.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: O que acontece se o fecho automático criar um fecho errado?</strong><br>
+R: O fecho automático soma todas as vendas com status "closed"/"paid". Se houver vendas pendentes (status "open"), estas não são incluídas. Pode fazer um fecho manual depois — o sistema actualiza o registo existente.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: Como exporto o SAF-T para a AGT?</strong><br>
+R: AGT → Exportar SAF-T. Selecione o período. O sistema gera o ficheiro no formato OGA 2024. Guarde e submeta no portal da AGT.</p>
+</div>
+
+<div class="step-box">
+<p><strong>P: O Menu Público Digital atualiza automaticamente?</strong><br>
+R: Sim! Quando altera produtos em Menu & Stock (preço, nome, disponibilidade), o menu público atualiza automaticamente. Não precisa de fazer nada extra.</p>
+</div>
+
+<div class="tip"><strong>💡 Precisa de mais ajuda?</strong> Use o chat bot no canto inferior direito. O bot responde a perguntas sobre todas as funcionalidades, incluindo Break-Even, AGT, Owner Dashboard, Impressoras, e muito mais.</div>
+
+</div>
+</body>
+</html>

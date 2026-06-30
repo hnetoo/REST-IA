@@ -1,0 +1,171 @@
+index.tsx(4,17): error TS2307: Cannot find module './App_tauri' or its corresponding type declarations.
+src/App_tauri.tsx(101,59): error TS2307: Cannot find module './lib/pendingSyncOrders' or its corresponding type declarations.
+src/components/DebugOverlay.tsx(73,39): error TS2339: Property 'os' does not exist on type '{}'.
+src/components/DebugOverlay.tsx(74,35): error TS2339: Property 'os' does not exist on type '{}'.
+src/components/DebugOverlay.tsx(105,16): error TS2307: Cannot find module '../lib/supabase' or its corresponding type declarations.
+src/components/DeveloperConsole.tsx(3,39): error TS2307: Cannot find module '../services/versionControlService' or its corresponding type declarations.
+src/components/DeveloperConsole.tsx(32,26): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/components/Sidebar.tsx(12,21): error TS2307: Cannot find module '/logo.png' or its corresponding type declarations.
+src/hooks/useSyncCoreOffline.ts(2,21): error TS2307: Cannot find module 'lowdb' or its corresponding type declarations.
+src/hooks/useSyncCoreOffline.ts(62,32): error TS2503: Cannot find namespace 'low'.
+src/hooks/useSyncCoreOffline.ts(68,29): error TS2304: Cannot find name 'low'.
+src/hooks/useSyncCoreOffline.ts(86,36): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'LocalDB'.
+src/hooks/useSyncCoreOffline.ts(107,54): error TS2503: Cannot find namespace 'low'.
+src/hooks/useSyncCoreOffline.ts(213,11): error TS2451: Cannot redeclare block-scoped variable 'today'.
+src/hooks/useSyncCoreOffline.ts(222,11): error TS2451: Cannot redeclare block-scoped variable 'today'.
+src/hooks/useSyncCoreOffline.ts(234,11): error TS2451: Cannot redeclare block-scoped variable 'today'.
+src/hooks/useSyncCoreOffline.ts(240,11): error TS2451: Cannot redeclare block-scoped variable 'today'.
+src/lib/data/localDataService.ts(1,29): error TS2307: Cannot find module './offlineSync' or its corresponding type declarations.
+src/lib/data/localDataService.ts(141,7): error TS2740: Type '{ id: string; status: "FECHADO"; total: number; created_at: string; }' is missing the following properties from type 'LocalOrder': items, type, timestamp, tax_total, and 2 more.
+src/lib/data/localDataService.ts(147,7): error TS2740: Type '{ id: string; status: "FECHADO"; total: number; created_at: string; }' is missing the following properties from type 'LocalOrder': items, type, timestamp, tax_total, and 2 more.
+src/lib/database/localDatabaseService.ts(2,29): error TS2307: Cannot find module './offlineSync' or its corresponding type declarations.
+src/lib/database/localDatabaseService.ts(178,25): error TS7006: Parameter 'order' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(227,27): error TS7006: Parameter 'expense' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(276,24): error TS7006: Parameter 'person' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(336,26): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(463,15): error TS7006: Parameter 'order' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(468,16): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(468,21): error TS7006: Parameter 'order' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(470,41): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(470,46): error TS7006: Parameter 'order' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(471,45): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(471,50): error TS7006: Parameter 'expense' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(473,41): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(473,46): error TS7006: Parameter 'person' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(478,54): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+src/lib/database/localDatabaseService.ts(478,59): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/lib/geminiService.ts(3,10): error TS2305: Module '"../types"' has no exported member 'Dish'.
+src/lib/geminiService.ts(3,23): error TS2305: Module '"../types"' has no exported member 'AIAnalysisResult'.
+src/lib/geminiService.ts(3,41): error TS2305: Module '"../types"' has no exported member 'AIMonthlyReport'.
+src/lib/geminiService.ts(3,58): error TS2305: Module '"../types"' has no exported member 'Table'.
+src/lib/invoiceSequenceService.ts(2,49): error TS2307: Cannot find module './agtService' or its corresponding type declarations.
+src/lib/metricsCalculator.ts(1,48): error TS2307: Cannot find module './dataService' or its corresponding type declarations.
+src/lib/metricsCalculator.ts(4,34): error TS2307: Cannot find module './dataService' or its corresponding type declarations.
+src/lib/sharedMetrics.ts(1,26): error TS2307: Cannot find module './supabase' or its corresponding type declarations.
+src/lib/supabaseDiagnostics.ts(1,26): error TS2307: Cannot find module './supabase' or its corresponding type declarations.
+src/lib/supabaseService.ts(6,28): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/lib/supabaseService.ts(7,32): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/lib/sync/offlineSync.ts(1,26): error TS2307: Cannot find module '../supabase_standalone' or its corresponding type declarations.
+src/lib/thermalPrinterConfig.ts(1,10): error TS2305: Module '"../types"' has no exported member 'SystemSettings'.
+src/main.tsx(76,17): error TS18046: 'error' is of type 'unknown'.
+src/main.tsx(76,32): error TS18046: 'error' is of type 'unknown'.
+src/services/cleanFetchService.ts(266,12): error TS2551: Property 'categoryId' does not exist on type 'Dish'. Did you mean 'category_id'?
+src/services/cleanFetchService.ts(266,28): error TS2551: Property 'categoryId' does not exist on type 'Dish'. Did you mean 'category_id'?
+src/services/idCleanupService.ts(87,15): error TS2322: Type '{ id: any; costPrice: number; categoryId: string; description: string; image: string; image_url: any; createdAt: any; name: string; price: number; category_id: string; taxCode?: string; isVisibleDigital?: boolean; ... 5 more ...; min_stock?: number; }' is not assignable to type 'LocalProduct'.
+  Types of property 'is_active' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/services/idCleanupService.ts(98,17): error TS2345: Argument of type 'LocalProduct' is not assignable to parameter of type 'Dish'.
+  Types of property 'costPrice' are incompatible.
+    Type 'number | undefined' is not assignable to type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+src/services/productRecoveryService.ts(189,11): error TS2561: Object literal may only specify known properties, but 'categoryId' does not exist in type 'Dish'. Did you mean to write 'category_id'?
+src/store/index.ts(21,43): error TS2307: Cannot find module './useStoreLegacy' or its corresponding type declarations.
+src/store/slices/useFinanceStore.ts(69,33): error TS2352: Conversion of type '{ status: "APPROVED"; approvedBy: string; approvedAt: string; }' to type 'Partial<Expense>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'status' are incompatible.
+    Type '"APPROVED"' is not comparable to type 'ExpenseStatus | undefined'.
+src/store/slices/useMenuStore.ts(83,49): error TS2339: Property 'isVisible' does not exist on type 'Dish'.
+src/store/slices/useMenuStore.ts(122,49): error TS2339: Property 'isVisible' does not exist on type 'MenuCategory'.
+src/store/slices/useMenuStore.ts(189,39): error TS2322: Type '"CANCELLED"' is not assignable to type '"PENDENTE" | "CONFIRMADA" | "CANCELADA" | undefined'.
+src/store/slices/useOrderStore.ts(339,56): error TS2339: Property 'debt' does not exist on type 'Customer'.
+src/store/slices/useSettingsStore.ts(4,25): error TS2307: Cannot find module '/logo.png' or its corresponding type declarations.
+src/store/slices/useSettingsStore.ts(31,3): error TS2353: Object literal may only specify known properties, and 'language' does not exist in type 'SystemSettings'.
+src/store/slices/useSettingsStore.ts(88,11): error TS2353: Object literal may only specify known properties, and 'timestamp' does not exist in type 'Notification'.
+src/store/slices/useUserStore.ts(165,38): error TS2352: Conversion of type '{ id: any; name: any; role: any; pin: any; permissions: any; status: any; email: any; phone: any; bio_id: any; }[]' to type 'Employee[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: any; name: any; role: any; pin: any; permissions: any; status: any; email: any; phone: any; bio_id: any; }' is missing the following properties from type 'Employee': salary, color, workDaysPerMonth, dailyWorkHours, externalBioId
+src/store/slices/useUserStore.ts(177,11): error TS2322: Type 'null' is not assignable to type 'string | Date | undefined'.
+src/store/useStore.ts(141,25): error TS2307: Cannot find module '/logo.png' or its corresponding type declarations.
+src/store/useStore.ts(469,37): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/store/useStore.ts(471,41): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/store/useStore.utils.ts(132,37): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/store/useStore.utils.ts(133,41): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/utils/finance.ts(36,3): error TS2322: Type 'string | boolean' is not assignable to type 'boolean'.
+  Type 'string' is not assignable to type 'boolean'.
+src/views/AGTControl.tsx(35,18): error TS2345: Argument of type 'Promise<string>' is not assignable to parameter of type 'string'.
+src/views/Analytics.tsx(213,27): error TS2339: Property 'category' does not exist on type 'Dish'.
+src/views/CustomerDisplay.tsx(314,158): error TS2551: Property 'categoryId' does not exist on type 'Dish'. Did you mean 'category_id'?
+src/views/DashboardV2.tsx(501,24): error TS2322: Type '{ size: number; }' is not assignable to type 'IntrinsicAttributes & CategoricalChartProps & RefAttributes<{ readonly eventEmitterSymbol: Symbol; clipPathId: string; accessibilityManager: AccessibilityManager; ... 65 more ...; UNSAFE_componentWillUpdate?(nextProps: Readonly<...>, nextState: Readonly<...>, nextContext: any): void; }>'.
+  Property 'size' does not exist on type 'IntrinsicAttributes & CategoricalChartProps & RefAttributes<{ readonly eventEmitterSymbol: Symbol; clipPathId: string; accessibilityManager: AccessibilityManager; ... 65 more ...; UNSAFE_componentWillUpdate?(nextProps: Readonly<...>, nextState: Readonly<...>, nextContext: any): void; }>'.
+src/views/DBHub.tsx(3,58): error TS2307: Cannot find module '../lib/databaseService' or its corresponding type declarations.
+src/views/DBHub.tsx(22,52): error TS2367: This comparison appears to be unintentional because the types '"CAIXA" | "GARCOM" | "COZINHA" | "OWNER" | undefined' and '"DONO"' have no overlap.
+src/views/Employees.tsx(100,9): error TS2783: 'discounts' is specified more than once, so this usage will be overwritten.
+src/views/Employees.tsx(101,9): error TS2783: 'overtime' is specified more than once, so this usage will be overwritten.
+src/views/Events.tsx(609,43): error TS2339: Property 'deletePackage' does not exist on type '{ listPackages(): Promise<EventPackage[]>; getPackagesByType(eventType: EventType): Promise<EventPackage[]>; getPackageById(id: string): Promise<...>; createPackage(pkg: Omit<...>): Promise<...>; updatePackage(id: string, updates: Partial<...>): Promise<...>; deactivatePackage(id: string): Promise<...>; calculatePac...'.
+src/views/Events.tsx(1615,9): error TS2322: Type 'string' is not assignable to type '"MARKETING" | "STAFF" | "ARTIST_FEE" | "TRANSPORT" | "EQUIPMENT" | "OTHER"'.
+src/views/Events.tsx(1638,9): error TS2322: Type 'string' is not assignable to type '"POS_SALES" | "TICKETS" | "SPONSORSHIP" | "MERCHANDISE"'.
+src/views/ExpenseReports.tsx(122,41): error TS2339: Property 'split' does not exist on type 'string | Date'.
+  Property 'split' does not exist on type 'Date'.
+src/views/Finance.tsx(13,10): error TS2305: Module '"../types"' has no exported member 'PaymentMethodConfig'.
+src/views/Finance.tsx(13,40): error TS2305: Module '"../types"' has no exported member 'ExpenseCategory'.
+src/views/Finance.tsx(13,57): error TS2305: Module '"../types"' has no exported member 'ExpenseStatus'.
+src/views/Finance.tsx(53,5): error TS2353: Object literal may only specify known properties, and 'amount' does not exist in type 'Omit<Expense, "id" | "createdAt" | "updatedAt"> | (() => Omit<Expense, "id" | "createdAt" | "updatedAt">)'.
+src/views/Finance.tsx(297,20): error TS2345: Argument of type 'Promise<string>' is not assignable to parameter of type 'string'.
+src/views/Finance.tsx(380,47): error TS2339: Property 'amount' does not exist on type 'Omit<Expense, "id" | "createdAt" | "updatedAt">'.
+src/views/Finance.tsx(398,31): error TS2339: Property 'amount' does not exist on type 'Omit<Expense, "id" | "createdAt" | "updatedAt">'.
+src/views/Finance.tsx(417,11): error TS2353: Object literal may only specify known properties, and 'amount' does not exist in type 'SetStateAction<Omit<Expense, "id" | "createdAt" | "updatedAt">>'.
+src/views/Finance.tsx(440,11): error TS2353: Object literal may only specify known properties, and 'amount' does not exist in type 'SetStateAction<Omit<Expense, "id" | "createdAt" | "updatedAt">>'.
+src/views/Finance.tsx(467,7): error TS2353: Object literal may only specify known properties, and 'amount' does not exist in type 'SetStateAction<Omit<Expense, "id" | "createdAt" | "updatedAt">>'.
+src/views/Finance.tsx(467,23): error TS2339: Property 'amount' does not exist on type 'Expense'.
+src/views/Finance.tsx(470,21): error TS2339: Property 'date' does not exist on type 'Expense'.
+src/views/Finance.tsx(476,66): error TS2339: Property 'amount' does not exist on type 'Omit<Expense, "id" | "createdAt" | "updatedAt">'.
+src/views/Finance.tsx(481,38): error TS2345: Argument of type '{ updatedAt: Date; created_at: string; updated_at: string; description: string; category: string; status: string; amount_kz: number; }' is not assignable to parameter of type 'Partial<Expense>'.
+  Types of property 'category' are incompatible.
+    Type 'string' is not assignable to type 'ExpenseCategory | undefined'.
+src/views/Finance.tsx(488,7): error TS2353: Object literal may only specify known properties, and 'amount' does not exist in type 'SetStateAction<Omit<Expense, "id" | "createdAt" | "updatedAt">>'.
+src/views/Finance.tsx(997,37): error TS2339: Property 'amount' does not exist on type 'Omit<Expense, "id" | "createdAt" | "updatedAt">'.
+src/views/Finance.tsx(998,64): error TS2353: Object literal may only specify known properties, and 'amount' does not exist in type 'SetStateAction<Omit<Expense, "id" | "createdAt" | "updatedAt">>'.
+src/views/Finance.tsx(1007,37): error TS2339: Property 'date' does not exist on type 'Omit<Expense, "id" | "createdAt" | "updatedAt">'.
+src/views/Finance.tsx(1008,64): error TS2353: Object literal may only specify known properties, and 'date' does not exist in type 'SetStateAction<Omit<Expense, "id" | "createdAt" | "updatedAt">>'.
+src/views/Finance.tsx(1020,23): error TS2353: Object literal may only specify known properties, and 'amount' does not exist in type 'SetStateAction<Omit<Expense, "id" | "createdAt" | "updatedAt">>'.
+src/views/Finance_Original.tsx(271,20): error TS2345: Argument of type 'Promise<string>' is not assignable to parameter of type 'string'.
+src/views/Finance_Original.tsx(372,31): error TS2339: Property 'amount' does not exist on type 'Omit<Expense, "created_at" | "updated_at" | "id">'.
+src/views/Finance_Original.tsx(452,38): error TS2345: Argument of type '{ updatedAt: Date; date?: string | undefined; description: string; category: string; status: string; amount_kz: number; }' is not assignable to parameter of type 'Partial<Expense>'.
+  Types of property 'category' are incompatible.
+    Type 'string' is not assignable to type 'ExpenseCategory | undefined'.
+src/views/Finance_Original.tsx(755,51): error TS2345: Argument of type 'Omit<PaymentMethodConfig, "id">' is not assignable to parameter of type 'Omit<import("C:/Users/hneto/rest-ia-Tasca do Vereda/types").PaymentMethodConfig, "id">'.
+  Types of property 'type' are incompatible.
+    Type 'string' is not assignable to type 'PaymentMethod'.
+src/views/Finance_Original.tsx(967,37): error TS2339: Property 'amount' does not exist on type 'Omit<Expense, "created_at" | "updated_at" | "id">'.
+src/views/Finance_Original.tsx(968,64): error TS2353: Object literal may only specify known properties, and 'amount' does not exist in type 'SetStateAction<Omit<Expense, "created_at" | "updated_at" | "id">>'.
+src/views/Finance_Original.tsx(990,23): error TS2353: Object literal may only specify known properties, and 'amount' does not exist in type 'SetStateAction<Omit<Expense, "created_at" | "updated_at" | "id">>'.
+src/views/Kitchen.tsx(10,31): error TS2339: Property 'updateOrderItemStatus' does not exist on type 'StoreState'.
+src/views/Login.tsx(7,21): error TS2307: Cannot find module '/logo.png' or its corresponding type declarations.
+src/views/OvertimeReports.tsx(75,75): error TS18047: 'emp' is possibly 'null'.
+src/views/OvertimeReports.tsx(173,26): error TS18047: 'employee' is possibly 'null'.
+src/views/OvertimeReports.tsx(176,60): error TS18047: 'employee' is possibly 'null'.
+src/views/OvertimeReports.tsx(179,55): error TS18047: 'employee' is possibly 'null'.
+src/views/OvertimeReports.tsx(180,74): error TS18047: 'employee' is possibly 'null'.
+src/views/OvertimeReports.tsx(181,74): error TS18047: 'employee' is possibly 'null'.
+src/views/OvertimeReports.tsx(182,85): error TS18047: 'employee' is possibly 'null'.
+src/views/OvertimeReports.tsx(183,64): error TS18047: 'employee' is possibly 'null'.
+src/views/OvertimeReports.tsx(184,86): error TS18047: 'employee' is possibly 'null'.
+src/views/OvertimeReports.tsx(187,24): error TS18047: 'employee' is possibly 'null'.
+src/views/OvertimeReports.tsx(203,60): error TS18047: 'emp' is possibly 'null'.
+src/views/OvertimeReports.tsx(206,69): error TS18047: 'emp' is possibly 'null'.
+src/views/OvertimeReports.tsx(227,87): error TS18047: 'emp' is possibly 'null'.
+src/views/OvertimeReports.tsx(235,60): error TS18047: 'emp' is possibly 'null'.
+src/views/OvertimeReports.tsx(242,63): error TS18047: 'emp' is possibly 'null'.
+src/views/Purchases.tsx(62,39): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/views/Purchases.tsx(98,39): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/views/Purchases.tsx(454,52): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/views/Settings.tsx(20,15): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/views/Settings.tsx(21,15): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/views/SystemHub.tsx(311,20): error TS2345: Argument of type 'SystemHubUser' is not assignable to parameter of type 'User'.
+  Types of property 'permissions' are incompatible.
+    Type 'string[]' is not assignable to type 'PermissionKey[]'.
+      Type 'string' is not assignable to type 'PermissionKey'.
+src/views/SystemHub.tsx(313,17): error TS2345: Argument of type 'SystemHubUser' is not assignable to parameter of type 'User'.
+  Types of property 'permissions' are incompatible.
+    Type 'string[]' is not assignable to type 'PermissionKey[]'.
+      Type 'string' is not assignable to type 'PermissionKey'.
+src/views/SystemHub.tsx(653,20): error TS2345: Argument of type 'Promise<string>' is not assignable to parameter of type 'string'.
+src/views/SystemHub.tsx(1125,9): error TS2304: Cannot find name 'safeAlert'.
+src/views/SystemHub.tsx(1135,30): error TS2552: Cannot find name 'safeLocalStorage'. Did you mean 'localStorage'?
+src/views/SystemHub.tsx(1168,32): error TS2552: Cannot find name 'safeSessionStorage'. Did you mean 'sessionStorage'?
+src/views/SystemHub.tsx(1201,24): error TS2304: Cannot find name 'safeWindow'.
+src/views/SystemHub.tsx(1219,13): error TS2304: Cannot find name 'safeReload'.
+src/views/SystemHub.tsx(1242,9): error TS2304: Cannot find name 'safeAlert'.
+src/views/SystemHub.tsx(1246,9): error TS2304: Cannot find name 'safeAlert'.
+src/views/SystemHub.tsx(1602,15): error TS2304: Cannot find name 'loadExternalHistory'.
+src/views/SystemHub.tsx(1898,37): error TS2304: Cannot find name 'loadExternalHistory'.
+src/views/TableLayout.tsx(42,13): error TS2739: Type '{ id: number; name: string; zone: TableZone; x: number; y: number; seats: number; status: "LIVRE"; }' is missing the following properties from type 'Table': shape, rotation

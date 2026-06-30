@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS Mockup — Tasca do Vereda (Preview)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#fff;overflow:hidden;height:100vh}
+.pos{display:flex;height:100vh;padding-top:28px}
+
+/* BANNER */
+.banner{position:fixed;top:0;left:0;right:0;height:28px;background:linear-gradient(90deg,#06b6d4,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#000;z-index:99999}
+
+/* COLUNA MESAS */
+.col-m{width:170px;background:#0b1120;border-right:1px solid rgba(255,255,255,.05);display:flex;flex-direction:column;padding:10px;gap:6px;overflow-y:auto;max-height:calc(100vh - 28px)}
+.tit{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.15em;color:#64748b;margin-bottom:2px}
+.mc{padding:10px 12px;border-radius:12px;border:1px solid transparent;cursor:pointer;transition:all .2s;position:relative}
+.mc.l{background:rgba(255,255,255,.03);border-color:rgba(16,185,129,.15)}
+.mc.l:hover{background:rgba(255,255,255,.06);border-color:rgba(16,185,129,.3)}
+.mc.o{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2)}
+.mc.o:hover{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.35)}
+.mc.a{background:#06b6d4;color:#000;box-shadow:0 0 20px rgba(6,182,212,.3)}
+.mc.al{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{border-color:rgba(239,68,68,.3)}50%{border-color:rgba(239,68,68,.6)}}
+.mb{display:flex;justify-content:space-between;align-items:center}
+.mn{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:-.02em}
+.mt{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.2)}
+.mt.g{color:#34d399}.mt.a{color:#fbbf24}.mt.r{color:#f87171}
+.mbadge{position:absolute;top:-5px;right:-5px;background:#06b6d4;color:#000;font-size:9px;font-weight:900;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.mbot{margin-top:4px;font-size:10px;color:rgba(255,255,255,.4);font-weight:600}
+.mc.a .mbot{color:rgba(0,0,0,.5)}
+
+/* COLUNA PRODUTOS */
+.col-p{flex:1;display:flex;flex-direction:column;background:#0f172a;min-width:0}
+.topbar{height:52px;background:rgba(15,23,42,.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
+.mbtn{width:36px;height:36px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .2s;flex-shrink:0}
+.mbtn:hover{background:rgba(255,255,255,.1)}
+.msidebar{position:fixed;top:28px;left:0;bottom:0;width:220px;background:#0b1120;border-right:1px solid rgba(255,255,255,.08);z-index:99998;padding:20px;transform:translateX(-100%);transition:transform .3s;box-shadow:4px 0 24px rgba(0,0,0,.4)}
+.msidebar.on{transform:translateX(0)}
+.msidebar h4{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.15em;color:#64748b;margin-bottom:12px}
+.mitem{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:6px;cursor:pointer;transition:all .2s;color:#94a3b8;font-size:13px;font-weight:600}
+.mitem:hover{background:rgba(255,255,255,.05);color:#fff}
+.mitem.on{background:#06b6d4;color:#000}
+.mitem .mi{width:20px;text-align:center}
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99997;display:none}
+.moverlay.on{display:block}
+.search{position:relative;width:240px}
+.search input{width:100%;padding:9px 12px 9px 36px;background:rgba(255,255,255,.05);border:1px solid rgba(6,182,212,.3);border-radius:12px;color:#fff;font-size:13px;outline:none}
+.search input::placeholder{color:#64748b}
+.search::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px}
+.vtoggle{margin-left:auto;display:flex;gap:3px;background:rgba(255,255,255,.04);padding:3px;border-radius:8px}
+.vb{padding:6px 10px;border-radius:6px;font-size:10px;cursor:pointer;border:none;background:transparent;color:#64748b;font-weight:700}
+.vb.on{background:rgba(255,255,255,.1);color:#fff}
+.clock{margin-left:12px;text-align:right;font-size:11px;color:#94a3b8;font-weight:600}
+.clock span{color:#06b6d4}
+
+.tabs{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.03)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:7px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;border:1px solid transparent;background:rgba(255,255,255,.04);color:#94a3b8;transition:all .2s}
+.tab:hover{background:rgba(255,255,255,.08);color:#fff}
+.tab.on{background:#06b6d4;color:#000;box-shadow:0 0 15px rgba(6,182,212,.25)}
+
+.parea{flex:1;overflow-y:auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}
+.pcard{background:rgba(255,255,255,.03);border:2px solid rgba(255,255,255,.05);border-radius:18px;overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
+.pcard:hover{border-color:rgba(6,182,212,.4);transform:translateY(-2px);box-shadow:0 8px 32px rgba(6,182,212,.1)}
+.pcard.off{opacity:.35;pointer-events:none;filter:grayscale(.7)}
+.pimg{aspect-ratio:1;background:linear-gradient(135deg,#1e293b,#0f172a);display:flex;align-items:center;justify-content:center;font-size:28px;position:relative}
+.pimg::after{content:'🍽️';opacity:.3}
+.bpop{position:absolute;top:6px;left:6px;background:rgba(245,158,11,.9);color:#000;font-size:8px;font-weight:900;padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.05em}
+.bsto{position:absolute;top:6px;right:6px;background:rgba(245,158,11,.15);color:#fbbf24;font-size:8px;font-weight:900;padding:2px 7px;border-radius:5px;border:1px solid rgba(245,158,11,.3)}
+.pinfo{padding:10px 12px}
+.pp{font-size:11px;font-weight:900;color:#06b6d4;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.pn{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:-.02em;line-height:1.2}
+.pcard.off .pn::after{content:' (ESGOTADO)';color:#ef4444;font-size:9px}
+
+/* MODO LISTA */
+.lista{display:none;flex-direction:column;gap:6px}
+.lista.on{display:flex}
+.plinha{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:12px;cursor:pointer;transition:all .2s}
+.plinha:hover{border-color:rgba(6,182,212,.3);background:rgba(255,255,255,.05)}
+.plimg{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#1e293b,#0f172a);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.plinfo{flex:1;min-width:0}
+.pln{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plc{font-size:10px;color:#64748b;margin-top:2px}
+.plp{font-size:14px;font-weight:800;color:#06b6d4;white-space:nowrap}
+
+/* COLUNA CARRINHO */
+.col-c{width:320px;background:#0b1120;border-left:1px solid rgba(255,255,255,.05);display:flex;flex-direction:column}
+.ch{padding:14px;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)}
+.cht{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cht h3{font-size:15px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em}
+.st{display:flex;align-items:center;gap:6px;font-size:10px;color:#34d399;font-weight:700}
+.st::before{content:'';width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:pulse 2s infinite}
+
+.subs{display:flex;gap:5px;margin-bottom:10px;overflow-x:auto}
+.subs::-webkit-scrollbar{display:none}
+.sp{padding:5px 12px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#94a3b8;white-space:nowrap}
+.sp.on{background:#06b6d4;color:#000;border-color:#06b6d4}
+
+.bcoz{width:100%;padding:12px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:12px;color:#000;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;box-shadow:0 4px 20px rgba(245,158,11,.2)}
+.bcoz:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(245,158,11,.35)}
+
+.cit{flex:1;overflow-y:auto;padding:12px 14px}
+.item{display:flex;align-items:center;gap:8px;padding:9px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:11px;margin-bottom:6px}
+.iimg{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#1e293b,#0f172a);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.iinfo{flex:1;min-width:0}
+.in{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ip{font-size:11px;color:#06b6d4;font-weight:700;margin-top:1px}
+.ibc{display:inline-block;font-size:8px;font-weight:900;color:#fbbf24;background:rgba(245,158,11,.1);padding:2px 5px;border-radius:4px;margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+.iq{display:flex;align-items:center;gap:4px}
+.qb{width:30px;height:30px;border-radius:7px;border:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;cursor:pointer}
+.qb.m{background:rgba(255,255,255,.05);color:#94a3b8}
+.qb.m:hover{background:rgba(255,255,255,.1);color:#fff}
+.qb.p{background:#06b6d4;color:#000}
+.qb.p:hover{background:#22d3ee}
+.qv{width:20px;text-align:center;font-size:13px;font-weight:900;color:#fff}
+
+.ct{padding:14px;border-top:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)}
+.tl{display:flex;justify-content:space-between;margin-bottom:7px;font-size:12px}
+.tl .l{color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:10px}
+.tl .v{color:#94a3b8;font-weight:700;font-family:monospace}
+.tf{display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:6px;border-top:1px solid rgba(255,255,255,.08)}
+.tf .l{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.15em;color:#fff}
+.tf .v{font-size:26px;font-weight:900;color:#06b6d4;font-family:monospace;text-shadow:0 0 20px rgba(6,182,212,.3)}
+
+.cact{padding:0 14px 14px;display:flex;flex-direction:column;gap:6px}
+.bc{width:100%;padding:14px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:12px;color:#000;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;box-shadow:0 4px 20px rgba(16,185,129,.2)}
+.bc:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(16,185,129,.35)}
+.bc:disabled{background:#334155;color:#64748b;cursor:not-allowed;box-shadow:none}
+
+/* COLUNA CATEGORIAS */
+.col-cat{width:90px;background:#0b1120;border-right:1px solid rgba(255,255,255,.05);display:flex;flex-direction:column;padding:10px 6px;gap:8px;flex-shrink:0;overflow-y:auto;max-height:calc(100vh - 28px);scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent}
+.col-m::-webkit-scrollbar,.col-cat::-webkit-scrollbar{width:4px}
+.col-m::-webkit-scrollbar-track,.col-cat::-webkit-scrollbar-track{background:transparent}
+.col-m::-webkit-scrollbar-thumb,.col-cat::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
+.col-m::-webkit-scrollbar-thumb:hover,.col-cat::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.25)}
+.cat-tit{font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.15em;color:#64748b;text-align:center;margin-bottom:4px}
+.cat-btn{width:100%;aspect-ratio:1;border-radius:14px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all .2s;font-size:9px;font-weight:800;color:#94a3b8;background:rgba(255,255,255,.04)}
+.cat-btn:hover{color:#fff;background:rgba(255,255,255,.08)}
+.cat-btn.on{background:#06b6d4;color:#000;border-color:#06b6d4;box-shadow:0 0 15px rgba(6,182,212,.25)}
+.cat-ic{font-size:18px}
+
+/* BOTÕES RODAPÉ MESAS */
+.mfoot{margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:6px}
+.mfbtn{padding:8px;border-radius:10px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border:1px solid transparent;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .2s}
+.mfbtn.hist{background:rgba(255,255,255,.04);color:#94a3b8;border-color:rgba(255,255,255,.08)}
+.mfbtn.hist:hover{background:rgba(255,255,255,.08);color:#fff}
+.mfbtn.turno{background:rgba(6,182,212,.08);color:#06b6d4;border-color:rgba(6,182,212,.2)}
+.mfbtn.turno:hover{background:rgba(6,182,212,.15)}
+.mfbtn.fecho{background:rgba(16,185,129,.08);color:#34d399;border-color:rgba(16,185,129,.2)}
+.mfbtn.fecho:hover{background:rgba(16,185,129,.15)}
+.mfbtn.susp{background:rgba(245,158,11,.08);color:#fbbf24;border-color:rgba(245,158,11,.2)}
+.mfbtn.susp:hover{background:rgba(245,158,11,.15)}
+
+/* SUBCONTAS SCROLL */
+.subscroll{overflow-y:auto;max-height:110px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent}
+.subscroll::-webkit-scrollbar{width:4px}
+.subscroll::-webkit-scrollbar-track{background:transparent}
+.subscroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
+.subscroll::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.25)}
+
+/* HEADER PRODUTOS COM MESA ATIVA */
+.hmesa{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hmbtn{padding:8px 12px;border-radius:10px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#94a3b8;display:flex;align-items:center;gap:4px;transition:all .2s}
+.hmbtn:hover{background:rgba(255,255,255,.1);color:#fff}
+.hmbtn.red{background:rgba(239,68,68,.08);color:#f87171;border-color:rgba(239,68,68,.2)}
+.hmbtn.red:hover{background:rgba(239,68,68,.15);color:#fff}
+.hminfo{display:flex;align-items:center;gap:8px;margin-left:8px;padding-left:12px;border-left:1px solid rgba(255,255,255,.08)}
+.hmname{font-size:16px;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;color:#fff}
+.hmsub{font-size:9px;font-weight:900;color:#06b6d4;text-transform:uppercase;letter-spacing:.1em}
+.hmic{display:flex;gap:4px;margin-left:auto;align-items:center}
+.hmicb{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#94a3b8;transition:all .2s;font-size:13px}
+.hmicb:hover{color:#fff;background:rgba(255,255,255,.1)}
+.hmicb.cya:hover{color:#06b6d4}
+.hmicb.ora:hover{color:#f59e0b}
+.hmicb.grn:hover{color:#34d399}
+.h2ec{padding:10px 16px;border-radius:12px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#94a3b8;display:flex;align-items:center;gap:6px;transition:all .2s}
+.h2ec:hover{background:rgba(255,255,255,.1);color:#fff}
+.h2ec.on{background:#06b6d4;color:#000;border-color:#06b6d4}
+
+/* CARRINHO BOTÕES TOPO */
+.chtop{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.chtbtn{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#94a3b8;transition:all .2s;font-size:13px}
+.chtbtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.chtbtn.prt:hover{color:#06b6d4}
+
+/* SUBCONTAS COM NOME E AÇÕES */
+.subwrap{display:flex;align-items:center;gap:4px;margin-bottom:8px}
+.subname{flex:1;padding:6px 10px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:#94a3b8;white-space:nowrap;transition:all .2s}
+.subname.on{background:#06b6d4;color:#000;border-color:#06b6d4}
+.subact{display:flex;gap:2px}
+.subx{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;font-size:10px;transition:all .2s}
+.subx.ok{background:rgba(16,185,129,.1);color:#34d399}
+.subx.ok:hover{background:rgba(16,185,129,.2)}
+.subx.del{background:rgba(239,68,68,.1);color:#f87171}
+.subx.del:hover{background:rgba(239,68,68,.2)}
+
+/* ITENS CARRINHO COM AÇÕES */
+.iacts{display:flex;flex-direction:column;gap:3px;align-items:center}
+.ixa{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;font-size:10px;transition:all .2s}
+.ixa.co{background:rgba(245,158,11,.1);color:#fbbf24}
+.ixa.co:hover{background:rgba(245,158,11,.2)}
+.ixa.rm{background:rgba(239,68,68,.1);color:#f87171}
+.ixa.rm:hover{background:rgba(239,68,68,.2)}
+
+/* BOTOES RODAPE CARRINHO */
+.cfoot{display:flex;gap:6px;margin-top:8px}
+.cfb{flex:1;padding:12px 6px;border-radius:12px;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;border:1px solid transparent;display:flex;align-items:center;justify-content:center;gap:3px;transition:all .2s}
+.cfb.sus{background:rgba(255,255,255,.04);color:#94a3b8;border-color:rgba(255,255,255,.1)}
+.cfb.sus:hover{background:rgba(255,255,255,.08);color:#fff}
+.cfb.coz{background:rgba(245,158,11,.12);color:#fbbf24;border-color:rgba(245,158,11,.25)}
+.cfb.coz:hover{background:rgba(245,158,11,.2)}
+.cfb.fin{flex:2;background:linear-gradient(135deg,#10b981,#059669);color:#000;border:none;box-shadow:0 4px 20px rgba(16,185,129,.2)}
+.cfb.fin:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(16,185,129,.35)}
+
+/* PREVIEW OVERLAY */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100000}
+.ov.s{display:flex}
+.ovc{background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:28px;text-align:center;max-width:380px}
+.ovc h2{font-size:17px;margin-bottom:14px}
+.ovc p{font-size:13px;color:#94a3b8;margin-bottom:6px}
+.ovc .big{font-size:28px;color:#06b6d4;font-weight:900;margin:12px 0}
+.ovc button{margin-top:16px;padding:10px 28px;background:#06b6d4;color:#000;border:none;border-radius:10px;font-size:13px;font-weight:900;cursor:pointer}
+
+/* MODAL PAGAMENTO REALISTA */
+.paygrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.paybtn{padding:16px 8px;border-radius:14px;border:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.04);color:#94a3b8;font-size:11px;font-weight:800}
+.paybtn:hover{transform:translateY(-2px)}
+.paybtn.on{box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.paybtn.num{background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.3)}
+.paybtn.num.on{background:rgba(16,185,129,.25);border-color:#34d399}
+.paybtn.tpa{background:rgba(6,182,212,.1);color:#06b6d4;border-color:rgba(6,182,212,.3)}
+.paybtn.tpa.on{background:rgba(6,182,212,.25);border-color:#06b6d4}
+.paybtn.qr{background:rgba(139,92,246,.1);color:#a78bfa;border-color:rgba(139,92,246,.3)}
+.paybtn.qr.on{background:rgba(139,92,246,.25);border-color:#a78bfa}
+.paybtn.trf{background:rgba(245,158,11,.1);color:#fbbf24;border-color:rgba(245,158,11,.3)}
+.paybtn.trf.on{background:rgba(245,158,11,.25);border-color:#fbbf24}
+.paybtn.dep{background:rgba(100,116,139,.1);color:#94a3b8;border-color:rgba(100,116,139,.3)}
+.paybtn.dep.on{background:rgba(100,116,139,.25);border-color:#94a3b8}
+.payic{font-size:24px}
+.payrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px}
+.payrow .pl{color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:10px}
+.payrow .pv{font-weight:900;font-family:monospace}
+.payinp{width:100%;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-size:16px;font-weight:900;text-align:center;margin:8px 0;outline:none}
+.payinp:focus{border-color:#06b6d4}
+.troco{color:#34d399;font-size:20px;font-weight:900;text-align:center;margin:8px 0}
+</style>
+</head>
+<body>
+<div class="banner">🎨 MOCKUP VISUAL — POS Melhorado — Tasca do Vereda — Para Aprovação</div>
+
+<div class="pos">
+  <!-- CATEGORIAS -->
+  <div class="col-cat">
+    <div class="cat-tit">Categorias</div>
+    <div class="cat-btn on"><span class="cat-ic">⊞</span>Todos</div>
+    <div class="cat-btn"><span class="cat-ic">🍺</span>Bebidas</div>
+    <div class="cat-btn"><span class="cat-ic">🍽️</span>Pratos</div>
+    <div class="cat-btn"><span class="cat-ic">🥗</span>Entradas</div>
+    <div class="cat-btn"><span class="cat-ic">🍰</span>Sobremesas</div>
+    <div class="cat-btn"><span class="cat-ic">☕</span>Cafetaria</div>
+    <div class="cat-btn"><span class="cat-ic">🔥</span>Grelhados</div>
+    <div class="cat-btn"><span class="cat-ic">🍷</span>Alcoólicas</div>
+  </div>
+
+  <!-- MESAS -->
+  <div class="col-m">
+    <div class="tit">Mesas</div>
+    <div class="mc l" onclick="selM(this)"><div class="mb"><span class="mn">Mesa 1</span><span class="mt g">LIVRE</span></div><div class="mbot">Esplanada</div></div>
+    <div class="mc o" onclick="selM(this)"><span class="mbadge">3</span><div class="mb"><span class="mn">Mesa 2</span><span class="mt a">12 min</span></div><div class="mbot">Interior • 3 itens</div></div>
+    <div class="mc o a" onclick="selM(this)"><span class="mbadge">5</span><div class="mb"><span class="mn">Mesa 4</span><span class="mt g">8 min</span></div><div class="mbot">Interior • 5 itens</div></div>
+    <div class="mc o al" onclick="selM(this)"><span class="mbadge">2</span><div class="mb"><span class="mn">Mesa 5</span><span class="mt r">42 min</span></div><div class="mbot">⚠️ Atendimento pendente</div></div>
+    <div class="mc l" onclick="selM(this)"><div class="mb"><span class="mn">Mesa 6</span><span class="mt g">LIVRE</span></div><div class="mbot">Bar</div></div>
+    <div class="mc l" onclick="selM(this)"><div class="mb"><span class="mn">Mesa 7</span><span class="mt g">LIVRE</span></div><div class="mbot">Bar</div></div>
+    <div class="mc l" onclick="selM(this)"><div class="mb"><span class="mn">Mesa 8</span><span class="mt g">LIVRE</span></div><div class="mbot">Esplanada</div></div>
+    <div class="mc l" onclick="selM(this)"><div class="mb"><span class="mn">Mesa 9</span><span class="mt g">LIVRE</span></div><div class="mbot">Esplanada</div></div>
+    <div class="mc o" onclick="selM(this)"><span class="mbadge">4</span><div class="mb"><span class="mn">Mesa 10</span><span class="mt a">25 min</span></div><div class="mbot">Interior • 4 itens</div></div>
+    <div class="mc l" onclick="selM(this)"><div class="mb"><span class="mn">Mesa 11</span><span class="mt g">LIVRE</span></div><div class="mbot">Interior</div></div>
+    <div class="mc l" onclick="selM(this)"><div class="mb"><span class="mn">Mesa 12</span><span class="mt g">LIVRE</span></div><div class="mbot">Interior</div></div>
+    <div class="mc o al" onclick="selM(this)"><span class="mbadge">6</span><div class="mb"><span class="mn">Mesa 13</span><span class="mt r">55 min</span></div><div class="mbot">⚠️ Atendimento urgente</div></div>
+    <div class="mc l" onclick="selM(this)"><div class="mb"><span class="mn">Mesa 14</span><span class="mt g">LIVRE</span></div><div class="mbot">Bar</div></div>
+    <div class="mc o" onclick="selM(this)"><span class="mbadge">1</span><div class="mb"><span class="mn">Takeaway 1</span><span class="mt a">18 min</span></div><div class="mbot">Takeaway</div></div>
+    <div class="mc l" onclick="selM(this)"><div class="mb"><span class="mn">Mesa 15</span><span class="mt g">LIVRE</span></div><div class="mbot">Bar</div></div>
+
+    <div class="mfoot">
+      <button class="mfbtn hist">🕐 Histórico</button>
+      <button class="mfbtn turno">⏱️ Turno de Caixa</button>
+      <button class="mfbtn fecho">🔒 Fecho de Dia</button>
+      <button class="mfbtn susp">⏸ Suspender</button>
+    </div>
+  </div>
+
+  <!-- PRODUTOS -->
+  <div class="col-p">
+    <div class="topbar">
+      <button class="mbtn" onclick="togMenu()">☰</button>
+      <div class="hmesa">
+        <button class="hmbtn">⊞ Mesas</button>
+        <button class="hmbtn" style="color:#f87171;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.06)">↻ Sincronizar</button>
+        <div class="hminfo">
+          <div style="width:3px;height:24px;background:#06b6d4;border-radius:3px"></div>
+          <div>
+            <div class="hmname">Mesa 4</div>
+            <div class="hmsub">● Principal</div>
+          </div>
+        </div>
+        <div class="hmic">
+          <button class="hmicb cya" title="Nova Subconta">+👤</button>
+          <button class="hmicb ora" title="Transferir Mesa">⇄</button>
+          <button class="hmbtn red" title="Fechar Mesa">✕ Fechar</button>
+        </div>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <button class="h2ec">🖥️ 2.º Ecrã</button>
+        <button class="h2ec on">💳 Enviar p/ Pagamento</button>
+      </div>
+      <div class="clock">18 Jun 2026 — <span>14:32</span><br><span>Turno: Manhã</span></div>
+    </div>
+    <div style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:10px">
+      <div style="position:relative;flex:1;max-width:400px">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px">🔍</span>
+        <input type="text" placeholder="Pesquisar item por nome..." style="width:100%;padding:10px 14px 10px 38px;background:rgba(255,255,255,.05);border:1px solid rgba(6,182,212,.3);border-radius:12px;color:#fff;font-size:13px;outline:none">
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab on">Todos</div>
+      <div class="tab">Bebidas</div>
+      <div class="tab">Pratos</div>
+      <div class="tab">Entradas</div>
+      <div class="tab">Sobremesas</div>
+      <div class="tab">Cafetaria</div>
+      <div class="tab">Grelhados</div>
+    </div>
+    <div class="parea">
+      <div class="grid" id="vGrid">
+        <div class="pcard" onclick="addIt()">
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">1.500 Kz</div><div class="pn">Cuca 330ml</div></div>
+        </div>
+        <div class="pcard" onclick="addIt()">
+          <div class="bpop">★ Mais Vendido</div>
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">3.500 Kz</div><div class="pn">Mufete de Peixe</div></div>
+        </div>
+        <div class="pcard" onclick="addIt()">
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">2.800 Kz</div><div class="pn">Funje com Calulu</div></div>
+        </div>
+        <div class="pcard" onclick="addIt()">
+          <div class="bsto">⚠ Stock Baixo</div>
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">4.200 Kz</div><div class="pn">Galinha à Zambeziana</div></div>
+        </div>
+        <div class="pcard off">
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">2.200 Kz</div><div class="pn">Arroz de Marisco</div></div>
+        </div>
+        <div class="pcard" onclick="addIt()">
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">1.800 Kz</div><div class="pn">Feijão de Óleo de Palma</div></div>
+        </div>
+        <div class="pcard" onclick="addIt()">
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">900 Kz</div><div class="pn">Café Expresso</div></div>
+        </div>
+        <div class="pcard" onclick="addIt()">
+          <div class="bpop">★ Mais Vendido</div>
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">2.500 Kz</div><div class="pn">Churrasco Misto</div></div>
+        </div>
+        <div class="pcard" onclick="addIt()">
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">1.200 Kz</div><div class="pn">Sumo Natural</div></div>
+        </div>
+        <div class="pcard" onclick="addIt()">
+          <div class="pimg"></div>
+          <div class="pinfo"><div class="pp">3.000 Kz</div><div class="pn">Cachupa Rica</div></div>
+        </div>
+      </div>
+      <div class="lista" id="vList">
+        <div class="plinha" onclick="addIt()"><div class="plimg">🍺</div><div class="plinfo"><div class="pln">Cuca 330ml</div><div class="plc">Bebidas</div></div><div class="plp">1.500 Kz</div></div>
+        <div class="plinha" onclick="addIt()"><div class="plimg">🐟</div><div class="plinfo"><div class="pln">Mufete de Peixe ★</div><div class="plc">Pratos</div></div><div class="plp">3.500 Kz</div></div>
+        <div class="plinha" onclick="addIt()"><div class="plimg">🍛</div><div class="plinfo"><div class="pln">Funje com Calulu</div><div class="plc">Pratos</div></div><div class="plp">2.800 Kz</div></div>
+        <div class="plinha" onclick="addIt()"><div class="plimg">🍗</div><div class="plinfo"><div class="pln">Galinha Zambeziana ⚠</div><div class="plc">Pratos</div></div><div class="plp">4.200 Kz</div></div>
+        <div class="plinha off" style="opacity:.4"><div class="plimg">🦐</div><div class="plinfo"><div class="pln">Arroz de Marisco (ESGOTADO)</div><div class="plc">Pratos</div></div><div class="plp">2.200 Kz</div></div>
+        <div class="plinha" onclick="addIt()"><div class="plimg">☕</div><div class="plinfo"><div class="pln">Café Expresso</div><div class="plc">Cafetaria</div></div><div class="plp">900 Kz</div></div>
+        <div class="plinha" onclick="addIt()"><div class="plimg">🍖</div><div class="plinfo"><div class="pln">Churrasco Misto ★</div><div class="plc">Grelhados</div></div><div class="plp">2.500 Kz</div></div>
+        <div class="plinha" onclick="addIt()"><div class="plimg">🍊</div><div class="plinfo"><div class="pln">Sumo Natural</div><div class="plc">Bebidas</div></div><div class="plp">1.200 Kz</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARRINHO -->
+  <div class="col-c">
+    <div class="ch">
+      <div class="chtop">
+        <button class="chtbtn prt" title="Imprimir Consulta / Pré-conta">🖨️</button>
+        <button class="chtbtn" title="Voltar para Mesas">✕</button>
+      </div>
+      <div class="cht"><h3>Pedido #A7B2</h3><div class="st">● Em Curso</div></div>
+
+      <!-- SUBCONTAS COM NOME E AÇÕES -->
+      <div class="subscroll">
+        <div class="subwrap">
+          <div class="subname on">Principal</div>
+          <div class="subact">
+            <button class="subx ok" title="Fechar Subconta">✓</button>
+            <button class="subx del" title="Apagar Subconta">🗑</button>
+          </div>
+        </div>
+        <div class="subwrap">
+          <div class="subname">João Silva</div>
+          <div class="subact">
+            <button class="subx ok" title="Fechar Subconta">✓</button>
+            <button class="subx del" title="Apagar Subconta">🗑</button>
+          </div>
+        </div>
+        <div class="subwrap">
+          <div class="subname">Maria Santos</div>
+          <div class="subact">
+            <button class="subx ok" title="Fechar Subconta">✓</button>
+            <button class="subx del" title="Apagar Subconta">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cit" id="citens">
+      <!-- ITEM NÃO ENVIADO (com remover) -->
+      <div class="item">
+        <div class="iimg">🍺</div>
+        <div class="iinfo"><div class="in">Cuca 330ml</div><div class="ip">1.500 Kz</div></div>
+        <div class="iacts">
+          <button class="ixa rm" title="Remover item">✕</button>
+        </div>
+        <div class="iq"><button class="qb m">-</button><span class="qv">2</span><button class="qb p">+</button></div>
+      </div>
+      <!-- ITEM ENVIADO (com cancelar cozinha + remover admin) -->
+      <div class="item">
+        <div class="iimg">🐟</div>
+        <div class="iinfo"><div class="in">Mufete de Peixe</div><div class="ip">3.500 Kz</div><span class="ibc">✓ Enviado Cozinha</span></div>
+        <div class="iacts">
+          <button class="ixa co" title="Cancelar na Cozinha">✕</button>
+          <button class="ixa rm" title="Remover (Admin)">🗑</button>
+        </div>
+        <div class="iq"><button class="qb m">-</button><span class="qv">1</span><button class="qb p">+</button></div>
+      </div>
+      <div class="item">
+        <div class="iimg">🍛</div>
+        <div class="iinfo"><div class="in">Funje com Calulu</div><div class="ip">2.800 Kz</div><span class="ibc">✓ Enviado Cozinha</span></div>
+        <div class="iacts">
+          <button class="ixa co" title="Cancelar na Cozinha">✕</button>
+          <button class="ixa rm" title="Remover (Admin)">🗑</button>
+        </div>
+        <div class="iq"><button class="qb m">-</button><span class="qv">1</span><button class="qb p">+</button></div>
+      </div>
+    </div>
+    <div class="ct">
+      <div class="tl"><span class="l">Subtotal</span><span class="v">8.300 Kz</span></div>
+      <div class="tl"><span class="l">Taxas (Incluso)</span><span class="v">0 Kz</span></div>
+      <div class="tf"><span class="l">Total</span><span class="v">8.300 Kz</span></div>
+    </div>
+    <div class="cact">
+      <div class="cfoot">
+        <button class="cfb coz" onclick="envCoz()">👨‍🍳 Enviar p/ Cozinha</button>
+        <button class="cfb fin" onclick="chk()">💳 Finalizar Pagamento</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MENU SIDEBAR -->
+<div class="moverlay" id="mov" onclick="togMenu()"></div>
+<div class="msidebar" id="msb">
+  <h4 style="margin-bottom:10px">Navegação Principal</h4>
+  <div class="mitem on"><span class="mi">💵</span> Terminal POS</div>
+  <div class="mitem"><span class="mi">📊</span> Dashboard</div>
+  <div class="mitem"><span class="mi">📈</span> Centro de Lucro</div>
+  <div class="mitem"><span class="mi">💰</span> Despesas</div>
+  <div class="mitem"><span class="mi">📦</span> Menu & Stock</div>
+  <div class="mitem"><span class="mi">👥</span> Funcionários</div>
+  <div class="mitem"><span class="mi">📅</span> Eventos</div>
+  <div class="mitem"><span class="mi">📋</span> Relatórios</div>
+  <div class="mitem"><span class="mi">🛒</span> Compras</div>
+  <div class="mitem"><span class="mi">📉</span> Análises</div>
+  <div class="mitem"><span class="mi">⚙️</span> Configurações</div>
+  <div class="mitem"><span class="mi">🪑</span> Mesa Layout</div>
+  <div class="mitem"><span class="mi">📖</span> Manual</div>
+  <h4 style="margin-top:16px;margin-bottom:10px">Sistema</h4>
+  <div class="mitem" style="color:#f87171"><span class="mi">🚪</span> Sair da Conta</div>
+</div>
+
+<!-- PREVIEW CHECKOUT - PaymentModal (inalterado) -->
+<div class="ov" id="ov"><div class="ovc" style="max-width:680px;width:95%;max-height:85vh;overflow-y:auto;padding:24px;background:#0f172a;border:1px solid #334155">
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <h2 style="font-size:18px;font-weight:700;color:#fff">Finalizar Pagamento — Pedido #A7B2</h2>
+    <button onclick="document.getElementById('ov').classList.remove('s')" style="padding:8px;background:rgba(255,255,255,.05);border:none;border-radius:8px;color:#94a3b8;cursor:pointer;font-size:16px">✕</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <!-- COLUNA ESQUERDA -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <!-- Valor Total -->
+      <div style="background:#1e293b;border:1px solid #475569;border-radius:12px;padding:16px;text-align:center">
+        <p style="font-size:11px;color:#94a3b8;margin-bottom:6px">Valor Total</p>
+        <p style="font-size:28px;font-weight:700;color:#22d3ee">8.300 Kz</p>
+      </div>
+
+      <!-- Tipo de Documento -->
+      <div style="background:#1e293b;border:1px solid #475569;border-radius:12px;padding:12px">
+        <p style="font-size:11px;color:#94a3b8;margin-bottom:8px">Tipo de Documento Fiscal:</p>
+        <div style="display:flex;gap:6px">
+          <button style="flex:1;padding:8px;background:#0ea5e9;color:#000;border:none;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer">FR</button>
+          <button style="flex:1;padding:8px;background:#334155;color:#94a3b8;border:1px solid #475569;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer">TV</button>
+          <button style="flex:1;padding:8px;background:#334155;color:#94a3b8;border:1px solid #475569;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer">NC</button>
+          <button style="flex:1;padding:8px;background:#334155;color:#94a3b8;border:1px solid #475569;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer">ND</button>
+        </div>
+      </div>
+
+      <!-- Nome Cliente -->
+      <div style="background:#1e293b;border:1px solid #475569;border-radius:12px;padding:12px">
+        <p style="font-size:11px;color:#94a3b8;margin-bottom:6px">Nome do Cliente / Empresa (Opcional)</p>
+        <input type="text" placeholder="Digite o nome" style="width:100%;padding:10px 12px;background:#334155;border:1px solid #475569;border-radius:8px;color:#fff;font-size:13px;outline:none" readonly>
+      </div>
+
+      <!-- Consumidor Final -->
+      <div style="display:flex;align-items:center;gap:10px;background:#1e293b;border:1px solid #475569;border-radius:12px;padding:12px">
+        <div style="width:40px;height:22px;background:#06b6d4;border-radius:11px;position:relative">
+          <div style="position:absolute;top:2px;right:2px;width:18px;height:18px;background:#fff;border-radius:50%"></div>
+        </div>
+        <span style="font-size:13px;color:#d1d5db">Consumidor Final (sem NIF)</span>
+      </div>
+    </div>
+
+    <!-- COLUNA DIREITA -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <!-- Métodos de Pagamento -->
+      <div style="background:#1e293b;border:1px solid #475569;border-radius:12px;padding:12px;flex:1">
+        <p style="font-size:11px;color:#94a3b8;margin-bottom:10px">Selecione o Método de Pagamento:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="payreal on" onclick="selPayR(this)" style="padding:12px;background:#334155;border:2px solid #06b6d4;border-radius:12px;color:#fff;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all .2s">
+            <span style="font-size:20px">�</span><span style="font-size:10px;font-weight:800">NUMERÁRIO</span>
+          </button>
+          <button class="payreal" onclick="selPayR(this)" style="padding:12px;background:#334155;border:2px solid #475569;border-radius:12px;color:#94a3b8;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all .2s">
+            <span style="font-size:20px">💳</span><span style="font-size:10px;font-weight:800">TPA / MULTICAIXA</span>
+          </button>
+          <button class="payreal" onclick="selPayR(this)" style="padding:12px;background:#334155;border:2px solid #475569;border-radius:12px;color:#94a3b8;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all .2s">
+            <span style="font-size:20px">📱</span><span style="font-size:10px;font-weight:800">QR CODE</span>
+          </button>
+          <button class="payreal" onclick="selPayR(this)" style="padding:12px;background:#334155;border:2px solid #475569;border-radius:12px;color:#94a3b8;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:all .2s">
+            <span style="font-size:20px">🏦</span><span style="font-size:10px;font-weight:800">TRANSFERÊNCIA</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Botão Confirmar -->
+      <button onclick="document.getElementById('ov').classList.remove('s')" style="width:100%;padding:16px;background:#10b981;color:#000;border:none;border-radius:12px;font-size:13px;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:.05em">Confirmar Pagamento</button>
+      <button onclick="document.getElementById('ov').classList.remove('s')" style="width:100%;padding:12px;background:rgba(255,255,255,.05);color:#94a3b8;border:1px solid rgba(255,255,255,.1);border-radius:12px;font-size:12px;font-weight:900;cursor:pointer">Cancelar</button>
+    </div>
+  </div>
+</div></div>
+
+<script>
+function selM(el){document.querySelectorAll('.mc').forEach(m=>m.classList.remove('a'));el.classList.add('a');}
+function swV(mode,btn){document.querySelectorAll('.vb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.getElementById('vGrid').style.display=mode==='grid'?'grid':'none';document.getElementById('vList').classList.toggle('on',mode==='list');}
+function addIt(){const c=document.getElementById('citens');const n=c.children.length+1;c.insertAdjacentHTML('beforeend','<div class="item" style="animation:in .3s"><div class="iimg">🆕</div><div class="iinfo"><div class="in">Novo Item '+n+'</div><div class="ip">1.000 Kz</div></div><div class="iq"><button class="qb m">-</button><span class="qv">1</span><button class="qb p">+</button></div></div>');}
+function envCoz(){document.querySelectorAll('.item').forEach(it=>{if(!it.querySelector('.ibc'))it.querySelector('.iinfo').insertAdjacentHTML('beforeend','<span class="ibc">✓ Enviado Cozinha</span>');});}
+function chk(){document.getElementById('ov').classList.add('s');}
+function togMenu(){document.getElementById('msb').classList.toggle('on');document.getElementById('mov').classList.toggle('on');}
+function selPayR(el){document.querySelectorAll('.payreal').forEach(b=>{b.classList.remove('on');b.style.borderColor='#475569';b.style.color='#94a3b8';});el.classList.add('on');el.style.borderColor='#06b6d4';el.style.color='#fff';}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=function(){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));this.classList.add('on');});
+document.querySelectorAll('.sp').forEach(s=>s.onclick=function(){document.querySelectorAll('.sp').forEach(x=>x.classList.remove('on'));this.classList.add('on');});
+</script>
+</body>
+</html>

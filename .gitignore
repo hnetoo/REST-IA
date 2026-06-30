@@ -1,0 +1,41 @@
+dist/
+dist-electron/*.msi
+node_modules/
+release-new/
+.env
+.env.local
+.env.production
+*.log
+# Build outputs
+build/
+out/
+# Dependencies
+# Environment
+.env.*.local
+# Logs
+logs/
+# IDE
+.vscode/settings.json
+.idea/
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel output (ficheiros compilados grandes)
+.vercel/output/
+
+# Ficheiros de debug/estado temporário
+state_raw.json
+orders_*.json
+order_items_*.json
+
+# Backups e ficheiros .bak
+*.bak
+backups_fase1/
+
+# Scripts de diagnóstico temporários
+scripts/check-lost-items.js
+scripts/check-tables.mjs
+scripts/audit-all-tables.mjs
+scripts/list-all-tables.mjs
+scripts/run-sql.mjs

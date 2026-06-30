@@ -1,0 +1,53 @@
+LICENÇA DE SOFTWARE - TASCA DO VEREDA
+========================================
+
+Copyright (c) 2024 Tasca do Vereda
+
+PERMISSÃO DE USO
+-----------------
+
+Este software é propriedade da Tasca do Vereda e é fornecido sob os seguintes termos:
+
+1. Você pode instalar e usar este software em um único computador.
+2. Você pode fazer uma cópia de backup para fins de arquivo.
+3. Você pode transferir o software para outro computador se desinstalar do computador original.
+
+RESTRIÇÕES
+-----------
+
+1. Você não pode:
+   - Distribuir cópias deste software
+   - Modificar ou engenharia reversa do software
+   - Usar este software para fins comerciais não autorizados
+   - Remover ou alterar avisos de direitos autorais
+
+GARANTIA
+--------
+
+Este software é fornecido "COMO ESTÁ", sem garantia de qualquer tipo, expressa ou implícita.
+
+LIMITAÇÃO DE RESPONSABILIDADE
+------------------------------
+
+Em nenhum caso a Tasca do Vereda será responsável por quaisquer danos diretos, indiretos, incidentais, especiais ou consequenciais resultantes do uso deste software.
+
+DADOS DO USUÁRIO
+-----------------
+
+O software armazena dados do usuário na pasta de dados do aplicativo (%APPDATA%). 
+Estes dados são preservados durante a desinstalação para permitir reinstalações futuras sem perda de informações.
+
+SUPORTE
+-------
+
+Para suporte técnico, entre em contato:
+- Email: info@tascadovereda.pt
+- Website: https://tasca-do-vereda.vercel.app
+
+VERSÃO
+------
+
+Versão: 1.0.2
+Data: 2024
+
+Ao instalar este software, você concorda com os termos acima.

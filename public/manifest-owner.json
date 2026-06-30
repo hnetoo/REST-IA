@@ -1,0 +1,55 @@
+{
+  "name": "Owner Dashboard - Tasca do Vereda",
+  "short_name": "Owner Dashboard",
+  "description": "Dashboard do proprietário para gestão do restaurante Tasca do Vereda",
+  "start_url": "/owner.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "pt-AO",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "72x72 96x96 128x128 144x144 152x152 192x192 384x384 512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "72x72 96x96 128x128 144x144 152x152 192x192 384x384 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "screenshots": [
+    {
+      "src": "/screenshot-owner-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard do Proprietário"
+    },
+    {
+      "src": "/screenshot-owner-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard Mobile"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Acessar dashboard principal",
+      "url": "/owner.html",
+      "icons": [{ "src": "/icon.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

@@ -1,0 +1,7122 @@
+{
+  "categories": [
+    {
+      "id": "cat_entradas",
+      "name": "Entradas e Sopas",
+      "icon": "Utensils",
+      "visible": true
+    },
+    {
+      "id": "cat_principais",
+      "name": "Pratos do Dia e Massas",
+      "icon": "Utensils",
+      "visible": true
+    },
+    {
+      "id": "cat_bebidas",
+      "name": "Bebidas",
+      "icon": "Beer",
+      "visible": true
+    },
+    {
+      "id": "cat_sobremesas",
+      "name": "Sobremesas",
+      "icon": "IceCream",
+      "visible": true
+    },
+    {
+      "id": "l6bt0k1fn",
+      "name": "Cocktails ",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "2ewxw04xl",
+      "name": "Grelhados ",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "4oxf4uhdz",
+      "name": "Petiscos",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "inh1plnkw",
+      "name": "Vinhos",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "i8ywp2y1q",
+      "name": "Fino",
+      "icon": "Beer",
+      "visible": true
+    },
+    {
+      "id": "uxifqc7x9",
+      "name": "Fast Food",
+      "icon": "Pizza",
+      "visible": true
+    },
+    {
+      "id": "r8xjnjwu3",
+      "name": "Pequeno Almoço e Sandes",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "fy5d64isp",
+      "name": "Cervejas  e Sidras",
+      "icon": "Beer",
+      "visible": true
+    },
+    {
+      "id": "f931cxx5j",
+      "name": "Esperituosas",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "b83nc36zk",
+      "name": "Guarnições ",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "qv585ikpi",
+      "name": "Espumantes e Champanhes ",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "rv8pqh1gw",
+      "name": "Bebidas Não Alcoólicas ",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "8jpjv3v3b",
+      "name": "Cafés ",
+      "icon": "Coffee",
+      "visible": true
+    },
+    {
+      "id": "n6l3nfyfx",
+      "name": "Conhaques,Aguardentes  e Tequila ",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "uncategorized",
+      "name": "Sem Categoria",
+      "icon": "Grid3X3",
+      "visible": true
+    },
+    {
+      "id": "cat-1770240640200",
+      "name": "Pizzas",
+      "icon": "Pizza",
+      "visible": true
+    }
+  ],
+  "dishes": [
+    {
+      "id": "08cx8yjj4",
+      "name": "Caldo Verde",
+      "description": "",
+      "price": 2.5,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "0prg20p62",
+      "name": "Pão de Alho",
+      "description": "",
+      "price": 2,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "dljw14xht",
+      "name": "Sopa de Legumes",
+      "description": "",
+      "price": 3,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "eo6tpmoni",
+      "name": "Sopa de Feijão",
+      "description": "",
+      "price": 2.5,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "fn5omsfg0",
+      "name": "Ginguba Torrada",
+      "description": "",
+      "price": 0.5,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ma2oddm2y",
+      "name": "Fino lambreta",
+      "description": "",
+      "price": 0.6,
+      "category_id": "uncategorized",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "q4blpibh1",
+      "name": "Paté de Atum",
+      "description": "",
+      "price": 2.5,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "xkc7s4llv",
+      "name": "Caldo de Peixe",
+      "description": "",
+      "price": 5,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "rq07mepzs",
+      "name": "Moelas ",
+      "description": "",
+      "price": 3,
+      "category_id": "4oxf4uhdz",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "7doajrncy",
+      "name": "Dobradinha ",
+      "description": "",
+      "price": 3,
+      "category_id": "4oxf4uhdz",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "3vbtzpahz",
+      "name": "Chouriço Caseiro",
+      "description": "",
+      "price": 5.5,
+      "category_id": "4oxf4uhdz",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "oeotuve2y",
+      "name": "Frango a Passarinho",
+      "description": "",
+      "price": 6,
+      "category_id": "4oxf4uhdz",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "wewq1n7dd",
+      "name": "Asinhas Panadas",
+      "description": "",
+      "price": 6.5,
+      "category_id": "4oxf4uhdz",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "v6wem91zy",
+      "name": "Pica Pau",
+      "description": "",
+      "price": 6.5,
+      "category_id": "4oxf4uhdz",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "aftx63p4x",
+      "name": "Fino Lambreta",
+      "description": "",
+      "price": 0.6,
+      "category_id": "i8ywp2y1q",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "zzzlma9ho",
+      "name": "Fino Taça",
+      "description": "",
+      "price": 0.8,
+      "category_id": "i8ywp2y1q",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "y6q981gex",
+      "name": "Fino Tulipa",
+      "description": "",
+      "price": 1,
+      "category_id": "i8ywp2y1q",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "w75g2mtly",
+      "name": "Feijão Preto",
+      "description": "",
+      "price": 1.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "5ckfciiyb",
+      "name": "Batata Frita",
+      "description": "",
+      "price": 1.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "tvnob3v8c",
+      "name": "Take Away",
+      "description": "",
+      "price": 0.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "4brevjzi7",
+      "name": "Pão ",
+      "description": "",
+      "price": 0.3,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "1q4navart",
+      "name": "Tosta Mista",
+      "description": "",
+      "price": 2,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "tdt7doour",
+      "name": "Tosta de Atum",
+      "description": "",
+      "price": 3.5,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "v0uh1z3i5",
+      "name": "Omelete Simples",
+      "description": "",
+      "price": 2.5,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "xyz65zsja",
+      "name": "Omelete Mista",
+      "description": "",
+      "price": 3.5,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "qbwu6o9y7",
+      "name": "Ovos Mexidos Com Torrada",
+      "description": "",
+      "price": 2.5,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "5jdsig7yr",
+      "name": "Ovos Estrelados com Torrada",
+      "description": "",
+      "price": 2.5,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "dct1748c7",
+      "name": "Sandes Choripan",
+      "description": "",
+      "price": 1.5,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "sox5j587r",
+      "name": "Sandes de Carne",
+      "description": "",
+      "price": 3,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "uqrul7gsm",
+      "name": "Sandes de Frango",
+      "description": "",
+      "price": 3,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "bta9o47sd",
+      "name": "Sandes de Atum",
+      "description": "",
+      "price": 3.5,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "hcl8l27ax",
+      "name": "Bifanas no Prato",
+      "description": "",
+      "price": 8,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "arkjip5x4",
+      "name": "Bitoque",
+      "description": "",
+      "price": 8.5,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "sy0sgjn2d",
+      "name": "Brazileríssimo",
+      "description": "",
+      "price": 9,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "yul3qtqeb",
+      "name": "Parmegiana de Frango",
+      "description": "",
+      "price": 12,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "bz3dx5jpy",
+      "name": "Parmegiana de Carne",
+      "description": "",
+      "price": 12.5,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "nmdx6ncbt",
+      "name": "Lasanha ",
+      "description": "",
+      "price": 12.5,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "u4ypj2a3x",
+      "name": "Choco Panado",
+      "description": "",
+      "price": 5.5,
+      "category_id": "4oxf4uhdz",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "fapwxo9if",
+      "name": "Ameijoas ",
+      "description": "",
+      "price": 6.5,
+      "category_id": "4oxf4uhdz",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "bf3579zwc",
+      "name": "Meio Frango(batata/salada/arroz)",
+      "description": "",
+      "price": 7,
+      "category_id": "2ewxw04xl",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "725rzx2zi",
+      "name": "Frango Inteiro",
+      "description": "",
+      "price": 14,
+      "category_id": "2ewxw04xl",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "amnh4afth",
+      "name": "Grelhados Mistos",
+      "description": "",
+      "price": 20,
+      "category_id": "2ewxw04xl",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "c3l37j2d6",
+      "name": "Picanha Composta(feijão preto,batata,arroz)",
+      "description": "",
+      "price": 16,
+      "category_id": "2ewxw04xl",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "lu30yog5x",
+      "name": "Entremeada Composta(feijão preto,batata,arroz)",
+      "description": "",
+      "price": 12.5,
+      "category_id": "2ewxw04xl",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "3bw1mi6ym",
+      "name": "Arroz Cubano",
+      "description": "",
+      "price": 1.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ye2x8pf37",
+      "name": "Pão ",
+      "description": "",
+      "price": 0.3,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "xqwqj8zoc",
+      "name": "Couvert da Tasca",
+      "description": "",
+      "price": 2,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "yj20s0rat",
+      "name": "Peito Alto",
+      "description": "",
+      "price": 12.5,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "zmz1skcil",
+      "name": "Courvina Grelhada",
+      "description": "",
+      "price": 5.5,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "apahuywdt",
+      "name": "Peixe  Escalado",
+      "description": "",
+      "price": 4.5,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "6ckd61mwl",
+      "name": "Moamba de Galinha Rija",
+      "description": "",
+      "price": 4.5,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "dgo3xbik8",
+      "name": "Fino Caneca",
+      "description": "",
+      "price": 1.5,
+      "category_id": "i8ywp2y1q",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "320gac4j0",
+      "name": "Massa á Bolonhesa (Linguine ou Fetuccine) Fetuccine)",
+      "description": "",
+      "price": 9,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ewdufu30p",
+      "name": "Massa á Alfredo(Linguine ou Fetuccine)",
+      "description": "",
+      "price": 9,
+      "category_id": "cat_principais",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "pox49cpgi",
+      "name": "Peixe Pando(Fish and Fries)",
+      "description": "",
+      "price": 4.5,
+      "category_id": "4oxf4uhdz",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ft5x68cwx",
+      "name": "Extra Queijo",
+      "description": "",
+      "price": 2.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "9pyfk5fbr",
+      "name": "Extra Bacon",
+      "description": "",
+      "price": 2.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "yuv15p6dz",
+      "name": "Molho de Tomate e Kiabo",
+      "description": "",
+      "price": 1.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "nu9gdqixt",
+      "name": "Funge",
+      "description": "",
+      "price": 1.3,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "8tjwfiwsi",
+      "name": "Banana Pão  Frita",
+      "description": "",
+      "price": 1.8,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "x9la0zfk6",
+      "name": "Salada ",
+      "description": "",
+      "price": 1.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ae443alz8",
+      "name": "Arroz Branco",
+      "description": "",
+      "price": 1.2,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "dlcbehhz4",
+      "name": "Fanta em Lata",
+      "description": "",
+      "price": 1,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "4thsapvuh",
+      "name": "Coca-Cola em Lata",
+      "description": "",
+      "price": 1,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "wlsypb68k",
+      "name": "Batata doce frita",
+      "description": "",
+      "price": 1.3,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "urvvih69x",
+      "name": "Feijão de Óleo de Palma",
+      "description": "",
+      "price": 1.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "oyi1rnhq0",
+      "name": "Arroz doce",
+      "description": "",
+      "price": 3.5,
+      "category_id": "cat_sobremesas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "85905p7z1",
+      "name": "Pudim",
+      "description": "",
+      "price": 2,
+      "category_id": "cat_sobremesas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "7ftkeet0n",
+      "name": "Salada de Frutas",
+      "description": "",
+      "price": 2,
+      "category_id": "cat_sobremesas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "vio4jjf62",
+      "name": "Brawnie de Chocolate com Gelado",
+      "description": "",
+      "price": 5.5,
+      "category_id": "cat_sobremesas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "3ynck38j9",
+      "name": "Quindim(Unidade)",
+      "description": "",
+      "price": 2.5,
+      "category_id": "cat_sobremesas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "fhwxvmlf7",
+      "name": "Cheder Burger",
+      "description": "",
+      "price": 6,
+      "category_id": "uxifqc7x9",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "w1xb0smh8",
+      "name": "New York  Burger",
+      "description": "",
+      "price": 6,
+      "category_id": "uxifqc7x9",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "7rgaxcayv",
+      "name": "Extra Molho",
+      "description": "",
+      "price": 0.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "j0vsgcopu",
+      "name": "Bifana no pão ",
+      "description": "",
+      "price": 3.5,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "7zbkqn6mq",
+      "name": "Fahita de Carne",
+      "description": "",
+      "price": 4.5,
+      "category_id": "uxifqc7x9",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "d4h353a0f",
+      "name": "Fahita de Frango",
+      "description": "",
+      "price": 4,
+      "category_id": "uxifqc7x9",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "fc5h3f8jr",
+      "name": "Fahita TV",
+      "description": "",
+      "price": 4.5,
+      "category_id": "uxifqc7x9",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ejxus8i8h",
+      "name": "Hambúrguer Composto",
+      "description": "",
+      "price": 4.5,
+      "category_id": "uxifqc7x9",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "wy972hke5",
+      "name": "Hambúrguer Simples",
+      "description": "",
+      "price": 3,
+      "category_id": "uxifqc7x9",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "pttg3bq2s",
+      "name": "Hambúrguer da TV",
+      "description": "",
+      "price": 4.5,
+      "category_id": "uxifqc7x9",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "4fn9wxjtj",
+      "name": "Pizza 4 Estações Média ",
+      "description": "",
+      "price": 13,
+      "category_id": "cat-1770240640200",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "oostqh5mi",
+      "name": "Água Atlantis pequena",
+      "description": "",
+      "price": 0.3,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "w1b3g4oj0",
+      "name": "Cartuxa",
+      "description": "",
+      "price": 35.5,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "l2cvjm096",
+      "name": "Silk Spice Branco",
+      "description": "",
+      "price": 18,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "s4wrxjyv2",
+      "name": "Silk Spice (Tinto)",
+      "description": "",
+      "price": 16.5,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "9kdotn9p4",
+      "name": "Papa Figo",
+      "description": "",
+      "price": 18,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "5umnnj4sj",
+      "name": "Silk Spice Road",
+      "description": "",
+      "price": 16,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "eacg7gvbj",
+      "name": "Quinta da Pedra Cavada",
+      "description": "",
+      "price": 15,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "3t1gdhuzv",
+      "name": "Reserva da Fazenda 5L",
+      "description": "",
+      "price": 15,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "s07srbfsc",
+      "name": "Reserva da Fazenda (copo)",
+      "description": "",
+      "price": 2,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "kqo2ej8t4",
+      "name": "Capataz 5L",
+      "description": "",
+      "price": 17,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "wn2w1093z",
+      "name": "Capataz",
+      "description": "",
+      "price": 2.5,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "8rv6t3cui",
+      "name": "Plantato Branco",
+      "description": "",
+      "price": 12,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "fsr7hhygu",
+      "name": "Segredos de São Miguel",
+      "description": "",
+      "price": 12,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "iqe5v9i54",
+      "name": "Vinha da Casinha",
+      "description": "",
+      "price": 12,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "rl43c4ktu",
+      "name": "Spyland Tinto",
+      "description": "",
+      "price": 12,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "0nh37ers4",
+      "name": "Mateus Rose",
+      "description": "",
+      "price": 12,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "9sr8xsvqi",
+      "name": "Ali-Jó",
+      "description": "",
+      "price": 10.5,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "zdkrq64vz",
+      "name": "Estevão Douro",
+      "description": "",
+      "price": 10,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "lynnh1ki7",
+      "name": "Calçado Douro",
+      "description": "",
+      "price": 10,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "c440cwkxr",
+      "name": "Vallado Douro",
+      "description": "",
+      "price": 10,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "6h55z0wfy",
+      "name": "Monte de Ravasqueiros",
+      "description": "",
+      "price": 9,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "smo83v6ao",
+      "name": "Gazela",
+      "description": "",
+      "price": 8.5,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "8or3sd78b",
+      "name": "JP Azeitão ",
+      "description": "",
+      "price": 8,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "6zi7j2mgp",
+      "name": "Mabanga Branco",
+      "description": "",
+      "price": 8,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "9hxtvs09t",
+      "name": "Petinto",
+      "description": "",
+      "price": 7.5,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "eufc7e3em",
+      "name": "Doppel Garrafa",
+      "description": "",
+      "price": 0.5,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "nuijx98dy",
+      "name": "Nocal Garrafa",
+      "description": "",
+      "price": 0.5,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "1nsuoo99i",
+      "name": "Cuca Garrafa",
+      "description": "",
+      "price": 0.5,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "voked0wqe",
+      "name": "Eka Garrafa",
+      "description": "",
+      "price": 0.5,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "abtj3oc8r",
+      "name": "Super Bock em lata",
+      "description": "",
+      "price": 1.5,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ifzg7efk0",
+      "name": "Booster Morango em Lata",
+      "description": "",
+      "price": 1.5,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "so039k4jy",
+      "name": "Booster Sidra em lata",
+      "description": "",
+      "price": 1,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "s9egtxyy4",
+      "name": "Eka em Lata",
+      "description": "",
+      "price": 1,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "lelz8ghrv",
+      "name": "Nocal em Lata",
+      "description": "",
+      "price": 1,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "11o9g9b1u",
+      "name": "Cuca em Lata",
+      "description": "",
+      "price": 1,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ogu4rjqxc",
+      "name": "Heineken ",
+      "description": "",
+      "price": 3,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "lmz1my7uu",
+      "name": "Corona",
+      "description": "",
+      "price": 2.5,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "gvot36rup",
+      "name": "Savanna",
+      "description": "",
+      "price": 2,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "m9hcdenkq",
+      "name": "Castello",
+      "description": "",
+      "price": 2,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "hkufm01i3",
+      "name": "Huster's",
+      "description": "",
+      "price": 2,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "alibfpe6r",
+      "name": "Fahita Mista",
+      "description": "",
+      "price": 5,
+      "category_id": "uxifqc7x9",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "4mdwnu7on",
+      "name": "Sumol em lata",
+      "description": "",
+      "price": 1,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "l37zstjky",
+      "name": "Jack Daniel's Garrafa",
+      "description": "",
+      "price": 36,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "dk2fzvlec",
+      "name": "Black Label Garrafa",
+      "description": "",
+      "price": 35,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "x8xq4o70h",
+      "name": "Jack Daniel's Duplo",
+      "description": "",
+      "price": 6.5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "suz254hsu",
+      "name": "Jack Daniel's Duplo",
+      "description": "",
+      "price": 7.5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "qh02ugzlg",
+      "name": "Black Label Simples ",
+      "description": "",
+      "price": 4,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "xes4w34ew",
+      "name": "Black Label Duplo",
+      "description": "",
+      "price": 7,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "bn5dt00o8",
+      "name": "Chivas Regal Garrafa",
+      "description": "",
+      "price": 30,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "pnkn6pdjt",
+      "name": "Chivas Regal Simples",
+      "description": "",
+      "price": 3.5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "v0kuy1f87",
+      "name": "Chivas Regal Duplo",
+      "description": "",
+      "price": 6.5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "3brvutnql",
+      "name": "Ballantines 12 Anos",
+      "description": "",
+      "price": 30,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ut7o6crbr",
+      "name": "Ballantines 12 Anos Simples",
+      "description": "",
+      "price": 3.5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "mag7roiz0",
+      "name": "Ballantines 12 Anos Duplo",
+      "description": "",
+      "price": 6.5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "dyot7hrs8",
+      "name": "Jameson Garrafa",
+      "description": "",
+      "price": 17,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "jqv75hslm",
+      "name": "Jameson Garrafa Simples",
+      "description": "",
+      "price": 2.5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "s797m3u5r",
+      "name": "Jameson Garrafa Duplo",
+      "description": "",
+      "price": 5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "eazhcz7xg",
+      "name": "Red Label Garrafa",
+      "description": "",
+      "price": 17,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "3yr22fvwy",
+      "name": "Red Label Garrafa Simples",
+      "description": "",
+      "price": 2.5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "oe8azg8w7",
+      "name": "Red Label Garrafa Duplo",
+      "description": "",
+      "price": 5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ekezoyd1n",
+      "name": "Camino Branco Garrafa",
+      "description": "",
+      "price": 10.5,
+      "category_id": "f931cxx5j",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "mt2tf6m57",
+      "name": "Moscato",
+      "description": "",
+      "price": 16,
+      "category_id": "qv585ikpi",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "s6kgbxly4",
+      "name": "Don Luciano",
+      "description": "",
+      "price": 8,
+      "category_id": "qv585ikpi",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "cfdryzp9g",
+      "name": "Groselha Portuguesa Garrafa",
+      "description": "",
+      "price": 8,
+      "category_id": "qv585ikpi",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "5d5sn8lfi",
+      "name": "Groselha Portuguesa Simples",
+      "description": "",
+      "price": 2,
+      "category_id": "qv585ikpi",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "tvh8ip0f1",
+      "name": "Groselha Portuguesa Duplo",
+      "description": "",
+      "price": 4,
+      "category_id": "qv585ikpi",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "jmbimu1z7",
+      "name": "Coca-Cola Garrafa",
+      "description": "",
+      "price": 0.5,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "h3cflb4gn",
+      "name": "Camino Branco Simples",
+      "description": "",
+      "price": 2.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "5g5mgimlt",
+      "name": "Camino Branco Duplo",
+      "description": "",
+      "price": 5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "43fjzylu6",
+      "name": "Água das Pedras",
+      "description": "",
+      "price": 1.5,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "80k47epy1",
+      "name": "Água Tónica ",
+      "description": "",
+      "price": 1,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "4untaogci",
+      "name": "água Pura Grande",
+      "description": "",
+      "price": 0.6,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "hkdv0n2k8",
+      "name": "Água Pura",
+      "description": "",
+      "price": 0.3,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "m038xqo7y",
+      "name": "Sumo Natural",
+      "description": "",
+      "price": 2.5,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "eaxm6jpet",
+      "name": "Nutry 1L",
+      "description": "",
+      "price": 3.5,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "14txaahux",
+      "name": "Nutry Pequena",
+      "description": "",
+      "price": 0.5,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ij2z7y7jr",
+      "name": "Fanta Garrafa",
+      "description": "",
+      "price": 0.5,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "7ywn3fs4c",
+      "name": "Sprite",
+      "description": "",
+      "price": 0.5,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "c2jqdgwd8",
+      "name": "Compal Lata",
+      "description": "",
+      "price": 1,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "1xpl4sxks",
+      "name": "Red Bull",
+      "description": "",
+      "price": 3,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "0a2c3p1cw",
+      "name": "Gin Gordons Pink",
+      "description": "",
+      "price": 17,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ktyg8aiyp",
+      "name": "Gin Gordons Pink Simples",
+      "description": "",
+      "price": 3.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "m9svip2wg",
+      "name": "Gin Gordons Pink Duplo",
+      "description": "",
+      "price": 6.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "32eigjjq9",
+      "name": "Amarula Garrafa",
+      "description": "",
+      "price": 15,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "hf9ba7sl6",
+      "name": "Amarula Simples",
+      "description": "",
+      "price": 2.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "a3223wak8",
+      "name": "Pão ",
+      "description": "",
+      "price": 0.1,
+      "category_id": "b83nc36zk",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "dqpq5tgyg",
+      "name": "Chá ",
+      "description": "",
+      "price": 0.7,
+      "category_id": "8jpjv3v3b",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "mixez5m27",
+      "name": "Sprite",
+      "description": "",
+      "price": 1,
+      "category_id": "cat_entradas",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "8x8q9q4qy",
+      "name": "Chá ",
+      "description": "",
+      "price": 0.5,
+      "category_id": "8jpjv3v3b",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "6t007n3mm",
+      "name": "Vinho a Pressão ",
+      "description": "",
+      "price": 2,
+      "category_id": "inh1plnkw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ff6988e8w",
+      "name": "Gin Tonico",
+      "description": "",
+      "price": 3.5,
+      "category_id": "l6bt0k1fn",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "9138ytcur",
+      "name": "Água Chela",
+      "description": "",
+      "price": 0.4,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ts52wrccr",
+      "name": "Água Chela 1L",
+      "description": "",
+      "price": 0.8,
+      "category_id": "rv8pqh1gw",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "2fj6z4oym",
+      "name": "1920 Simples",
+      "description": "",
+      "price": 2.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "1e2gaw2s2",
+      "name": "1920 Duplo",
+      "description": "",
+      "price": 5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "sy3wlx25y",
+      "name": "Smirnoff",
+      "description": "",
+      "price": 1.5,
+      "category_id": "fy5d64isp",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "nl59mb5cy",
+      "name": "Tosta Simples ",
+      "description": "",
+      "price": 1,
+      "category_id": "r8xjnjwu3",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "pp4uqxmn8",
+      "name": "Pizza 4 Estações Grande",
+      "description": "",
+      "price": 17.5,
+      "category_id": "cat-1770240640200",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "4284m8l0f",
+      "name": "Pizza Margarita Média ",
+      "description": "",
+      "price": 12.5,
+      "category_id": "cat-1770240640200",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "3wutixq59",
+      "name": "Pizza Margarita Grande",
+      "description": "",
+      "price": 16.5,
+      "category_id": "cat-1770240640200",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "n8jq4whj3",
+      "name": "Fino copo plástico ",
+      "description": "",
+      "price": 0.8,
+      "category_id": "i8ywp2y1q",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ubo6yhxi1",
+      "name": "Gin Gordons Garrafa",
+      "description": "",
+      "price": 16,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "22c1c7zmb",
+      "name": "Gin Gordons Duplo",
+      "description": "",
+      "price": 6,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "wsxsjr54x",
+      "name": "Gin Gordons Simples",
+      "description": "",
+      "price": 3,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "2ryt5h1av",
+      "name": "Amarula Duplo",
+      "description": "",
+      "price": 5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "7nnaow604",
+      "name": "Chapéu de Palha Simples",
+      "description": "",
+      "price": 3.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "n08t6fuug",
+      "name": "Chapéu de Palha Duplo",
+      "description": "",
+      "price": 6.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "mz4heof51",
+      "name": "Chapéu de Palha Duplo (Cópia)",
+      "description": "",
+      "price": 6.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "r9z21hri2",
+      "name": "Vodka Escape Garrafa",
+      "description": "",
+      "price": 10,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "v8zoyxasx",
+      "name": "Vodka Escape Duplo",
+      "description": "",
+      "price": 4,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "9qa9e9ad5",
+      "name": "Vodka Escape Simples",
+      "description": "",
+      "price": 2,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "l9s0do1w6",
+      "name": "Vodka Eristoff Garrafa",
+      "description": "",
+      "price": 10,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "2pcmeg1yp",
+      "name": "Vodka Eristoff Duplo",
+      "description": "",
+      "price": 4,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "wdex0gout",
+      "name": "Vodka Eristoff Simples",
+      "description": "",
+      "price": 2,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "r0zf0r9vi",
+      "name": "Havana Club Rum Garrafa",
+      "description": "",
+      "price": 8,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "dyvxht627",
+      "name": "Havana Club Rum Duplo",
+      "description": "",
+      "price": 4,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "bjcbc2yp3",
+      "name": "Havana Club Rum Simples",
+      "description": "",
+      "price": 2,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "brhdoaaw4",
+      "name": "Courvoisier Garrafa",
+      "description": "",
+      "price": 75,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "voyqik6sk",
+      "name": "Courvoisier Duplo",
+      "description": "",
+      "price": 14,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "kdaf6qaxb",
+      "name": "Courvoisier Simples",
+      "description": "",
+      "price": 8,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "nwkif3t7v",
+      "name": "Aliança Velha Garrafa",
+      "description": "",
+      "price": 20.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "8qx54rz8l",
+      "name": "Aliança Velha Duplo",
+      "description": "",
+      "price": 7,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "w65uuwt2v",
+      "name": "Aliança Velha Simples",
+      "description": "",
+      "price": 4,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "tv4rcx9er",
+      "name": "GB 12 Garrafa",
+      "description": "",
+      "price": 17,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "ricis9my7",
+      "name": "GB 12 Garrafa Duplo",
+      "description": "",
+      "price": 5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "fa0snskje",
+      "name": "GB 12 Garrafa Simples",
+      "description": "",
+      "price": 2.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "rlykc87yg",
+      "name": "1920 Brandy Garrafa",
+      "description": "",
+      "price": 15,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "2u9iwhrg2",
+      "name": "Bagaceira Portuguesa",
+      "description": "",
+      "price": 15,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "bp6m18q5p",
+      "name": "Bagaceira Portuguesa Duplo",
+      "description": "",
+      "price": 5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    },
+    {
+      "id": "417uq8kao",
+      "name": "Bagaceira Portuguesa",
+      "description": "",
+      "price": 2.5,
+      "category_id": "n6l3nfyfx",
+      "image_url": "",
+      "is_visible_digital": true,
+      "is_featured": false
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-1770129128415-f9",
+      "table_id": 1,
+      "status": "FECHADO",
+      "total": 7.41,
+      "items": [
+        {
+          "dishId": "23jvly3hw",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 910.0000000000001
+        }
+      ],
+      "created_at": "2026-02-03T14:32:29.607Z"
+    },
+    {
+      "id": "ord-1770129198038-cg",
+      "table_id": 1,
+      "status": "FECHADO",
+      "total": 6.5,
+      "items": [
+        {
+          "dishId": "23jvly3hw",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T14:33:34.876Z"
+    },
+    {
+      "id": "ord-1770134729449-e8",
+      "table_id": 1,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T16:05:52.927Z"
+    },
+    {
+      "id": "ord-1770135229959-vj",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T16:48:10.289Z"
+    },
+    {
+      "id": "ord-1770135547423-bg",
+      "table_id": 4,
+      "status": "FECHADO",
+      "total": 4,
+      "items": [
+        {
+          "dishId": "ikr4gj5w4",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T16:21:42.500Z"
+    },
+    {
+      "id": "ord-1770139320648-va",
+      "table_id": 1013,
+      "status": "FECHADO",
+      "total": 5.2,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 5,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T17:37:16.600Z"
+    },
+    {
+      "id": "ord-1770139527166-3b",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 9.7,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "23jvly3hw",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:23:46.087Z"
+    },
+    {
+      "id": "ord-1770139991927-up",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 2.4,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T18:56:18.863Z"
+    },
+    {
+      "id": "ord-1770140043321-s4",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 3.2,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T18:17:56.729Z"
+    },
+    {
+      "id": "ord-1770140314447-8f",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 3.6,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T17:38:56.785Z"
+    },
+    {
+      "id": "ord-1770140350337-wd",
+      "table_id": 1013,
+      "status": "FECHADO",
+      "total": 11,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 10,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4mbjd7bah",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:31:02.400Z"
+    },
+    {
+      "id": "ord-1770140413382-ba",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 1.6,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T17:54:07.012Z"
+    },
+    {
+      "id": "ord-1770140762682-67",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 11.3,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "23jvly3hw",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:18:14.208Z"
+    },
+    {
+      "id": "ord-1770141128477-sd",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 40,
+      "items": [
+        {
+          "dishId": "7d5w0246q",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 16000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "h0jrxtn7z",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "5ph7zie3h",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:45:50.828Z"
+    },
+    {
+      "id": "ord-1770141751125-vk",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:39:23.569Z"
+    },
+    {
+      "id": "ord-1770142185212-hk",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T18:09:53.370Z"
+    },
+    {
+      "id": "ord-1770142614490-ot",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T18:28:30.015Z"
+    },
+    {
+      "id": "ord-1770143272661-ed",
+      "table_id": 1007,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T18:28:00.079Z"
+    },
+    {
+      "id": "ord-1770143372382-h5",
+      "table_id": 1005,
+      "status": "FECHADO",
+      "total": 1.6,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T18:48:46.083Z"
+    },
+    {
+      "id": "ord-1770143414683-ww",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 39.8,
+      "items": [
+        {
+          "dishId": "kpoph4mgy",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "nzq93exgw",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "23jvly3hw",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "dnzhek4e4",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "7d5w0246q",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 16000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "wu2amtyps",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T20:07:20.011Z"
+    },
+    {
+      "id": "ord-1770143494635-wq",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 1,
+      "items": [
+        {
+          "dishId": "t84846b5v",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T18:45:06.916Z"
+    },
+    {
+      "id": "ord-1770143789473-ns",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 2.4,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:26:52.234Z"
+    },
+    {
+      "id": "ord-1770143861578-pr",
+      "table_id": 1007,
+      "status": "FECHADO",
+      "total": 24.2,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "j3xv5yx3h",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "0mx68cakv",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 8500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:58:16.957Z"
+    },
+    {
+      "id": "ord-1770143875174-3c",
+      "table_id": 1008,
+      "status": "FECHADO",
+      "total": 25,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 10,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "kpoph4mgy",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "h0jrxtn7z",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "uczquuzvs",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T20:51:37.280Z"
+    },
+    {
+      "id": "ord-1770145435269-yj",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 4.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:04:38.217Z"
+    },
+    {
+      "id": "ord-1770145556609-vy",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 9.8,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "mem62vi86",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "uczquuzvs",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T20:49:49.512Z"
+    },
+    {
+      "id": "ord-1770145829421-wc",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 2.6,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:56:05.420Z"
+    },
+    {
+      "id": "ord-1770145894682-8o",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 1,
+      "items": [
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:14:38.068Z"
+    },
+    {
+      "id": "ord-1770146550602-ur",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 23.6,
+      "items": [
+        {
+          "dishId": "h0jrxtn7z",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "23jvly3hw",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 11,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "9c0j1972x",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "aren3x83m",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T21:09:46.497Z"
+    },
+    {
+      "id": "ord-1770147151802-v7",
+      "table_id": 1011,
+      "status": "FECHADO",
+      "total": 8.4,
+      "items": [
+        {
+          "dishId": "8ylgo3y70",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "abq8pwwir",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 400,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T20:30:29.125Z"
+    },
+    {
+      "id": "ord-1770147642051-bc",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:49:52.202Z"
+    },
+    {
+      "id": "ord-1770147680028-ey",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 2.6,
+      "items": [
+        {
+          "dishId": "xeingufo3",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T19:53:48.529Z"
+    },
+    {
+      "id": "ord-1770148252702-0w",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 22.1,
+      "items": [
+        {
+          "dishId": "5ph7zie3h",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "s4q3mhxwl",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1y9zs4t86",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "xeingufo3",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T21:05:22.811Z"
+    },
+    {
+      "id": "ord-1770148442125-em",
+      "table_id": 1010,
+      "status": "FECHADO",
+      "total": 4.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T20:34:27.434Z"
+    },
+    {
+      "id": "ord-1770149622947-sf",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 2,
+      "items": [
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T20:16:39.360Z"
+    },
+    {
+      "id": "ord-1770149694555-oy",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 1.6,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T21:10:02.380Z"
+    },
+    {
+      "id": "ord-1770150524532-wf",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 0.6,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T20:28:54.052Z"
+    },
+    {
+      "id": "ord-1770150722667-vc",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 2.4,
+      "items": [
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "abq8pwwir",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 400,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T21:20:21.389Z"
+    },
+    {
+      "id": "ord-1770151547456-f7",
+      "table_id": 1009,
+      "status": "FECHADO",
+      "total": 2,
+      "items": [
+        {
+          "dishId": "vuq4ztcxf",
+          "quantity": 20,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 100,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T20:46:07.897Z"
+    },
+    {
+      "id": "ord-1770152349007-mc",
+      "table_id": 1007,
+      "status": "FECHADO",
+      "total": 1.6,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T20:59:37.794Z"
+    },
+    {
+      "id": "ord-1770153659916-u3",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 9.7,
+      "items": [
+        {
+          "dishId": "0tygzjiak",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "mem62vi86",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T21:22:06.111Z"
+    },
+    {
+      "id": "ord-1770153750089-cu",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "xk9nn749e",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-03T21:23:44.072Z"
+    },
+    {
+      "id": "ord-1770197280644-wl",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 2.5,
+      "items": [
+        {
+          "dishId": "prkr05r2o",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T15:49:43.030Z"
+    },
+    {
+      "id": "ord-1770197293849-rw",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 4.3,
+      "items": [
+        {
+          "dishId": "8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T11:47:14.592Z"
+    },
+    {
+      "id": "ord-1770197311852-25",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 6.7,
+      "items": [
+        {
+          "dishId": "8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 7,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T12:08:28.540Z"
+    },
+    {
+      "id": "ord-1770201062664-mc",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 5.9,
+      "items": [
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "abq8pwwir",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 400,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T11:38:55.496Z"
+    },
+    {
+      "id": "ord-1770201834061-6g",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 4.5,
+      "items": [
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T12:11:44.492Z"
+    },
+    {
+      "id": "ord-1770202567994-e3",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 0.5,
+      "items": [
+        {
+          "dishId": "sl2h8eel7",
+          "quantity": 5,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 100,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T10:58:03.669Z"
+    },
+    {
+      "id": "ord-1770203092674-ie",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 8.4,
+      "items": [
+        {
+          "dishId": "8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "t84846b5v",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "bsql5ez87",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "abq8pwwir",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 400,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "udelqxjdz",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T11:49:42.191Z"
+    },
+    {
+      "id": "ord-1770205238916-gq",
+      "table_id": 1007,
+      "status": "FECHADO",
+      "total": 5.3,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "uufxhunc3",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T11:41:39.992Z"
+    },
+    {
+      "id": "ord-1770207284196-4g",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 9.7,
+      "items": [
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "470dzo0qr",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "e3oja6iwm",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "0xmgnphsv",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "slpr894e2",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1200,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T13:32:54.025Z"
+    },
+    {
+      "id": "ord-1770207785087-u6",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 11.6,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "532cwvwyt",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "0xmgnphsv",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T15:06:45.052Z"
+    },
+    {
+      "id": "ord-1770209755314-w5",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 2,
+      "items": [
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T14:04:46.160Z"
+    },
+    {
+      "id": "ord-1770213264992-m0",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 0.6,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T14:03:59.582Z"
+    },
+    {
+      "id": "ord-1770215509473-2w",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 10.7,
+      "items": [
+        {
+          "dishId": "vb23hjq3a",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "abq8pwwir",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 400,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "532cwvwyt",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "0xmgnphsv",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "9c0j1972x",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T15:31:06.730Z"
+    },
+    {
+      "id": "ord-1770215690297-5g",
+      "table_id": 1009,
+      "status": "FECHADO",
+      "total": 12.5,
+      "items": [
+        {
+          "dishId": "532cwvwyt",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "0xmgnphsv",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1fx9rzdg2",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "bsql5ez87",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T15:11:43.980Z"
+    },
+    {
+      "id": "ord-1770221477156-rt",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 4,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 5,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T18:24:17.371Z"
+    },
+    {
+      "id": "ord-1770223253949-0l",
+      "table_id": 1011,
+      "status": "FECHADO",
+      "total": 15,
+      "items": [
+        {
+          "dishId": "t0xgdl4fx",
+          "quantity": 9,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "d1cnpqtuo",
+          "quantity": 8,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "23jvly3hw",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T17:37:05.135Z"
+    },
+    {
+      "id": "ord-1770224194179-5a",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 5.4,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "h0jrxtn7z",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T18:24:40.456Z"
+    },
+    {
+      "id": "ord-1770227732449-r4",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 0.6,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T18:11:51.874Z"
+    },
+    {
+      "id": "ord-1770227987618-iy",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 2,
+      "items": [
+        {
+          "dishId": "qfcgt4hv6",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T18:38:12.242Z"
+    },
+    {
+      "id": "ord-1770228109534-9f",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 12.6,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "mem62vi86",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1y9zs4t86",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "wu2amtyps",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "xeingufo3",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T19:49:46.405Z"
+    },
+    {
+      "id": "ord-1770228199526-vl",
+      "table_id": 1004,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T18:12:44.899Z"
+    },
+    {
+      "id": "ord-1770228413641-hv",
+      "table_id": 1011,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "d1cnpqtuo",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "t0xgdl4fx",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T18:07:32.842Z"
+    },
+    {
+      "id": "ord-1770228890800-sw",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T18:38:57.983Z"
+    },
+    {
+      "id": "ord-1770228975008-88",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 8.8,
+      "items": [
+        {
+          "dishId": "qfcgt4hv6",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "mem62vi86",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "uczquuzvs",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "wu2amtyps",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T19:06:31.769Z"
+    },
+    {
+      "id": "ord-1770230667142-9i",
+      "table_id": 1007,
+      "status": "FECHADO",
+      "total": 4,
+      "items": [
+        {
+          "dishId": "1y9zs4t86",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T19:03:29.645Z"
+    },
+    {
+      "id": "ord-1770230887991-m0",
+      "table_id": 1008,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T18:48:55.851Z"
+    },
+    {
+      "id": "ord-1770232202265-j8",
+      "table_id": 1012,
+      "status": "FECHADO",
+      "total": 18.8,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "0xmgnphsv",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "ztt4g27t8",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "s4q3mhxwl",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "wu2amtyps",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T19:50:39.700Z"
+    },
+    {
+      "id": "ord-1770232295349-oi",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 3.5,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "5uwpa9s8d",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T19:12:49.592Z"
+    },
+    {
+      "id": "ord-1770234014262-s0",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 5.4,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4mbjd7bah",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "wu2amtyps",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T20:03:45.872Z"
+    },
+    {
+      "id": "ord-1770235616501-b6",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-04T20:07:23.520Z"
+    },
+    {
+      "id": "ord-1770288418506-xj",
+      "table_id": 1,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "q9koqa73k",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T10:48:18.768Z"
+    },
+    {
+      "id": "ord-1770294741786-f9",
+      "table_id": 1,
+      "status": "FECHADO",
+      "total": 0.9,
+      "items": [
+        {
+          "dishId": "5uwpa9s8d",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T12:32:57.826Z"
+    },
+    {
+      "id": "ord-1770297102256-96",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 2.4,
+      "items": [
+        {
+          "dishId": "92b13m0r1",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T13:41:50.173Z"
+    },
+    {
+      "id": "ord-1770308195538-x5",
+      "table_id": 1,
+      "status": "ABERTO",
+      "total": 2,
+      "items": [
+        {
+          "productId": "prod-1770308166659",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T16:16:35.538Z"
+    },
+    {
+      "id": "ord-1770309143667-8i",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 5.6,
+      "items": [
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 7,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T17:52:51.695Z"
+    },
+    {
+      "id": "ord-1770309162058-o7",
+      "table_id": 1004,
+      "status": "FECHADO",
+      "total": 6.6,
+      "items": [
+        {
+          "dishId": "zk5oen1kt",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T16:46:18.223Z"
+    },
+    {
+      "id": "ord-1770313244781-ua",
+      "table_id": 3,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T18:04:53.659Z"
+    },
+    {
+      "id": "ord-1770313872785-03",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 22.9,
+      "items": [
+        {
+          "dishId": "aftx63p4x",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "dgo3xbik8",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "wewq1n7dd",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "v6wem91zy",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "7iivx7ilx",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "tvnob3v8c",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T19:27:08.841Z"
+    },
+    {
+      "id": "ord-1770314128630-96",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 1.5,
+      "items": [
+        {
+          "dishId": "dct1748c7",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T17:56:14.140Z"
+    },
+    {
+      "id": "ord-1770317098744-ml",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T18:23:39.849Z"
+    },
+    {
+      "id": "ord-1770317130450-hq",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 1.9,
+      "items": [
+        {
+          "dishId": "dlcbehhz4",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "30e96ypx3",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T19:11:14.413Z"
+    },
+    {
+      "id": "ord-1770317305753-gv",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 9,
+      "items": [
+        {
+          "dishId": "hcl8l27ax",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 8000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4thsapvuh",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T10:40:26.311Z"
+    },
+    {
+      "id": "ord-1770319766481-20",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 21.9,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "dgo3xbik8",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "wewq1n7dd",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "v6wem91zy",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "tvnob3v8c",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T19:30:24.137Z"
+    },
+    {
+      "id": "ord-1770323038612-km",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 6,
+      "items": [
+        {
+          "dishId": "alibfpe6r",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4mdwnu7on",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-05T20:28:25.916Z"
+    },
+    {
+      "id": "ord-1770387122952-av",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 4.5,
+      "items": [
+        {
+          "dishId": "1nsuoo99i",
+          "quantity": 8,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "jmbimu1z7",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T16:25:33.907Z"
+    },
+    {
+      "id": "ord-1770387864684-ry",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 1.8,
+      "items": [
+        {
+          "dishId": "3sehfwcpc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "y6q981gex",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T15:44:48.413Z"
+    },
+    {
+      "id": "ord-1770389192011-wv",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T15:18:12.129Z"
+    },
+    {
+      "id": "ord-1770389290953-uv",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 8.6,
+      "items": [
+        {
+          "dishId": "bf3579zwc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 7000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T15:45:08.790Z"
+    },
+    {
+      "id": "ord-1770395310193-05",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 7.8,
+      "items": [
+        {
+          "dishId": "bf3579zwc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 7000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "3sehfwcpc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T17:34:28.534Z"
+    },
+    {
+      "id": "ord-1770396751934-lr",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 6,
+      "items": [
+        {
+          "dishId": "dgo3xbik8",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T18:31:26.853Z"
+    },
+    {
+      "id": "ord-1770397646407-ec",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 11.1,
+      "items": [
+        {
+          "dishId": "wewq1n7dd",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "tvnob3v8c",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "dgo3xbik8",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T17:33:46.965Z"
+    },
+    {
+      "id": "ord-1770399850106-x8",
+      "table_id": 3,
+      "status": "FECHADO",
+      "total": 5.3,
+      "items": [
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "y6q981gex",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T18:01:19.574Z"
+    },
+    {
+      "id": "ord-1770399936813-rp",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 5.5,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "30e96ypx3",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "h3cflb4gn",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "oostqh5mi",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T19:36:15.895Z"
+    },
+    {
+      "id": "ord-1770400321037-aa",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 2.6,
+      "items": [
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4thsapvuh",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T18:15:14.280Z"
+    },
+    {
+      "id": "ord-1770402348926-21",
+      "table_id": 4,
+      "status": "FECHADO",
+      "total": 1.5,
+      "items": [
+        {
+          "dishId": "ifzg7efk0",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T18:46:29.470Z"
+    },
+    {
+      "id": "ord-1770403878087-yd",
+      "table_id": 4,
+      "status": "FECHADO",
+      "total": 1.5,
+      "items": [
+        {
+          "dishId": "ifzg7efk0",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T18:57:05.888Z"
+    },
+    {
+      "id": "ord-1770403935708-n7",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "nuijx98dy",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T20:57:52.749Z"
+    },
+    {
+      "id": "ord-1770404028578-jc",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 2,
+      "items": [
+        {
+          "dishId": "y6q981gex",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T20:00:04.066Z"
+    },
+    {
+      "id": "ord-1770408052820-zy",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 0.3,
+      "items": [
+        {
+          "dishId": "oostqh5mi",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-06T20:01:04.388Z"
+    },
+    {
+      "id": "ord-1770453915028-p9",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 2.4,
+      "items": [
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T10:25:07.287Z"
+    },
+    {
+      "id": "ord-1770454423378-iv",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 7.8,
+      "items": [
+        {
+          "dishId": "a3223wak8",
+          "quantity": 20,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 100,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "3sehfwcpc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "xkc7s4llv",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T11:30:56.871Z"
+    },
+    {
+      "id": "ord-1770455276771-w4",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "80k47epy1",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "jmbimu1z7",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T09:32:13.595Z"
+    },
+    {
+      "id": "ord-1770456297265-x2",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 5,
+      "items": [
+        {
+          "dishId": "lmz1my7uu",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T10:01:24.205Z"
+    },
+    {
+      "id": "ord-1770456524141-af",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 3.5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "mixez5m27",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T10:16:12.176Z"
+    },
+    {
+      "id": "ord-1770456571311-oh",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 7.9,
+      "items": [
+        {
+          "dishId": "tdt7doour",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "oostqh5mi",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T10:34:49.589Z"
+    },
+    {
+      "id": "ord-1770458118581-rx",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 2.5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T13:05:32.452Z"
+    },
+    {
+      "id": "ord-1770458919286-2t",
+      "table_id": 1004,
+      "status": "FECHADO",
+      "total": 2.5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T10:15:14.860Z"
+    },
+    {
+      "id": "ord-1770460135335-cw",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T10:41:03.364Z"
+    },
+    {
+      "id": "ord-1770462529565-rq",
+      "table_id": 6,
+      "status": "FECHADO",
+      "total": 7,
+      "items": [
+        {
+          "dishId": "alibfpe6r",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "jmbimu1z7",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "tvnob3v8c",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4thsapvuh",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T11:33:07.076Z"
+    },
+    {
+      "id": "ord-1770462652884-vx",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "7ywn3fs4c",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T11:26:02.393Z"
+    },
+    {
+      "id": "ord-1770464502484-85",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 6.5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "nuijx98dy",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "a3223wak8",
+          "quantity": 20,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 100,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T12:19:08.911Z"
+    },
+    {
+      "id": "ord-1770464837926-yu",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T12:22:20.051Z"
+    },
+    {
+      "id": "ord-1770465012022-i2",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 4.4,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "y6q981gex",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T13:04:23.203Z"
+    },
+    {
+      "id": "ord-1770465602961-qj",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 9.5,
+      "items": [
+        {
+          "dishId": "y6q981gex",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "14txaahux",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1q4navart",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "voked0wqe",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "6t007n3mm",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T13:00:43.879Z"
+    },
+    {
+      "id": "ord-1770466951311-3o",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T12:41:25.532Z"
+    },
+    {
+      "id": "ord-1770468839057-x4",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 1.8,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T13:11:51.859Z"
+    },
+    {
+      "id": "ord-1770469927505-da",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 3.6,
+      "items": [
+        {
+          "dishId": "6t007n3mm",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "y6q981gex",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T13:17:41.818Z"
+    },
+    {
+      "id": "ord-1770470359381-t9",
+      "table_id": 3,
+      "status": "FECHADO",
+      "total": 27.5,
+      "items": [
+        {
+          "dishId": "7zbkqn6mq",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "0prg20p62",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "dgo3xbik8",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "tvnob3v8c",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1xpl4sxks",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T14:05:15.244Z"
+    },
+    {
+      "id": "ord-1770470491655-xa",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 1,
+      "items": [
+        {
+          "dishId": "4thsapvuh",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T13:22:11.928Z"
+    },
+    {
+      "id": "ord-1770470887630-t3",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "aftx63p4x",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T13:37:54.439Z"
+    },
+    {
+      "id": "ord-1770473651647-3w",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 5.8,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "y6q981gex",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T15:01:49.537Z"
+    },
+    {
+      "id": "ord-1770474187761-8y",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 2,
+      "items": [
+        {
+          "dishId": "y6q981gex",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T14:24:37.107Z"
+    },
+    {
+      "id": "ord-1770475234917-ir",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 3.3,
+      "items": [
+        {
+          "dishId": "jqv75hslm",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T14:41:29.196Z"
+    },
+    {
+      "id": "ord-1770482849973-dv",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T17:34:38.218Z"
+    },
+    {
+      "id": "ord-1770484684152-2w",
+      "table_id": 1004,
+      "status": "FECHADO",
+      "total": 5.3,
+      "items": [
+        {
+          "dishId": "voked0wqe",
+          "quantity": 5,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1nsuoo99i",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "oostqh5mi",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "nuijx98dy",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T21:12:05.641Z"
+    },
+    {
+      "id": "ord-1770485160981-de",
+      "table_id": 1007,
+      "status": "FECHADO",
+      "total": 6.7,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "u4ypj2a3x",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T18:34:20.036Z"
+    },
+    {
+      "id": "ord-1770486757035-ck",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 69.5,
+      "items": [
+        {
+          "dishId": "lmz1my7uu",
+          "quantity": 10,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "5ckfciiyb",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "alibfpe6r",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "u4ypj2a3x",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "ff6988e8w",
+          "quantity": 7,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T20:50:04.242Z"
+    },
+    {
+      "id": "ord-1770487303249-xu",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 27.9,
+      "items": [
+        {
+          "dishId": "y6q981gex",
+          "quantity": 20,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "u4ypj2a3x",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "9138ytcur",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 400,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1nsuoo99i",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "voked0wqe",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T21:45:16.587Z"
+    },
+    {
+      "id": "ord-1770488004877-i3",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "wy972hke5",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T19:47:55.139Z"
+    },
+    {
+      "id": "ord-1770489639889-7v",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 47.5,
+      "items": [
+        {
+          "dishId": "s4wrxjyv2",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 16500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1nsuoo99i",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "voked0wqe",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "v6wem91zy",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T21:51:00.441Z"
+    },
+    {
+      "id": "ord-1770489994362-hq",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 0.6,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T18:54:23.807Z"
+    },
+    {
+      "id": "ord-1770491098569-oc",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 7.5,
+      "items": [
+        {
+          "dishId": "1nsuoo99i",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "u4ypj2a3x",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T19:57:16.285Z"
+    },
+    {
+      "id": "ord-1770494087095-uq",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 19.8,
+      "items": [
+        {
+          "dishId": "2fj6z4oym",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "3sehfwcpc",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "alibfpe6r",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T21:24:53.032Z"
+    },
+    {
+      "id": "ord-1770494500040-t0",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 2.5,
+      "items": [
+        {
+          "dishId": "dgo3xbik8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "c2jqdgwd8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T20:18:04.995Z"
+    },
+    {
+      "id": "ord-1770495539782-ar",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 1.8,
+      "items": [
+        {
+          "dishId": "3sehfwcpc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "voked0wqe",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1nsuoo99i",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T20:37:28.344Z"
+    },
+    {
+      "id": "ord-1770496737242-1c",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 3.5,
+      "items": [
+        {
+          "dishId": "7ywn3fs4c",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "rq07mepzs",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T21:51:19.230Z"
+    },
+    {
+      "id": "ord-1770497171004-u5",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "sy3wlx25y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T20:49:02.617Z"
+    },
+    {
+      "id": "ord-1770499534327-lw",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 0.6,
+      "items": [
+        {
+          "dishId": "hkdv0n2k8",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T21:48:38.150Z"
+    },
+    {
+      "id": "ord-1770499573418-ge",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 1.6,
+      "items": [
+        {
+          "dishId": "3sehfwcpc",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-07T21:40:11.598Z"
+    },
+    {
+      "id": "ord-1770539546543-hy",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 2.5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T08:32:44.564Z"
+    },
+    {
+      "id": "ord-1770544368201-6s",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 3.5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "y6q981gex",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T10:21:42.609Z"
+    },
+    {
+      "id": "ord-1770546599067-u7",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 5.5,
+      "items": [
+        {
+          "dishId": "1q4navart",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4mdwnu7on",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "jmbimu1z7",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T10:55:55.444Z"
+    },
+    {
+      "id": "ord-1770548589681-9t",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 1,
+      "items": [
+        {
+          "dishId": "y6q981gex",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T11:10:24.287Z"
+    },
+    {
+      "id": "ord-1770548768514-09",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 4.5,
+      "items": [
+        {
+          "dishId": "1q4navart",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "jmbimu1z7",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T11:48:25.447Z"
+    },
+    {
+      "id": "ord-1770548781916-j2",
+      "table_id": 7,
+      "status": "FECHADO",
+      "total": 3.5,
+      "items": [
+        {
+          "dishId": "tdt7doour",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T11:14:35.283Z"
+    },
+    {
+      "id": "ord-1770551191340-sb",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "wy972hke5",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T11:46:49.263Z"
+    },
+    {
+      "id": "ord-1770553138334-6n",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 3.7,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T13:05:47.090Z"
+    },
+    {
+      "id": "ord-1770553980511-hn",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 0.8,
+      "items": [
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T12:37:17.100Z"
+    },
+    {
+      "id": "ord-1770555978813-of",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 1.5,
+      "items": [
+        {
+          "dishId": "c2jqdgwd8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "7ywn3fs4c",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T13:07:37.773Z"
+    },
+    {
+      "id": "ord-1770556082164-1f",
+      "table_id": 999,
+      "status": "FECHADO",
+      "total": 2.5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T13:08:09.574Z"
+    },
+    {
+      "id": "ord-1770556899773-hc",
+      "table_id": 999,
+      "status": "FECHADO",
+      "total": 21.5,
+      "items": [
+        {
+          "dishId": "nmdx6ncbt",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 12500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "bf3579zwc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 7000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "tvnob3v8c",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T14:27:31.517Z"
+    },
+    {
+      "id": "ord-1770557315914-5h",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 11.6,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 11,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "xkc7s4llv",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T14:38:41.167Z"
+    },
+    {
+      "id": "ord-1770560444057-or",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 2.8,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "oostqh5mi",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T14:47:48.230Z"
+    },
+    {
+      "id": "ord-1770562353317-g5",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 0.6,
+      "items": [
+        {
+          "dishId": "oostqh5mi",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T16:26:09.411Z"
+    },
+    {
+      "id": "ord-1770563955986-vx",
+      "table_id": 1003,
+      "status": "FECHADO",
+      "total": 7,
+      "items": [
+        {
+          "dishId": "so039k4jy",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 7,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "9138ytcur",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 400,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T16:29:16.979Z"
+    },
+    {
+      "id": "ord-1770568323714-yj",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 2.8,
+      "items": [
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "9138ytcur",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 400,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T16:43:44.273Z"
+    },
+    {
+      "id": "ord-1770568809587-tp",
+      "table_id": 1004,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "y6q981gex",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "6t007n3mm",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T17:35:08.062Z"
+    },
+    {
+      "id": "ord-1770570108801-9v",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 31.4,
+      "items": [
+        {
+          "dishId": "aftx63p4x",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "wy972hke5",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "alibfpe6r",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "u4ypj2a3x",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 5500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "mt2tf6m57",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 16000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "c2jqdgwd8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "hkdv0n2k8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T19:28:17.715Z"
+    },
+    {
+      "id": "ord-1770572250277-08",
+      "table_id": 6,
+      "status": "FECHADO",
+      "total": 1.8,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T18:32:37.754Z"
+    },
+    {
+      "id": "ord-1770572629035-87",
+      "table_id": 6,
+      "status": "FECHADO",
+      "total": 9.2,
+      "items": [
+        {
+          "dishId": "v6wem91zy",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4brevjzi7",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T18:44:13.748Z"
+    },
+    {
+      "id": "ord-1770574015450-6b",
+      "table_id": 999,
+      "status": "FECHADO",
+      "total": 2,
+      "items": [
+        {
+          "dishId": "s07srbfsc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T20:38:10.712Z"
+    },
+    {
+      "id": "ord-1770574048387-eg",
+      "table_id": 999,
+      "status": "FECHADO",
+      "total": 4,
+      "items": [
+        {
+          "dishId": "y6q981gex",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "aftx63p4x",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T20:00:18.441Z"
+    },
+    {
+      "id": "ord-1770576077035-4r",
+      "table_id": 3,
+      "status": "FECHADO",
+      "total": 6.4,
+      "items": [
+        {
+          "dishId": "6t007n3mm",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "aftx63p4x",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T20:51:02.790Z"
+    },
+    {
+      "id": "ord-1770576270696-mo",
+      "table_id": 6,
+      "status": "FECHADO",
+      "total": 1.8,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T19:45:26.169Z"
+    },
+    {
+      "id": "ord-1770576766846-zj",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "wy972hke5",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T18:53:00.064Z"
+    },
+    {
+      "id": "ord-1770578224639-7n",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 18,
+      "items": [
+        {
+          "dishId": "7zbkqn6mq",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T19:17:41.714Z"
+    },
+    {
+      "id": "ord-1770578346613-5s",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 1.5,
+      "items": [
+        {
+          "dishId": "dgo3xbik8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T19:19:20.005Z"
+    },
+    {
+      "id": "ord-1770578489219-9i",
+      "table_id": 6,
+      "status": "FECHADO",
+      "total": 5.6,
+      "items": [
+        {
+          "dishId": "y6q981gex",
+          "quantity": 5,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "aftx63p4x",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T20:48:16.551Z"
+    },
+    {
+      "id": "ord-1770580136074-u9",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "aftx63p4x",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T20:19:25.837Z"
+    },
+    {
+      "id": "ord-1770581727193-oe",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 4.6,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "wy972hke5",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "y6q981gex",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T20:41:15.003Z"
+    },
+    {
+      "id": "ord-1770581837501-yr",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 8.9,
+      "items": [
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "v6wem91zy",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T21:06:47.108Z"
+    },
+    {
+      "id": "ord-1770582938532-5i",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 1.2,
+      "items": [
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-08T20:35:55.559Z"
+    },
+    {
+      "id": "ord-1770632642687-14",
+      "table_id": 1006,
+      "status": "FECHADO",
+      "total": 2.8,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "oostqh5mi",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 300,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T10:46:48.499Z"
+    },
+    {
+      "id": "ord-1770635913814-9a",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 3.5,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "1nsuoo99i",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T12:31:43.075Z"
+    },
+    {
+      "id": "ord-1770639876863-kq",
+      "table_id": 2,
+      "status": "FECHADO",
+      "total": 9.7,
+      "items": [
+        {
+          "dishId": "bf3579zwc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 7000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "w75g2mtly",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "ae443alz8",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1200,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T12:25:10.642Z"
+    },
+    {
+      "id": "ord-1770640020156-zy",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 1,
+      "items": [
+        {
+          "dishId": "y6q981gex",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T12:27:20.309Z"
+    },
+    {
+      "id": "ord-1770640279895-4z",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 3.7,
+      "items": [
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T12:58:03.601Z"
+    },
+    {
+      "id": "ord-1770640696863-4i",
+      "table_id": 6,
+      "status": "FECHADO",
+      "total": 9.5,
+      "items": [
+        {
+          "dishId": "arkjip5x4",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 8500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "voked0wqe",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T12:57:38.121Z"
+    },
+    {
+      "id": "ord-1770640979741-zj",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 1.5,
+      "items": [
+        {
+          "dishId": "tvnob3v8c",
+          "quantity": 3,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T12:44:05.275Z"
+    },
+    {
+      "id": "ord-1770642306893-k9",
+      "table_id": 6,
+      "status": "FECHADO",
+      "total": 0.5,
+      "items": [
+        {
+          "dishId": "voked0wqe",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T13:30:08.342Z"
+    },
+    {
+      "id": "ord-1770644545355-54",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 11.5,
+      "items": [
+        {
+          "dishId": "bf3579zwc",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 7000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "tvnob3v8c",
+          "quantity": 4,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T13:46:16.425Z"
+    },
+    {
+      "id": "ord-1770644861885-o5",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 28,
+      "items": [
+        {
+          "dishId": "amnh4afth",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 20000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "eo6tpmoni",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "tvnob3v8c",
+          "quantity": 6,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T14:27:03.724Z"
+    },
+    {
+      "id": "ord-1770645887957-x8",
+      "table_id": 1002,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "1q4navart",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 2000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4mdwnu7on",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T14:05:11.424Z"
+    },
+    {
+      "id": "ord-1770658640706-2l",
+      "table_id": 6,
+      "status": "FECHADO",
+      "total": 1,
+      "items": [
+        {
+          "dishId": "80k47epy1",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T17:38:16.722Z"
+    },
+    {
+      "id": "ord-1770660786974-u0",
+      "table_id": 1005,
+      "status": "FECHADO",
+      "total": 9.1,
+      "items": [
+        {
+          "dishId": "v6wem91zy",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 6500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "4mdwnu7on",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 1000,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T19:25:00.294Z"
+    },
+    {
+      "id": "ord-1770661816410-4a",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "aftx63p4x",
+          "quantity": 5,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T21:19:41.270Z"
+    },
+    {
+      "id": "ord-1770665371377-31",
+      "table_id": 1005,
+      "status": "FECHADO",
+      "total": 9,
+      "items": [
+        {
+          "dishId": "ejxus8i8h",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T20:03:05.610Z"
+    },
+    {
+      "id": "ord-1770666459101-i9",
+      "table_id": 1000,
+      "status": "FECHADO",
+      "total": 2,
+      "items": [
+        {
+          "dishId": "zzzlma9ho",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 800,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "ma2oddm2y",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 600,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T19:55:32.302Z"
+    },
+    {
+      "id": "ord-1770666488305-hn",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "wy972hke5",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T19:49:59.470Z"
+    },
+    {
+      "id": "ord-1770666806903-jo",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 3,
+      "items": [
+        {
+          "dishId": "wy972hke5",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 3000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T19:53:34.509Z"
+    },
+    {
+      "id": "ord-1770668293580-e6",
+      "table_id": 1004,
+      "status": "FECHADO",
+      "total": 2,
+      "items": [
+        {
+          "dishId": "1nsuoo99i",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "jmbimu1z7",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        },
+        {
+          "dishId": "7ywn3fs4c",
+          "quantity": 1,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 500,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T20:46:43.529Z"
+    },
+    {
+      "id": "ord-1770670038020-zr",
+      "table_id": 1001,
+      "status": "FECHADO",
+      "total": 8,
+      "items": [
+        {
+          "dishId": "d4h353a0f",
+          "quantity": 2,
+          "status": "PENDENTE",
+          "notes": "",
+          "unitPrice": 4000,
+          "taxAmount": 0
+        }
+      ],
+      "created_at": "2026-02-09T20:48:06.126Z"
+    }
+  ]
+}

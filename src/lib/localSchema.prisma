@@ -1,0 +1,220 @@
+// 🎯 SCHEMA PRISMA PARA SQLITE LOCAL - UNIFICADO COM SUPABASE
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./local.db"
+}
+
+// 📦 ORDERS - Mesma estrutura do Supabase
+model orders {
+  id               String    @id @default(cuid())
+  customer_name    String?
+  customer_phone   String?
+  delivery_address String?
+  total_amount     Decimal?  @default(0) @db.Decimal(10, 2)
+  status           String?   @default("pending")
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now())
+  cost_amount      Decimal?  @default(0) @db.Decimal(15, 2)
+  payment_method   String?   @default("NUMERARIO")
+  invoice_number   String?
+  table_id         String?
+  customer_id      String?
+  user_id          String?
+  data_contabil    DateTime?
+  tax_amount       Decimal?
+  net_amount       Decimal?
+  tax_rate         Decimal?
+  items            String?   // JSON
+  document_type    String?   @default("FT")
+  document_status  String?   @default("N")
+  customer_nif     String?
+  event_id         String?
+  is_event_order   Boolean?  @default(false)
+
+  @@map("orders")
+}
+
+// 💸 EXPENSES - Mesma estrutura do Supabase
+model expenses {
+  id            String    @id @default(cuid())
+  description   String
+  amount_kz     Decimal   @db.Decimal(15, 2)
+  category      String
+  is_recurring  Boolean?  @default(false)
+  period_start  DateTime? @db.Date
+  period_end    DateTime? @db.Date
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now())
+  status        String?   @default("pago")
+  category_name String?
+
+  @@map("expenses")
+}
+
+// 👥 STAFF - Mesma estrutura do Supabase
+model staff {
+  id              String    @id @default(cuid())
+  full_name       String
+  role            String?
+  base_salary_kz  Decimal?  @default(0) @db.Decimal(12, 2)
+  phone           String?
+  status          String?   @default("active")
+  created_at      DateTime  @default(now())
+  subsidios       Decimal?  @default(0) @db.Decimal
+  bonus           Decimal?  @default(0) @db.Decimal
+  horas_extras    Decimal?  @default(0) @db.Decimal
+  descontos       Decimal?  @default(0) @db.Decimal
+  salario_base    Decimal?  @default(0) @db.Decimal
+
+  @@map("staff")
+}
+
+// 📚 EXTERNAL_HISTORY - Mesma estrutura do Supabase
+model external_history {
+  id            String    @id @default(cuid())
+  source_name   String
+  total_revenue Decimal   @default(0) @db.Decimal
+  gross_profit  Decimal   @default(0) @db.Decimal
+  period        String
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now())
+
+  @@map("external_history")
+}
+
+// 📊 SYNC_QUEUE - Controle de sincronização
+model sync_queue {
+  id         String   @id @default(cuid())
+  table_name String
+  operation  String   // insert, update, delete
+  data       String   // JSON
+  status     String   @default("pending") // pending, synced, error
+  created_at DateTime @default(now())
+  synced_at  DateTime?
+
+  @@map("sync_queue")
+}
+
+// 💰 CASH_FLOW - Mesma estrutura do Supabase
+model cash_flow {
+  id            String    @id @default(cuid())
+  amount        Decimal
+  type          String    @default("entrada")
+  category      String
+  description   String?
+  data_contabil DateTime
+  closed_by     String?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now())
+
+  @@map("cash_flow")
+}
+
+// 📅 CLOSED_DAYS - Dias fechados
+model closed_days {
+  id         String   @id @default(cuid())
+  date       DateTime
+  closed_at  DateTime @default(now())
+  closed_by  String?
+  created_at DateTime @default(now())
+
+  @@map("closed_days")
+}
+
+// 🧾 AGT DOCUMENTOS FISCAIS
+model agt_documents {
+  id                  String    @id @default(cuid())
+  document_type       String    // FT, FR, ND, NC, GT, GR, RG
+  document_status     String    @default("N") // N, A, C, R, P
+  series_code         String
+  document_number     String
+  document_date       DateTime  @default(now())
+  tax_registration_number String
+  customer_tax_id     String    @default("999999999")
+  customer_name       String    @default("CONSUMIDOR FINAL")
+  customer_country    String    @default("AO")
+  customer_address    String?
+  eac_code            String?
+  hash                String
+  hash_control        Int?
+  previous_hash       String?
+  lines_json          String    // JSON array of lines
+  tax_payable         Decimal   @default(0)
+  net_total           Decimal   @default(0)
+  gross_total         Decimal   @default(0)
+  discount_total      Decimal   @default(0)
+  payment_method      String    @default("NUMERARIO")
+  payment_terms       String?
+  source_billing      String    @default("P") // P = Programa
+  order_id            String?
+  invoice_number      String?
+  agt_submission_uuid String?
+  agt_submission_status String? @default("PENDING")
+  agt_response_code   String?
+  agt_response_message String?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @default(now())
+
+  @@map("agt_documents")
+}
+
+// 📋 AGT SÉRIES DE FATURAÇÃO
+model agt_series {
+  id                    String    @id @default(cuid())
+  series_code           String
+  series_year           Int
+  document_type         String
+  establishment_number  String    @default("001")
+  authorized_quantity   Int
+  first_document_no     String
+  last_document_no      String
+  current_sequence      Int       @default(0)
+  status                String    @default("A") // A, U, F
+  agt_registration_code String?
+  agt_registered_at     DateTime?
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @default(now())
+
+  @@map("agt_series")
+}
+
+// 📡 AGT SUBMISSÕES
+model agt_submissions {
+  id                  String    @id @default(cuid())
+  request_id          String
+  submission_uuid     String
+  order_id            String?
+  document_no         String
+  document_type       String
+  status              String    @default("PENDING")
+  result_code         Int?
+  action_result_code  String?
+  submitted_at        DateTime  @default(now())
+  processed_at        DateTime?
+  response_data       String?   // JSON
+  error_details       String?   // JSON
+  retry_count         Int       @default(0)
+  last_retry_at       DateTime?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @default(now())
+
+  @@map("agt_submissions")
+}
+
+// 🛡️ AGT LOGS DE CONFORMIDADE
+model agt_compliance_logs {
+  id            String    @id @default(cuid())
+  log_type      String    // SERIES_REGISTRATION, INVOICE_VALIDATION, SAFT_UPLOAD, DOCUMENT_EMISSION, SIGNATURE
+  status        String    // SUCCESS, ERROR, WARNING
+  request_data  String?   // JSON
+  response_data String?   // JSON
+  error_message String?
+  timestamp     DateTime  @default(now())
+
+  @@map("agt_compliance_logs")
+}

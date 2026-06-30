@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2d4a3e"/>
+      <stop offset="100%" stop-color="#1a2e26"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield background -->
+  <path d="M100 10 L180 40 L180 110 Q180 160 100 190 Q20 160 20 110 L20 40 Z" fill="url(#bg)" stroke="#c9a84c" stroke-width="4"/>
+  <path d="M100 18 L172 45 L172 108 Q172 153 100 180 Q28 153 28 108 L28 45 Z" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+  
+  <!-- Text -->
+  <text x="100" y="55" text-anchor="middle" fill="#f5f5dc" font-family="Georgia, serif" font-size="22" font-weight="bold" letter-spacing="1">TASCA DO</text>
+  <text x="100" y="80" text-anchor="middle" fill="#f5f5dc" font-family="Georgia, serif" font-size="22" font-weight="bold" letter-spacing="1">VEREDA</text>
+  <text x="100" y="100" text-anchor="middle" fill="#c9a84c" font-family="Arial, sans-serif" font-size="10" letter-spacing="3">RESTAURANTE</text>
+  
+  <!-- Steak illustration -->
+  <ellipse cx="100" cy="125" rx="32" ry="18" fill="#8B4513" stroke="#5D3A1A" stroke-width="1.5"/>
+  <ellipse cx="100" cy="122" rx="28" ry="14" fill="#A0522D"/>
+  <path d="M75 120 L125 120" stroke="#5D3A1A" stroke-width="1.5" opacity="0.6"/>
+  <path d="M72 125 L128 125" stroke="#5D3A1A" stroke-width="1.5" opacity="0.6"/>
+  <path d="M78 130 L122 130" stroke="#5D3A1A" stroke-width="1.5" opacity="0.6"/>
+  
+  <!-- Bone -->
+  <ellipse cx="130" cy="125" rx="8" ry="10" fill="#DEB887" stroke="#CD853F" stroke-width="1"/>
+  
+  <!-- Crossed cutlery -->
+  <line x1="75" y1="155" x2="125" y2="140" stroke="#c0c0c0" stroke-width="4" stroke-linecap="round"/>
+  <line x1="75" y1="140" x2="125" y2="155" stroke="#c0c0c0" stroke-width="4" stroke-linecap="round"/>
+  <!-- Fork tines -->
+  <line x1="72" y1="135" x2="68" y2="128" stroke="#c0c0c0" stroke-width="2"/>
+  <line x1="75" y1="134" x2="73" y2="126" stroke="#c0c0c0" stroke-width="2"/>
+  <line x1="78" y1="133" x2="78" y2="125" stroke="#c0c0c0" stroke-width="2"/>
+  <!-- Knife blade -->
+  <path d="M122 138 L138 132 Q140 138 138 144 L122 148 Z" fill="#c0c0c0" stroke="#999" stroke-width="0.5"/>
+  
+  <!-- Ornament -->
+  <path d="M70 170 Q85 160 100 170 Q115 160 130 170" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+  <circle cx="100" cy="165" r="3" fill="#c9a84c"/>
+</svg>

@@ -1,0 +1,4 @@
+-- Criar bucket products se não existir
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('products', 'products', true)
+ON CONFLICT (id) DO NOTHING;

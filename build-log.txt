@@ -1,0 +1,17 @@
+  ÔÇó electron-builder  version=26.8.1 os=10.0.26200
+  ÔÇó loaded configuration  file=C:\Users\hneto\rest-ia-Tasca do Vereda\electron-builder.json
+  ÔÇó executing @electron/rebuild  electronVersion=41.2.0 arch=x64 buildFromSource=false workspaceRoot=C:\Users\hneto\rest-ia-Tasca do Vereda projectDir=./ appDir=./
+  ÔÇó installing native dependencies  arch=x64
+  ÔÇó completed installing native dependencies
+  ÔÇó packaging       platform=win32 arch=x64 electron=41.2.0 appOutDir=release-new\win-unpacked
+  ÔÇó searching for node modules  pm=npm searchDir=C:\Users\hneto\rest-ia-Tasca do Vereda
+  ÔÇó duplicate dependency references  dependencies=["fetch-blob@3.2.0","gaxios@7.1.4","ecdsa-sig-formatter@1.0.11","@types/node@25.6.0","@prisma/get-platform@5.22.0","@types/node@25.6.0","utrie@1.0.2","jspdf@4.2.1","html2canvas@1.4.1","react@18.3.1","string-width@4.2.3","string-width@4.2.3","strip-ansi@6.0.1","strip-ansi@6.0.1","react@18.3.1","loose-envify@1.4.0","i18next@23.16.8","react@18.3.1","react-dom@18.3.1","react@18.3.1","react@18.3.1","loose-envify@1.4.0","react-dom@18.3.1","loose-envify@1.4.0","react-dom@18.3.1","loose-envify@1.4.0","prop-types@15.8.1","react-dom@18.3.1","react@18.3.1","react@18.3.1","react@18.3.1","d3-array@3.2.4","d3-interpolate@3.0.1","d3-time@3.1.0","d3-time@3.1.0","d3-array@3.2.4","react@18.3.1","react@18.3.1"]
+  ÔÇó updating asar integrity executable resource  executablePath=release-new\win-unpacked\Tasca Vereda.exe
+  ÔÇó signing with signtool.exe  path=release-new\win-unpacked\Tasca Vereda.exe
+  ÔÇó signing with signtool.exe  path=release-new\win-unpacked\resources\app.asar.unpacked\node_modules\@supabase\cli-windows-x64\bin\supabase-go.exe
+  ÔÇó signing with signtool.exe  path=release-new\win-unpacked\resources\app.asar.unpacked\node_modules\@supabase\cli-windows-x64\bin\supabase.exe
+  ÔÇó building        target=nsis file=release-new\TascaVereda-Setup-1.0.11.exe archs=x64 oneClick=false perMachine=false
+  ÔÇó signing with signtool.exe  path=release-new\win-unpacked\resources\elevate.exe
+  ÔÇó signing with signtool.exe  path=release-new\TascaVereda-Setup-1.0.11.__uninstaller.exe
+  ÔÇó signing with signtool.exe  path=release-new\TascaVereda-Setup-1.0.11.exe
+  ÔÇó building block map  blockMapFile=release-new\TascaVereda-Setup-1.0.11.exe.blockmap
