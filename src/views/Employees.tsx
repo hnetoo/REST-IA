@@ -16,13 +16,14 @@ const Employees = () => {
     employees, workShifts, updateEmployee, removeEmployee, 
     addWorkShift, updateWorkShift, removeWorkShift,
     attendance, addNotification, settings,
-    loadEmployees // Adicionar função de carregamento
+    loadEmployees, loadWorkShifts
   } = useStore();
   
-  // useEffect para carregar dados da tabela staff
+  // useEffect para carregar dados da tabela staff e escalas
   useEffect(() => {
     loadEmployees();
-  }, [loadEmployees]);
+    loadWorkShifts();
+  }, [loadEmployees, loadWorkShifts]);
 
   // useEffect para carregar logo como base64 (para recibos)
   useEffect(() => {
@@ -48,8 +49,59 @@ const Employees = () => {
       addNotification('warning', 'Nenhuma escala para exportar.');
       return;
     }
-    printStaffSchedules(employees, workShifts, settings);
-    addNotification('success', 'Escalas exportadas com sucesso.');
+    const days = ['Domingo', 'Segunda-Feira', 'Terça-Feira', 'Quarta-Feira', 'Quinta-Feira', 'Sexta-Feira', 'Sábado'];
+    const daysOrder = [1, 2, 3, 4, 5, 6, 0];
+    const companyName = (settings as any)?.restaurantName || 'Tasca do Vereda';
+    const today = new Date().toLocaleDateString('pt-AO');
+
+    const tableRows = daysOrder.map(dayId => {
+      const dayShifts = workShifts.filter(s => s.dayOfWeek === dayId);
+      if (dayShifts.length === 0) return '';
+      return dayShifts.map((s, i) => {
+        const emp = employees.find(e => e.id === s.employeeId);
+        return `<tr>
+          ${i === 0 ? `<td rowspan="${dayShifts.length}" style="font-weight:900;color:#1a2e26;background:#f8fafc;vertical-align:middle;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">${days[dayId]}</td>` : ''}
+          <td style="font-weight:700;color:#1e293b;">${emp?.name || 'N/A'}</td>
+          <td style="color:#64748b;font-size:11px;text-transform:uppercase;">${emp?.role || ''}</td>
+          <td style="font-family:monospace;font-weight:700;color:#059669;">${s.startTime}</td>
+          <td style="font-family:monospace;font-weight:700;color:#dc2626;">${s.endTime}</td>
+          <td style="font-family:monospace;font-size:11px;color:#64748b;">${
+            (() => { const [sh, sm] = s.startTime.split(':').map(Number); const [eh, em] = s.endTime.split(':').map(Number); const mins = (eh * 60 + em) - (sh * 60 + sm); return mins > 0 ? `${Math.floor(mins/60)}h${mins%60 > 0 ? String(mins%60).padStart(2,'0') : ''}` : '-'; })()
+          }</td>
+        </tr>`;
+      }).join('');
+    }).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Escalas de Trabalho</title>
+    <style>
+      @page { size: A4; margin: 15mm; }
+      body { font-family: 'Segoe UI', system-ui, sans-serif; color: #334155; padding: 20px; }
+      .header { border-bottom: 3px solid #1a2e26; padding-bottom: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+      .header h1 { margin: 0; font-size: 20px; font-weight: 900; color: #1a2e26; text-transform: uppercase; letter-spacing: 1px; }
+      .header p { margin: 4px 0 0; font-size: 10px; color: #64748b; }
+      .meta { font-size: 10px; color: #64748b; text-align: right; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      th { background: #1a2e26; color: #fff; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; padding: 10px 12px; text-align: left; font-weight: 900; }
+      td { border-bottom: 1px solid #e2e8f0; padding: 9px 12px; font-size: 12px; }
+      tr:last-child td { border-bottom: none; }
+      tr:hover td { background: #f8fafc; }
+      .footer { margin-top: 30px; font-size: 9px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+      @media print { body { padding: 0; } }
+    </style></head><body>
+    <div class="header">
+      <div><h1>${companyName}</h1><p>Escalas de Trabalho Semanal</p></div>
+      <div class="meta">Emitido em: ${today}<br>Total de escalas: ${workShifts.length}</div>
+    </div>
+    <table>
+      <thead><tr><th>Dia</th><th>Funcionário</th><th>Cargo</th><th>Entrada</th><th>Saída</th><th>Duração</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+    <div class="footer">REST IA OS — Gestão de Capital Humano — ${companyName}</div>
+    </body></html>`;
+
+    setPrintHtml(html);
+    setPrintTitle('Escalas de Trabalho');
+    setIsPrintOpen(true);
   };
 
   const handleExportPayroll = () => {
@@ -559,15 +611,16 @@ const Employees = () => {
             <div className="flex gap-2">
                <button 
                   onClick={handleExportSchedules}
-                  className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+                  className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest"
+                  title="Imprimir Escalas"
                >
-                  <Printer size={18} /> Imprimir Escalas
+                  <Printer size={13} /> Imprimir
                </button>
                <button 
                   onClick={() => { setEditingShift(null); setShiftForm({employeeId: employees[0]?.id, dayOfWeek: selectedDay, startTime: '08:00', endTime: '16:00'}); setIsShiftModalOpen(true); }}
-                  className="px-6 py-3 rounded-xl bg-primary text-black font-black text-[10px] uppercase tracking-widest shadow-glow hover:brightness-110 transition-all flex items-center gap-2"
+                  className="px-4 py-2 rounded-xl bg-primary text-black font-black text-[9px] uppercase tracking-widest shadow-glow hover:brightness-110 transition-all flex items-center gap-1.5"
                >
-                  <Plus size={18} /> Criar Escala
+                  <Plus size={13} /> Nova Escala
                </button>
             </div>
           )}
@@ -605,7 +658,7 @@ const Employees = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => { setEditingEmp(emp); setEmpForm(emp); setIsEmpModalOpen(true); }} className="flex-1 py-4 rounded-2xl bg-white/5 text-slate-400 hover:text-white text-[9px] font-black uppercase tracking-widest">Editar</button>
+                    <button onClick={() => { setEditingEmp(emp); setEmpForm(emp); setHasSubmitted(false); setIsSubmitting(false); setIsEmpModalOpen(true); }} className="flex-1 py-4 rounded-2xl bg-white/5 text-slate-400 hover:text-white text-[9px] font-black uppercase tracking-widest">Editar</button>
                     <button onClick={() => removeEmployee(emp.id)} className="px-5 py-4 rounded-2xl border border-red-500/10 text-red-500/50 hover:bg-red-500 hover:text-white transition-all" aria-label="Remover funcionário"><Trash2 size={16} /></button>
                   </div>
                 </div>
@@ -726,7 +779,7 @@ const Employees = () => {
                   <select 
                     value={selectedMonth.slice(5, 7)}
                     onChange={(e) => setSelectedMonth(`${selectedMonth.slice(0, 4)}-${e.target.value.padStart(2, '0')}`)}
-                    className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white outline-none focus:border-primary font-bold"
+                    className="px-4 py-2 bg-slate-800 border border-white/20 rounded-xl text-white outline-none focus:border-primary font-bold"
                     title="Selecione o mês"
                   >
                     <option value="01">Janeiro</option>
@@ -745,7 +798,7 @@ const Employees = () => {
                   <select 
                     value={selectedMonth.slice(0, 4)}
                     onChange={(e) => setSelectedMonth(`${e.target.value}-${selectedMonth.slice(5, 7)}`)}
-                    className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white outline-none focus:border-primary font-bold"
+                    className="px-4 py-2 bg-slate-800 border border-white/20 rounded-xl text-white outline-none focus:border-primary font-bold"
                     title="Selecione o ano"
                   >
                     {[...Array(5)].map((_, i) => {
@@ -943,14 +996,14 @@ const Employees = () => {
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Papel</label>
-                  <select className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none font-bold appearance-none" value={empForm.role} onChange={e => setEmpForm({...empForm, role: e.target.value as UserRole})} title="Selecione o papel do funcionário">
-                    <option value="GARCOM">Garçom</option>
-                    <option value="COZINHA">Chef / Cozinha</option>
-                    <option value="CAIXA">Caixa</option>
-                    <option value="ADMIN">Administrador</option>
-                    <option value="AUXILIAR_COZINHA">Auxiliar de Cozinha</option>
-                    <option value="LIMPEZA">Limpeza</option>
-                    <option value="ESTAFETA">Estafeta</option>
+                  <select className="w-full p-5 bg-slate-800 border border-white/10 rounded-2xl text-white outline-none font-bold appearance-none" value={empForm.role} onChange={e => setEmpForm({...empForm, role: e.target.value as UserRole})} title="Selecione o papel do funcionário">
+                    <option value="GARCOM" className="bg-slate-800 text-white">Garçom</option>
+                    <option value="COZINHA" className="bg-slate-800 text-white">Chef / Cozinha</option>
+                    <option value="CAIXA" className="bg-slate-800 text-white">Caixa</option>
+                    <option value="ADMIN" className="bg-slate-800 text-white">Administrador</option>
+                    <option value="AUXILIAR_COZINHA" className="bg-slate-800 text-white">Auxiliar de Cozinha</option>
+                    <option value="LIMPEZA" className="bg-slate-800 text-white">Limpeza</option>
+                    <option value="ESTAFETA" className="bg-slate-800 text-white">Estafeta</option>
                   </select>
                 </div>
                 <div>
@@ -983,12 +1036,12 @@ const Employees = () => {
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Tipo de Contrato</label>
-                  <select className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none font-bold appearance-none" value={empForm.contractType || 'INDEFINIDO'} onChange={e => setEmpForm({...empForm, contractType: e.target.value})} title="Tipo de contrato">
-                    <option value="INDEFINIDO">Indefinido</option>
-                    <option value="A_TERMO">A Termo</option>
-                    <option value="A_TERMO_CERTO">A Termo Certo</option>
-                    <option value="TRABALHO_OCASIONAL">Trabalho Ocasional</option>
-                    <option value="ESTAGIO">Estágio</option>
+                  <select className="w-full p-5 bg-slate-800 border border-white/10 rounded-2xl text-white outline-none font-bold appearance-none" value={empForm.contractType || 'INDEFINIDO'} onChange={e => setEmpForm({...empForm, contractType: e.target.value})} title="Tipo de contrato">
+                    <option value="INDEFINIDO" className="bg-slate-800 text-white">Indefinido</option>
+                    <option value="A_TERMO" className="bg-slate-800 text-white">A Termo</option>
+                    <option value="A_TERMO_CERTO" className="bg-slate-800 text-white">A Termo Certo</option>
+                    <option value="TRABALHO_OCASIONAL" className="bg-slate-800 text-white">Trabalho Ocasional</option>
+                    <option value="ESTAGIO" className="bg-slate-800 text-white">Estágio</option>
                   </select>
                 </div>
                 <div>
@@ -1095,8 +1148,8 @@ const Employees = () => {
             <form onSubmit={handleSaveShift} className="space-y-6">
                  <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Selecionar Colaborador</label>
-                    <select required className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white outline-none font-bold" value={shiftForm.employeeId} onChange={e => setShiftForm({...shiftForm, employeeId: e.target.value})} title="Selecione o colaborador">
-                       {employees.map(e => <option key={e.id} value={e.id} className="bg-slate-900">{e.name}</option>)}
+                    <select required className="w-full p-5 bg-slate-800 border border-white/10 rounded-2xl text-white outline-none font-bold" value={shiftForm.employeeId} onChange={e => setShiftForm({...shiftForm, employeeId: e.target.value})} title="Selecione o colaborador">
+                       {employees.map(e => <option key={e.id} value={e.id} className="bg-slate-800 text-white">{e.name}</option>)}
                     </select>
                  </div>
                  <div className="grid grid-cols-2 gap-4">

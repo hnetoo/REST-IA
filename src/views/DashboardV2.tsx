@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { Users, Target, TrendingUp, DollarSign, Zap, RefreshCw, Activity, MonitorOff, Printer, ChefHat, Loader2, Sparkles, ShoppingBag, Receipt, AlertTriangle, PieChart, FileText, Wallet, CreditCard, Scale, Gauge, TrendingDown, BarChart3 } from 'lucide-react';
 import { AIAnalysisResult, Order } from '../../types';
 import { supabase } from '../supabase_standalone';
-import { printFinanceReport, printThermalInvoice, showPrintPreview } from '../lib/printService';
+import { printThermalInvoice } from '../lib/printService';
 import { formatKz, formatDateInAppTimezone, calculateDataContabil } from '../lib/dateUtils';
 import { getRealtimeService, stopRealtimeService } from '../services/realtimeService';
 import { getTodayRangeInLuanda, formatKzAngola, formatDateDDMMAAAA } from '../lib/timezoneLuanda';
@@ -20,6 +20,10 @@ const DashboardV2 = () => {
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [reportHtml, setReportHtml] = useState<string | null>(null);
+  const aiPanelRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   // 🔥 ADICIONADO: Estado para orders do Supabase
   const [supabaseOrders, setSupabaseOrders] = useState<any[]>([]);
   
@@ -580,21 +584,20 @@ const DashboardV2 = () => {
 
   const biChartColors = ['#06b6d4', '#f97316', '#eab308'];
 
-  const handleExportTodayReport = () => {
-    const orders = recentInvoices.length > 0 ? recentInvoices : supabaseOrders.filter(o => ['closed', 'paid'].includes(o.status));
-    if (orders.length === 0) {
-      addNotification('warning', 'Nenhuma venda hoje para exportar.');
-      return;
+  const openReportWindow = (html: string) => {
+    setReportHtml(html);
+  };
+
+  const handlePrintIframe = () => {
+    try {
+      const frame = iframeRef.current;
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+      }
+    } catch (_) {
+      addNotification('error', 'Erro ao imprimir. Tente usar o botão dentro do relatório.');
     }
-    const rows = orders.map(order => {
-      const inv = order.invoiceNumber || order.invoice_number || order.id?.toString().slice(-6).toUpperCase() || '—';
-      const total = Number(order.total ?? order.total_amount ?? 0);
-      const pm = order.payment_method || order.paymentMethod || '—';
-      const time = order.created_at ? new Date(order.created_at).toLocaleTimeString('pt-AO', { hour: '2-digit', minute: '2-digit' }) : '—';
-      return [inv, pm, time, formatKz(total)];
-    });
-    printFinanceReport('Relatório de Vendas de Hoje', rows, ['Fatura', 'Pagamento', 'Hora', 'Valor'], settings);
-    addNotification('success', 'Relatório exportado com sucesso.');
   };
   
   const handleReprint = (order: Order) => {
@@ -604,18 +607,51 @@ const DashboardV2 = () => {
   
   const handleAIAnalysis = async () => {
     setLoadingAi(true);
-    
-    // 🔥 IMPLEMENTADO: Análise real usando dados do SyncCore
+    await new Promise(r => setTimeout(r, 600));
+
+    const revenue = todayMetrics.revenue || 0;
+    const profit = todayMetrics.profit || 0;
+    const expenses = todayExpenses || 0;
+    const staff = staffCosts || 0;
+    const margin = revenue > 0 ? ((profit / revenue) * 100).toFixed(1) : '0.0';
+    const ordersCount = recentInvoices.length;
+    const avgTicket = ordersCount > 0 ? (revenue / ordersCount) : 0;
+
+    let summaryLines: string[] = [];
+    if (revenue === 0) {
+      summaryLines.push('Sem vendas registadas hoje. O dia ainda pode estar a começar ou não há pedidos fechados.');
+    } else {
+      summaryLines.push(`Hoje foram processadas ${ordersCount} ${ordersCount === 1 ? 'venda' : 'vendas'} com faturação total de ${formatKz(revenue)}.`);
+      summaryLines.push(`Ticket médio: ${formatKz(avgTicket)}. Margem líquida: ${margin}%.`);
+    }
+    if (expenses > 0) summaryLines.push(`Despesas operacionais: ${formatKz(expenses)}. Folha salarial: ${formatKz(staff)}.`);
+
+    let rec = '';
+    if (revenue === 0) {
+      rec = 'Inicie o registo de pedidos no POS para começar a acompanhar a performance do dia.';
+    } else if (profit < 0) {
+      rec = `Lucro negativo (${formatKz(profit)}). As despesas superam a faturação — reveja custos operacionais e folha salarial.`;
+    } else if (Number(margin) < 10) {
+      rec = `Margem de ${margin}% está abaixo do ideal (>15%). Analise o custo dos pratos mais vendidos.`;
+    } else if (Number(margin) < 20) {
+      rec = `Margem de ${margin}% é aceitável. Para melhorar: reduza despesas variáveis ou aumente o ticket médio.`;
+    } else {
+      rec = `Excelente margem de ${margin}%! Performance sólida. Mantenha o controlo de despesas e explore upselling.`;
+    }
+
     const analysis: AIAnalysisResult = {
-      summary: `Análise de Performance - ${new Date().toLocaleDateString('pt-AO')}`,
-      recommendation: netProfit > 0 
-          ? '✅ Performance positiva! Continue monitorando despesas.'
-          : '⚠️ Lucro negativo. Revise custos operacionais.',
-      trend: todayRevenue > (totalRevenue || 0) * 0.1 ? 'up' : 'down'
+      summary: summaryLines.join(' '),
+      recommendation: rec,
+      trend: profit >= 0 && Number(margin) > 10 ? 'up' : 'down'
     };
-    
+
     setAiAnalysis(analysis);
+    setShowAiModal(true);
     setLoadingAi(false);
+
+    setTimeout(() => {
+      aiPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   // Relatório Diário para Aprovação
@@ -712,7 +748,8 @@ const DashboardV2 = () => {
         </body>
       </html>
     `;
-    showPrintPreview(reportHtml);
+    openReportWindow(reportHtml);
+    addNotification('success', 'Relatório diário gerado com sucesso.');
   };
 
   return (
@@ -734,12 +771,6 @@ const DashboardV2 = () => {
           >
             {isRefreshing ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
             {isRefreshing ? 'Atualizando...' : 'Actualizar Dashboard'}
-          </button>
-          <button 
-            onClick={handleExportTodayReport}
-            className="px-4 py-2.5 bg-white/5 border border-white/10 text-white rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-white/10 transition-all"
-          >
-            <Printer size={16} /> Exportar Hoje
           </button>
           <button 
             onClick={handlePrintDailyReport}
@@ -1239,14 +1270,22 @@ const DashboardV2 = () => {
           </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl border border-primary/30 relative overflow-hidden flex flex-col">
+        <div ref={aiPanelRef} className="glass-panel p-6 rounded-2xl border border-primary/30 relative overflow-hidden flex flex-col">
           <div className="absolute top-0 right-0 w-40 h-40 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none"></div>
           
-          <div className="flex items-center gap-3 mb-6 z-10">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-purple-600 shadow-lg">
-                <Sparkles className="text-white" size={20} />
+          <div className="flex items-center justify-between mb-6 z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-purple-600 shadow-lg">
+                  <Sparkles className="text-white" size={20} />
+              </div>
+              <h3 className="text-lg font-bold text-white">IA Assistant</h3>
             </div>
-            <h3 className="text-lg font-bold text-white">IA Assistant</h3>
+            {aiAnalysis && (
+              <button onClick={() => setShowAiModal(true)}
+                className="text-[9px] font-black uppercase tracking-widest text-primary border border-primary/30 px-3 py-1.5 rounded-lg hover:bg-primary/10 transition-all">
+                Ver Análise
+              </button>
+            )}
           </div>
           
           {!aiAnalysis ? (
@@ -1255,9 +1294,10 @@ const DashboardV2 = () => {
                     <Activity size={24} className="text-slate-600" />
                 </div>
                 <p className="text-sm">Aguardando solicitação de análise...</p>
+                <p className="text-xs text-slate-600">Clique em "Análise Tática" no cabeçalho</p>
             </div>
           ) : (
-            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 z-10">
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 z-10">
                <div className="bg-slate-800/50 p-4 rounded-xl border-l-4 border-primary">
                   <p className="text-slate-400 text-[10px] uppercase tracking-wider font-bold mb-1">Resumo Tático</p>
                   <p className="text-sm text-slate-200 leading-relaxed">{aiAnalysis.summary}</p>
@@ -1267,10 +1307,10 @@ const DashboardV2 = () => {
                   <p className="text-sm text-slate-200 leading-relaxed">{aiAnalysis.recommendation}</p>
                </div>
                <div className="flex items-center justify-between bg-white/5 p-3 rounded-lg">
-                  <span className="text-xs font-bold text-slate-400">Tendência de Mercado</span>
+                  <span className="text-xs font-bold text-slate-400">Tendência</span>
                   <div className="flex items-center gap-2">
                       {aiAnalysis.trend === 'up' && <TrendingUp className="text-green-400" size={16}/>}
-                      {aiAnalysis.trend === 'down' && <TrendingUp className="text-red-400 rotate-180" size={16}/>}
+                      {aiAnalysis.trend === 'down' && <TrendingDown className="text-red-400" size={16}/>}
                       <span className="text-sm font-bold text-white uppercase">{aiAnalysis.trend === 'up' ? 'Alta' : 'Baixa'}</span>
                   </div>
                </div>
@@ -1388,6 +1428,96 @@ const DashboardV2 = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Modal Relatório ── */}
+      {reportHtml && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/80 backdrop-blur-sm">
+          <div className="flex items-center justify-between px-6 py-3 bg-slate-900 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-3">
+              <FileText size={18} className="text-primary" />
+              <span className="text-sm font-black text-white uppercase tracking-widest">Relatório Diário</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePrintIframe}
+                className="px-4 py-2 bg-primary text-black rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:brightness-110 transition-all"
+              >
+                🖨️ Imprimir / Guardar PDF
+              </button>
+              <button
+                onClick={() => setReportHtml(null)}
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-all text-lg leading-none"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          <iframe
+            ref={iframeRef}
+            srcDoc={reportHtml}
+            className="flex-1 w-full bg-white"
+            title="Relatório Diário"
+            sandbox="allow-same-origin allow-scripts allow-modals allow-popups"
+          />
+        </div>
+      )}
+
+      {/* ── Modal Análise Tática ── */}
+      {showAiModal && aiAnalysis && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowAiModal(false)}>
+          <div className="glass-panel w-full max-w-lg rounded-3xl border border-primary/30 p-8 space-y-5 relative" onClick={e => e.stopPropagation()}>
+            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-lg">
+                  <Sparkles className="text-white" size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-white">Análise Tática</h3>
+                  <p className="text-[9px] text-slate-500 uppercase tracking-widest">{new Date().toLocaleDateString('pt-AO', { timeZone: 'Africa/Luanda' })}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAiModal(false)}
+                className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white flex items-center justify-center text-lg leading-none transition-all">
+                ×
+              </button>
+            </div>
+
+            <div className="bg-slate-800/60 p-4 rounded-2xl border-l-4 border-primary">
+              <p className="text-[10px] text-primary uppercase tracking-widest font-black mb-2">Resumo do Dia</p>
+              <p className="text-sm text-slate-200 leading-relaxed">{aiAnalysis.summary}</p>
+            </div>
+
+            <div className="bg-slate-800/60 p-4 rounded-2xl border-l-4 border-yellow-500">
+              <p className="text-[10px] text-yellow-400 uppercase tracking-widest font-black mb-2">Recomendação</p>
+              <p className="text-sm text-slate-200 leading-relaxed">{aiAnalysis.recommendation}</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3 text-center">
+                <p className="text-base font-black text-white">{formatKz(todayMetrics.revenue || 0)}</p>
+                <p className="text-[9px] text-slate-500 uppercase mt-0.5">Faturação</p>
+              </div>
+              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3 text-center">
+                <p className={`text-base font-black ${(todayMetrics.profit || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatKz(todayMetrics.profit || 0)}</p>
+                <p className="text-[9px] text-slate-500 uppercase mt-0.5">Lucro</p>
+              </div>
+              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-3 text-center">
+                <div className="flex items-center justify-center gap-1">
+                  {aiAnalysis.trend === 'up' ? <TrendingUp className="text-emerald-400" size={14}/> : <TrendingDown className="text-red-400" size={14}/>}
+                  <p className={`text-base font-black ${aiAnalysis.trend === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>{aiAnalysis.trend === 'up' ? 'Alta' : 'Baixa'}</p>
+                </div>
+                <p className="text-[9px] text-slate-500 uppercase mt-0.5">Tendência</p>
+              </div>
+            </div>
+
+            <button onClick={() => setShowAiModal(false)}
+              className="w-full py-3 bg-primary/10 border border-primary/30 text-primary rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-primary/20 transition-all">
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

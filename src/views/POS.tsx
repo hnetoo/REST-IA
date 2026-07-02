@@ -957,7 +957,8 @@ const POS = () => {
     }
     
     const features = `width=${windowWidth},height=${windowHeight},left=${windowLeft},top=${windowTop},menubar=no,toolbar=no,location=no,status=no,scrollbars=no`;
-    const newWindow = window.open(url, 'VeredaCustomerDisplay', features);
+    const winName = `VeredaCustomerDisplay_${Date.now()}`;
+    const newWindow = window.open(url, winName, features);
     
     if (newWindow) {
       // Tentar mover a janela (funciona na maioria dos browsers para popups)

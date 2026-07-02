@@ -29,6 +29,17 @@ const CustomerDisplay = () => {
     }, 1000);
   }, []);
 
+  // 🔥 Auto-reload quando Service Worker detecta nova versão (sem precisar de teclado)
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handleSWUpdate = () => {
+      console.log('[CustomerDisplay] Nova versão detectada — recarregando...');
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', handleSWUpdate);
+    return () => navigator.serviceWorker.removeEventListener('controllerchange', handleSWUpdate);
+  }, []);
+
   // Sincronização em tempo real entre abas/janelas
   useEffect(() => {
     const generalChannel = new BroadcastChannel('vereda_state_sync');
@@ -118,12 +129,23 @@ const CustomerDisplay = () => {
     return mode === 'ORDER_SUMMARY' && allItems.length > 0;
   }, [customerDisplayMode, tableId, allItems]);
 
-  // Gerar QR Code real para menu público da mesa
+  // Gerar QR Code para menu público — usa a URL configurada nas definições (Vercel)
   useEffect(() => {
     const generateQR = async () => {
       try {
-        const baseUrl = window.location.origin;
-        const menuUrl = `${baseUrl}/#/menu-public?mesa=${tableId || ''}`;
+        // 🔥 Usar sempre a URL pública do Vercel (acessível pelo telemóvel do cliente)
+        // Corrigir URLs antigas erradas (rest-ai → rest-ia, public-menu → menu-public)
+        const CORRECT_URL = 'https://rest-ia.vercel.app/#/menu-public';
+        let rawUrl = settings.customDigitalMenuUrl || CORRECT_URL;
+        // Rejeitar URLs com domínio ou rota errada
+        if (rawUrl.includes('rest-ai.vercel.app') || rawUrl.includes('public-menu')) {
+          console.warn('[CustomerDisplay] URL antiga/errada detectada, usando URL correcta:', rawUrl);
+          rawUrl = CORRECT_URL;
+        }
+        const publicBase = rawUrl.replace(/\/$/, '');
+        const menuUrl = tableId && Number(tableId) > 0
+          ? `${publicBase}${publicBase.includes('?') ? '&' : '?'}mesa=${tableId}`
+          : publicBase;
         const qr = await QRCode.toDataURL(menuUrl, {
           width: 200,
           margin: 1,
@@ -136,7 +158,7 @@ const CustomerDisplay = () => {
       }
     };
     generateQR();
-  }, [tableId]);
+  }, [tableId, settings.customDigitalMenuUrl]);
 
   const handleConfirmAndPay = () => {
     if (table) {

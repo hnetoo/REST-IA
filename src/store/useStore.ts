@@ -1365,6 +1365,8 @@ interface StoreState {
 
   removeWorkShift: (id: string) => void;
 
+  loadWorkShifts: () => Promise<void>;
+
 
 
   addReservation: (res: Reservation) => void;
@@ -4014,7 +4016,7 @@ export const useStore = create<StoreState>()(
 
               base_salary_kz: e.salary,
 
-              status: e.status || 'active',
+              status: e.status === 'ATIVO' ? 'active' : (e.status === 'INATIVO' ? 'inactive' : (e.status || 'active')),
 
               nif: e.nif || null,
 
@@ -4144,7 +4146,7 @@ export const useStore = create<StoreState>()(
 
               base_salary_kz: e.salary,
 
-              is_active: e.status === 'ATIVO',
+              status: e.status === 'ATIVO' ? 'active' : (e.status === 'INATIVO' ? 'inactive' : (e.status || 'active')),
 
               nif: e.nif || null,
 
@@ -4334,11 +4336,82 @@ export const useStore = create<StoreState>()(
 
 
 
-      addWorkShift: (s) => set(state => ({ workShifts: [...state.workShifts, s] })),
+      addWorkShift: (s) => {
+        set(state => ({ workShifts: [...state.workShifts, s] }));
+        supabase
+          .from('staff_schedules')
+          .insert({
+            id: s.id,
+            staff_id: s.employeeId,
+            shift_start: s.startTime,
+            shift_end: s.endTime,
+            work_days: [String(s.dayOfWeek)]
+          })
+          .then(({ error }) => {
+            if (error) console.error('[SCHEDULES] Erro ao gravar escala no Supabase:', error);
+            else console.log('[SCHEDULES] Escala gravada no Supabase:', s.id);
+          });
+      },
 
-      updateWorkShift: (s) => set(state => ({ workShifts: state.workShifts.map(x => x.id === s.id ? s : x) })),
+      updateWorkShift: (s) => {
+        set(state => ({ workShifts: state.workShifts.map(x => x.id === s.id ? s : x) }));
+        supabase
+          .from('staff_schedules')
+          .update({
+            staff_id: s.employeeId,
+            shift_start: s.startTime,
+            shift_end: s.endTime,
+            work_days: [String(s.dayOfWeek)]
+          })
+          .eq('id', s.id)
+          .then(({ error }) => {
+            if (error) console.error('[SCHEDULES] Erro ao atualizar escala no Supabase:', error);
+            else console.log('[SCHEDULES] Escala atualizada no Supabase:', s.id);
+          });
+      },
 
-      removeWorkShift: (id) => set(state => ({ workShifts: state.workShifts.filter(x => x.id !== id) })),
+      removeWorkShift: (id) => {
+        set(state => ({ workShifts: state.workShifts.filter(x => x.id !== id) }));
+        supabase
+          .from('staff_schedules')
+          .delete()
+          .eq('id', id)
+          .then(({ error }) => {
+            if (error) console.error('[SCHEDULES] Erro ao apagar escala no Supabase:', error);
+            else console.log('[SCHEDULES] Escala apagada no Supabase:', id);
+          });
+      },
+
+      loadWorkShifts: async () => {
+        try {
+          const { data, error } = await supabase
+            .from('staff_schedules')
+            .select('*');
+          if (error) {
+            console.error('[SCHEDULES] Erro ao carregar escalas:', error);
+            return;
+          }
+          if (data && data.length > 0) {
+            const shifts: WorkShift[] = [];
+            for (const row of data) {
+              const days = row.work_days || [];
+              for (const dayStr of days) {
+                shifts.push({
+                  id: days.length > 1 ? `${row.id}_${dayStr}` : row.id,
+                  employeeId: row.staff_id || '',
+                  dayOfWeek: Number(dayStr),
+                  startTime: row.shift_start || '08:00',
+                  endTime: row.shift_end || '16:00'
+                });
+              }
+            }
+            set({ workShifts: shifts });
+            console.log('[SCHEDULES] Escalas carregadas do Supabase:', shifts.length);
+          }
+        } catch (e) {
+          console.error('[SCHEDULES] Erro ao carregar escalas:', e);
+        }
+      },
 
 
 
@@ -4815,7 +4888,7 @@ export const useStore = create<StoreState>()(
 
             phone: staff.phone || '',
 
-            status: (staff.is_active ? 'ATIVO' : 'INATIVO') as 'ATIVO' | 'INATIVO',
+            status: (staff.status === 'active' || staff.status === 'ATIVO' ? 'ATIVO' : 'INATIVO') as 'ATIVO' | 'INATIVO',
 
             color: staff.color || '#3B82F6',
 
@@ -5799,7 +5872,8 @@ export const useStore = create<StoreState>()(
         invoiceCounter: state.invoiceCounter,
         customerDisplayMode: state.customerDisplayMode,
         activeOrders: state.activeOrders, // 🔥 PERSISTIR mesas/contas abertas com produtos
-        customers: state.customers // 🔥 PERSISTIR clientes (incl. contas pendentes)
+        customers: state.customers, // 🔥 PERSISTIR clientes (incl. contas pendentes)
+        workShifts: state.workShifts // 🔥 PERSISTIR escalas de turno
       }),
       merge: (persistedState: any, currentState: any) => {
         const merged = { ...currentState, ...persistedState };

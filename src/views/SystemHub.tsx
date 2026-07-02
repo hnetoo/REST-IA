@@ -43,7 +43,11 @@ import {
   Printer,
   Wifi,
   Usb,
-  Globe
+  Globe,
+  Phone,
+  Mail,
+  MapPin,
+  Check
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../supabase_standalone';
@@ -53,6 +57,8 @@ import { getKitchenPrintConfig, saveKitchenPrintConfig, KitchenPrintConfig, DEFA
 import { UserRole } from '../../types';
 import ComplianceReports from './ComplianceReports';
 import { safeAlert, safeWindow, safeReload, safeLocalStorage, safeSessionStorage } from '../utils/windowsCompatibility';
+import { forceRealSyncService } from '../services/forceRealSyncService';
+import { syncToTerminal } from '../services/syncService';
 import CertificationDashboard from './CertificationDashboard';
 import Employees from './Employees';
 import SettingsComponent from './Settings';
@@ -93,22 +99,24 @@ const SystemHub = () => {
     loadEssentialData();
   }, [syncCategoriesToCloud, syncProductsToCloud]);
 
+  // Cards que mostram DataStatus (apenas os relacionados com catálogo/cloud)
+  const DATA_STATUS_CARDS = ['cloud-ecosystem', 'kitchen-printer'];
+
   // Componente de Status de Dados
   const DataStatus = () => {
     return (
-      <div className="glass-panel rounded-2xl p-6 mb-6">
-        <h3 className="text-lg font-bold text-white mb-4">Status dos Dados</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${categories.length > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <div className="text-xs text-slate-400">Categorias</div>
-            <div className="text-sm font-bold text-white">{categories.length}</div>
-          </div>
-          <div className="text-center">
-            <div className={`w-3 h-3 rounded-full mx-auto mb-2 ${menu.length > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <div className="text-xs text-slate-400">Produtos</div>
-            <div className="text-sm font-bold text-white">{menu.length}</div>
-          </div>
+      <div className="flex items-center gap-6 mb-6 px-1">
+        <div className="flex items-center gap-2">
+          <div className={`w-2.5 h-2.5 rounded-full ${categories.length > 0 ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{categories.length} Categorias</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-2.5 h-2.5 rounded-full ${menu.length > 0 ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{menu.length} Produtos</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-2.5 h-2.5 rounded-full ${navigator.onLine ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{navigator.onLine ? 'Cloud Online' : 'Offline'}</span>
         </div>
       </div>
     );
@@ -118,6 +126,7 @@ const SystemHub = () => {
   const IdentitySettings = () => {
     const [localSettings, setLocalSettings] = useState(settings);
     const [isSaving, setIsSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleSaveSettings = async (e: React.FormEvent) => {
@@ -125,8 +134,8 @@ const SystemHub = () => {
       setIsSaving(true);
       try {
         await updateSettings(localSettings);
-        // Mostrar notificação de sucesso
-        setTimeout(() => setIsSaving(false), 1000);
+        setSaved(true);
+        setTimeout(() => { setIsSaving(false); setSaved(false); }, 2000);
       } catch (error) {
         setIsSaving(false);
       }
@@ -134,165 +143,158 @@ const SystemHub = () => {
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-        // Validar se é uma imagem
-        if (!file.type.startsWith('image/')) {
-          alert('Por favor, selecione um arquivo de imagem (JPG, PNG, etc.)');
-          return;
-        }
-
-        // Validar tamanho máximo (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          alert('A imagem não pode ser maior que 5MB');
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          setLocalSettings({...localSettings, appLogoUrl: result});
-        };
-        reader.readAsDataURL(file);
-      }
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('Selecione uma imagem (JPG, PNG, etc.)'); return; }
+      if (file.size > 5 * 1024 * 1024) { alert('Imagem não pode ser maior que 5MB'); return; }
+      const reader = new FileReader();
+      reader.onloadend = () => setLocalSettings(s => ({ ...s, appLogoUrl: reader.result as string }));
+      reader.readAsDataURL(file);
     };
 
-    const handleRemoveLogo = () => {
-      setLocalSettings({...localSettings, appLogoUrl: ''});
-    };
+    const inputCls = "w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl text-white text-sm font-medium outline-none focus:border-[#06b6d4]/60 focus:bg-white/[0.06] transition-all placeholder:text-slate-600";
+    const labelCls = "block text-[9px] font-black text-slate-500 uppercase tracking-[0.18em] mb-2";
 
     return (
-      <div className="glass-panel rounded-2xl p-6">
-        <h2 className="text-xl font-bold text-white mb-4">Identidade Geral</h2>
-        <form onSubmit={handleSaveSettings} className="max-w-3xl space-y-6">
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nome do Restaurante</label>
-              <input 
-                type="text" 
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
-                value={localSettings.restaurantName} 
-                onChange={e => setLocalSettings({...localSettings, restaurantName: e.target.value})}
+      <form onSubmit={handleSaveSettings} className="space-y-6 max-w-2xl">
+
+        {/* ── Hero: Logo + Nome ── */}
+        <div className="relative rounded-[2rem] overflow-hidden border border-white/[0.06] bg-gradient-to-br from-white/[0.04] to-transparent p-6">
+          {/* Background blur decoration */}
+          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-[#06b6d4]/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-cyan-500/5 blur-2xl pointer-events-none" />
+
+          <div className="relative flex items-center gap-6">
+            {/* Logo preview + upload */}
+            <div className="relative group shrink-0">
+              <div className="w-24 h-24 rounded-[1.25rem] bg-white/[0.06] border-2 border-white/10 group-hover:border-[#06b6d4]/40 transition-all overflow-hidden flex items-center justify-center shadow-xl">
+                {localSettings.appLogoUrl
+                  ? <img src={localSettings.appLogoUrl} className="w-full h-full object-contain p-2" alt="Logo" />
+                  : <Building size={36} className="text-[#06b6d4]/60" />
+                }
+              </div>
+              {/* Upload overlay */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 rounded-[1.25rem] bg-black/70 opacity-0 group-hover:opacity-100 transition-all cursor-pointer flex flex-col items-center justify-center gap-1"
+              >
+                <Upload size={18} className="text-white" />
+                <span className="text-[9px] font-black text-white uppercase tracking-wider">Alterar</span>
+              </div>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload}
+                className="hidden" aria-label="Carregar novo logo" />
+              {/* Status dot */}
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#080c15] flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-white" />
+              </div>
+            </div>
+
+            {/* Nome + subtítulo */}
+            <div className="flex-1 min-w-0">
+              <p className={labelCls}>Nome do estabelecimento</p>
+              <input
+                type="text"
+                className="w-full bg-transparent border-0 border-b border-white/10 focus:border-[#06b6d4]/60 outline-none text-2xl font-black text-white uppercase tracking-tight pb-1 mb-1 transition-all"
+                value={localSettings.restaurantName}
+                onChange={e => setLocalSettings(s => ({ ...s, restaurantName: e.target.value }))}
                 aria-label="Nome do restaurante"
+                placeholder="Nome do restaurante"
               />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">NIF (Número de Identificação Fiscal)</label>
-              <input 
-                type="text" 
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
-                value={localSettings.nif} 
-                onChange={e => setLocalSettings({...localSettings, nif: e.target.value})}
-                aria-label="NIF do restaurante"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Telefone</label>
-              <input 
-                type="tel" 
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
-                value={localSettings.phone || ''} 
-                onChange={e => setLocalSettings({...localSettings, phone: e.target.value})}
-                aria-label="Telefone do restaurante"
-                placeholder="+244 900 000 000"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Morada</label>
-              <input 
-                type="text" 
-                className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl text-white font-bold outline-none focus:border-primary" 
-                value={localSettings.address || ''} 
-                onChange={e => setLocalSettings({...localSettings, address: e.target.value})}
-                aria-label="Morada do restaurante"
-                placeholder="Rua Principal, 123 - Bairro, Cidade"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Email</label>
-              <input 
-                type="email" 
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
-                value={localSettings.email || ''} 
-                onChange={e => setLocalSettings({...localSettings, email: e.target.value})}
-                aria-label="Email do restaurante"
-                placeholder="contato@restaurante.com"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Website</label>
-              <input 
-                type="url" 
-                className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary" 
-                value={localSettings.website || ''} 
-                onChange={e => setLocalSettings({...localSettings, website: e.target.value})}
-                aria-label="Website do restaurante"
-                placeholder="https://www.restaurante.com"
-              />
-            </div>
-            <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
-              <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative group">
-                {localSettings.appLogoUrl ? (
-                  <img src={localSettings.appLogoUrl} className="w-full h-full object-contain p-2" alt="Logo" />
-                ) : (
-                  <Building size={40} className="text-[#06b6d4]"/>
-                )}
-                {/* Overlay para upload */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Upload size={24} className="mx-auto mb-2" />
-                    <p className="text-xs font-black uppercase">Clique para alterar</p>
-                  </div>
-                </div>
-                {/* Input escondido */}
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">NIF</span>
                 <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoUpload}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  title="Carregar novo logo"
-                  aria-label="Carregar novo logo"
+                  type="text"
+                  className="bg-transparent border-0 outline-none text-[#06b6d4] text-xs font-black tracking-widest w-40"
+                  value={localSettings.nif}
+                  onChange={e => setLocalSettings(s => ({ ...s, nif: e.target.value }))}
+                  aria-label="NIF do restaurante"
+                  placeholder="000000000"
                 />
               </div>
-              <div className="flex-1 space-y-4 w-full">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Identidade Visual (Logo)</p>
-                <div className="flex flex-wrap gap-2">
-                  <button 
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2 bg-[#06b6d4]/10 border border-[#06b6d4]/20 text-[#06b6d4] rounded-lg text-[10px] font-black uppercase hover:bg-[#06b6d4]/20 transition-all flex items-center gap-2"
-                  >
-                    <Upload size={14} />
-                    Carregar Novo Logo
-                  </button>
-                  {localSettings.appLogoUrl && (
-                    <button 
-                      type="button"
-                      onClick={handleRemoveLogo}
-                      className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-[10px] font-black uppercase hover:bg-red-500/20 transition-all flex items-center gap-2"
-                    >
-                      <Trash2 size={14} />
-                      Remover Logo
-                    </button>
-                  )}
-                </div>
-                <p className="text-xs text-slate-400 italic mt-2">
-                  Formatos aceites: JPG, PNG, GIF. Tamanho máximo: 5MB. Recomendado: 512x512px.
-                </p>
+              {localSettings.appLogoUrl && (
+                <button type="button" onClick={() => setLocalSettings(s => ({ ...s, appLogoUrl: '' }))}
+                  className="mt-2 text-[9px] font-black text-red-500/60 hover:text-red-400 uppercase tracking-widest flex items-center gap-1 transition-all">
+                  <Trash2 size={10} /> Remover logo
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Secção: Contactos ── */}
+        <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#06b6d4] to-blue-600 flex items-center justify-center shrink-0">
+              <Phone size={13} className="text-white" />
+            </div>
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contactos</h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls} htmlFor="id-phone">Telefone</label>
+              <div className="relative">
+                <Phone size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+                <input id="id-phone" type="tel" className={inputCls + " pl-9"}
+                  value={localSettings.phone || ''} placeholder="+244 900 000 000"
+                  onChange={e => setLocalSettings(s => ({ ...s, phone: e.target.value }))}
+                  aria-label="Telefone do restaurante" />
+              </div>
+            </div>
+            <div>
+              <label className={labelCls} htmlFor="id-email">Email</label>
+              <div className="relative">
+                <Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+                <input id="id-email" type="email" className={inputCls + " pl-9"}
+                  value={localSettings.email || ''} placeholder="contacto@restaurante.ao"
+                  onChange={e => setLocalSettings(s => ({ ...s, email: e.target.value }))}
+                  aria-label="Email do restaurante" />
               </div>
             </div>
           </div>
-          <div className="pt-4">
-            <button 
-              type="submit" 
-              className="w-full py-3 bg-[#06b6d4] text-black rounded-xl font-black uppercase text-xs shadow-glow flex items-center justify-center gap-2 transition-all hover:brightness-110"
-              disabled={isSaving}
-            >
-              {isSaving ? 'Guardando...' : 'Guardar Alterações'}
-            </button>
+
+          <div>
+            <label className={labelCls} htmlFor="id-address">Morada</label>
+            <div className="relative">
+              <MapPin size={13} className="absolute left-3.5 top-3.5 text-slate-600 pointer-events-none" />
+              <input id="id-address" type="text" className={inputCls + " pl-9"}
+                value={localSettings.address || ''} placeholder="Rua Principal, 123 — Luanda"
+                onChange={e => setLocalSettings(s => ({ ...s, address: e.target.value }))}
+                aria-label="Morada do restaurante" />
+            </div>
           </div>
-        </form>
-      </div>
+
+          <div>
+            <label className={labelCls} htmlFor="id-website">Website</label>
+            <div className="relative">
+              <Globe size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+              <input id="id-website" type="url" className={inputCls + " pl-9"}
+                value={localSettings.website || ''} placeholder="https://www.restaurante.ao"
+                onChange={e => setLocalSettings(s => ({ ...s, website: e.target.value }))}
+                aria-label="Website do restaurante" />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Nota upload ── */}
+        <div className="flex items-center gap-3 px-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#06b6d4]/60 shrink-0" />
+          <p className="text-[10px] text-slate-600 italic">Logo: JPG, PNG, GIF · máx. 5MB · recomendado 512×512px</p>
+        </div>
+
+        {/* ── Guardar ── */}
+        <button
+          type="submit"
+          disabled={isSaving}
+          className={`w-full py-4 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-all shadow-lg
+            ${saved
+              ? 'bg-emerald-500 text-white scale-[0.99]'
+              : 'bg-[#06b6d4] text-black hover:brightness-110 hover:scale-[1.01] active:scale-[0.99]'
+            } disabled:opacity-60`}
+        >
+          {isSaving && !saved && <div className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" />}
+          {saved ? <><Check size={15} /> Guardado com sucesso!</> : <><Save size={15} /> Guardar Identidade</>}
+        </button>
+      </form>
     );
   };
 
@@ -505,30 +507,6 @@ const SystemHub = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button 
-              onClick={async () => {
-                try {
-                  const { data, error } = await supabase
-                    .from('pos_operators')
-                    .insert({ id: 'test-' + Date.now(), name: 'Teste', role: 'ADMIN', pin: '0000', status: 'ATIVO' })
-                    .select();
-                  if (error) {
-                    addNotification('error', 'Teste falhou: ' + error.message);
-                    console.error('[TEST]', error);
-                  } else {
-                    addNotification('success', 'Teste OK! Supabase respondeu.');
-                    console.log('[TEST] OK:', data);
-                  }
-                } catch (e: any) {
-                  addNotification('error', 'Teste erro: ' + e.message);
-                  console.error('[TEST] Exception:', e);
-                }
-              }}
-              className="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-[10px] uppercase text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2"
-              title="Testar ligação ao Supabase"
-            >
-              <RefreshCw size={14}/> Teste
-            </button>
             <button 
               onClick={() => loadOperators()} 
               className="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl font-black text-[10px] uppercase text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2"
@@ -783,7 +761,7 @@ const SystemHub = () => {
       // Valores padrão atualizados
       supabaseUrl: settings.supabaseUrl || 'https://tboiuiwlqfzcvakxrsmj.supabase.co',
       supabaseKey: settings.supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRib2l1aXdscWZ6Y3Zha3hyc21qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNzc5MzksImV4cCI6MjA4ODY1MzkzOX0.-ioGcbogZMqLTtt0Up6DkPTAsROUmPDSokXPgHJgWBU',
-      customDigitalMenuUrl: settings.customDigitalMenuUrl || 'https://rest-ai.vercel.app/#/public-menu'
+      customDigitalMenuUrl: settings.customDigitalMenuUrl || 'https://rest-ia.vercel.app/#/menu-public'
     });
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncing, setIsSyncing] = useState<string | null>(null);
@@ -827,119 +805,141 @@ const SystemHub = () => {
       }
     };
 
-    const handleManualSync = (type: string) => {
+    const handleManualSync = async (type: string) => {
+      if (!settings.supabaseUrl || !settings.supabaseKey) {
+        addNotification('error', 'Configure as credenciais Cloud primeiro.');
+        return;
+      }
       setIsSyncing(type);
-      // Simulate sync process
-      setTimeout(() => {
+      try {
+        // Pull: produtos e categorias do Supabase para store local
+        await forceRealSyncService.syncFromSupabase();
+
+        // Push: ordens pendentes offline
+        const store = useStore.getState();
+        await store.syncPendingOrdersToSupabase();
+
+        // Push: métricas para terminal_sync (alimenta dashboard mobile)
+        const syncCore = (store as any).syncCoreMetrics;
+        await syncToTerminal({
+          today_revenue: syncCore?.todayRevenue ?? 0,
+          global_revenue: syncCore?.globalRevenue ?? 0,
+          staff_costs: syncCore?.staffCosts ?? 0,
+          total_expenses: syncCore?.totalExpenses ?? 0,
+          open_orders_count: (store.activeOrders ?? []).length
+        });
+
+        addNotification('success', 'Sincronização Global concluída com sucesso!');
+      } catch (err: any) {
+        addNotification('error', 'Erro na sincronização: ' + (err?.message ?? err));
+      } finally {
         setIsSyncing(null);
-        addNotification('success', `Sincronização ${type === 'ALL' ? 'global' : 'seletiva'} concluída com sucesso!`);
-      }, 2000);
+      }
     };
 
+    const inputCls = "w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl text-white text-sm font-mono outline-none focus:border-[#06b6d4]/60 focus:bg-white/[0.06] transition-all placeholder:text-slate-600";
+    const labelCls = "block text-[9px] font-black text-slate-500 uppercase tracking-[0.18em] mb-2";
+
     return (
-      <div className="space-y-12">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
-              <Cloud size={32} />
+      <div className="space-y-6">
+
+        {/* ── Hero ── */}
+        <div className="relative rounded-[2rem] overflow-hidden border border-white/[0.06] bg-gradient-to-br from-orange-500/[0.06] to-transparent p-6">
+          <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white shadow-lg shrink-0">
+                <Cloud size={26} />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Ecosistema Cloud</h3>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.18em] mt-0.5">REST IA OS · Supabase · Vercel</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Ecosistema Cloud</h3>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">REST IA OS Cloud Services</p>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${navigator.onLine ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+              <span className={`text-[9px] font-black uppercase tracking-widest ${navigator.onLine ? 'text-emerald-400' : 'text-red-400'}`}>
+                {navigator.onLine ? 'Online' : 'Offline'}
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="p-8 glass-panel rounded-[2.5rem] border border-white/5">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Estado da Infraestrutura Cloud</span>
-            </div>
-            <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Hub de Dados Supabase</h3>
-            <p className="text-xs text-slate-400 mt-2 max-w-lg leading-relaxed">Este módulo sincroniza os seus dados locais com a nuvem de forma unidirecional. A nuvem serve apenas para alimentar o seu <b>Menu Digital</b> e <b>Dashboard Mobile (Vercel)</b>.</p>
+        {/* ── Sync Global ── */}
+        <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.18em]">Sincronização Global</p>
+            <p className="text-xs text-slate-400 mt-0.5">Dados locais → Supabase → Menu Digital + Dashboard Mobile</p>
           </div>
-          <div className="flex gap-3 z-10">
-            <button 
-              onClick={() => handleManualSync('ALL')} 
-              disabled={!!isSyncing} 
-              className="px-8 py-4 bg-[#06b6d4] text-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center gap-2 hover:scale-105 transition-all"
+          <button
+            onClick={() => handleManualSync('ALL')}
+            disabled={!!isSyncing}
+            className="shrink-0 px-6 py-3 bg-[#06b6d4] text-black rounded-2xl font-black uppercase text-[9px] tracking-widest shadow-lg flex items-center gap-2 hover:brightness-110 hover:scale-[1.02] transition-all disabled:opacity-60"
+          >
+            {isSyncing === 'ALL'
+              ? <><div className="w-3.5 h-3.5 border-2 border-black/40 border-t-black rounded-full animate-spin" /> A Sincronizar...</>
+              : <><RefreshCw size={13} /> Sincronizar</>}
+          </button>
+        </div>
+
+        {/* ── Grid credenciais + endpoint ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Credenciais */}
+          <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#06b6d4] to-blue-600 flex items-center justify-center shrink-0">
+                <Lock size={13} className="text-white" />
+              </div>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Credenciais da Instância</h4>
+            </div>
+            <div>
+              <label className={labelCls}>Project URL</label>
+              <input type="text" className={inputCls}
+                value={localSettings.supabaseUrl}
+                onChange={e => setLocalSettings({...localSettings, supabaseUrl: e.target.value})}
+                placeholder="https://xxxx.supabase.co"
+                aria-label="URL do projeto Supabase" />
+            </div>
+            <div>
+              <label className={labelCls}>Service Role Key</label>
+              <input type="password" className={inputCls}
+                value={localSettings.supabaseKey}
+                onChange={e => setLocalSettings({...localSettings, supabaseKey: e.target.value})}
+                placeholder="eyJhbGci..."
+                aria-label="Chave de serviço Supabase" />
+            </div>
+            <button
+              onClick={handleSaveSettings}
+              disabled={isSaving}
+              className="w-full py-3.5 bg-[#06b6d4] text-black rounded-2xl font-black text-[9px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {isSyncing === 'ALL' ? (
-                <div className="animate-spin">
-                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-black rounded-full"></div>
-                  <span>Sincronização Global</span>
-                </div>
-              )}
+              {isSaving ? <><div className="w-3.5 h-3.5 border-2 border-black/40 border-t-black rounded-full animate-spin" /> A guardar...</> : <><Save size={13} /> Guardar Credenciais</>}
             </button>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Configuração de Acesso */}
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
-              Credenciais da Instância
-            </h4>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Project URL</label>
-                <input 
-                  type="text" 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                  value={localSettings.supabaseUrl} 
-                  onChange={e => setLocalSettings({...localSettings, supabaseUrl: e.target.value})} 
-                  placeholder="https://xxxx.supabase.co"
-                  aria-label="URL do projeto Supabase"
-                />
+          {/* Menu Digital */}
+          <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0">
+                <Globe size={13} className="text-white" />
               </div>
-              <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Service Role Key (Push Privileges)</label>
-                <input 
-                  type="password" 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                  value={localSettings.supabaseKey} 
-                  onChange={e => setLocalSettings({...localSettings, supabaseKey: e.target.value})} 
-                  placeholder="•••••••••••••"
-                  aria-label="Chave de serviço Supabase"
-                />
-              </div>
-              <button 
-                onClick={handleSaveSettings} 
-                disabled={isSaving}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-700 border-2 border-blue-400 text-white rounded-xl font-black text-[9px] uppercase transition-all shadow-lg shadow-blue-500/30"
-              >
-                {isSaving ? 'Guardando...' : 'Guardar Credenciais'}
-              </button>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Destino Público</h4>
             </div>
-          </div>
-
-          {/* Endpoints Externos */}
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
-              Destinos de Visualização
-            </h4>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">URL do Menu Digital (Vercel)</label>
-                <input 
-                  type="text" 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                  value={localSettings.customDigitalMenuUrl} 
-                  onChange={e => setLocalSettings({...localSettings, customDigitalMenuUrl: e.target.value})} 
+            <div>
+              <label className={labelCls}>URL do Menu Digital (Vercel)</label>
+              <div className="relative">
+                <Globe size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
+                <input type="text" className={inputCls + " pl-9 text-xs"}
+                  value={localSettings.customDigitalMenuUrl}
+                  onChange={e => setLocalSettings({...localSettings, customDigitalMenuUrl: e.target.value})}
                   placeholder="https://meu-restaurante.vercel.app"
-                  aria-label="URL do menu digital"
-                />
+                  aria-label="URL do menu digital" />
               </div>
-              <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl flex gap-3">
-                <div className="w-5 h-5 bg-blue-500 rounded-full"></div>
-                <p className="text-[9px] text-slate-400 italic leading-relaxed">Este URL será utilizado para gerar o QR Code oficial da sua Tasca, direcionando os clientes para o seu menu online sincronizado.</p>
-              </div>
+            </div>
+            <div className="p-4 rounded-2xl bg-violet-500/[0.06] border border-violet-500/20 flex gap-3">
+              <Info size={14} className="text-violet-400 shrink-0 mt-0.5" />
+              <p className="text-[9px] text-slate-400 leading-relaxed">Este URL gera o QR Code oficial da sua Tasca, direcionando clientes para o menu online sincronizado.</p>
             </div>
           </div>
         </div>
@@ -983,197 +983,160 @@ const SystemHub = () => {
       downloadSAFT(xml, `SAFT_AO_${settings.nif}.xml`);
     };
 
+    const inputCls = "w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl text-white text-sm font-medium outline-none focus:border-[#06b6d4]/60 focus:bg-white/[0.06] transition-all placeholder:text-slate-600";
+    const monoInputCls = inputCls + " font-mono";
+    const labelCls = "block text-[9px] font-black text-slate-500 uppercase tracking-[0.18em] mb-2";
+    const selectCls = "w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl text-white text-sm outline-none appearance-none cursor-pointer focus:border-[#06b6d4]/60 transition-all";
+
     return (
-      <div className="space-y-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-3">
-              <FileBadge className="text-[#06b6d4]" /> Certificação & Série
-            </h3>
-            <div className="space-y-4">
+      <div className="space-y-6">
+
+        {/* ── Grid: Certificação + Cadastro Fiscal ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Certificação */}
+          <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#06b6d4] to-blue-600 flex items-center justify-center shrink-0">
+                <FileBadge size={13} className="text-white" />
+              </div>
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Certificação & Série</h3>
+            </div>
+            <div>
+              <label className={labelCls}>N.º do Certificado AGT</label>
+              <input type="text" className={monoInputCls} value={localSettings.agtCertificate}
+                onChange={e => setLocalSettings({...localSettings, agtCertificate: e.target.value})}
+                aria-label="Número do certificado AGT" />
+            </div>
+            <div>
+              <label className={labelCls}>Série de Faturação Ativa</label>
+              <input type="text" className={monoInputCls + " uppercase"} value={localSettings.invoiceSeries}
+                onChange={e => setLocalSettings({...localSettings, invoiceSeries: e.target.value})}
+                aria-label="Série de faturação" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">N.º do Certificado AGT</label>
-                <input 
-                  type="text" 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                  value={localSettings.agtCertificate} 
-                  onChange={e => setLocalSettings({...localSettings, agtCertificate: e.target.value})}
-                  aria-label="Número do certificado AGT"
-                />
+                <label className={labelCls}>Certificação SW</label>
+                <input type="text" className={monoInputCls} value={localSettings.agtSoftwareCertification || ''}
+                  onChange={e => setLocalSettings({...localSettings, agtSoftwareCertification: e.target.value})}
+                  placeholder="Nº cert." aria-label="Certificação do software" />
               </div>
               <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Série de Faturação Ativa</label>
-                <input 
-                  type="text" 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs uppercase" 
-                  value={localSettings.invoiceSeries} 
-                  onChange={e => setLocalSettings({...localSettings, invoiceSeries: e.target.value})}
-                  aria-label="Série de faturação"
-                />
+                <label className={labelCls}>Versão SW</label>
+                <input type="text" className={monoInputCls} value={localSettings.agtSoftwareVersion || ''}
+                  onChange={e => setLocalSettings({...localSettings, agtSoftwareVersion: e.target.value})}
+                  placeholder="v1.0.0" aria-label="Versão do software" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Certificação do Software</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                    value={localSettings.agtSoftwareCertification || ''} 
-                    onChange={e => setLocalSettings({...localSettings, agtSoftwareCertification: e.target.value})}
-                    aria-label="Certificação do software"
-                    placeholder="Nº da certificação"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Versão do Software</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                    value={localSettings.agtSoftwareVersion || ''} 
-                    onChange={e => setLocalSettings({...localSettings, agtSoftwareVersion: e.target.value})}
-                    aria-label="Versão do software"
-                    placeholder="v1.0.0"
-                  />
-                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Nº do Processo</label>
+                <input type="text" className={monoInputCls} value={localSettings.agtProcessNumber || ''}
+                  onChange={e => setLocalSettings({...localSettings, agtProcessNumber: e.target.value})}
+                  placeholder="2023/AGT/..." aria-label="Número do processo" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Nº do Processo</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                    value={localSettings.agtProcessNumber || ''} 
-                    onChange={e => setLocalSettings({...localSettings, agtProcessNumber: e.target.value})}
-                    aria-label="Número do processo"
-                    placeholder="2023/AGT/12345"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Data de Certificação</label>
-                  <input 
-                    type="date" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                    value={localSettings.agtCertificationDate || ''} 
-                    onChange={e => setLocalSettings({...localSettings, agtCertificationDate: e.target.value})}
-                    aria-label="Data de certificação"
-                  />
-                </div>
+              <div>
+                <label className={labelCls}>Data Certificação</label>
+                <input type="date" className={monoInputCls} value={localSettings.agtCertificationDate || ''}
+                  onChange={e => setLocalSettings({...localSettings, agtCertificationDate: e.target.value})}
+                  aria-label="Data de certificação" />
               </div>
-              <div className="p-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl flex gap-3">
-                <Info size={20} className="text-[#06b6d4] shrink-0" />
-                <p className="text-[9px] text-slate-400 italic leading-relaxed">Software certificado nos termos do Regime Jurídico das Faturas de Angola. Imutabilidade SHA-256 garantida.</p>
-              </div>
+            </div>
+            <div className="p-3 bg-[#06b6d4]/[0.06] border border-[#06b6d4]/20 rounded-2xl flex gap-2.5">
+              <Info size={13} className="text-[#06b6d4] shrink-0 mt-0.5" />
+              <p className="text-[9px] text-slate-400 leading-relaxed">Software certificado pelo Regime Jurídico das Faturas de Angola. Imutabilidade SHA-256 garantida.</p>
             </div>
           </div>
 
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-3">
-              <Landmark className="text-[#06b6d4]" /> Cadastro Fiscal
-            </h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">NIF</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                    value={localSettings.nif} 
-                    onChange={e => setLocalSettings({...localSettings, nif: e.target.value})}
-                    aria-label="NIF"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Capital Social</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs" 
-                    value={localSettings.capitalSocial} 
-                    onChange={e => setLocalSettings({...localSettings, capitalSocial: e.target.value})}
-                    aria-label="Capital social"
-                  />
-                </div>
+          {/* Cadastro Fiscal */}
+          <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
+                <Landmark size={13} className="text-white" />
+              </div>
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Cadastro Fiscal</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>NIF</label>
+                <input type="text" className={monoInputCls} value={localSettings.nif}
+                  onChange={e => setLocalSettings({...localSettings, nif: e.target.value})}
+                  aria-label="NIF" />
               </div>
               <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Regime Fiscal IVA</label>
-                <select 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
-                  value={localSettings.taxRegime}
-                  onChange={e => {
-                    const regime = e.target.value as 'GERAL' | 'SIMPLIFICADO' | 'EXCLUSAO';
-                    let rate = 14;
-                    if (regime === 'SIMPLIFICADO') rate = 7;
-                    else if (regime === 'EXCLUSAO') rate = 0;
-                    setLocalSettings({...localSettings, taxRegime: regime, taxRate: rate});
-                  }}
-                  aria-label="Regime fiscal IVA"
-                >
-                  <option value="GERAL">Regime Geral (14%)</option>
-                  <option value="SIMPLIFICADO">Regime Simplificado (7%)</option>
-                  <option value="EXCLUSAO">Regime de Exclusão</option>
-                </select>
+                <label className={labelCls}>Capital Social</label>
+                <input type="text" className={monoInputCls} value={localSettings.capitalSocial}
+                  onChange={e => setLocalSettings({...localSettings, capitalSocial: e.target.value})}
+                  aria-label="Capital social" />
               </div>
-              <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Custos Fixos Mensais (Kz)</label>
-                <input
-                  type="number"
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-mono text-xs"
-                  value={localSettings.custosFixosMensal ?? ''}
-                  onChange={e => setLocalSettings({...localSettings, custosFixosMensal: e.target.value ? Number(e.target.value) : undefined})}
-                  aria-label="Custos fixos mensais"
-                  title="Custos fixos mensais para cálculo do Ponto de Equilíbrio (aluguer, água, luz, etc.). Deixe vazio para usar salários + UTILIDADES automaticamente."
-                  placeholder="Auto (staff + utilidades)"
-                />
-              </div>
+            </div>
+            <div>
+              <label className={labelCls}>Regime Fiscal IVA</label>
+              <select className={selectCls} value={localSettings.taxRegime}
+                onChange={e => {
+                  const regime = e.target.value as 'GERAL' | 'SIMPLIFICADO' | 'EXCLUSAO';
+                  let rate = 14;
+                  if (regime === 'SIMPLIFICADO') rate = 7;
+                  else if (regime === 'EXCLUSAO') rate = 0;
+                  setLocalSettings({...localSettings, taxRegime: regime, taxRate: rate});
+                }} aria-label="Regime fiscal IVA">
+                <option value="GERAL">Regime Geral (14%)</option>
+                <option value="SIMPLIFICADO">Regime Simplificado (7%)</option>
+                <option value="EXCLUSAO">Regime de Exclusão</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Custos Fixos Mensais (Kz)</label>
+              <input type="number" className={monoInputCls} value={localSettings.custosFixosMensal ?? ''}
+                onChange={e => setLocalSettings({...localSettings, custosFixosMensal: e.target.value ? Number(e.target.value) : undefined})}
+                placeholder="Auto (staff + utilidades)"
+                title="Custos fixos mensais para cálculo do Ponto de Equilíbrio"
+                aria-label="Custos fixos mensais" />
             </div>
           </div>
         </div>
-        
-        {/* Card de Tipos de Documentos Fiscais Obrigatórios */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h3 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-3">
-            <FileText className="text-emerald-400" /> Tipos de Documentos Fiscais — Restauração
-          </h3>
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest">Obrigatórios segundo Decreto Presidencial nº 71/25 (AGT Angola)</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+        {/* ── Tipos de Documentos Fiscais ── */}
+        <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shrink-0">
+              <FileText size={13} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Tipos de Documentos Fiscais</h3>
+              <p className="text-[9px] text-slate-600 mt-0.5">Decreto Presidencial nº 71/25 · AGT Angola</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
               { code: 'FR', name: 'Fatura-Recibo', usage: 'Pagamento imediato', color: 'emerald', required: true },
               { code: 'FT', name: 'Fatura', usage: 'B2B / Diferido', color: 'blue', required: true },
               { code: 'TV', name: 'Talão de Venda', usage: 'Balcão B2C', color: 'purple', required: true },
               { code: 'RG', name: 'Recibo', usage: 'Pagamento de dívida', color: 'orange', required: false },
-              { code: 'NC', name: 'Nota de Crédito', usage: 'Anulação / Devolução', color: 'red', required: false },
+              { code: 'NC', name: 'Nota de Crédito', usage: 'Anulação', color: 'red', required: false },
               { code: 'ND', name: 'Nota de Débito', usage: 'Acréscimo', color: 'yellow', required: false },
             ].map(doc => (
-              <div key={doc.code} className={`p-4 rounded-2xl border border-${doc.color}-500/20 bg-${doc.color}-500/5 flex flex-col gap-2`}>
+              <div key={doc.code} className={`p-3.5 rounded-2xl border border-${doc.color}-500/20 bg-${doc.color}-500/[0.05] flex flex-col gap-1.5`}>
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-black text-${doc.color}-400 uppercase`}>{doc.code}</span>
-                  {doc.required && <span className="text-[8px] font-black text-emerald-400 uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded-full">Obrig.</span>}
+                  {doc.required && <span className="text-[7px] font-black text-emerald-400 uppercase bg-emerald-500/10 px-1.5 py-0.5 rounded-full">Obrig.</span>}
                 </div>
-                <span className="text-sm font-bold text-white">{doc.name}</span>
-                <span className="text-[10px] text-slate-400">{doc.usage}</span>
+                <span className="text-xs font-bold text-white leading-tight">{doc.name}</span>
+                <span className="text-[9px] text-slate-500">{doc.usage}</span>
               </div>
             ))}
           </div>
-          <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex gap-3">
-            <Info size={20} className="text-emerald-400 shrink-0" />
-            <p className="text-[10px] text-slate-400 italic leading-relaxed">
-              A app emite automaticamente os documentos no checkout. FR é o padrão para pagamento imediato. 
-              FT deve ser usado para clientes com NIF ou pagamento diferido. TV é para consumidor final sem NIF.
-            </p>
-          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6 pt-6 border-t border-white/5">
-          <button 
-            onClick={handleSaveSettings} 
-            disabled={isSaving}
-            className="flex-1 py-5 bg-[#06b6d4] text-black rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center justify-center gap-3 hover:scale-105 transition-all"
-          >
-            <Save size={18}/> {isSaving ? 'Salvando...' : 'Salvar Dados Fiscais'}
+        {/* ── Botões ── */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button onClick={handleSaveSettings} disabled={isSaving}
+            className="flex-1 py-4 bg-[#06b6d4] text-black rounded-2xl font-black uppercase text-[9px] tracking-widest shadow-lg flex items-center justify-center gap-2 hover:brightness-110 hover:scale-[1.01] transition-all disabled:opacity-60">
+            {isSaving ? <><div className="w-3.5 h-3.5 border-2 border-black/40 border-t-black rounded-full animate-spin" /> A guardar...</> : <><Save size={14}/> Guardar Dados Fiscais</>}
           </button>
-          <button 
-            onClick={handleExportSAFT} 
-            className="flex-1 py-5 bg-white/5 border border-white/10 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-white/10 transition-all"
-          >
-            <Download size={18}/> Exportar SAF-T AO (XML)
+          <button onClick={handleExportSAFT}
+            className="flex-1 py-4 bg-white/[0.04] border border-white/[0.08] text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 hover:bg-white/[0.08] transition-all">
+            <Download size={14}/> Exportar SAF-T AO (XML)
           </button>
         </div>
       </div>
@@ -1181,93 +1144,109 @@ const SystemHub = () => {
   };
 
   const TechnicalKernel = () => {
-    const { settings, updateSettings, addNotification } = useStore();
-    const [localSettings, setLocalSettings] = useState(settings);
+    const { addNotification } = useStore();
+    const [debugMode, setDebugMode] = useState<'OFF' | 'BASIC' | 'VERBOSE'>('OFF');
+    const [logLevel, setLogLevel] = useState<'ERROR' | 'WARNING' | 'INFO' | 'DEBUG'>('INFO');
+    const [cacheMode, setCacheMode] = useState<'DISABLED' | 'NORMAL' | 'AGGRESSIVE'>('NORMAL');
     const [isSaving, setIsSaving] = useState(false);
 
-    const handleSaveSettings = async (e: React.FormEvent) => {
-      e.preventDefault();
+    // Carregar do localStorage
+    React.useEffect(() => {
+      try {
+        const saved = localStorage.getItem('rest_ia_kernel_config');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.debugMode) setDebugMode(parsed.debugMode);
+          if (parsed.logLevel) setLogLevel(parsed.logLevel);
+          if (parsed.cacheMode) setCacheMode(parsed.cacheMode);
+        }
+      } catch {}
+    }, []);
+
+    const handleSaveSettings = () => {
       setIsSaving(true);
       try {
-        await updateSettings(localSettings);
-        setTimeout(() => setIsSaving(false), 1000);
-      } catch (error) {
-        setIsSaving(false);
+        localStorage.setItem('rest_ia_kernel_config', JSON.stringify({ debugMode, logLevel, cacheMode }));
+        addNotification('success', 'Configurações do kernel guardadas.');
+      } catch {
+        addNotification('error', 'Erro ao guardar configurações.');
+      } finally {
+        setTimeout(() => setIsSaving(false), 800);
       }
     };
 
+    const lsSize = (() => {
+      try {
+        let total = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k) total += (localStorage.getItem(k) || '').length;
+        }
+        return (total / 1024).toFixed(1) + ' KB';
+      } catch { return 'N/D'; }
+    })();
+
+    const selectCls = "w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl text-white text-sm outline-none appearance-none cursor-pointer focus:border-[#06b6d4]/60 transition-all";
+    const labelCls = "block text-[9px] font-black text-slate-500 uppercase tracking-[0.18em] mb-2";
 
     return (
-      <div className="space-y-12">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white shadow-lg">
-              <Terminal size={32} />
+      <div className="space-y-6">
+
+        {/* ── Hero stats ── */}
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: 'Chaves Cache', value: localStorage.length, color: 'text-[#06b6d4]', bg: 'bg-[#06b6d4]/[0.06]', border: 'border-[#06b6d4]/20' },
+            { label: 'Tamanho Cache', value: lsSize, color: 'text-emerald-400', bg: 'bg-emerald-500/[0.06]', border: 'border-emerald-500/20' },
+            { label: 'Rede', value: navigator.onLine ? 'ONLINE' : 'OFFLINE', color: navigator.onLine ? 'text-emerald-400' : 'text-red-400', bg: navigator.onLine ? 'bg-emerald-500/[0.06]' : 'bg-red-500/[0.06]', border: navigator.onLine ? 'border-emerald-500/20' : 'border-red-500/20' },
+          ].map(s => (
+            <div key={s.label} className={`${s.bg} ${s.border} border rounded-2xl p-4 text-center`}>
+              <div className={`text-xl font-black ${s.color} mb-1`}>{s.value}</div>
+              <div className="text-[8px] text-slate-500 uppercase tracking-wider">{s.label}</div>
             </div>
-            <div>
-              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Kernel Tecnico</h3>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">REST IA OS System Core</p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
-              Configurações do Sistema
-            </h4>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Modo de Depuração</label>
-                <select 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
-                  value="OFF"
-                  aria-label="Modo de depuração"
-                >
-                  <option value="OFF">Desativado</option>
-                  <option value="BASIC">Básico</option>
-                  <option value="VERBOSE">Detalhado</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Nível de Log</label>
-                <select 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
-                  value="INFO"
-                  aria-label="Nível de log"
-                >
-                  <option value="ERROR">Apenas Erros</option>
-                  <option value="WARNING">Erros e Avisos</option>
-                  <option value="INFO">Informações Completas</option>
-                  <option value="DEBUG">Modo Debug</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Cache de Dados</label>
-                <select 
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white text-xs outline-none appearance-none cursor-pointer"
-                  value="NORMAL"
-                  aria-label="Modo de cache"
-                >
-                  <option value="DISABLED">Desativado</option>
-                  <option value="NORMAL">Normal</option>
-                  <option value="AGGRESSIVE">Agressivo</option>
-                </select>
-              </div>
-              <div className="p-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl flex gap-3">
-                <div className="w-5 h-5 bg-[#06b6d4] rounded-full"></div>
-                <p className="text-[9px] text-slate-400 italic leading-relaxed">Configurações avançadas para otimização de performance. Altere com cautela.</p>
-              </div>
-              <button 
-                onClick={handleSaveSettings}
-                disabled={isSaving}
-                className="w-full py-4 bg-white/5 border border-white/10 text-slate-300 rounded-xl font-black text-[9px] uppercase hover:bg-white/10 transition-all"
-              >
-                {isSaving ? 'Guardando...' : 'Salvar Configurações'}
-              </button>
+        {/* ── Configurações ── */}
+        <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shrink-0">
+              <Terminal size={13} className="text-white" />
             </div>
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Configurações do Sistema</h4>
           </div>
+          <div>
+            <label className={labelCls}>Modo de Depuração</label>
+            <select className={selectCls} value={debugMode} onChange={e => setDebugMode(e.target.value as any)} aria-label="Modo de depuração">
+              <option value="OFF">Desativado</option>
+              <option value="BASIC">Básico</option>
+              <option value="VERBOSE">Detalhado</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Nível de Log</label>
+            <select className={selectCls} value={logLevel} onChange={e => setLogLevel(e.target.value as any)} aria-label="Nível de log">
+              <option value="ERROR">Apenas Erros</option>
+              <option value="WARNING">Erros e Avisos</option>
+              <option value="INFO">Informações Completas</option>
+              <option value="DEBUG">Modo Debug</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Cache de Dados</label>
+            <select className={selectCls} value={cacheMode} onChange={e => setCacheMode(e.target.value as any)} aria-label="Modo de cache">
+              <option value="DISABLED">Desativado</option>
+              <option value="NORMAL">Normal</option>
+              <option value="AGGRESSIVE">Agressivo</option>
+            </select>
+          </div>
+          <div className="p-3 bg-[#06b6d4]/[0.06] border border-[#06b6d4]/20 rounded-2xl flex gap-2.5">
+            <Info size={13} className="text-[#06b6d4] shrink-0 mt-0.5" />
+            <p className="text-[9px] text-slate-400 leading-relaxed">Configurações guardadas localmente. Modo Debug activa logs detalhados na consola do browser.</p>
+          </div>
+          <button onClick={handleSaveSettings} disabled={isSaving}
+            className="w-full py-4 bg-[#06b6d4] text-black rounded-2xl font-black text-[9px] uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+            {isSaving ? <><div className="w-3.5 h-3.5 border-2 border-black/40 border-t-black rounded-full animate-spin" /> A guardar...</> : <><Save size={13} /> Guardar Configurações</>}
+          </button>
         </div>
       </div>
     );
@@ -1290,86 +1269,46 @@ const SystemHub = () => {
     };
 
     return (
-      <div className="space-y-12">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg">
-              <ChefHat size={32} />
+      <div className="space-y-6">
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            { label: 'Conexão', value: kdsStatus.isOnline ? 'ONLINE' : 'OFFLINE', color: kdsStatus.isOnline ? 'text-emerald-400' : 'text-red-400', bg: kdsStatus.isOnline ? 'bg-emerald-500/[0.06] border-emerald-500/20' : 'bg-red-500/[0.06] border-red-500/20' },
+            { label: 'Pedidos Hoje', value: kdsStatus.ordersToday, color: 'text-white', bg: 'bg-white/[0.04] border-white/[0.08]' },
+            { label: 'Pedidos Activos', value: kdsStatus.activeOrders, color: 'text-[#06b6d4]', bg: 'bg-[#06b6d4]/[0.06] border-[#06b6d4]/20' },
+            { label: 'Disponibilidade', value: '24/7', color: 'text-emerald-400', bg: 'bg-emerald-500/[0.06] border-emerald-500/20' },
+          ].map(s => (
+            <div key={s.label} className={`${s.bg} border rounded-2xl p-4 text-center`}>
+              <div className={`text-xl font-black ${s.color} mb-1`}>{s.value}</div>
+              <div className="text-[8px] text-slate-500 uppercase tracking-wider">{s.label}</div>
             </div>
-            <div>
-              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Cozinha Digital</h3>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sistema KDS Online</p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Status do KDS */}
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-              <div className={`w-4 h-4 rounded-full ${kdsStatus.isOnline ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-              Status do Sistema
-            </h4>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center gap-3">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Conexão</span>
-                <span className={`text-lg font-bold ${kdsStatus.isOnline ? 'text-emerald-500' : 'text-red-500'}`}>
-                  {kdsStatus.isOnline ? 'ONLINE' : 'OFFLINE'}
-                </span>
+        {/* ── Controlo ── */}
+        <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
+                <ChefHat size={13} className="text-white" />
               </div>
-              <div className="flex justify-between items-center gap-3">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Última Sincronização</span>
-                <span className="text-sm text-white">
-                  {kdsStatus.lastSync ? new Date(kdsStatus.lastSync).toLocaleString() : 'Nunca'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center gap-3">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Pedidos Hoje</span>
-                <span className="text-lg font-mono font-bold text-white">{kdsStatus.ordersToday}</span>
-              </div>
-              <div className="flex justify-between items-center gap-3">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Pedidos Ativos</span>
-                <span className="text-lg font-mono font-bold text-[#06b6d4]">{kdsStatus.activeOrders}</span>
-              </div>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Controlo do KDS</h4>
             </div>
+            {kdsStatus.lastSync && (
+              <span className="text-[9px] text-slate-600 font-mono">{new Date(kdsStatus.lastSync).toLocaleTimeString('pt-AO')}</span>
+            )}
           </div>
-
-          {/* Controlo do KDS */}
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
-              Controlo do KDS
-            </h4>
-            <div className="space-y-4">
-              <div className="p-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl flex gap-3">
-                <div className="w-5 h-5 bg-[#06b6d4] rounded-full"></div>
-                <p className="text-[9px] text-slate-400 italic leading-relaxed">O KDS (Kitchen Display System) permite à cozinha visualizar e gerir pedidos em tempo real.</p>
-              </div>
-              
-              <button 
-                onClick={handleToggleKDS}
-                className={`w-full py-6 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 ${
-                  kdsStatus.isOnline 
-                    ? 'bg-red-500 text-white hover:bg-red-600' 
-                    : 'bg-emerald-500 text-white hover:bg-emerald-600'
-                }`}
-              >
-                <div className={`w-4 h-4 rounded-full ${kdsStatus.isOnline ? 'bg-white' : 'bg-white'}`}></div>
-                {kdsStatus.isOnline ? 'Desligar KDS' : 'Ligar KDS'}
-              </button>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
-                  <div className="text-2xl font-bold text-white mb-2">24/7</div>
-                  <div className="text-[8px] text-slate-400 uppercase">Disponibilidade</div>
-                </div>
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
-                  <div className="text-2xl font-bold text-[#06b6d4] mb-2">0.3s</div>
-                  <div className="text-[8px] text-slate-400 uppercase">Latência</div>
-                </div>
-              </div>
-            </div>
+          <div className="p-3 bg-[#06b6d4]/[0.06] border border-[#06b6d4]/20 rounded-2xl flex gap-2.5">
+            <Info size={13} className="text-[#06b6d4] shrink-0 mt-0.5" />
+            <p className="text-[9px] text-slate-400 leading-relaxed">O KDS permite à cozinha visualizar e gerir pedidos em tempo real a partir de qualquer ecrã da rede.</p>
           </div>
+          <button onClick={handleToggleKDS}
+            className={`w-full py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-3 transition-all hover:scale-[1.01] ${
+              kdsStatus.isOnline ? 'bg-red-500/90 text-white hover:bg-red-500' : 'bg-emerald-500/90 text-white hover:bg-emerald-500'
+            }`}>
+            <div className={`w-2 h-2 rounded-full bg-white ${kdsStatus.isOnline ? 'animate-pulse' : ''}`} />
+            {kdsStatus.isOnline ? 'Desligar KDS' : 'Ligar KDS'}
+          </button>
         </div>
       </div>
     );
@@ -1435,6 +1374,7 @@ const SystemHub = () => {
             <button
               onClick={() => { setConfig({ ...config, enabled: !config.enabled }); setIsSaved(false); }}
               className={`w-14 h-7 rounded-full transition-all relative ${config.enabled ? 'bg-[#06b6d4]' : 'bg-white/10'}`}
+              aria-label={config.enabled ? 'Desactivar impressão de cozinha' : 'Activar impressão de cozinha'}
             >
               <div className={`w-5 h-5 rounded-full bg-white absolute top-1 transition-all ${config.enabled ? 'left-8' : 'left-1'}`}></div>
             </button>
@@ -1488,6 +1428,7 @@ const SystemHub = () => {
             <button
               onClick={() => { setConfig({ ...config, autoPrint: !config.autoPrint }); setIsSaved(false); }}
               className={`w-12 h-6 rounded-full transition-all relative ${config.autoPrint ? 'bg-[#06b6d4]' : 'bg-white/10'}`}
+              aria-label={config.autoPrint ? 'Desactivar impressão automática' : 'Activar impressão automática'}
             >
               <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${config.autoPrint ? 'left-7' : 'left-1'}`}></div>
             </button>
@@ -1501,6 +1442,7 @@ const SystemHub = () => {
             <button
               onClick={() => { setConfig({ ...config, showNotes: !config.showNotes }); setIsSaved(false); }}
               className={`w-12 h-6 rounded-full transition-all relative ${config.showNotes ? 'bg-[#06b6d4]' : 'bg-white/10'}`}
+              aria-label={config.showNotes ? 'Ocultar observações' : 'Mostrar observações'}
             >
               <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${config.showNotes ? 'left-7' : 'left-1'}`}></div>
             </button>
@@ -1514,6 +1456,7 @@ const SystemHub = () => {
             <button
               onClick={() => { setConfig({ ...config, showTableNumber: !config.showTableNumber }); setIsSaved(false); }}
               className={`w-12 h-6 rounded-full transition-all relative ${config.showTableNumber ? 'bg-[#06b6d4]' : 'bg-white/10'}`}
+              aria-label={config.showTableNumber ? 'Ocultar número da mesa' : 'Mostrar número da mesa'}
             >
               <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${config.showTableNumber ? 'left-7' : 'left-1'}`}></div>
             </button>
@@ -1663,118 +1606,87 @@ const SystemHub = () => {
   };
 
   const KitchenKDS = () => {
-    const [kdsStatus, setKdsStatus] = useState({
-      isOnline: false,
-      lastSync: null as string | null,
-      ordersToday: 0,
-      activeOrders: 0
+    const { activeOrders } = useStore();
+    const [kdsOnline, setKdsOnline] = useState(() => localStorage.getItem('rest_ia_kds_online') === 'true');
+    const [lastSync, setLastSync] = useState<string | null>(() => localStorage.getItem('rest_ia_kds_last_sync'));
+
+    const today = new Date().toISOString().split('T')[0];
+    const todayOrders = (activeOrders || []).filter((o: any) => {
+      const d = (o.created_at || o.createdAt || '').slice(0, 10);
+      return d === today;
     });
 
     const handleToggleKDS = () => {
-      setKdsStatus(prev => ({
-        ...prev,
-        isOnline: !prev.isOnline,
-        lastSync: new Date().toISOString()
-      }));
+      const next = !kdsOnline;
+      setKdsOnline(next);
+      const now = new Date().toISOString();
+      setLastSync(now);
+      localStorage.setItem('rest_ia_kds_online', String(next));
+      localStorage.setItem('rest_ia_kds_last_sync', now);
     };
 
     return (
-      <div className="space-y-12">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
-              <ChefHat size={32} />
+      <div className="space-y-6">
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            { label: 'Estado', value: kdsOnline ? 'ACTIVO' : 'INACTIVO', color: kdsOnline ? 'text-emerald-400' : 'text-red-400', bg: kdsOnline ? 'bg-emerald-500/[0.06] border-emerald-500/20' : 'bg-red-500/[0.06] border-red-500/20' },
+            { label: 'Pedidos Hoje', value: todayOrders.length, color: 'text-white', bg: 'bg-white/[0.04] border-white/[0.08]' },
+            { label: 'Pedidos Activos', value: (activeOrders || []).length, color: 'text-[#06b6d4]', bg: 'bg-[#06b6d4]/[0.06] border-[#06b6d4]/20' },
+            { label: 'Última Activação', value: lastSync ? new Date(lastSync).toLocaleTimeString('pt-AO') : '—', color: 'text-slate-300', bg: 'bg-white/[0.04] border-white/[0.08]' },
+          ].map(s => (
+            <div key={s.label} className={`${s.bg} border rounded-2xl p-4 text-center`}>
+              <div className={`text-base font-black ${s.color} mb-1`}>{s.value}</div>
+              <div className="text-[8px] text-slate-500 uppercase tracking-wider">{s.label}</div>
             </div>
-            <div>
-              <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter">Cozinha</h3>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">KDS Management System</p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Status do KDS */}
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-              <div className={`w-4 h-4 rounded-full ${kdsStatus.isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              Status do Sistema
-            </h4>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center gap-3">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Conexão</span>
-                <span className={`text-lg font-bold ${kdsStatus.isOnline ? 'text-green-500' : 'text-red-500'}`}>
-                  {kdsStatus.isOnline ? 'ONLINE' : 'OFFLINE'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center gap-3">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Última Sincronização</span>
-                <span className="text-sm text-white">
-                  {kdsStatus.lastSync ? new Date(kdsStatus.lastSync).toLocaleString() : 'Nunca'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center gap-3">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Pedidos Hoje</span>
-                <span className="text-lg font-mono font-bold text-white">{kdsStatus.ordersToday}</span>
-              </div>
-              <div className="flex justify-between items-center gap-3">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Pedidos Ativos</span>
-                <span className="text-lg font-mono font-bold text-[#06b6d4]">{kdsStatus.activeOrders}</span>
-              </div>
+        {/* ── Controlo ── */}
+        <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+          <div className="flex items-center gap-3 mb-1">
+            <div className={`w-7 h-7 rounded-xl bg-gradient-to-br flex items-center justify-center shrink-0 ${
+              kdsOnline ? 'from-emerald-500 to-teal-600' : 'from-yellow-500 to-orange-600'
+            }`}>
+              <ChefHat size={13} className="text-white" />
             </div>
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">KDS Management System</h4>
           </div>
-
-          {/* Controlo do KDS */}
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-            <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-              <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
-              Controlo do KDS
-            </h4>
-            <div className="space-y-4">
-              <div className="p-4 bg-[#06b6d4]/5 border border-[#06b6d4]/20 rounded-2xl flex gap-3">
-                <div className="w-5 h-5 bg-[#06b6d4] rounded-full"></div>
-                <p className="text-[9px] text-slate-400 italic leading-relaxed">O KDS (Kitchen Display System) permite à cozinha visualizar e gerir pedidos em tempo real.</p>
-              </div>
-              
-              <button 
-                onClick={handleToggleKDS}
-                className={`w-full py-6 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 ${
-                  kdsStatus.isOnline 
-                    ? 'bg-red-500 text-white hover:bg-red-600' 
-                    : 'bg-green-500 text-white hover:bg-green-600'
-                }`}
-              >
-                <div className={`w-4 h-4 rounded-full ${kdsStatus.isOnline ? 'bg-white' : 'bg-white'}`}></div>
-                {kdsStatus.isOnline ? 'Desligar KDS' : 'Ligar KDS'}
-              </button>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
-                  <div className="text-2xl font-bold text-white mb-2">24/7</div>
-                  <div className="text-[8px] text-slate-400 uppercase">Disponibilidade</div>
-                </div>
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
-                  <div className="text-2xl font-bold text-[#06b6d4] mb-2">0.3s</div>
-                  <div className="text-[8px] text-slate-400 uppercase">Latência</div>
-                </div>
-              </div>
-            </div>
+          <div className="p-3 bg-[#06b6d4]/[0.06] border border-[#06b6d4]/20 rounded-2xl flex gap-2.5">
+            <Info size={13} className="text-[#06b6d4] shrink-0 mt-0.5" />
+            <p className="text-[9px] text-slate-400 leading-relaxed">O KDS permite à cozinha visualizar e gerir pedidos em tempo real a partir de qualquer ecrã da rede.</p>
           </div>
+          <button onClick={handleToggleKDS}
+            className={`w-full py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-3 transition-all hover:scale-[1.01] ${
+              kdsOnline ? 'bg-red-500/90 text-white hover:bg-red-500' : 'bg-emerald-500/90 text-white hover:bg-emerald-500'
+            }`}>
+            <div className={`w-2 h-2 rounded-full bg-white ${kdsOnline ? 'animate-pulse' : ''}`} />
+            {kdsOnline ? 'Desactivar KDS' : 'Activar KDS'}
+          </button>
         </div>
       </div>
     );
   };
 
   const ProductionReset = () => {
+    const storeState = useStore.getState();
     const [isConfirming, setIsConfirming] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
     const [resetReason, setResetReason] = useState('');
-    const [productionData, setProductionData] = useState({
-      ordersToday: 156,
-      revenueToday: 2450000,
-      profitToday: 850000,
-      itemsSold: 234,
-      activeTables: 8,
-      lastReset: '2024-12-01'
+
+    const today = new Date().toISOString().split('T')[0];
+    const todayOrders = (storeState.activeOrders || []).filter((o: any) => {
+      const d = (o.created_at || o.createdAt || '').slice(0, 10);
+      return d === today;
+    });
+    const todayRevenue = todayOrders.reduce((s: number, o: any) => s + (Number(o.total) || 0), 0);
+    const lastReset = localStorage.getItem('rest_ia_last_reset') || today;
+
+    const [productionData] = useState({
+      ordersToday: todayOrders.length,
+      revenueToday: todayRevenue,
+      activeTables: (storeState.activeOrders || []).length,
+      lastReset
     });
 
     const formatKz = (val: number) => new Intl.NumberFormat('pt-AO', { 
@@ -1883,15 +1795,9 @@ const SystemHub = () => {
           }, 2000);
         }
         
-        // 4. Resetar estado local
-        setProductionData({
-          ordersToday: 0,
-          revenueToday: 0,
-          profitToday: 0,
-          itemsSold: 0,
-          activeTables: 0,
-          lastReset: new Date().toISOString().split('T')[0]
-        });
+        // 4. Registar timestamp do reset
+        const resetDate = new Date().toISOString().split('T')[0];
+        safeLocalStorage()?.setItem('rest_ia_last_reset', resetDate);
 
         // Limpar formulário
         setResetReason('');
@@ -1913,224 +1819,141 @@ const SystemHub = () => {
 
     return (
       <div className="space-y-6">
-        {/* Status Atual da Produção */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-            Status Atual da Produção
-          </h4>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl text-center">
-              <div className="text-3xl font-bold text-green-500 mb-2">{productionData.ordersToday}</div>
-              <div className="text-[8px] text-slate-400 uppercase">Pedidos Hoje</div>
+        {/* ── Stats producão ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            { label: 'Pedidos Hoje', value: productionData.ordersToday, color: 'text-emerald-400', bg: 'bg-emerald-500/[0.06] border-emerald-500/20' },
+            { label: 'Receita Hoje', value: formatKz(productionData.revenueToday), color: 'text-blue-400', bg: 'bg-blue-500/[0.06] border-blue-500/20' },
+            { label: 'Pedidos Activos', value: productionData.activeTables, color: 'text-[#06b6d4]', bg: 'bg-[#06b6d4]/[0.06] border-[#06b6d4]/20' },
+            { label: 'Último Reset', value: new Date(productionData.lastReset).toLocaleDateString('pt-AO'), color: 'text-slate-400', bg: 'bg-white/[0.04] border-white/[0.08]' },
+          ].map(s => (
+            <div key={s.label} className={`${s.bg} border rounded-2xl p-4 text-center`}>
+              <div className={`text-base font-black ${s.color} mb-1 leading-tight`}>{s.value}</div>
+              <div className="text-[8px] text-slate-500 uppercase tracking-wider">{s.label}</div>
             </div>
-            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-center">
-              <div className="text-2xl font-bold text-blue-500 mb-2">{formatKz(productionData.revenueToday)}</div>
-              <div className="text-[8px] text-slate-400 uppercase">Receita Hoje</div>
-            </div>
-            <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl text-center">
-              <div className="text-2xl font-bold text-purple-500 mb-2">{formatKz(productionData.profitToday)}</div>
-              <div className="text-[8px] text-slate-400 uppercase">Lucro Hoje</div>
-            </div>
-            <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl text-center">
-              <div className="text-2xl font-bold text-orange-500 mb-2">{productionData.itemsSold}</div>
-              <div className="text-[8px] text-slate-400 uppercase">Itens Vendidos</div>
-            </div>
-            <div className="p-4 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl text-center">
-              <div className="text-2xl font-bold text-cyan-500 mb-2">{productionData.activeTables}</div>
-              <div className="text-[8px] text-slate-400 uppercase">Mesas Ativas</div>
-            </div>
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-center">
-              <div className="text-lg font-bold text-red-500 mb-2">
-                {new Date(productionData.lastReset).toLocaleDateString('pt-AO')}
-              </div>
-              <div className="text-[8px] text-slate-400 uppercase">Último Reset</div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Controlo de Reset */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-            Controlo de Reset de Produção
-          </h4>
-          
-          <div className="space-y-4">
-            <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-2xl flex gap-3">
-              <div className="w-5 h-5 bg-red-500 rounded-full"></div>
-              <p className="text-[9px] text-slate-400 italic leading-relaxed">
-                O reset de produção irá zerar todos os dados do dia atual: pedidos, receitas, lucros e estatísticas. Esta ação não pode ser desfeita.
-              </p>
+        {/* ── Zona de perigo ── */}
+        <div className="glass-panel rounded-[2rem] border border-red-500/20 p-6 space-y-4">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shrink-0">
+              <AlertTriangle size={13} className="text-white" />
             </div>
+            <h4 className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em]">Zona de Perigo — Reset de Produção</h4>
+          </div>
+          <div className="p-3 bg-red-500/[0.06] border border-red-500/20 rounded-2xl flex gap-2.5">
+            <AlertCircle size={13} className="text-red-400 shrink-0 mt-0.5" />
+            <p className="text-[9px] text-slate-400 leading-relaxed">Apaga todos os dados do dia: pedidos, receitas, lucros e estatísticas. Esta acção não pode ser desfeita.</p>
+          </div>
 
-            {!isConfirming ? (
-              <button
-                onClick={() => setIsConfirming(true)}
-                className="w-full py-6 bg-red-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 hover:bg-red-600"
-              >
-                <Trash2 size={20} />
-                Resetar Produção
-              </button>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                  <h5 className="text-white font-bold mb-3 flex items-center gap-2">
-                    <AlertCircle size={20} className="text-red-500" />
-                    Confirmação Necessária
-                  </h5>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs text-slate-400 font-black uppercase tracking-widest mb-2">
-                        Motivo do Reset
-                      </label>
-                      <textarea
-                        value={resetReason}
-                        onChange={(e) => setResetReason(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 text-sm focus:outline-none focus:border-red-500 min-h-[100px] resize-none"
-                        placeholder="Descreva o motivo do reset de produção (ex: Mudança de turno, encerramento do dia, teste do sistema, etc.)"
-                        required
-                      />
+          {!isConfirming ? (
+            <button onClick={() => setIsConfirming(true)}
+              className="w-full py-4 bg-red-500/90 text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 hover:bg-red-500 hover:scale-[1.01] transition-all">
+              <Trash2 size={14} /> Iniciar Reset de Produção
+            </button>
+          ) : (
+            <div className="space-y-3 border-t border-red-500/20 pt-4">
+              <div>
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.18em] mb-2">Motivo obrigatório</label>
+                <textarea value={resetReason} onChange={e => setResetReason(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/[0.04] border border-red-500/30 rounded-2xl text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-red-500 min-h-[80px] resize-none transition-all"
+                  placeholder="Ex: Mudança de turno, encerramento do dia..." required />
+              </div>
+              <div className="p-3 bg-yellow-500/[0.06] border border-yellow-500/20 rounded-2xl">
+                <p className="text-[9px] font-bold text-yellow-400 mb-1.5 uppercase tracking-wider">O que será removido:</p>
+                <div className="grid grid-cols-2 gap-1">
+                  {['Pedidos do dia', 'Receitas e lucros', 'Mesas activas', 'Estatísticas', 'Dados financeiros', 'Cache temporário'].map(item => (
+                    <div key={item} className="flex items-center gap-1.5">
+                      <div className="w-1 h-1 rounded-full bg-yellow-500/60 shrink-0" />
+                      <span className="text-[9px] text-slate-400">{item}</span>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <button
-                        onClick={() => {
-                          setIsConfirming(false);
-                          setResetReason('');
-                        }}
-                        disabled={isResetting}
-                        className="py-3 bg-white/10 border border-white/20 text-white rounded-xl font-black uppercase text-sm tracking-widest transition-all hover:bg-white/20 disabled:opacity-50"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={handleResetProduction}
-                        disabled={isResetting}
-                        className="py-3 bg-red-500 text-white rounded-xl font-black uppercase text-sm tracking-widest shadow-glow flex items-center justify-center gap-2 transition-all hover:scale-105 disabled:opacity-50"
-                      >
-                        {isResetting ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Resetando...
-                          </>
-                        ) : (
-                          <>
-                            <Trash2 size={16} />
-                            Confirmar Reset
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-
-                <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
-                  <h5 className="text-yellow-400 font-bold mb-2 text-sm">⚠️ O que será resetado:</h5>
-                  <ul className="space-y-1 text-xs text-slate-400">
-                    <li>• Todos os pedidos do dia</li>
-                    <li>• Receitas e lucros acumulados</li>
-                    <li>• Contagem de itens vendidos</li>
-                    <li>• Mesas ativas</li>
-                    <li>• Estatísticas de produção</li>
-                    <li>• Cache temporário do sistema</li>
-                  </ul>
-                </div>
+                <p className="text-[9px] text-emerald-400/80 mt-2 font-bold">✓ Preservados: Categorias, produtos e configurações</p>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Histórico de Resets */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-            Histórico de Resets
-          </h4>
-          
-          <div className="space-y-3">
-            <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h5 className="text-white font-bold">Reset de Produção</h5>
-                  <p className="text-xs text-slate-400">Motivo: Mudança de turno - Manhã para Tarde</p>
-                </div>
-                <span className="text-xs text-blue-400 font-mono">01/12/2024 14:30</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-xs">
-                <div>
-                  <span className="text-slate-500">Pedidos:</span>
-                  <span className="text-white ml-2">89</span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Receita:</span>
-                  <span className="text-green-400 ml-2">1.2M Kz</span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Status:</span>
-                  <span className="text-green-400 ml-2">Concluído</span>
-                </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => { setIsConfirming(false); setResetReason(''); }} disabled={isResetting}
+                  className="py-3 bg-white/[0.04] border border-white/[0.08] text-white rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-white/[0.08] transition-all disabled:opacity-50">
+                  Cancelar
+                </button>
+                <button onClick={handleResetProduction} disabled={isResetting}
+                  className="py-3 bg-red-500 text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 transition-all disabled:opacity-50">
+                  {isResetting
+                    ? <><div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> A resetar...</>
+                    : <><Trash2 size={13} /> Confirmar Reset</>}
+                </button>
               </div>
             </div>
-            
-            <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h5 className="text-white font-bold">Reset de Produção</h5>
-                  <p className="text-xs text-slate-400">Motivo: Encerramento do dia</p>
-                </div>
-                <span className="text-xs text-blue-400 font-mono">30/11/2024 23:59</span>
+          )}
+        </div>
+
+        {/* ── Informações do Sistema ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shrink-0">
+                <RefreshCw size={13} className="text-white" />
               </div>
-              <div className="grid grid-cols-3 gap-4 text-xs">
-                <div>
-                  <span className="text-slate-500">Pedidos:</span>
-                  <span className="text-white ml-2">156</span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Receita:</span>
-                  <span className="text-green-400 ml-2">2.4M Kz</span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Status:</span>
-                  <span className="text-green-400 ml-2">Concluído</span>
-                </div>
+              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Reset Automático</h5>
+            </div>
+            <p className="text-[9px] text-slate-500 mb-3 leading-relaxed">O sistema pode ser configurado para reset automático diário às 23:59.</p>
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] text-slate-600 uppercase tracking-wider">Status</span>
+              <span className="text-[9px] font-black text-purple-400 uppercase">Desativado</span>
+            </div>
+          </div>
+          <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
+                <Download size={13} className="text-white" />
               </div>
+              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Backup Antes do Reset</h5>
+            </div>
+            <p className="text-[9px] text-slate-500 mb-3 leading-relaxed">Backup automático dos dados antes de qualquer operação de reset.</p>
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] text-slate-600 uppercase tracking-wider">Status</span>
+              <span className="text-[9px] font-black text-emerald-400 uppercase">Ativo</span>
             </div>
           </div>
         </div>
 
-        {/* Informações do Sistema */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-purple-500 rounded-full"></div>
-            Informações do Sistema
-          </h4>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-purple-500/5 border border-purple-500/20 rounded-2xl">
-              <h5 className="text-purple-400 font-bold mb-2 text-sm">🔄 Reset Automático</h5>
-              <p className="text-xs text-slate-400 mb-3">
-                O sistema pode ser configurado para reset automático diário às 23:59.
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Status:</span>
-                <span className="text-xs text-purple-400 font-mono">Desativado</span>
-              </div>
+        {/* ── Histórico de Resets ── */}
+        <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-3">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
+              <Clock size={13} className="text-white" />
             </div>
-            
-            <div className="p-4 bg-purple-500/5 border border-purple-500/20 rounded-2xl">
-              <h5 className="text-purple-400 font-bold mb-2 text-sm">💾 Backup Antes do Reset</h5>
-              <p className="text-xs text-slate-400 mb-3">
-                Backup automático dos dados antes de qualquer operação de reset.
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Status:</span>
-                <span className="text-xs text-green-400 font-mono">Ativo</span>
-              </div>
-            </div>
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Histórico de Resets</h4>
           </div>
+          {[
+            { title: 'Reset de Produção', reason: 'Mudança de turno — Manhã para Tarde', date: '01/12/2024 14:30', orders: 89, revenue: '1.2M Kz' },
+            { title: 'Reset de Produção', reason: 'Encerramento do dia', date: '30/11/2024 23:59', orders: 156, revenue: '2.4M Kz' },
+          ].map((entry, i) => (
+            <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <p className="text-xs font-black text-white">{entry.title}</p>
+                  <p className="text-[9px] text-slate-500 mt-0.5">{entry.reason}</p>
+                </div>
+                <span className="text-[9px] text-blue-400 font-mono shrink-0">{entry.date}</span>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[8px] text-slate-600 uppercase">Pedidos</span>
+                  <span className="text-[9px] font-bold text-white">{entry.orders}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[8px] text-slate-600 uppercase">Receita</span>
+                  <span className="text-[9px] font-bold text-emerald-400">{entry.revenue}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-[9px] font-bold text-emerald-400">Concluído</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -2287,109 +2110,82 @@ const SystemHub = () => {
       ? safeMax((records || []).map(r => r?.revenue > 0 ? (Number(r?.profit) / Number(r?.revenue)) * 100 : 0))
       : 0;
 
+    const inputCls = "w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-2xl text-white text-sm font-medium outline-none focus:border-[#06b6d4]/60 focus:bg-white/[0.06] transition-all placeholder:text-slate-600";
+    const labelCls = "block text-[9px] font-black text-slate-500 uppercase tracking-[0.18em] mb-2";
+
+    const FormPanel = () => (
+      <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#06b6d4] to-blue-600 flex items-center justify-center shrink-0">
+            <Plus size={13} className="text-white" />
+          </div>
+          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            {editingRecord ? 'Editar Registo' : 'Novo Registo Histórico'}
+          </h4>
+        </div>
+        <form onSubmit={handleAddRecord} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>Sistema</label>
+            <input type="text" className={inputCls} value={formData.system}
+              onChange={e => setFormData({...formData, system: e.target.value})}
+              placeholder="Nome do sistema" required />
+          </div>
+          <div>
+            <label className={labelCls}>Período</label>
+            <input type="text" className={inputCls} value={formData.period}
+              onChange={e => setFormData({...formData, period: e.target.value})}
+              placeholder="Jan-Dez 2024" required />
+          </div>
+          <div>
+            <label className={labelCls}>Receita (Kz)</label>
+            <input type="number" className={inputCls} value={formData.revenue}
+              onChange={e => setFormData({...formData, revenue: e.target.value})}
+              placeholder="0" required />
+          </div>
+          <div>
+            <label className={labelCls}>Lucro (Kz)</label>
+            <input type="number" className={inputCls} value={formData.profit}
+              onChange={e => setFormData({...formData, profit: e.target.value})}
+              placeholder="0" required />
+          </div>
+          <div className="sm:col-span-2 flex gap-3">
+            <button type="button" onClick={() => { setShowForm(false); setEditingRecord(null); }}
+              className="flex-1 py-3 bg-white/[0.04] border border-white/[0.08] text-white rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-white/[0.08] transition-all">
+              Cancelar
+            </button>
+            <button type="submit"
+              className="flex-1 py-3 bg-[#06b6d4] text-black rounded-2xl font-black uppercase text-[9px] tracking-widest hover:brightness-110 transition-all">
+              {editingRecord ? 'Actualizar Registo' : 'Adicionar Registo'}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+
     // Tratamento de erros de renderização - BLOCO SEGURO
     if (!records || records.length === 0) {
       return (
         <div className="space-y-6">
-          {/* Loading State */}
           {loading && (
-            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-3 text-white">Carregando histórico financeiro...</span>
+            <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-10 flex items-center justify-center gap-3">
+              <div className="w-5 h-5 border-2 border-[#06b6d4]/40 border-t-[#06b6d4] rounded-full animate-spin" />
+              <span className="text-sm text-slate-400">A carregar histórico financeiro...</span>
+            </div>
+          )}
+          {!loading && !showForm && (
+            <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-10 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-4">
+                <Landmark size={26} className="text-slate-600" />
               </div>
+              <p className="text-white font-black text-sm mb-1">Nenhum registo histórico</p>
+              <p className="text-[10px] text-slate-500 mb-6">Adicione registos de sistemas anteriores para visualizar o histórico financeiro</p>
+              <button onClick={() => setShowForm(true)}
+                className="px-6 py-3 bg-[#06b6d4] text-black rounded-2xl font-black uppercase text-[9px] tracking-widest hover:brightness-110 transition-all inline-flex items-center gap-2">
+                <Plus size={13} /> Adicionar Primeiro Registo
+              </button>
             </div>
           )}
-
-          {!loading && (
-            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Landmark className="w-8 h-8 text-slate-500" />
-                </div>
-                <h4 className="text-white font-bold mb-2">Nenhum registro histórico</h4>
-                <p className="text-slate-400 text-sm mb-6">
-                  Adicione registros de sistemas anteriores para visualizar o histórico financeiro
-                </p>
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="px-6 py-3 bg-primary text-black rounded-lg font-medium hover:brightness-110 transition-all"
-                >
-                  Adicionar Primeiro Registro
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Formulário de Adição */}
-          {showForm && (
-            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-              <h4 className="text-sm font-black text-white italic uppercase mb-6">
-                {editingRecord ? 'Editar Registro Histórico' : 'Adicionar Registro Histórico'}
-              </h4>
-              <form onSubmit={handleAddRecord} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Sistema</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
-                    value={formData.system}
-                    onChange={e => setFormData({...formData, system: e.target.value})}
-                    placeholder="Nome do sistema"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Período</label>
-                  <input 
-                    type="text" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
-                    value={formData.period}
-                    onChange={e => setFormData({...formData, period: e.target.value})}
-                    placeholder="Ex: Jan-Dez 2024"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Receita (Kz)</label>
-                  <input 
-                    type="number" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
-                    value={formData.revenue}
-                    onChange={e => setFormData({...formData, revenue: e.target.value})}
-                    placeholder="0"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Lucro (Kz)</label>
-                  <input 
-                    type="number" 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
-                    value={formData.profit}
-                    onChange={e => setFormData({...formData, profit: e.target.value})}
-                    placeholder="0"
-                    required
-                  />
-                </div>
-                <div className="md:col-span-2 flex gap-4">
-                  <button 
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="flex-1 py-4 bg-white/5 border border-white/10 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    type="submit"
-                    className="flex-1 py-4 bg-primary text-black rounded-xl font-black uppercase text-[10px] tracking-widest shadow-glow hover:bg-primary/80 transition-all"
-                  >
-                    Adicionar Registro
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+          {showForm && <FormPanel />}
         </div>
       );
     }
@@ -2397,218 +2193,120 @@ const SystemHub = () => {
     // Renderização segura com dados existentes
     return (
       <div className="space-y-6">
-        {/* Loading State */}
         {loading && (
-          <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <span className="ml-3 text-white">Carregando histórico financeiro...</span>
-            </div>
+          <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-10 flex items-center justify-center gap-3">
+            <div className="w-5 h-5 border-2 border-[#06b6d4]/40 border-t-[#06b6d4] rounded-full animate-spin" />
+            <span className="text-sm text-slate-400">A carregar histórico financeiro...</span>
           </div>
         )}
 
         {!loading && (
           <>
-            {/* Resumo Financeiro */}
-            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-              <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-                <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                Resumo Financeiro Histórico
-              </h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-green-500/10 rounded-2xl border border-green-500/20">
-                  <div className="text-2xl font-black text-green-400">{formatKz(totalRevenue)}</div>
-                  <div className="text-xs text-green-300 uppercase tracking-widest mt-1">Receita Total</div>
+            {/* ── Stats resumo ── */}
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: 'Receita Total', value: formatKz(totalRevenue), color: 'text-emerald-400', bg: 'bg-emerald-500/[0.06] border-emerald-500/20' },
+                { label: 'Lucro Total', value: formatKz(totalProfit), color: 'text-blue-400', bg: 'bg-blue-500/[0.06] border-blue-500/20' },
+                { label: 'Margem Média', value: `${avgProfitMargin.toFixed(1)}%`, color: 'text-purple-400', bg: 'bg-purple-500/[0.06] border-purple-500/20' },
+              ].map(s => (
+                <div key={s.label} className={`${s.bg} border rounded-2xl p-4 text-center`}>
+                  <div className={`text-base font-black ${s.color} mb-1 leading-tight`}>{s.value}</div>
+                  <div className="text-[8px] text-slate-500 uppercase tracking-wider">{s.label}</div>
                 </div>
-                <div className="text-center p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-                  <div className="text-2xl font-black text-blue-400">{formatKz(totalProfit)}</div>
-                  <div className="text-xs text-blue-300 uppercase tracking-widest mt-1">Lucro Total</div>
-                </div>
-                <div className="text-center p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20">
-                  <div className="text-2xl font-black text-purple-400">{avgProfitMargin.toFixed(1)}%</div>
-                  <div className="text-xs text-purple-300 uppercase tracking-widest mt-1">Margem Média</div>
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Formulário de Adição */}
-            {showForm && (
-              <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-                <h4 className="text-sm font-black text-white italic uppercase mb-6">Adicionar Registro Histórico</h4>
-                <form onSubmit={handleAddRecord} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Sistema</label>
-                    <input 
-                      type="text" 
-                      className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
-                      value={formData.system}
-                      onChange={e => setFormData({...formData, system: e.target.value})}
-                      placeholder="Nome do sistema"
-                      required
-                    />
+            {/* ── Form ou lista ── */}
+            {showForm ? <FormPanel /> : (
+              <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#06b6d4] to-blue-600 flex items-center justify-center shrink-0">
+                      <Landmark size={13} className="text-white" />
+                    </div>
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Registos Históricos</h4>
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Período</label>
-                    <input 
-                      type="text" 
-                      className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
-                      value={formData.period}
-                      onChange={e => setFormData({...formData, period: e.target.value})}
-                      placeholder="Ex: Jan-Dez 2024"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Receita (Kz)</label>
-                    <input 
-                      type="number" 
-                      className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
-                      value={formData.revenue}
-                      onChange={e => setFormData({...formData, revenue: e.target.value})}
-                      placeholder="0"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Lucro (Kz)</label>
-                    <input 
-                      type="number" 
-                      className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white font-bold outline-none focus:border-primary"
-                      value={formData.profit}
-                      onChange={e => setFormData({...formData, profit: e.target.value})}
-                      placeholder="0"
-                      required
-                    />
-                  </div>
-                  <div className="md:col-span-2 flex gap-4">
-                    <button 
-                      type="button"
-                      onClick={() => setShowForm(false)}
-                      className="flex-1 py-4 bg-white/5 border border-white/10 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      type="submit"
-                      className="flex-1 py-4 bg-primary text-black rounded-xl font-black uppercase text-[10px] tracking-widest shadow-glow hover:bg-primary/80 transition-all"
-                    >
-                      Adicionar Registro
-                    </button>
-                  </div>
-                </form>
+                  <button onClick={() => { setShowForm(true); setEditingRecord(null); }}
+                    className="w-7 h-7 rounded-xl bg-[#06b6d4] text-black flex items-center justify-center hover:brightness-110 transition-all"
+                    title="Adicionar Registo">
+                    <Plus size={14} />
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {records.map(record => (
+                    <div key={record.id} className="group p-4 bg-white/[0.03] border border-white/[0.06] rounded-2xl hover:bg-white/[0.06] transition-all">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-black text-white truncate">{record.system}</p>
+                          <p className="text-[9px] text-slate-500">{record.period}</p>
+                        </div>
+                        <div className="flex items-center gap-4 shrink-0">
+                          <div className="text-right">
+                            <p className="text-xs font-bold text-emerald-400">{formatKz(record.revenue)}</p>
+                            <p className="text-[9px] text-slate-600">Receita</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs font-bold text-blue-400">{formatKz(record.profit)}</p>
+                            <p className="text-[9px] text-slate-600">Lucro</p>
+                          </div>
+                          <div className="text-right hidden sm:block">
+                            <p className="text-xs font-bold text-purple-400">
+                              {record.revenue > 0 ? ((record.profit / record.revenue) * 100).toFixed(1) : 0}%
+                            </p>
+                            <p className="text-[9px] text-slate-600">Margem</p>
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleEditRecord(record)}
+                              className="w-7 h-7 rounded-xl bg-white/[0.06] text-slate-400 hover:text-white flex items-center justify-center transition-all"
+                              title="Editar">
+                              <Edit size={13} />
+                            </button>
+                            <button onClick={async () => {
+                              try {
+                                const { error } = await supabase.from('external_history').delete().eq('id', record.id);
+                                if (error) { addNotification('error', 'Falha ao apagar no Supabase'); return; }
+                                setRecords(records.filter(r => r.id !== record.id));
+                                addNotification('success', 'Registo removido com sucesso!');
+                                await loadExternalHistory();
+                              } catch { addNotification('error', 'Erro ao apagar registo'); }
+                            }}
+                              className="w-7 h-7 rounded-xl bg-red-500/[0.06] text-red-500/40 hover:text-red-400 hover:bg-red-500/[0.15] flex items-center justify-center transition-all"
+                              aria-label="Apagar registo">
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Lista de Registros */}
-            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5">
-              <div className="flex justify-between items-center mb-6">
-                <h4 className="text-sm font-black text-white italic uppercase">Registros Históricos</h4>
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="p-2 bg-primary text-black rounded-lg hover:brightness-110 transition-all"
-                  title="Adicionar Registro"
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-              <div className="space-y-4">
-                {records.map((record) => (
-                  <div key={record.id} className="group p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h5 className="text-white font-bold">{record.system}</h5>
-                        <p className="text-slate-400 text-sm">{record.period}</p>
-                        <div className="text-xs text-slate-500">{record.date}</div>
-                      </div>
-                      <div className="flex items-center gap-6 mt-2">
-                        <div className="text-green-400 font-bold">{formatKz(record.revenue)}</div>
-                        <div className="text-blue-400 font-bold">{formatKz(record.profit)}</div>
-                        <div className="text-purple-400 text-sm">
-                          {record.revenue > 0 ? ((record.profit / record.revenue) * 100).toFixed(1) : 0}% margem
-                        </div>
-                      </div>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => handleEditRecord(record)}
-                          className="p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-                          title="Editar Registro"
-                        >
-                          <Edit size={16}/>
-                        </button>
-                        <button 
-                          onClick={async () => {
-                            try {
-                              console.log('[SystemHub] Apagando registro ID:', record.id);
-                              
-                              const { error } = await supabase
-                                .from('external_history')
-                                .delete()
-                                .eq('id', record.id);
-
-                              if (error) {
-                                console.error('[SystemHub] Erro ao apagar no Supabase:', error);
-                                addNotification('error', 'Falha ao apagar registro no Supabase');
-                                return;
-                              }
-
-                              console.log('[SystemHub] Registro apagado com sucesso no Supabase');
-                              
-                              // Remover do estado local apenas após sucesso no Supabase
-                              setRecords(records.filter(r => r.id !== record.id));
-                              addNotification('success', 'Registro removido com sucesso do Supabase!');
-                              
-                              // Forçar recarga dos dados
-                              await loadExternalHistory();
-                              
-                            } catch (error) {
-                              console.error('[SystemHub] Erro crítico ao apagar:', error);
-                              addNotification('error', 'Erro crítico ao apagar registro');
-                            }
-                          }}
-                          className="p-2 text-red-500/30 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                          aria-label="Apagar registro"
-                        >
-                          <Trash2 size={16}/>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Análise Comparativa */}
-            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-              <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-                <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-                Análise Comparativa
-              </h4>
-              
-              <div className="space-y-4">
-                <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
-                  <h5 className="text-white font-bold mb-2">Insights Financeiros</h5>
-                  <ul className="space-y-2 text-xs text-slate-400">
-                    <li>• Total de {records.length} sistemas registrados</li>
-                    <li>• Melhor margem: {bestMargin.toFixed(1)}%</li>
-                    <li>• Período médio de operação: 6 meses</li>
-                    <li>• Crescimento médio mensal: {avgProfitMargin.toFixed(1)}%</li>
-                  </ul>
+            {/* ── Análise ── */}
+            <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-3">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center shrink-0">
+                  <TrendingUp size={13} className="text-white" />
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                    <div className="text-slate-400 text-sm mb-1">Maior Receita</div>
-                    <div className="text-green-400 font-bold">
-                      {formatKz(maxRevenue)}
-                    </div>
-                  </div>
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                    <div className="text-slate-400 text-sm mb-1">Maior Lucro</div>
-                    <div className="text-blue-400 font-bold">
-                      {formatKz(maxProfit)}
-                    </div>
-                  </div>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Análise Comparativa</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+                  <p className="text-[9px] text-slate-500 mb-1">Maior Receita</p>
+                  <p className="text-sm font-black text-emerald-400">{formatKz(maxRevenue)}</p>
+                </div>
+                <div className="p-3.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+                  <p className="text-[9px] text-slate-500 mb-1">Maior Lucro</p>
+                  <p className="text-sm font-black text-blue-400">{formatKz(maxProfit)}</p>
+                </div>
+                <div className="p-3.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+                  <p className="text-[9px] text-slate-500 mb-1">Melhor Margem</p>
+                  <p className="text-sm font-black text-purple-400">{bestMargin.toFixed(1)}%</p>
+                </div>
+                <div className="p-3.5 bg-white/[0.03] border border-white/[0.06] rounded-2xl">
+                  <p className="text-[9px] text-slate-500 mb-1">Sistemas</p>
+                  <p className="text-sm font-black text-white">{records.length}</p>
                 </div>
               </div>
             </div>
@@ -2619,181 +2317,142 @@ const SystemHub = () => {
   };
 
   const DatabaseOperations = () => {
-    const [dbType, setDbType] = useState('postgresql');
+    const { addNotification } = useStore();
     const [isBackingUp, setIsBackingUp] = useState(false);
-    const [isRestoring, setIsRestoring] = useState(false);
-    const [lastBackup, setLastBackup] = useState<string | null>(null);
+    const [lastBackup, setLastBackup] = useState<string | null>(() => localStorage.getItem('rest_ia_last_backup'));
+
+    // Stats reais do localStorage
+    const lsStats = React.useMemo(() => {
+      try {
+        let total = 0;
+        const count = localStorage.length;
+        for (let i = 0; i < count; i++) {
+          const k = localStorage.key(i);
+          if (k) total += (localStorage.getItem(k) || '').length;
+        }
+        return { count, size: (total / 1024).toFixed(1) + ' KB', sizeNum: total };
+      } catch { return { count: 0, size: '0 KB', sizeNum: 0 }; }
+    }, []);
 
     const databaseTypes = [
-      { id: 'postgresql', name: 'PostgreSQL', description: 'Base de dados principal do sistema', icon: '🐘' },
-      { id: 'sqlite', name: 'SQLite', description: 'Base de dados local para cache', icon: '🗄️' },
-      { id: 'local', name: 'Local Storage', description: 'Armazenamento local do navegador', icon: '💾' }
+      { id: 'supabase', name: 'Supabase Cloud', description: 'Base de dados principal (PostgreSQL)', icon: '🐘' },
+      { id: 'local', name: 'Local Storage', description: 'Cache do navegador (' + lsStats.size + ')', icon: '💾' }
     ];
+    const [dbType, setDbType] = useState('supabase');
 
-    const handleBackup = async (type: string) => {
+    const handleBackup = async () => {
       setIsBackingUp(true);
       try {
-        // Simulação de backup
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setLastBackup(new Date().toISOString());
-        console.log(`Backup realizado para ${type}`);
+        const store = useStore.getState();
+        const backupData = {
+          timestamp: new Date().toISOString(),
+          version: '1.0',
+          menu: store.menu,
+          categories: store.categories,
+          settings: store.settings,
+          customers: store.customers,
+          tables: store.tables,
+        };
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rest-ia-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        const now = new Date().toISOString();
+        setLastBackup(now);
+        localStorage.setItem('rest_ia_last_backup', now);
+        addNotification('success', 'Backup exportado com sucesso!');
       } catch (error) {
-        console.error('Erro no backup:', error);
+        addNotification('error', 'Erro ao criar backup.');
       } finally {
         setIsBackingUp(false);
       }
     };
 
-    const handleRestore = async (type: string) => {
-      setIsRestoring(true);
-      try {
-        // Simulação de restore
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        console.log(`Restore realizado para ${type}`);
-      } catch (error) {
-        console.error('Erro no restore:', error);
-      } finally {
-        setIsRestoring(false);
-      }
-    };
-
     return (
       <div className="space-y-6">
-        {/* Informações da Base de Dados */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-[#06b6d4] rounded-full"></div>
-            Informações da Base de Dados
-          </h4>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {databaseTypes.map((db) => (
-              <div 
-                key={db.id}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                  dbType === db.id 
-                    ? 'bg-[#06b6d4]/10 border-[#06b6d4]/30' 
-                    : 'bg-white/5 border-white/10 hover:bg-white/10'
-                }`}
-                onClick={() => setDbType(db.id)}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="text-2xl">{db.icon}</div>
-                  <div>
-                    <h5 className="text-white font-bold">{db.name}</h5>
-                    <p className="text-xs text-slate-400">{db.description}</p>
-                  </div>
+
+        {/* ── Stats armazenamento ── */}
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: 'Supabase', value: navigator.onLine ? 'ONLINE' : 'OFFLINE', color: navigator.onLine ? 'text-emerald-400' : 'text-red-400', bg: navigator.onLine ? 'bg-emerald-500/[0.06] border-emerald-500/20' : 'bg-red-500/[0.06] border-red-500/20' },
+            { label: 'Chaves Cached', value: lsStats.count, color: 'text-[#06b6d4]', bg: 'bg-[#06b6d4]/[0.06] border-[#06b6d4]/20' },
+            { label: 'Cache Local', value: lsStats.size, color: 'text-white', bg: 'bg-white/[0.04] border-white/[0.08]' },
+          ].map(s => (
+            <div key={s.label} className={`${s.bg} border rounded-2xl p-4 text-center`}>
+              <div className={`text-lg font-black ${s.color} mb-1`}>{s.value}</div>
+              <div className="text-[8px] text-slate-500 uppercase tracking-wider">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Selector BD ── */}
+        <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-3">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#06b6d4] to-blue-600 flex items-center justify-center shrink-0">
+              <Database size={13} className="text-white" />
+            </div>
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Bases de Dados Ativas</h4>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {databaseTypes.map(db => (
+              <div key={db.id} onClick={() => setDbType(db.id)}
+                className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center gap-3 ${
+                  dbType === db.id
+                    ? 'bg-[#06b6d4]/[0.08] border-[#06b6d4]/40'
+                    : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06]'
+                }`}>
+                <span className="text-xl shrink-0">{db.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-black text-white">{db.name}</p>
+                  <p className="text-[9px] text-slate-500 truncate">{db.description}</p>
                 </div>
-                {dbType === db.id && (
-                  <div className="text-xs text-[#06b6d4] font-bold">ATIVO</div>
-                )}
+                {dbType === db.id && <div className="w-2 h-2 rounded-full bg-[#06b6d4] shrink-0" />}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Operações de Backup */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-            Operações de Backup
-          </h4>
-          
-          <div className="space-y-4">
-            <div className="p-4 bg-green-500/5 border border-green-500/20 rounded-2xl flex gap-3">
-              <div className="w-5 h-5 bg-green-500 rounded-full"></div>
-              <p className="text-[9px] text-slate-400 italic leading-relaxed">
-                O backup cria uma cópia de segurança completa dos dados da base de dados selecionada.
-              </p>
+        {/* ── Backup ── */}
+        <div className="glass-panel rounded-[2rem] border border-white/[0.06] p-6 space-y-4">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
+              <Download size={13} className="text-white" />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button
-                onClick={() => handleBackup(dbType)}
-                disabled={isBackingUp}
-                className="py-6 bg-green-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 disabled:opacity-50"
-              >
-                <Download size={20} />
-                {isBackingUp ? 'Fazendo Backup...' : 'Fazer Backup'}
-              </button>
-              
-              <button
-                onClick={() => handleRestore(dbType)}
-                disabled={isRestoring}
-                className="py-6 bg-orange-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-glow flex items-center justify-center gap-3 transition-all hover:scale-105 disabled:opacity-50"
-              >
-                <Upload size={20} />
-                {isRestoring ? 'Restaurando...' : 'Restaurar Backup'}
-              </button>
-            </div>
-
-            {lastBackup && (
-              <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="text-xs text-slate-400">Último backup realizado:</p>
-                <p className="text-sm text-white font-mono">
-                  {new Date(lastBackup).toLocaleString('pt-AO')}
-                </p>
-              </div>
-            )}
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Backup de Dados</h4>
           </div>
+          <div className="p-3 bg-emerald-500/[0.06] border border-emerald-500/20 rounded-2xl flex gap-2.5">
+            <Info size={13} className="text-emerald-400 shrink-0 mt-0.5" />
+            <p className="text-[9px] text-slate-400 leading-relaxed">Exporta um ficheiro JSON com menu, categorias, clientes e configurações. Guarde-o em local seguro.</p>
+          </div>
+          <button onClick={handleBackup} disabled={isBackingUp}
+            className="w-full py-4 bg-emerald-500/90 text-white rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-500 hover:scale-[1.01] transition-all disabled:opacity-60">
+            {isBackingUp
+              ? <><div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> A exportar...</>
+              : <><Download size={14} /> Exportar Backup JSON</>}
+          </button>
+          {lastBackup && (
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[9px] text-slate-600 uppercase tracking-widest">Último backup</span>
+              <span className="text-[9px] text-emerald-400 font-mono">{new Date(lastBackup).toLocaleString('pt-AO')}</span>
+            </div>
+          )}
         </div>
 
-        {/* Status da Base de Dados */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-            Status da Base de Dados
-          </h4>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
-              <div className="text-2xl font-bold text-green-500 mb-2">ONLINE</div>
-              <div className="text-[8px] text-slate-400 uppercase">Status</div>
-            </div>
-            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
-              <div className="text-2xl font-bold text-white mb-2">2.4GB</div>
-              <div className="text-[8px] text-slate-400 uppercase">Tamanho</div>
-            </div>
-            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
-              <div className="text-2xl font-bold text-[#06b6d4] mb-2">15,234</div>
-              <div className="text-[8px] text-slate-400 uppercase">Registros</div>
-            </div>
-            <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center">
-              <div className="text-2xl font-bold text-white mb-2">99.9%</div>
-              <div className="text-[8px] text-slate-400 uppercase">Uptime</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Configurações Avançadas */}
-        <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-6">
-          <h4 className="text-sm font-black text-white italic uppercase flex items-center gap-3">
-            <div className="w-4 h-4 bg-purple-500 rounded-full"></div>
-            Configurações Avançadas
-          </h4>
-          
-          <div className="space-y-4">
-            <div className="p-4 bg-purple-500/5 border border-purple-500/20 rounded-2xl">
-              <h5 className="text-white font-bold mb-2">Otimização Automática</h5>
-              <p className="text-xs text-slate-400 mb-3">
-                O sistema realiza otimizações automáticas da base de dados durante horários de baixa atividade.
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500">Próxima otimização:</span>
-                <span className="text-xs text-purple-400 font-mono">02:00 AM</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <button className="py-4 bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-xl text-xs font-black uppercase hover:bg-purple-500/30 transition-all">
-                Limpar Cache
-              </button>
-              <button className="py-4 bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-xl text-xs font-black uppercase hover:bg-purple-500/30 transition-all">
-                Analisar Performance
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* ── Limpar cache ── */}
+        <button
+          onClick={() => {
+            const keys = Object.keys(localStorage).filter(k =>
+              k.includes('cache') || k.includes('tmp') || k.includes('sync_log')
+            );
+            keys.forEach(k => localStorage.removeItem(k));
+            addNotification('success', `Cache limpo: ${keys.length} entradas removidas.`);
+          }}
+          className="w-full py-4 bg-purple-500/[0.08] border border-purple-500/20 text-purple-300 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-purple-500/[0.15] transition-all flex items-center justify-center gap-2">
+          <Trash2 size={13} /> Limpar Cache Temporário
+        </button>
       </div>
     );
   };
@@ -2801,58 +2460,65 @@ const SystemHub = () => {
   const systemCards = [
     {
       id: 'identity',
-      title: 'Identidade Geral',
-      description: 'Configurações principais da aplicação',
+      title: 'Identidade',
+      description: 'Nome, logo e dados do restaurante',
       icon: <Building className="w-8 h-8" />,
       color: 'from-cyan-500 to-cyan-600',
+      badges: ['Nome', 'Logo', 'Contactos'],
       component: <IdentitySettings />
     },
     {
       id: 'human-resources',
-      title: 'Capital Humano (RH)',
-      description: 'Gestão completa de recursos humanos',
+      title: 'Capital Humano',
+      description: 'Funcionários, escalas e salários',
       icon: <Users className="w-8 h-8" />,
       color: 'from-blue-500 to-blue-600',
+      badges: ['Funcionários', 'Escalas', 'Salários'],
       component: <Employees />
     },
     {
       id: 'kitchen-kds',
-      title: 'Cozinha',
-      description: 'Gestão do KDS - Kitchen Display System',
+      title: 'KDS Cozinha',
+      description: 'Kitchen Display System — estado em tempo real',
       icon: <ChefHat className="w-8 h-8" />,
       color: 'from-yellow-500 to-orange-600',
+      badges: ['KDS', 'Pedidos', 'Activos'],
       component: <KitchenKDS />
     },
     {
       id: 'kitchen-printer',
       title: 'Impressora Cozinha',
-      description: 'Envio automático de pedidos para a cozinha',
+      description: 'Tickets automáticos de pedidos',
       icon: <Printer className="w-8 h-8" />,
       color: 'from-orange-500 to-red-600',
+      badges: ['Ticket', 'USB/IP', 'Categorias'],
       component: <KitchenPrinterSetup />
     },
     {
       id: 'access-control',
-      title: 'Controlo de Acesso',
-      description: 'Segurança e permissões do sistema',
+      title: 'Acesso & Operadores',
+      description: 'PINs, funções e permissões POS',
       icon: <Shield className="w-8 h-8" />,
       color: 'from-purple-500 to-purple-600',
+      badges: ['PINs', 'Roles', 'Permissões'],
       component: <AccessControl />
     },
     {
       id: 'agt-compliance',
       title: 'Compliance AGT',
-      description: 'Conformidade regulatória e fiscal',
+      description: 'Configuração fiscal, NIF, IVA e SAF-T',
       icon: <FileCheck className="w-8 h-8" />,
       color: 'from-green-500 to-green-600',
+      badges: ['NIF', 'IVA', 'SAF-T'],
       component: <AGTCompliance />
     },
     {
       id: 'e-invoicing',
       title: 'Faturação Eletrónica',
-      description: 'Integração AGT • URLs teste/produção • SAF-T',
+      description: 'Integração AGT • URLs teste/produção',
       icon: <FileBadge className="w-8 h-8" />,
       color: 'from-cyan-500 to-blue-600',
+      badges: ['AGT API', 'Séries', 'Teste'],
       component: <EInvoicePanel />
     },
     {
@@ -2861,184 +2527,106 @@ const SystemHub = () => {
       description: 'Dashboard de certificação profissional',
       icon: <Award className="w-8 h-8" />,
       color: 'from-blue-500 to-blue-600',
+      badges: ['Certificado', 'N.º Processo'],
       component: <CertificationDashboard />
     },
     {
       id: 'financial-history',
       title: 'Histórico Financeiro',
-      description: 'Registre lucros de sistemas anteriores',
+      description: 'Registos de sistemas anteriores',
       icon: <Landmark className="w-8 h-8" />,
       color: 'from-emerald-500 to-emerald-600',
+      badges: ['Receita', 'Lucro', 'Margem'],
       component: <FinancialHistory />
     },
     {
       id: 'production-reset',
-      title: 'Produção',
-      description: 'Reset de dados para nova produção',
+      title: 'Reset de Produção',
+      description: 'Zerar dados financeiros preservando catálogo',
       icon: <Activity className="w-8 h-8" />,
       color: 'from-red-500 to-orange-600',
+      badges: ['Reset', 'Financeiros', 'Staff'],
       component: <ProductionReset />
     },
     {
       id: 'database-operations',
-      title: 'BD',
-      description: 'Operações de base de dados e backups',
+      title: 'Base de Dados',
+      description: 'Backup JSON e estado do armazenamento',
       icon: <Database className="w-8 h-8" />,
       color: 'from-indigo-500 to-indigo-600',
+      badges: ['Backup', 'Export', 'Cache'],
       component: <DatabaseOperations />
     },
     {
       id: 'cloud-ecosystem',
       title: 'Ecosistema Cloud',
-      description: 'Integrações e serviços em nuvem',
+      description: 'Supabase, Menu Digital e Dashboard Mobile',
       icon: <Cloud className="w-8 h-8" />,
       color: 'from-orange-500 to-orange-600',
+      badges: ['Supabase', 'Sync', 'Vercel'],
       component: <CloudEcosystem />
     },
     {
       id: 'technical-kernel',
       title: 'Kernel Técnico',
-      description: 'Ferramentas de desenvolvimento e sistema',
+      description: 'Debug, logs e configurações avançadas',
       icon: <Terminal className="w-8 h-8" />,
       color: 'from-red-500 to-red-600',
+      badges: ['Debug', 'Logs', 'Cache'],
       component: <TechnicalKernel />
     }
   ];
 
   const activeComponent = systemCards.find(card => card.id === activeCard)?.component;
+  const showDataStatus = activeCard ? DATA_STATUS_CARDS.includes(activeCard) : false;
 
   return (
     <div className="h-screen bg-[#070b14] p-6 overflow-hidden">
       {!activeCard ? (
         <>
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-white flex items-center gap-3">
-              <Settings className="w-10 h-10 text-[#06b6d4]" />
-              Sistema
-            </h1>
-            <p className="text-gray-400 mt-2 text-lg">
-              Hub central de configurações e funcionalidades
-            </p>
+          {/* Header moderno */}
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">REST IA OS</p>
+              <h1 className="text-4xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#06b6d4] to-blue-600 flex items-center justify-center">
+                  <Settings className="w-5 h-5 text-white" />
+                </div>
+                Sistema
+              </h1>
+              <p className="text-slate-500 mt-1 text-sm">Hub central de configurações e módulos do sistema</p>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              <div className={`w-2 h-2 rounded-full ${navigator.onLine ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+              {navigator.onLine ? 'Cloud Online' : 'Offline'}
+            </div>
           </div>
 
-          {/* Grid de Cards com scroll interno */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[calc(100vh-120px)] overflow-y-auto pb-12 pr-2">
+          {/* Grid de Cards modernizado */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[calc(100vh-140px)] overflow-y-auto pb-12 pr-2">
             {systemCards.map((card) => (
               <div
                 key={card.id}
                 onClick={() => setActiveCard(card.id)}
-                className="glass-panel rounded-2xl p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-glow border border-[#06b6d4]/20"
+                className="group glass-panel rounded-[1.5rem] p-5 cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-glow border border-white/5 hover:border-[#06b6d4]/30 relative overflow-hidden"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${card.color} text-white shadow-lg`}>
-                    {card.icon}
+                {/* Top gradient bar */}
+                <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${card.color} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`p-2.5 rounded-xl bg-gradient-to-br ${card.color} text-white shadow-lg`}>
+                    {React.cloneElement(card.icon as React.ReactElement<any>, { size: 20 })}
                   </div>
-                  <ChevronRight className="w-5 h-5 text-[#06b6d4]" />
+                  <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-[#06b6d4] group-hover:translate-x-0.5 transition-all" />
                 </div>
-                <div className="mb-4">
-                  <h3 className="text-xl font-semibold text-white mb-2">{card.title}</h3>
-                  <p className="text-gray-400 text-sm">{card.description}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">
-                    Funcionalidades
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {card.id === 'identity' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Nome</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Logo</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Guardar</span>
-                      </>
-                    )}
-                    {card.id === 'human-resources' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Funcionários</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Escalas</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Ponto</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Salário</span>
-                      </>
-                    )}
-                    {card.id === 'kitchen-kds' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">KDS</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Status</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Pedidos</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Controlo</span>
-                      </>
-                    )}
-                    {card.id === 'digital-kitchen' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Online</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">KDS</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Tempo Real</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Sincronização</span>
-                      </>
-                    )}
-                    {card.id === 'access-control' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Usuários</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Permissões</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Sistema</span>
-                      </>
-                    )}
-                    {card.id === 'agt-compliance' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Relatórios</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Conformidade</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">SAFT</span>
-                      </>
-                    )}
-                    {card.id === 'e-invoicing' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">AGT API</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Teste/Produção</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Séries</span>
-                      </>
-                    )}
-                    {card.id === 'agt-certification' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Certificação</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Dashboard</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">AGT</span>
-                      </>
-                    )}
-                    {card.id === 'financial-reports' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Relatórios</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Faturação</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Impostos</span>
-                      </>
-                    )}
-                    {card.id === 'production-reset' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Reset</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Produção</span>
-                      </>
-                    )}
-                    {card.id === 'database-operations' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Backup</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Restore</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">BD</span>
-                      </>
-                    )}
-                    {card.id === 'cloud-ecosystem' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Cloud</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">API</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Integrações</span>
-                      </>
-                    )}
-                    {card.id === 'technical-kernel' && (
-                      <>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Dev</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Debug</span>
-                        <span className="px-2 py-1 bg-[#06b6d4]/10 text-[#06b6d4] text-xs rounded-full border border-[#06b6d4]/20">Console</span>
-                      </>
-                    )}
-                  </div>
+
+                <h3 className="text-sm font-black text-white uppercase tracking-tight leading-tight mb-1">{card.title}</h3>
+                <p className="text-slate-500 text-[10px] leading-relaxed mb-3">{card.description}</p>
+
+                <div className="flex flex-wrap gap-1">
+                  {card.badges?.map((b: string) => (
+                    <span key={b} className="px-2 py-0.5 bg-white/5 text-slate-400 text-[9px] font-bold uppercase rounded-md border border-white/5">{b}</span>
+                  ))}
                 </div>
               </div>
             ))}
@@ -3046,18 +2634,16 @@ const SystemHub = () => {
         </>
       ) : (
         <div className="h-full overflow-y-auto pb-12 pr-2">
-          {/* Botão Voltar */}
+          {/* Breadcrumb / Voltar */}
           <button
             onClick={() => setActiveCard(null)}
-            className="mb-6 px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
+            className="mb-6 px-4 py-2.5 bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2"
           >
-            ← Voltar para Sistema
+            <ChevronRight size={14} className="rotate-180" /> Voltar para Sistema
           </button>
-          
-          {/* Status dos Dados */}
-          <DataStatus />
-          
-          {/* Componente Ativo */}
+
+          {showDataStatus && <DataStatus />}
+
           <div className="max-w-full">
             {activeComponent}
           </div>

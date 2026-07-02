@@ -150,12 +150,66 @@ const TableLayout = () => {
   };
   
   const containerRef = useRef<HTMLDivElement>(null);
+  const autoOrgDoneRef = useRef(false);
 
   // Atualiza o relógio para calcular tempo de permanência
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 10000);
     return () => clearInterval(timer);
   }, []);
+
+  // Auto-organizar mesas ao abrir — reorganiza qualquer zona cujas mesas estejam fora do canvas visível
+  useEffect(() => {
+    if (tables.length === 0) return;
+    if (autoOrgDoneRef.current) return;
+    autoOrgDoneRef.current = true;
+
+    const CANVAS_W = 860;
+    const CANVAS_H = 560;
+    const TABLE_SIZE = 112;
+
+    const zones: TableZone[] = ['INTERIOR', 'EXTERIOR', 'BALCAO'];
+    zones.forEach(zone => {
+      const zoneTables = [...tables].filter(t => t.zone === zone);
+      if (zoneTables.length === 0) return;
+
+      // Critério 1: alguma mesa fora dos limites visíveis do canvas
+      const hasOutOfBounds = zoneTables.some(
+        t => t.x < 0 || t.y < 0 || t.x + TABLE_SIZE > CANVAS_W || t.y + TABLE_SIZE > CANVAS_H
+      );
+
+      // Critério 2: mesas sobrepostas (distância < 30px)
+      let hasOverlap = false;
+      for (let i = 0; i < zoneTables.length && !hasOverlap; i++) {
+        for (let j = i + 1; j < zoneTables.length && !hasOverlap; j++) {
+          if (Math.abs(zoneTables[i].x - zoneTables[j].x) < 30 &&
+              Math.abs(zoneTables[i].y - zoneTables[j].y) < 30) hasOverlap = true;
+        }
+      }
+
+      // Critério 3: maioria das mesas concentradas abaixo de 50% do canvas
+      // (indicativo de mesas salvas com posições erradas, não de layout intencional)
+      const deepCount = zoneTables.filter(t => t.y > CANVAS_H * 0.5).length;
+      const yValues = zoneTables.map(t => t.y);
+      const yRange = Math.max(...yValues) - Math.min(...yValues);
+      // Só considerar "aglomerado" se estiverem no fundo E num range vertical < 250px (compacto)
+      const isClustered = deepCount >= Math.ceil(zoneTables.length * 0.6) && yRange < 250;
+
+      if (!hasOutOfBounds && !hasOverlap && !isClustered) return;
+
+      const sorted = [...zoneTables].sort((a, b) => {
+        const numA = parseInt(a.name.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b.name.replace(/\D/g, '')) || 0;
+        return numA - numB;
+      });
+      sorted.forEach((table, index) => {
+        const newX = 60 + (index % 4) * 150;
+        const newY = 60 + Math.floor(index / 4) * 140;
+        updateTablePosition(table.id, newX, newY);
+        supabase.from('pos_tables').update({ x: newX, y: newY }).eq('id', table.id).then(() => {});
+      });
+    });
+  }, [tables.length]);
 
   const getTableStats = (tableId: number) => {
     const order = activeOrders.find(o => o.tableId === tableId && o.status === 'ABERTO');
@@ -533,7 +587,15 @@ const TableLayout = () => {
         )}
 
         {/* Mapa de Mesas com Zoom */}
-        <div ref={(el) => { if (el) { el.style.transform = `scale(${zoom})`; } }} className="zoom-container">
+        <div
+          ref={(el) => {
+            if (el) {
+              el.style.transform = `scale(${zoom})`;
+              el.style.transformOrigin = 'top left';
+            }
+          }}
+          style={{ position: 'relative', minWidth: '900px', minHeight: '600px' }}
+        >
           {filteredTables.map((table, index) => {
             const stats = getTableStats(table.id);
             const isCritical = stats !== null && stats.minutes > 45;

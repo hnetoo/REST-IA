@@ -13,13 +13,9 @@ import {
 } from 'lucide-react';
 import { User, UserRole, PermissionKey, TaxRegime } from '../../types';
 import { generateSAFT, downloadSAFT } from '../lib/saftService';
-import { sqlMigrationService } from '../lib/sqlMigrationService';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { forceRealSyncService } from '../services/forceRealSyncService';
+import { syncToTerminal } from '../services/syncService';
+import { supabase } from '../supabase_standalone';
 
 const formatKz = (amount: number) => {
   return new Intl.NumberFormat('pt-AO', {
@@ -188,14 +184,39 @@ const Settings = () => {
       addNotification('error', 'Configure as credenciais Cloud primeiro.');
       return;
     }
-    
+
     setIsSyncing(type);
     try {
-      const localData = { menu, categories, activeOrders, customers };
-      await sqlMigrationService.autoMigrate(settings, localData);
-      addNotification('success', `Sincronização de ${type} concluída com sucesso.`);
+      if (type === 'MENU' || type === 'ALL') {
+        await forceRealSyncService.syncFromSupabase();
+      }
+
+      if (type === 'SALES' || type === 'ALL') {
+        const store = useStore.getState();
+        await store.syncPendingOrdersToSupabase();
+      }
+
+      if (type === 'ALL') {
+        const store = useStore.getState();
+        const syncCore = (store as any).syncCoreMetrics;
+        await syncToTerminal({
+          today_revenue: syncCore?.todayRevenue ?? 0,
+          global_revenue: syncCore?.globalRevenue ?? 0,
+          staff_costs: syncCore?.staffCosts ?? 0,
+          total_expenses: syncCore?.totalExpenses ?? 0,
+          open_orders_count: (store.activeOrders ?? []).length
+        });
+      }
+
+      const labels: Record<string, string> = {
+        MENU: 'Catálogo Digital',
+        SALES: 'Analítica Mobile',
+        CUSTOMERS: 'Base de Fidelidade',
+        ALL: 'Global'
+      };
+      addNotification('success', `Sincronização ${labels[type]} concluída com sucesso.`);
     } catch (err: any) {
-      addNotification('error', err.message);
+      addNotification('error', 'Erro na sincronização: ' + (err?.message ?? err));
     } finally {
       setIsSyncing(null);
     }

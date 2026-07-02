@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { 
   CalendarDays, Clock, Plus, Trash2, X, Save, 
@@ -9,7 +9,11 @@ import {
 import { WorkShift, Employee, UserRole } from '../../types';
 
 const Schedules = () => {
-  const { employees, workShifts, addWorkShift, updateWorkShift, removeWorkShift, addNotification } = useStore();
+  const { employees, workShifts, addWorkShift, updateWorkShift, removeWorkShift, addNotification, loadWorkShifts } = useStore();
+  
+  useEffect(() => {
+    loadWorkShifts();
+  }, [loadWorkShifts]);
   
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay() || 1); // Default to Monday if Sunday (0)
   const [isModalOpen, setIsModalOpen] = useState(false);
